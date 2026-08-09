@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مدیریت غرفه فامیلی</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            background: #0f172a;
+            color: #f8fafc;
+            font-family: Tahoma, sans-serif;
+            padding: 15px;
+            margin: 0;
+        }
+        .card {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        h2 { color: #38bdf8; margin-top: 0; font-size: 18px; }
+        label { font-size: 13px; color: #cbd5e1; display: block; margin-top: 10px; }
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-top: 5px;
+            border-radius: 10px;
+            border: 1px solid #334155;
+            background: #1e293b;
+            color: #fff;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 15px;
+            border-radius: 10px;
+            border: none;
+            background: linear-gradient(90deg, #0284c7, #2563eb);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>🛍️ ثبت فروش غرفه</h2>
+        <label>کد یا نام کالا:</label>
+        <input type="text" id="pCode" placeholder="مثلاً 2248441">
+
+        <label>مقدار فروش (کیلو / عدد):</label>
+        <input type="number" id="pQty" step="0.1" placeholder="مثلاً 1.5">
+
+        <label>قیمت کل فروش (تومان):</label>
+        <input type="number" id="pPrice" placeholder="مبلغ دریافت شده">
+
+        <button onclick="submitSale()">ثبت فاکتور</button>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        // کلیدهای اختصاصی دیتابیس Supabase
+        const SUPABASE_URL = "https://kinjpmvoyioaslpdzujg.supabase.co";
+        const SUPABASE_KEY = "Sb_publishable_k3wkzKalFmLFtfx8WZWr1g_fHKT-3Sl";
+        
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        async function submitSale() {
+            const code = document.getElementById('pCode').value;
+            const qty = parseFloat(document.getElementById('pQty').value);
+            const price = parseFloat(document.getElementById('pPrice').value);
+            const seller = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.first_name : 'شاگرد';
+
+            if(!code || !qty) {
+                alert('لطفاً کد کالا و مقدار را وارد کنید');
+                return;
+            }
+
+            // دریافت کالا از دیتابیس
+            const { data: product, error } = await _supabase
+                .from('products')
+                .select('*')
+                .eq('code', code)
+                .single();
+
+            if(error || !product) {
+                alert('کالا یافت نشد!');
+                return;
+            }
+
+            const profit = price - (product.buy_price * qty);
+            const newStock = product.stock - qty;
+
+            // به‌روزرسانی موجودی انبار
+            await _supabase.from('products').update({ stock: newStock }).eq('id', product.id);
+
+            // ثبت جزئیات فروش و سود
+            await _supabase.from('sales').insert([{
+                product_code: code,
+                quantity: qty,
+                sell_price: price,
+                profit: profit,
+                seller_name: seller
+            }]);
+
+            alert('✅ فروش با موفقیت ثبت شد!');
+            tg.close();
+        }
+    </script>
+</body>
+</html>
+
