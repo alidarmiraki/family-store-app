@@ -80,6 +80,26 @@
             margin-top: 2px;
             text-align: right;
         }
+        .user-badge {
+            display: none;
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 8px 12px;
+            margin-bottom: 12px;
+            font-size: 12px;
+            color: #38bdf8;
+            text-align: center;
+        }
+        .logout-btn {
+            background: transparent;
+            border: none;
+            color: #ef4444;
+            font-size: 11px;
+            cursor: pointer;
+            margin-right: 8px;
+            text-decoration: underline;
+        }
         button.submit-btn {
             width: 100%;
             padding: 12px;
@@ -91,6 +111,18 @@
             font-weight: bold;
             font-size: 14px;
             cursor: pointer;
+        }
+        button.cancel-edit-btn {
+            width: 100%;
+            padding: 10px;
+            margin-top: 8px;
+            border-radius: 10px;
+            border: 1px solid #334155;
+            background: transparent;
+            color: #94a3b8;
+            font-size: 13px;
+            cursor: pointer;
+            display: none;
         }
         table {
             width: 100%;
@@ -104,9 +136,451 @@
             text-align: center;
         }
         th { background: #1e293b; color: #38bdf8; }
+        .error-msg {
+            color: #ef4444;
+            font-size: 12px;
+            margin-top: 10px;
+            display: none;
+        }
+        .low-stock-banner {
+            display: none;
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid #ef4444;
+            color: #fecaca;
+            border-radius: 10px;
+            padding: 10px;
+            font-size: 12px;
+            margin-bottom: 10px;
+            text-align: right;
+            line-height: 1.9;
+        }
+        .row-btn {
+            border: none;
+            border-radius: 6px;
+            padding: 5px 8px;
+            font-size: 11px;
+            cursor: pointer;
+            margin: 2px;
+        }
+        .edit-btn { background: #2563eb; color: #fff; }
+        .delete-btn { background: #dc2626; color: #fff; }
     </style>
 </head>
 <body>
+
+    <!-- صفحه ورود (نام کاربری + رمز عبور) -->
+    <div id="loginScreen" class="login-box">
+        <h2>🔒 ورود به سیستم غرفه</h2>
+        <label>نام کاربری:</label>
+        <input type="text" id="accessUser" placeholder="نام کاربری خود را وارد کنید">
+        <label>رمز عبور:</label>
+        <input type="password" id="accessPin" placeholder="رمز عبور خود را وارد کنید">
+        <div class="error-msg" id="loginError">❌ نام کاربری یا رمز عبور اشتباه است!</div>
+        <button class="submit-btn" onclick="checkLogin()">ورود</button>
+    </div>
+
+    <!-- نوار کاربر لاگین‌شده -->
+    <div class="user-badge" id="userBadge"></div>
+
+    <!-- تب‌های بالای صفحه -->
+    <div class="tabs" id="tabContainer">
+        <button class="tab-btn" id="btnSale" onclick="switchTab('sale')">🛍️ ثبت فروش</button>
+        <button class="tab-btn" id="btnProduct" onclick="switchTab('product')">➕ تعریف کالا</button>
+        <button class="tab-btn" id="btnInventory" onclick="switchTab('inventory'); loadInventory();">📦 موجودی انبار</button>
+    </div>
+
+    <!-- فرم ثبت فروش -->
+    <div id="saleTab" class="card">
+        <h2>🛍️ ثبت فروش روزانه</h2>
+        <label>کد کالا:</label>
+        <input type="text" id="sCode" placeholder="مثلاً 2248441">
+
+        <label>مقدار فروش (کیلو / عدد):</label>
+        <input type="number" id="sQty" step="0.001" placeholder="مثلاً 0.250 برای 250 گرم">
+        <div class="hint">مثال: 250 گرم = 0.250 | 1 کیلو و نیم = 1.5</div>
+
+        <label>قیمت کل فروش (تومان):</label>
+        <input type="number" id="sPrice" placeholder="مثلاً 45000" oninput="formatPrice(this, 'sPriceFormatted')">
+        <div id="sPriceFormatted" class="price-display"></div>
+
+        <button class="submit-btn" onclick="submitSale()">ثبت فاکتور فروش</button>
+    </div>
+
+    <!-- فرم تعریف / ویرایش کالا -->
+    <div id="productTab" class="card">
+        <h2 id="productFormTitle">➕ تعریف کالای جدید به انبار</h2>
+        <label>کد کالا (بارکد/کد اختصاصی):</label>
+        <input type="text" id="pCode" placeholder="مثلاً 2248441">
+
+        <label>نام محصول:</label>
+        <input type="text" id="pName" placeholder="مثلاً پنیر محلی">
+
+        <label>موجودی (کیلو / عدد):</label>
+        <input type="number" id="pStock" step="0.001" placeholder="مثلاً 15.5">
+
+        <label>حداقل موجودی (نقطه سفارش):</label>
+        <input type="number" id="pMinStock" step="0.001" placeholder="مثلاً 2">
+
+        <label>قیمت فروش هر کیلو/عدد (تومان):</label>
+        <input type="number" id="pSellPrice" placeholder="مثلاً 120000" oninput="formatPrice(this, 'pSellPriceFormatted')">
+        <div id="pSellPriceFormatted" class="price-display"></div>
+
+        <!-- این بخش فقط برای مدیر نمایش داده می‌شود -->
+        <div id="buyPriceField" style="display:none;">
+            <label>قیمت خرید هر کیلو/عدد (تومان) - فقط مدیر می‌بیند:</label>
+            <input type="number" id="pBuyPrice" placeholder="مثلاً 90000" oninput="formatPrice(this, 'pBuyPriceFormatted')">
+            <div id="pBuyPriceFormatted" class="price-display"></div>
+        </div>
+
+        <button class="submit-btn" id="productSubmitBtn" style="background: linear-gradient(90deg, #0284c7, #2563eb);" onclick="saveProduct()">ذخیره در انبار</button>
+        <button class="cancel-edit-btn" id="cancelEditBtn" onclick="cancelEdit()">لغو ویرایش و بازگشت به حالت افزودن کالای جدید</button>
+    </div>
+
+    <!-- لیست موجودی انبار -->
+    <div id="inventoryTab" class="card">
+        <h2>📦 لیست کالاهای انبار</h2>
+        <div class="low-stock-banner" id="lowStockBanner"></div>
+        <table>
+            <thead>
+                <tr id="inventoryHeaderRow">
+                    <th>کد</th>
+                    <th>نام</th>
+                    <th>موجودی</th>
+                    <th>قیمت فروش</th>
+                </tr>
+            </thead>
+            <tbody id="inventoryTable">
+                <tr><td colspan="4">در حال بارگذاری...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        const SUPABASE_URL = "https://kinjpmvoyioaslpdzujg.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_k3wkzKalFmLFtfx8WZWr1g_fHKT-3Sl";
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // برچسب فارسی برای هر نقش
+        const roleLabels = {
+            morning_seller: "فروشنده صبح",
+            evening_seller: "فروشنده شب",
+            admin: "مدیر"
+        };
+
+        let currentRole = "";
+        let currentUserLabel = "";
+        let editingProductId = null; // اگر مقدار داشته باشد یعنی در حالت ویرایش هستیم
+
+        async function checkLogin() {
+            const username = document.getElementById('accessUser').value.trim();
+            const password = document.getElementById('accessPin').value;
+            const errBox = document.getElementById('loginError');
+            errBox.style.display = 'none';
+
+            if (!username || !password) {
+                errBox.innerText = '❌ لطفاً نام کاربری و رمز عبور را وارد کنید';
+                errBox.style.display = 'block';
+                return;
+            }
+
+            const { data: user, error } = await _supabase
+                .from('users')
+                .select('*')
+                .eq('username', username)
+                .eq('password', password)
+                .maybeSingle();
+
+            if (error) {
+                errBox.innerText = '❌ خطا در برقراری ارتباط: ' + error.message;
+                errBox.style.display = 'block';
+                return;
+            }
+
+            if (!user) {
+                errBox.innerText = '❌ نام کاربری یا رمز عبور اشتباه است!';
+                errBox.style.display = 'block';
+                return;
+            }
+
+            currentRole = user.role;
+            currentUserLabel = (roleLabels[user.role] || user.role) + ' - ' + (user.full_name || user.username);
+
+            const badge = document.getElementById('userBadge');
+            badge.innerHTML = '👤 ' + currentUserLabel + ' <button class="logout-btn" onclick="logout()">خروج</button>';
+            badge.style.display = 'block';
+
+            // نمایش/مخفی‌کردن فیلد قیمت خرید فقط برای مدیر
+            document.getElementById('buyPriceField').style.display = (currentRole === 'admin') ? 'block' : 'none';
+
+            if (currentRole === 'admin') {
+                // مدیر: دسترسی کامل + دیدن قیمت خرید + ویرایش/حذف کالا
+                setupView(['btnSale', 'btnProduct', 'btnInventory'], 'saleTab');
+            } else if (currentRole === 'morning_seller') {
+                // فروشنده صبح: ثبت فروش + تعریف کالا + موجودی انبار (بدون قیمت خرید، بدون ویرایش/حذف)
+                setupView(['btnSale', 'btnProduct', 'btnInventory'], 'saleTab');
+            } else {
+                // فروشنده شب: فقط ثبت فروش
+                setupView(['btnSale'], 'saleTab');
+            }
+        }
+
+        function logout() {
+            currentRole = "";
+            currentUserLabel = "";
+            editingProductId = null;
+            document.getElementById('accessUser').value = '';
+            document.getElementById('accessPin').value = '';
+            document.getElementById('userBadge').style.display = 'none';
+            document.getElementById('userBadge').innerHTML = '';
+            document.getElementById('buyPriceField').style.display = 'none';
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.style.display = 'none';
+                btn.classList.remove('active');
+            });
+            document.querySelectorAll('.card').forEach(card => card.classList.remove('active'));
+            document.getElementById('loginScreen').style.display = 'block';
+        }
+
+        function setupView(allowedBtns, defaultTab) {
+            document.getElementById('loginScreen').style.display = 'none';
+            allowedBtns.forEach(btnId => {
+                document.getElementById(btnId).style.display = 'block';
+            });
+            switchTab(defaultTab.replace('Tab', ''));
+        }
+
+        function formatPrice(input, displayId) {
+            const val = input.value;
+            if (!val) {
+                document.getElementById(displayId).innerText = '';
+                return;
+            }
+            const formatted = Number(val).toLocaleString('fa-IR');
+            document.getElementById(displayId).innerText = formatted + ' تومان';
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.card').forEach(card => card.classList.remove('active'));
+
+            if (tab === 'sale') {
+                document.getElementById('btnSale').classList.add('active');
+                document.getElementById('saleTab').classList.add('active');
+            } else if (tab === 'product') {
+                document.getElementById('btnProduct').classList.add('active');
+                document.getElementById('productTab').classList.add('active');
+            } else if (tab === 'inventory') {
+                document.getElementById('btnInventory').classList.add('active');
+                document.getElementById('inventoryTab').classList.add('active');
+            }
+        }
+
+        // ذخیره کالا: هم افزودن کالای جدید و هم ویرایش کالای موجود از همین تابع رد می‌شود
+        async function saveProduct() {
+            const code = document.getElementById('pCode').value.trim();
+            const name = document.getElementById('pName').value.trim();
+            const stock = parseFloat(document.getElementById('pStock').value);
+            const min_stock = parseFloat(document.getElementById('pMinStock').value) || 0;
+            const sell_price = parseFloat(document.getElementById('pSellPrice').value) || 0;
+
+            // قیمت خرید فقط اگر مدیر باشد خوانده می‌شود، در غیر این صورت صفر ذخیره می‌شود
+            const buy_price = (currentRole === 'admin')
+                ? (parseFloat(document.getElementById('pBuyPrice').value) || 0)
+                : 0;
+
+            if (!code || !name || isNaN(stock)) {
+                alert('لطفاً کد کالا، نام محصول و موجودی را وارد کنید');
+                return;
+            }
+
+            if (editingProductId) {
+                // حالت ویرایش
+                const updateData = { code, name, stock, min_stock, sell_price };
+                if (currentRole === 'admin') {
+                    updateData.buy_price = buy_price;
+                }
+                const { error } = await _supabase.from('products').update(updateData).eq('id', editingProductId);
+
+                if (error) {
+                    alert('❌ خطا در به‌روزرسانی: ' + error.message);
+                } else {
+                    alert('✅ کالا با موفقیت به‌روزرسانی شد');
+                    cancelEdit();
+                    switchTab('inventory');
+                    loadInventory();
+                }
+            } else {
+                // حالت افزودن کالای جدید
+                const { error } = await _supabase.from('products').insert([{
+                    code, name, stock, min_stock, sell_price, buy_price
+                }]);
+
+                if (error) {
+                    alert('❌ خطا در ذخیره: ' + error.message);
+                } else {
+                    alert('✅ کالای جدید با موفقیت ذخیره شد');
+                    clearProductForm();
+                }
+            }
+        }
+
+        function clearProductForm() {
+            document.getElementById('pCode').value = '';
+            document.getElementById('pName').value = '';
+            document.getElementById('pStock').value = '';
+            document.getElementById('pMinStock').value = '';
+            document.getElementById('pSellPrice').value = '';
+            document.getElementById('pSellPriceFormatted').innerText = '';
+            document.getElementById('pBuyPrice').value = '';
+            document.getElementById('pBuyPriceFormatted').innerText = '';
+        }
+
+        // شروع ویرایش یک کالا (فقط مدیر این دکمه را می‌بیند)
+        function editProduct(product) {
+            editingProductId = product.id;
+            document.getElementById('pCode').value = product.code;
+            document.getElementById('pName').value = product.name;
+            document.getElementById('pStock').value = product.stock;
+            document.getElementById('pMinStock').value = product.min_stock;
+            document.getElementById('pSellPrice').value = product.sell_price;
+            formatPrice(document.getElementById('pSellPrice'), 'pSellPriceFormatted');
+
+            if (currentRole === 'admin') {
+                document.getElementById('pBuyPrice').value = product.buy_price || 0;
+                formatPrice(document.getElementById('pBuyPrice'), 'pBuyPriceFormatted');
+            }
+
+            document.getElementById('productFormTitle').innerText = '✏️ ویرایش کالا: ' + product.name;
+            document.getElementById('productSubmitBtn').innerText = 'به‌روزرسانی کالا';
+            document.getElementById('cancelEditBtn').style.display = 'block';
+
+            switchTab('product');
+        }
+
+        function cancelEdit() {
+            editingProductId = null;
+            clearProductForm();
+            document.getElementById('productFormTitle').innerText = '➕ تعریف کالای جدید به انبار';
+            document.getElementById('productSubmitBtn').innerText = 'ذخیره در انبار';
+            document.getElementById('cancelEditBtn').style.display = 'none';
+        }
+
+        // حذف کالا (فقط مدیر این دکمه را می‌بیند)
+        async function deleteProduct(id, name) {
+            const sure = confirm('آیا از حذف کالای «' + name + '» مطمئن هستید؟ این عملیات قابل بازگشت نیست.');
+            if (!sure) return;
+
+            const { error } = await _supabase.from('products').delete().eq('id', id);
+            if (error) {
+                alert('❌ خطا در حذف: ' + error.message);
+            } else {
+                alert('✅ کالا حذف شد');
+                loadInventory();
+            }
+        }
+
+        async function submitSale() {
+            const code = document.getElementById('sCode').value.trim();
+            const qty = parseFloat(document.getElementById('sQty').value);
+            const price = parseFloat(document.getElementById('sPrice').value);
+
+            if (!code || isNaN(qty) || isNaN(price)) {
+                alert('لطفاً کد کالا، مقدار و مبلغ فروش را وارد کنید');
+                return;
+            }
+
+            const { data: product, error } = await _supabase
+                .from('products')
+                .select('*')
+                .eq('code', code)
+                .single();
+
+            if (error || !product) {
+                alert('❌ کالا با این کد در انبار یافت نشد!');
+                return;
+            }
+
+            const newStock = Number((product.stock - qty).toFixed(3));
+
+            await _supabase.from('products').update({ stock: newStock }).eq('id', product.id);
+
+            await _supabase.from('sales').insert([{
+                product_code: code,
+                quantity: qty,
+                sell_price: price,
+                seller_name: currentUserLabel
+            }]);
+
+            // هشدار موجودی کم به همان فروشنده‌ای که فروش را ثبت کرده
+            if (newStock <= product.min_stock) {
+                alert('✅ فروش ثبت شد و موجودی کسر گردید!\n\n⚠️ توجه: موجودی «' + product.name + '» به نقطه سفارش رسیده (' + newStock + ' باقی مانده). لطفاً به مدیر اطلاع دهید.');
+            } else {
+                alert('✅ فروش ثبت شد و موجودی کسر گردید!');
+            }
+
+            document.getElementById('sCode').value = '';
+            document.getElementById('sQty').value = '';
+            document.getElementById('sPrice').value = '';
+            document.getElementById('sPriceFormatted').innerText = '';
+        }
+
+        async function loadInventory() {
+            const headerRow = document.getElementById('inventoryHeaderRow');
+            headerRow.innerHTML = '<th>کد</th><th>نام</th><th>موجودی</th><th>قیمت فروش</th>';
+            if (currentRole === 'admin') {
+                headerRow.innerHTML += '<th>قیمت خرید</th><th>عملیات</th>';
+            }
+
+            const { data: products } = await _supabase
+                .from('products')
+                .select('id, code, name, stock, min_stock, sell_price, buy_price');
+
+            const tbody = document.getElementById('inventoryTable');
+            const banner = document.getElementById('lowStockBanner');
+            tbody.innerHTML = '';
+
+            if (!products || products.length === 0) {
+                const colCount = currentRole === 'admin' ? 6 : 4;
+                tbody.innerHTML = '<tr><td colspan="' + colCount + '">هیچ کالایی در انبار ثبت نشده است.</td></tr>';
+                banner.style.display = 'none';
+                return;
+            }
+
+            // هشدار موجودی کم - فقط برای مدیر نمایش داده می‌شود
+            const lowStockItems = products.filter(p => p.stock <= p.min_stock);
+            if (currentRole === 'admin' && lowStockItems.length > 0) {
+                banner.innerHTML = '⚠️ ' + lowStockItems.length + ' کالا به نقطه سفارش رسیده یا تمام شده:<br>' +
+                    lowStockItems.map(p => '• ' + p.name + ' (موجودی: ' + p.stock + ')').join('<br>');
+                banner.style.display = 'block';
+            } else {
+                banner.style.display = 'none';
+            }
+
+            products.forEach(p => {
+                const tr = document.createElement('tr');
+                let rowHtml = `
+                    <td>${p.code}</td>
+                    <td>${p.name}</td>
+                    <td style="color: ${p.stock <= p.min_stock ? '#ef4444' : '#10b981'}; font-weight: bold;">${p.stock}</td>
+                    <td>${Number(p.sell_price || 0).toLocaleString('fa-IR')}</td>
+                `;
+                if (currentRole === 'admin') {
+                    rowHtml += `<td>${Number(p.buy_price || 0).toLocaleString('fa-IR')}</td>`;
+                    rowHtml += `<td>
+                        <button class="row-btn edit-btn" onclick='editProduct(${JSON.stringify(p)})'>ویرایش</button>
+                        <button class="row-btn delete-btn" onclick="deleteProduct('${p.id}', '${p.name.replace(/'/g, "\\'")}')">حذف</button>
+                    </td>`;
+                }
+                tr.innerHTML = rowHtml;
+                tbody.appendChild(tr);
+            });
+        }
+    </script>
+</body>
+</html>
 
     <!-- صفحه ورود (تک کادر) -->
     <div id="loginScreen" class="login-box">
