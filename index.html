@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v19 آخرین نسخه لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v20 آخرین نسخه لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -316,6 +316,7 @@
     <div class="tabs" id="tabContainer">
         <button class="tab-btn" id="btnSale" onclick="switchTab('sale'); loadProductDatalist();">🛍️ ثبت فروش</button>
         <button class="tab-btn" id="btnAttendance" onclick="switchTab('attendance');">⏰ حضور و غیاب</button>
+        <button class="tab-btn" id="btnShiftSettings" onclick="switchTab('shiftSettings');">⚙️ تنظیمات شیفت‌ها</button>
         <button class="tab-btn" id="btnMessage" onclick="switchTab('message');">📩 ارسال پیام به مدیر</button>
         <button class="tab-btn" id="btnInbox" onclick="switchTab('inbox'); loadManagerInbox();">📥 صندوقچه پیام‌ها</button>
         <button class="tab-btn" id="btnBooth" onclick="switchTab('booth'); loadBoothInventory();">🧊 وضعیت یخچال غرفه</button>
@@ -352,13 +353,10 @@
         <button class="submit-btn" onclick="submitSale()">ثبت فاکتور فروش</button>
     </div>
 
-    <!-- فرم حضور و غیاب فروشنده / تنظیمات شیفت مدیر -->
-    <div id="attendanceTab" class="card">
-        <h2>⏰ حضور و غیاب روزانه (ثبت خودکار زمان شمسی)</h2>
-        
-        <!-- بخش مخصوص مدیر برای تنظیم ساعت شیفت‌ها -->
-        <div id="adminShiftSettings" style="display:none;" class="calc-box">
-            <h3 style="color:#38bdf8; margin-top:0;">⚙️ تنظیمات ساعت شیفت‌ها و تاخیر مجاز (ویژه مدیر)</h3>
+    <!-- تب مخصوص مدیر: تنظیمات شیفت‌ها -->
+    <div id="shiftSettingsTab" class="card">
+        <h2>⚙️ تنظیمات ساعت شیفت‌ها و تاخیر مجاز (ویژه مدیر)</h2>
+        <div class="calc-box">
             <div style="display:flex; gap:10px;">
                 <div style="flex:1;">
                     <label>ورود شیفت صبح:</label>
@@ -366,24 +364,29 @@
                 </div>
                 <div style="flex:1;">
                     <label>خروج شیفت صبح:</label>
-                    <input type="time" id="shiftMorningEnd" value="16:00">
+                    <input type="time" id="shiftMorningEnd" value="15:30">
                 </div>
             </div>
             <div style="display:flex; gap:10px; margin-top:5px;">
                 <div style="flex:1;">
                     <label>ورود شیفت شب:</label>
-                    <input type="time" id="shiftEveningStart" value="16:00">
+                    <input type="time" id="shiftEveningStart" value="15:30">
                 </div>
                 <div style="flex:1;">
                     <label>خروج شیفت شب:</label>
-                    <input type="time" id="shiftEveningEnd" value="23:59">
+                    <input type="time" id="shiftEveningEnd" value="23:30">
                 </div>
             </div>
             <label>⏱️ میزان تاخیر مجاز بدون هشدار (به دقیقه):</label>
             <input type="number" id="shiftAllowedDelay" value="15" placeholder="مثلاً 15">
-            <button class="row-btn edit-btn" style="width:100%; margin-top:10px; padding:10px;" onclick="saveShiftSettings()">💾 ذخیره تنظیمات شیفت‌ها</button>
+            <button class="submit-btn" style="background: linear-gradient(90deg, #0284c7, #2563eb);" onclick="saveShiftSettings()">💾 ذخیره تنظیمات شیفت‌ها</button>
         </div>
+    </div>
 
+    <!-- فرم حضور و غیاب (فقط ویژه فروشنده‌ها) -->
+    <div id="attendanceTab" class="card">
+        <h2>⏰ حضور و غیاب روزانه (ثبت خودکار زمان شمسی)</h2>
+        
         <div class="hint" style="margin-top:10px;">
             📌 زمان و تاریخ ورود/خروج به‌صورت <b>خودکار بر اساس ساعت شمسی جاری سیستم</b> ثبت می‌شود.
         </div>
@@ -543,7 +546,7 @@
         <div id="workReportContent" style="margin-top:15px;"></div>
     </div>
 
-    <div class="build-tag">v19 آخرین نسخه لبنیات و ترشیجات فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v20 آخرین نسخه لبنیات و ترشیجات فله فامیلی ( دره میرکی )</div>
 
     <script>
         const tg = window.Telegram.WebApp;
@@ -562,9 +565,9 @@
         // تنظیمات پیش‌فرض شیفت‌ها
         let shiftConfig = {
             morningStart: "08:00",
-            morningEnd: "16:00",
-            eveningStart: "16:00",
-            eveningEnd: "23:59",
+            morningEnd: "15:30",
+            eveningStart: "15:30",
+            eveningEnd: "23:30",
             allowedDelay: 15
         };
 
@@ -596,15 +599,24 @@
         };
 
         async function loadShiftSettings() {
-            const { data } = await _supabase.from('settings').select('*').eq('key', 'shift_config').maybeSingle();
-            if (data && data.value) {
-                shiftConfig = data.value;
-                document.getElementById('shiftMorningStart').value = shiftConfig.morningStart || "08:00";
-                document.getElementById('shiftMorningEnd').value = shiftConfig.morningEnd || "16:00";
-                document.getElementById('shiftEveningStart').value = shiftConfig.eveningStart || "16:00";
-                document.getElementById('shiftEveningEnd').value = shiftConfig.eveningEnd || "23:59";
-                document.getElementById('shiftAllowedDelay').value = shiftConfig.allowedDelay || 15;
+            try {
+                const { data, error } = await _supabase.from('settings').select('*').eq('key', 'shift_config').maybeSingle();
+                if (data && data.value) {
+                    shiftConfig = data.value;
+                } else {
+                    const localSaved = localStorage.getItem('shift_config');
+                    if (localSaved) shiftConfig = JSON.parse(localSaved);
+                }
+            } catch (err) {
+                const localSaved = localStorage.getItem('shift_config');
+                if (localSaved) shiftConfig = JSON.parse(localSaved);
             }
+
+            document.getElementById('shiftMorningStart').value = shiftConfig.morningStart || "08:00";
+            document.getElementById('shiftMorningEnd').value = shiftConfig.morningEnd || "15:30";
+            document.getElementById('shiftEveningStart').value = shiftConfig.eveningStart || "15:30";
+            document.getElementById('shiftEveningEnd').value = shiftConfig.eveningEnd || "23:30";
+            document.getElementById('shiftAllowedDelay').value = shiftConfig.allowedDelay || 15;
         }
 
         async function saveShiftSettings() {
@@ -616,6 +628,8 @@
                 allowedDelay: parseInt(document.getElementById('shiftAllowedDelay').value) || 15
             };
 
+            localStorage.setItem('shift_config', JSON.stringify(shiftConfig));
+
             const { error } = await _supabase.from('settings').upsert({
                 key: 'shift_config',
                 value: shiftConfig
@@ -624,7 +638,7 @@
             if (!error) {
                 alert('✅ تنظیمات شیفت‌ها با موفقیت ذخیره شد.');
             } else {
-                alert('خطا در ذخیره تنظیمات شیفت: ' + error.message);
+                alert('⚠️ تنظیمات به‌صورت محلی ذخیره شد. لطفاً جدول settings را در Supabase بسازید:\n\nخطا: ' + error.message);
             }
         }
 
@@ -669,10 +683,10 @@
             badge.style.display = 'block';
 
             document.getElementById('buyPriceField').style.display = (currentRole === 'admin') ? 'block' : 'none';
-            document.getElementById('adminShiftSettings').style.display = (currentRole === 'admin') ? 'block' : 'none';
 
             if (currentRole === 'admin') {
-                setupView(['btnSale', 'btnAttendance', 'btnInbox', 'btnBooth', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport'], 'saleTab');
+                // مدیر تب ثبت حضور غیاب ندارد و تب تنظیمات شیفت‌ها را دارد
+                setupView(['btnSale', 'btnShiftSettings', 'btnInbox', 'btnBooth', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport'], 'saleTab');
                 checkLowStockAlertNoWeight();
             } else if (currentRole === 'morning_seller') {
                 setupView(['btnSale', 'btnAttendance', 'btnMessage', 'btnBooth', 'btnProduct', 'btnInventory', 'btnReport'], 'saleTab');
@@ -855,7 +869,7 @@
                     shiftStartMinutes = parseTimeToMinutes(shiftConfig.morningStart || "08:00");
                     shiftName = "شیفت صبح";
                 } else if (currentRole === 'evening_seller') {
-                    shiftStartMinutes = parseTimeToMinutes(shiftConfig.eveningStart || "16:00");
+                    shiftStartMinutes = parseTimeToMinutes(shiftConfig.eveningStart || "15:30");
                     shiftName = "شیفت شب";
                 }
 
@@ -864,7 +878,7 @@
 
                 if (diffMinutes > allowedDelay) {
                     calculatedDelayMinutes = diffMinutes;
-                    delayAlertText = `⚠️ تاخیر در ورود (${shiftName}): ثبت ورود در ${persianDateTime} با **${calculatedDelayMinutes} دقیقه تاخیر** نسبت به ساعت مقرر (${shiftConfig.morningStart || '08:00'}) ثبت شد.`;
+                    delayAlertText = `⚠️ تاخیر در ورود (${shiftName}): ثبت ورود در ${persianDateTime} با **${calculatedDelayMinutes} دقیقه تاخیر** نسبت به ساعت مقرر ثبت شد.`;
                 }
             }
 
