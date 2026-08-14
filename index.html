@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v22 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v23 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -279,6 +279,28 @@
             grid-template-columns: 1fr 1fr;
             gap: 8px;
         }
+        .mode-selector {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .mode-btn {
+            flex: 1;
+            padding: 8px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: #94a3b8;
+            border-radius: 8px;
+            font-size: 11px;
+            cursor: pointer;
+            text-align: center;
+        }
+        .mode-btn.active {
+            background: #0284c7;
+            color: #fff;
+            border-color: #38bdf8;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -314,7 +336,7 @@
         <button class="tab-btn" id="btnShiftSettings" onclick="switchTab('shiftSettings'); loadShiftSettings();">⚙️ تنظیمات شیفت‌ها</button>
     </div>
 
-    <!-- فرم ثبت فروش (فقط وزن خالص جهت سرعت حداکثری) -->
+    <!-- فرم ثبت فروش -->
     <div id="saleTab" class="card">
         <h2>🛍️ ثبت فروش روزانه</h2>
         <label>انتخاب یا تایپ نام کالا:</label>
@@ -330,7 +352,7 @@
         <button class="submit-btn" onclick="submitSale()">ثبت فاکتور فروش</button>
     </div>
 
-    <!-- فرم حضور و غیاب فروشنده -->
+    <!-- فرم حضور و غیاب -->
     <div id="attendanceTab" class="card">
         <h2>⏰ ثبت ورود، خروج و مرخصی</h2>
         <div class="hint">⚠️ ثبت عکس معتبر لحظه‌ای برای ورود و خروج **اجباری** است. سیستم تاخیرها را اتوماتیک بررسی می‌کند.</div>
@@ -386,7 +408,7 @@
         <div id="inboxList">در حال بارگذاری...</div>
     </div>
 
-    <!-- تب مدیریت ظروف یخچال غرفه (دارای محاسبه ناخالص و تار) -->
+    <!-- تب مدیریت ظروف یخچال غرفه -->
     <div id="boothTab" class="card">
         <h2>🧊 کنترل ظرف‌های یخچال غرفه</h2>
         <div class="hint">
@@ -408,7 +430,7 @@
         </table>
     </div>
 
-    <!-- فرم تعریف / ویرایش کالا (دارای وزن ناخالص و تار برای انبار) -->
+    <!-- فرم تعریف / ویرایش کالا -->
     <div id="productTab" class="card">
         <h2 id="productFormTitle">➕ تعریف کالای جدید به انبار</h2>
         <label>کد کالا (بارکد/کد اختصاصی):</label>
@@ -510,7 +532,7 @@
         <div id="workReportContent" style="margin-top:15px;"></div>
     </div>
 
-    <!-- تنظیمات شیفت‌ها (مدیر) -->
+    <!-- تنظیمات شیفت‌ها -->
     <div id="shiftSettingsTab" class="card">
         <h2>⚙️ تنظیمات شیفت‌ها و حد مجاز تاخیر (ویژه مدیر)</h2>
         <div class="hint">ساعت شروع شیفت‌ها و حداکثر دقایق تاخیر مجاز را وارد کنید تا سیستم در صورت تاخیر پیام هشدار ارسال کند.</div>
@@ -545,7 +567,7 @@
         <button class="submit-btn" onclick="saveShiftSettings()">ذخیره تنظیمات شیفت‌ها</button>
     </div>
 
-    <div class="build-tag">v22 نسخه پیشرفته سیستم جامع لبنیات و ترشیجات فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v23 نسخه پیشرفته سیستم جامع لبنیات و ترشیجات فامیلی ( دره میرکی )</div>
 
     <script>
         const tg = window.Telegram.WebApp;
@@ -562,7 +584,7 @@
         let uploadedPhotoBase64 = "";
         let selectedProductUnitPrice = 0;
 
-        // --- توابع اختصاصی فرمت تاریخ و زمان شمسی ایران ---
+        // --- توابع اختصاصی زمان و تاریخ ---
         function getTehranDateString(dateObj = new Date()) {
             return new Intl.DateTimeFormat('fa-IR-u-ca-persian', {
                 timeZone: 'Asia/Tehran',
@@ -593,7 +615,6 @@
             }).format(dateObj);
         }
 
-        // تبدیل ISO به YYYY-MM-DD با ساعت ایران
         function getTehranISODate(dateObj = new Date()) {
             const parts = new Intl.DateTimeFormat('en-CA', {
                 timeZone: 'Asia/Tehran',
@@ -719,7 +740,6 @@
             if (targetTab) targetTab.classList.add('active');
         }
 
-        // --- هشدار موجودی انبار هوشمند مدیر ---
         async function checkLowStockAlertNoWeight() {
             if (currentRole !== 'admin') return;
 
@@ -730,9 +750,9 @@
             const lowStockItems = [];
             products.forEach(p => {
                 if (p.stock <= 0) {
-                    lowStockItems.push(`❌ ${p.name}: اصلاً هیچی نیست!`);
+                    lowStockItems.push(`❌ ${p.name}: موجودی تمام شده!`);
                 } else if (p.stock <= p.min_stock) {
-                    lowStockItems.push(`⚠️ ${p.name}: از این یکی هست (کمبوده)`);
+                    lowStockItems.push(`⚠️ ${p.name}: کمتر از نقطه سفارش`);
                 }
             });
 
@@ -744,7 +764,6 @@
             }
         }
 
-        // --- محاسبه خودکار قیمت بر اساس نرخ انبار ---
         async function calculateSalePriceAuto() {
             const nameVal = document.getElementById('sName').value.trim();
             const qty = parseFloat(document.getElementById('sQty').value) || 0;
@@ -772,7 +791,6 @@
             }
         }
 
-        // --- ثبت پیام به مدیر ---
         async function sendMessageToAdmin() {
             const title = document.getElementById('msgTitle').value.trim();
             const body = document.getElementById('msgBody').value.trim();
@@ -796,7 +814,6 @@
             }
         }
 
-        // --- بارگذاری صندوقچه پیام‌ها ---
         async function loadManagerInbox() {
             const inbox = document.getElementById('inboxList');
             inbox.innerHTML = 'در حال دریافت پیام‌ها...';
@@ -824,7 +841,6 @@
             }).join('');
         }
 
-        // --- تنظیمات شیفت‌ها ---
         async function saveShiftSettings() {
             const mStart = document.getElementById('shiftMorningStart').value;
             const mEnd = document.getElementById('shiftMorningEnd').value;
@@ -833,12 +849,12 @@
             const maxDelay = parseInt(document.getElementById('maxDelayAllowed').value) || 15;
 
             const settings = { mStart, mEnd, eStart, eEnd, maxDelay };
-            localStorage.setItem('shift_settings_v22', JSON.stringify(settings));
+            localStorage.setItem('shift_settings_v23', JSON.stringify(settings));
             alert('✅ تنظیمات شیفت‌ها با موفقیت ذخیره گردید.');
         }
 
         function getShiftSettings() {
-            const saved = localStorage.getItem('shift_settings_v22');
+            const saved = localStorage.getItem('shift_settings_v23');
             if (saved) return JSON.parse(saved);
             return { mStart: "08:00", mEnd: "15:30", eStart: "15:30", eEnd: "23:00", maxDelay: 15 };
         }
@@ -852,7 +868,6 @@
             document.getElementById('maxDelayAllowed').value = s.maxDelay;
         }
 
-        // --- حضور و غیاب (با عکس اجباری و زمان دقیق ایران) ---
         function toggleAttendanceFields() {
             const type = document.getElementById('attType').value;
             document.getElementById('attTimeFields').style.display = (type === 'leave') ? 'none' : 'block';
@@ -927,7 +942,6 @@
             }
         }
 
-        // --- گزارش کارکرد پرسنل ---
         async function loadWorkReport() {
             const sellerRole = document.getElementById('workSellerSelect').value;
             const container = document.getElementById('workReportContent');
@@ -1171,7 +1185,6 @@
             }
         }
 
-        // --- ثبت فروش زنده ---
         async function submitSale() {
             const inputVal = document.getElementById('sName').value.trim();
             const qty = parseFloat(document.getElementById('sQty').value);
@@ -1248,7 +1261,6 @@
             }
         }
 
-        // --- محاسبه وزن خالص ظرف با تار در یخچال غرفه ---
         async function updateDirectBoothStockWithTare(productId) {
             const gross = parseFloat(document.getElementById(`grossBooth_${productId}`).value) || 0;
             const tare = parseFloat(document.getElementById(`tareBooth_${productId}`).value) || 0;
@@ -1410,7 +1422,7 @@
             });
         }
 
-        // --- گزارش فروش هوشمند و زمان‌بندی دقیق ایران ---
+        // --- گزارش فروش v23: تقویم هوشمند، گزارش روزانه و بازه‌ای ---
         async function loadSalesReport() {
             const content = document.getElementById('reportContent');
             content.innerHTML = 'در حال بارگذاری...';
@@ -1504,46 +1516,41 @@
                     }
                 });
 
-                content.innerHTML = `
+                const renderRoleCard = (key, title) => `
                     <div class="report-card">
-                        <h3>🌅 فروشنده صبح</h3>
-                        <p>فروش امروز: ${totals.morning.today.toLocaleString('fa-IR')} تومان (${totals.morning.todayCount} فاکتور)</p>
-                        <p>مجموع کل فروش: ${totals.morning.all.toLocaleString('fa-IR')} تومان (${totals.morning.allCount} فاکتور)</p>
-                        <button class="row-btn edit-btn" onclick="toggleDetail('morning')">📋 گزارش با جزئیات و تاریخ</button>
-                        <div id="detailPanel_morning" style="display:none; margin-top:10px;">
-                            <label>تاریخ مورد نظر را وارد کن (مثلاً 1405/05/24 یا به میلادی YYYY-MM-DD):</label>
-                            <input type="text" id="detailDate_morning" placeholder="مثلاً 2026-08-14">
-                            <button class="submit-btn" style="margin-top:8px;" onclick="loadDetailReport('morning')">نمایش گزارش این تاریخ</button>
-                            <div id="detailResult_morning" style="margin-top:10px;"></div>
-                        </div>
-                    </div>
+                        <h3>${title}</h3>
+                        <p>فروش امروز: ${totals[key].today.toLocaleString('fa-IR')} تومان (${totals[key].todayCount} فاکتور)</p>
+                        <p>مجموع کل فروش: ${totals[key].all.toLocaleString('fa-IR')} تومان (${totals[key].allCount} فاکتور)</p>
+                        <button class="row-btn edit-btn" onclick="toggleDetail('${key}')">📋 گزارش گیری پیشرفته (تقویم / بازه‌ای)</button>
+                        
+                        <div id="detailPanel_${key}" style="display:none; margin-top:12px; background:rgba(15, 23, 42, 0.7); padding:10px; border-radius:10px;">
+                            <div class="mode-selector">
+                                <button class="mode-btn active" id="btnSingle_${key}" onclick="switchReportMode('${key}', 'single')">📅 گزارش روزانه</button>
+                                <button class="mode-btn" id="btnRange_${key}" onclick="switchReportMode('${key}', 'range')">📆 گزارش بازه‌ای</button>
+                            </div>
 
-                    <div class="report-card">
-                        <h3>🌙 فروشنده شب</h3>
-                        <p>فروش امروز: ${totals.evening.today.toLocaleString('fa-IR')} تومان (${totals.evening.todayCount} فاکتور)</p>
-                        <p>مجموع کل فروش: ${totals.evening.all.toLocaleString('fa-IR')} تومان (${totals.evening.allCount} فاکتور)</p>
-                        <button class="row-btn edit-btn" onclick="toggleDetail('evening')">📋 گزارش با جزئیات و تاریخ</button>
-                        <div id="detailPanel_evening" style="display:none; margin-top:10px;">
-                            <label>تاریخ مورد نظر را وارد کن (مثلاً 1405/05/24 یا به میلادی YYYY-MM-DD):</label>
-                            <input type="text" id="detailDate_evening" placeholder="مثلاً 2026-08-14">
-                            <button class="submit-btn" style="margin-top:8px;" onclick="loadDetailReport('evening')">نمایش گزارش این تاریخ</button>
-                            <div id="detailResult_evening" style="margin-top:10px;"></div>
-                        </div>
-                    </div>
+                            <div id="singleDateBox_${key}">
+                                <label>انتخاب روز مورد نظر:</label>
+                                <input type="date" id="singleDateInput_${key}" value="${todayISOTehran}">
+                            </div>
 
-                    <div class="report-card">
-                        <h3>👑 مدیر غرفه</h3>
-                        <p>فروش امروز: ${totals.admin.today.toLocaleString('fa-IR')} تومان (${totals.admin.todayCount} فاکتور)</p>
-                        <p>مجموع کل فروش: ${totals.admin.all.toLocaleString('fa-IR')} تومان (${totals.admin.allCount} فاکتور)</p>
-                        <button class="row-btn edit-btn" onclick="toggleDetail('admin')">📋 گزارش با جزئیات و تاریخ</button>
-                        <div id="detailPanel_admin" style="display:none; margin-top:10px;">
-                            <label>تاریخ مورد نظر را وارد کن (مثلاً 1405/05/24 یا به میلادی YYYY-MM-DD):</label>
-                            <input type="text" id="detailDate_admin" placeholder="مثلاً 2026-08-14">
-                            <button class="submit-btn" style="margin-top:8px;" onclick="loadDetailReport('admin')">نمایش گزارش این تاریخ</button>
-                            <div id="detailResult_admin" style="margin-top:10px;"></div>
+                            <div id="rangeDateBox_${key}" style="display:none;">
+                                <label>از تاریخ (شروع):</label>
+                                <input type="date" id="rangeStartDate_${key}" value="${todayISOTehran}">
+                                <label>تا تاریخ (پایان):</label>
+                                <input type="date" id="rangeEndDate_${key}" value="${todayISOTehran}">
+                            </div>
+
+                            <button class="submit-btn" style="margin-top:12px;" onclick="loadDetailReportV23('${key}')">نمایش گزارش</button>
+                            <div id="detailResult_${key}" style="margin-top:10px;"></div>
                         </div>
                     </div>
                 `;
+
+                content.innerHTML = 
+                    renderRoleCard('morning', '🌅 فروشنده صبح') +
+                    renderRoleCard('evening', '🌙 فروشنده شب') +
+                    renderRoleCard('admin', '👑 مدیر غرفه');
             }
         }
 
@@ -1552,16 +1559,30 @@
             panel.style.display = (panel.style.display === 'none' || !panel.style.display) ? 'block' : 'none';
         }
 
-        async function loadDetailReport(key) {
-            const dateVal = document.getElementById('detailDate_' + key).value.trim();
-            const resultEl = document.getElementById('detailResult_' + key);
+        function switchReportMode(key, mode) {
+            const singleBox = document.getElementById('singleDateBox_' + key);
+            const rangeBox = document.getElementById('rangeDateBox_' + key);
+            const btnSingle = document.getElementById('btnSingle_' + key);
+            const btnRange = document.getElementById('btnRange_' + key);
 
-            if (!dateVal) {
-                resultEl.innerHTML = '<p style="color:#ef4444;">لطفاً یک تاریخ وارد کنید.</p>';
-                return;
+            if (mode === 'single') {
+                singleBox.style.display = 'block';
+                rangeBox.style.display = 'none';
+                btnSingle.classList.add('active');
+                btnRange.classList.remove('active');
+            } else {
+                singleBox.style.display = 'none';
+                rangeBox.style.display = 'block';
+                btnSingle.classList.remove('active');
+                btnRange.classList.add('active');
             }
+        }
 
-            resultEl.innerHTML = 'در حال بارگذاری گزارش...';
+        async function loadDetailReportV23(key) {
+            const resultEl = document.getElementById('detailResult_' + key);
+            const isSingleMode = document.getElementById('btnSingle_' + key).classList.contains('active');
+
+            resultEl.innerHTML = 'در حال پردازش فاکتورها...';
 
             let rolePrefix = 'فروشنده صبح';
             if (key === 'evening') rolePrefix = 'فروشنده شب';
@@ -1573,47 +1594,71 @@
                 .order('created_at', { ascending: true });
 
             if (error) {
-                resultEl.innerHTML = '❌ خطا در دریافت گزارش: ' + error.message;
+                resultEl.innerHTML = '❌ خطا در دریافت اطلاعات: ' + error.message;
                 return;
             }
 
-            const daySales = (sales || []).filter(s => {
-                if (!s.seller_name || s.seller_name.indexOf(rolePrefix) !== 0) return false;
-                const dateObj = new Date(s.created_at);
-                const isoDateStr = getTehranISODate(dateObj);
-                const faDateStr = getTehranDateString(dateObj);
-                return isoDateStr.includes(dateVal) || faDateStr.includes(dateVal);
-            });
+            let filteredSales = [];
 
-            if (daySales.length === 0) {
-                resultEl.innerHTML = '<p>هیچ فروشی در این تاریخ برای این نقش یافت نشد.</p>';
+            if (isSingleMode) {
+                const targetDate = document.getElementById('singleDateInput_' + key).value;
+                if (!targetDate) {
+                    resultEl.innerHTML = '<p style="color:#ef4444;">لطفاً تاریخ را انتخاب کنید.</p>';
+                    return;
+                }
+                filteredSales = (sales || []).filter(s => {
+                    if (!s.seller_name || s.seller_name.indexOf(rolePrefix) !== 0) return false;
+                    const isoStr = getTehranISODate(new Date(s.created_at));
+                    return isoStr === targetDate;
+                });
+            } else {
+                const startDate = document.getElementById('rangeStartDate_' + key).value;
+                const endDate = document.getElementById('rangeEndDate_' + key).value;
+                if (!startDate || !endDate) {
+                    resultEl.innerHTML = '<p style="color:#ef4444;">لطفاً بازه زمانی را کامل انتخاب کنید.</p>';
+                    return;
+                }
+                filteredSales = (sales || []).filter(s => {
+                    if (!s.seller_name || s.seller_name.indexOf(rolePrefix) !== 0) return false;
+                    const isoStr = getTehranISODate(new Date(s.created_at));
+                    return isoStr >= startDate && isoStr <= endDate;
+                });
+            }
+
+            if (filteredSales.length === 0) {
+                resultEl.innerHTML = '<p style="color:#fbbf24; text-align:center;">هیچ فاکتور فروشی در این تاریخ/بازه یافت نشد.</p>';
                 return;
             }
 
-            const codes = [...new Set(daySales.map(s => s.product_code))];
+            const codes = [...new Set(filteredSales.map(s => s.product_code))];
             const { data: productsData } = await _supabase.from('products').select('code, name').in('code', codes);
             const nameMap = {};
             (productsData || []).forEach(p => { nameMap[p.code] = p.name; });
 
-            let total = 0;
-            const rows = daySales.map(s => {
-                total += Number(s.sell_price) || 0;
-                const timeStr = getTehranTimeString(new Date(s.created_at));
+            let totalSum = 0;
+            const rows = filteredSales.map(s => {
+                totalSum += Number(s.sell_price) || 0;
+                const dateObj = new Date(s.created_at);
+                const timeStr = getTehranTimeString(dateObj);
+                const faDateStr = getTehranDateString(dateObj);
                 const productName = nameMap[s.product_code] || s.product_code;
+
                 return `<tr>
-                    <td>${timeStr}</td>
+                    <td>${faDateStr} - ${timeStr}</td>
                     <td>${productName}</td>
                     <td>${Number(s.quantity).toLocaleString('fa-IR', { maximumFractionDigits: 3 })} کیلو</td>
-                    <td>${Number(s.sell_price).toLocaleString('fa-IR')}</td>
+                    <td>${Number(s.sell_price).toLocaleString('fa-IR')} تومان</td>
                 </tr>`;
             }).join('');
 
             resultEl.innerHTML = `
-                <table>
-                    <thead><tr><th>ساعت ثبت</th><th>کالا</th><th>مقدار</th><th>مبلغ (تومان)</th></tr></thead>
+                <table style="margin-top:10px;">
+                    <thead><tr><th>تاریخ و ساعت</th><th>کالا</th><th>مقدار</th><th>مبلغ</th></tr></thead>
                     <tbody>${rows}</tbody>
                 </table>
-                <p style="margin-top:8px; font-weight:bold; color:#38bdf8;">جمع کل این تاریخ: ${total.toLocaleString('fa-IR')} تومان (${daySales.length} فاکتور)</p>
+                <div class="price-display" style="margin-top:10px; text-align:center;">
+                    مجموع فروش این گزارش: ${totalSum.toLocaleString('fa-IR')} تومان (${filteredSales.length} فاکتور)
+                </div>
             `;
         }
     </script>
