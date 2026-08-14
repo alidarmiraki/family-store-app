@@ -228,6 +228,13 @@
             margin-top: 2px;
             font-weight: bold;
         }
+        .cap-input {
+            width: 50px !important;
+            padding: 4px !important;
+            margin: 0 !important;
+            text-align: center;
+            font-size: 11px !important;
+        }
         .build-tag {
             text-align: center;
             font-size: 10px;
@@ -287,19 +294,20 @@
     <div id="boothTab" class="card">
         <h2>🧊 کنترل ظرف‌های یخچال غرفه</h2>
         <div class="hint">
-            💡 <b>راهنما:</b> مقدار خالی شده ظرف محاسبه می‌شود. با دکمه شارژ، **دقیقاً به میزان کمبود** از انبار اصلی کسر و ظرف غرفه پر می‌شود.
+            💡 <b>راهنما:</b> می‌توانید ظرفیت هر ظرف (مثلاً ۱۶ کیلو خیارشور، ۴ کیلو ارده و...) را تغییر داده و ذخیره کنید. دکمه شارژ، **دقیقاً به میزان کمبود** از انبار کسر و ظرف غرفه را پر می‌کند.
         </div>
         <table>
             <thead>
                 <tr>
                     <th>نام کالا</th>
+                    <th>ظرفیت (کیلو)</th>
                     <th>موجودی غرفه</th>
-                    <th>وضعیت ظرف</th>
-                    <th>عملیات شارژ هوشمند</th>
+                    <th>وضعیت</th>
+                    <th>عملیات شارژ</th>
                 </tr>
             </thead>
             <tbody id="boothTable">
-                <tr><td colspan="4">در حال دریافت اطلاعات...</td></tr>
+                <tr><td colspan="5">در حال دریافت اطلاعات...</td></tr>
             </tbody>
         </table>
     </div>
@@ -314,7 +322,7 @@
         <input type="text" id="pName" placeholder="مثلاً پنیر محلی">
 
         <label>ظرفیت ظرف یخچال غرفه (کیلوگرم):</label>
-        <input type="number" id="pCapacity" step="0.1" value="7.0" placeholder="مثلاً 7 کیلو">
+        <input type="number" id="pCapacity" step="0.1" value="7.0" placeholder="مثلاً 7 کیلو (برای خیارشور 16، ارده 4 و...)">
 
         <label>روش وارد کردن موجودی انبار اصلی:</label>
         <div class="unit-toggle">
@@ -376,11 +384,11 @@
 
     <!-- گزارش فروش (فقط مدیر) -->
     <div id="reportTab" class="card">
-        <h2>📊 گزارش فروش شاگردها</h2>
+        <h2>📊 گزارش فروش غرفه</h2>
         <div id="reportContent">در حال بارگذاری...</div>
     </div>
 
-    <div class="build-tag">نسخه کد: v10 - کنترل ظرفیت غرفه و شارژ هوشمند انبار اضافه شد</div>
+    <div class="build-tag">نسخه کد: v11 - اصلاح دقیق ساعت ایران، افزودن گزارش مدیر و تغییر سریع ظرفیت ظرف‌ها</div>
 
     <script>
         const tg = window.Telegram.WebApp;
@@ -390,7 +398,6 @@
         const SUPABASE_KEY = "sb_publishable_k3wkzKalFmLFtfx8WZWr1g_fHKT-3Sl";
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // ۱. ساعت زنده شمسی
         function updateClock() {
             const now = new Date();
             const options = { 
@@ -549,7 +556,6 @@
                 total > 0 ? ('📦 موجودی کل انبار: ' + total.toLocaleString('fa-IR') + ' کیلوگرم') : '';
         }
 
-        // ۲. ذخیره کالا (شامل ظرفیت و موجودی اولیه غرفه)
         async function saveProduct() {
             const code = document.getElementById('pCode').value.trim();
             const name = document.getElementById('pName').value.trim();
@@ -666,7 +672,6 @@
             }
         }
 
-        // ۳. ثبت فروش روزانه و کسر متناظر از غرفه
         async function submitSale() {
             const inputVal = document.getElementById('sName').value.trim();
             const qty = parseFloat(document.getElementById('sQty').value);
@@ -735,7 +740,6 @@
             document.getElementById('sPriceFormatted').innerText = '';
         }
 
-        // ۴. محاسبات هوشمند شارژ ظرف غرفه از انبار
         function getQualitativeStatus(stock, capacity) {
             const ratio = stock / capacity;
             if (stock <= 0) return { label: 'خالی 🔴', class: 'status-empty' };
@@ -743,6 +747,19 @@
             if (ratio >= 0.35 && ratio <= 0.65) return { label: 'نصف 🟡', class: 'status-half' };
             if (ratio > 0.65 && ratio < 0.98) return { label: 'بیشتر از نصف 🟢', class: 'status-full' };
             return { label: 'کامل پر 🟢', class: 'status-full' };
+        }
+
+        async function updateContainerCapacity(productId, newCap) {
+            const val = parseFloat(newCap);
+            if (isNaN(val) || val <= 0) return alert('لطفاً یک عدد معتبر برای ظرفیت وارد کنید');
+
+            const { error } = await _supabase.from('products').update({ container_capacity: val }).eq('id', productId);
+            if (!error) {
+                alert('✅ ظرفیت ظرف با موفقیت تغییر یافت.');
+                loadBoothInventory();
+            } else {
+                alert('خطا در تغییر ظرفیت: ' + error.message);
+            }
         }
 
         async function smartFillBooth(productId) {
@@ -785,9 +802,11 @@
             tbody.innerHTML = '';
 
             if (!products || products.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4">هیچ کالایی یافت نشد.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5">هیچ کالایی یافت نشد.</td></tr>';
                 return;
             }
+
+            const canEditCap = (currentRole === 'admin' || currentRole === 'morning_seller');
 
             products.forEach(p => {
                 const capacity = p.container_capacity || 7.0;
@@ -798,7 +817,14 @@
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td><b>${p.name}</b></td>
-                    <td>${Number(currentBooth).toLocaleString('fa-IR')} از ${capacity} کیلو</td>
+                    <td>
+                        ${canEditCap 
+                            ? `<input type="number" step="0.5" class="cap-input" id="cap_${p.id}" value="${capacity}"> 
+                               <button class="row-btn edit-btn" style="padding:2px 5px;" onclick="updateContainerCapacity('${p.id}', document.getElementById('cap_${p.id}').value)">💾</button>`
+                            : `${capacity} کیلو`
+                        }
+                    </td>
+                    <td>${Number(currentBooth).toLocaleString('fa-IR')} کیلو</td>
                     <td><span class="status-tag ${status.class}">${status.label}</span></td>
                     <td>
                         ${needed > 0 
@@ -812,7 +838,6 @@
             });
         }
 
-        // ۵. نمایش لیست موجودی انبار
         async function loadInventory() {
             const canManage = (currentRole === 'admin' || currentRole === 'morning_seller');
             const showBuyPrice = (currentRole === 'admin');
@@ -887,7 +912,7 @@
             }
         }
 
-        // ۶. گزارش فروش با جزئیات و تاریخ
+        // اصلاح گزارش فروش (صبح، شب، و اضافه شدن کارت مدیر)
         async function loadSalesReport() {
             const content = document.getElementById('reportContent');
             content.innerHTML = 'در حال بارگذاری...';
@@ -907,29 +932,31 @@
             }
 
             const now = new Date();
-            const isToday = (d) =>
-                d.getFullYear() === now.getFullYear() &&
-                d.getMonth() === now.getMonth() &&
-                d.getDate() === now.getDate();
+            const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Tehran' }); // YYYY-MM-DD ایران
 
             const totals = {
                 morning: { today: 0, all: 0, todayCount: 0, allCount: 0 },
-                evening: { today: 0, all: 0, todayCount: 0, allCount: 0 }
+                evening: { today: 0, all: 0, todayCount: 0, allCount: 0 },
+                admin: { today: 0, all: 0, todayCount: 0, allCount: 0 }
             };
 
             sales.forEach(s => {
                 let key = null;
                 if (s.seller_name && s.seller_name.indexOf('فروشنده صبح') === 0) key = 'morning';
                 else if (s.seller_name && s.seller_name.indexOf('فروشنده شب') === 0) key = 'evening';
+                else if (s.seller_name && s.seller_name.indexOf('مدیر') === 0) key = 'admin';
                 if (!key) return;
 
                 const price = Number(s.sell_price) || 0;
                 totals[key].all += price;
                 totals[key].allCount += 1;
 
-                if (s.created_at && isToday(new Date(s.created_at))) {
-                    totals[key].today += price;
-                    totals[key].todayCount += 1;
+                if (s.created_at) {
+                    const itemDateStr = new Date(s.created_at).toLocaleDateString('en-CA', { timeZone: 'Asia/Tehran' });
+                    if (itemDateStr === todayStr) {
+                        totals[key].today += price;
+                        totals[key].todayCount += 1;
+                    }
                 }
             });
 
@@ -946,6 +973,7 @@
                         <div id="detailResult_morning" style="margin-top:10px;"></div>
                     </div>
                 </div>
+
                 <div class="report-card">
                     <h3>🌙 فروشنده شب</h3>
                     <p>فروش امروز: ${totals.evening.today.toLocaleString('fa-IR')} تومان (${totals.evening.todayCount} فاکتور)</p>
@@ -958,6 +986,19 @@
                         <div id="detailResult_evening" style="margin-top:10px;"></div>
                     </div>
                 </div>
+
+                <div class="report-card">
+                    <h3>👑 مدیر غرفه</h3>
+                    <p>فروش امروز: ${totals.admin.today.toLocaleString('fa-IR')} تومان (${totals.admin.todayCount} فاکتور)</p>
+                    <p>مجموع کل فروش: ${totals.admin.all.toLocaleString('fa-IR')} تومان (${totals.admin.allCount} فاکتور)</p>
+                    <button class="row-btn edit-btn" onclick="toggleDetail('admin')">📋 گزارش با جزئیات و تاریخ</button>
+                    <div id="detailPanel_admin" style="display:none; margin-top:10px;">
+                        <label>تاریخ مورد نظر را انتخاب کن:</label>
+                        <input type="date" id="detailDate_admin">
+                        <button class="submit-btn" style="margin-top:8px;" onclick="loadDetailReport('admin')">نمایش گزارش این تاریخ</button>
+                        <div id="detailResult_admin" style="margin-top:10px;"></div>
+                    </div>
+                </div>
             `;
         }
 
@@ -966,6 +1007,7 @@
             panel.style.display = (panel.style.display === 'none' || !panel.style.display) ? 'block' : 'none';
         }
 
+        // دریافت گزارش جزئیات با محاسبه کامل زمان محلی ایران
         async function loadDetailReport(key) {
             const dateVal = document.getElementById('detailDate_' + key).value;
             const resultEl = document.getElementById('detailResult_' + key);
@@ -976,16 +1018,14 @@
             }
 
             resultEl.innerHTML = 'در حال بارگذاری...';
-            const rolePrefix = (key === 'morning') ? 'فروشنده صبح' : 'فروشنده شب';
-
-            const startDate = new Date(dateVal + 'T00:00:00');
-            const endDate = new Date(dateVal + 'T23:59:59.999');
+            
+            let rolePrefix = 'فروشنده صبح';
+            if (key === 'evening') rolePrefix = 'فروشنده شب';
+            if (key === 'admin') rolePrefix = 'مدیر';
 
             const { data: sales, error } = await _supabase
                 .from('sales')
                 .select('product_code, quantity, sell_price, created_at, seller_name')
-                .gte('created_at', startDate.toISOString())
-                .lte('created_at', endDate.toISOString())
                 .order('created_at', { ascending: true });
 
             if (error) {
@@ -993,10 +1033,15 @@
                 return;
             }
 
-            const daySales = (sales || []).filter(s => s.seller_name && s.seller_name.indexOf(rolePrefix) === 0);
+            // فیلتر بر اساس تاریخ انتخاب شده در منطقه زمانی ایران
+            const daySales = (sales || []).filter(s => {
+                if (!s.seller_name || s.seller_name.indexOf(rolePrefix) !== 0) return false;
+                const itemDateStr = new Date(s.created_at).toLocaleDateString('en-CA', { timeZone: 'Asia/Tehran' });
+                return itemDateStr === dateVal;
+            });
 
             if (daySales.length === 0) {
-                resultEl.innerHTML = '<p>هیچ فروشی در این تاریخ برای این فروشنده ثبت نشده است.</p>';
+                resultEl.innerHTML = '<p>هیچ فروشی در این تاریخ برای این نقش ثبت نشده است.</p>';
                 return;
             }
 
@@ -1008,10 +1053,15 @@
             let total = 0;
             const rows = daySales.map(s => {
                 total += Number(s.sell_price) || 0;
-                const time = new Date(s.created_at).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
+                // تبدیل زمان به ساعت:دقیقه رسمی تهران
+                const timeStr = new Date(s.created_at).toLocaleTimeString('fa-IR', { 
+                    timeZone: 'Asia/Tehran', 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
                 const productName = nameMap[s.product_code] || s.product_code;
                 return `<tr>
-                    <td>${time}</td>
+                    <td>${timeStr}</td>
                     <td>${productName}</td>
                     <td>${Number(s.quantity).toLocaleString('fa-IR', { maximumFractionDigits: 3 })} کیلو</td>
                     <td>${Number(s.sell_price).toLocaleString('fa-IR')}</td>
@@ -1029,3 +1079,4 @@
     </script>
 </body>
 </html>
+
