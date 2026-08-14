@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v20 آخرین نسخه لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v21 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -82,18 +82,17 @@
             font-size: 14px;
             font-family: inherit;
         }
-        input[readonly] {
-            background: #0f172a;
-            color: #38bdf8;
-            font-weight: bold;
-        }
         textarea { resize: vertical; height: 90px; }
         .price-display {
-            font-size: 12px;
+            font-size: 13px;
             color: #38bdf8;
-            margin-top: 4px;
+            margin-top: 6px;
             font-weight: bold;
             text-align: right;
+            background: rgba(56, 189, 248, 0.1);
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px dashed rgba(56, 189, 248, 0.3);
         }
         .hint {
             font-size: 11px;
@@ -242,7 +241,7 @@
             font-weight: bold;
         }
         .cap-input {
-            width: 48px !important;
+            width: 58px !important;
             padding: 4px !important;
             margin: 0 !important;
             text-align: center;
@@ -268,28 +267,17 @@
             display: none;
             border: 1px solid #334155;
         }
-        .calc-box {
-            background: rgba(15, 23, 42, 0.5);
+        .tare-box {
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px dashed #38bdf8;
+            border-radius: 10px;
             padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #334155;
-            margin-top: 8px;
+            margin-top: 10px;
         }
-        .badge-delay {
-            background: #991b1b;
-            color: #fca5a5;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: bold;
-            font-size: 11px;
-        }
-        .badge-ontime {
-            background: #065f46;
-            color: #34d399;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: bold;
-            font-size: 11px;
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
         }
     </style>
 </head>
@@ -316,7 +304,6 @@
     <div class="tabs" id="tabContainer">
         <button class="tab-btn" id="btnSale" onclick="switchTab('sale'); loadProductDatalist();">🛍️ ثبت فروش</button>
         <button class="tab-btn" id="btnAttendance" onclick="switchTab('attendance');">⏰ حضور و غیاب</button>
-        <button class="tab-btn" id="btnShiftSettings" onclick="switchTab('shiftSettings');">⚙️ تنظیمات شیفت‌ها</button>
         <button class="tab-btn" id="btnMessage" onclick="switchTab('message');">📩 ارسال پیام به مدیر</button>
         <button class="tab-btn" id="btnInbox" onclick="switchTab('inbox'); loadManagerInbox();">📥 صندوقچه پیام‌ها</button>
         <button class="tab-btn" id="btnBooth" onclick="switchTab('booth'); loadBoothInventory();">🧊 وضعیت یخچال غرفه</button>
@@ -324,72 +311,43 @@
         <button class="tab-btn" id="btnInventory" onclick="switchTab('inventory'); loadInventory();">📦 موجودی انبار</button>
         <button class="tab-btn" id="btnReport" onclick="switchTab('report'); loadSalesReport();">📊 گزارش فروش</button>
         <button class="tab-btn" id="btnWorkReport" onclick="switchTab('workReport'); loadWorkReport();">🗓️ کارکرد پرسنل</button>
+        <button class="tab-btn" id="btnShiftSettings" onclick="switchTab('shiftSettings'); loadShiftSettings();">⚙️ تنظیمات شیفت‌ها</button>
     </div>
 
-    <!-- فرم ثبت فروش -->
+    <!-- فرم ثبت فروش (محاسبه اتوماتیک قیمت بر اساس نرخ تعریف شده) -->
     <div id="saleTab" class="card">
         <h2>🛍️ ثبت فروش روزانه</h2>
-        <label>نام کالا:</label>
-        <input type="text" id="sName" dir="auto" list="productDatalist" placeholder="اسم کالا را انتخاب یا تایپ کنید" onchange="autoCalculateSalePrice()">
+        <label>انتخاب یا تایپ نام کالا:</label>
+        <input type="text" id="sName" dir="auto" list="productDatalist" placeholder="نام کالا را انتخاب یا تایپ کنید" onchange="calculateSalePriceAuto()">
         <datalist id="productDatalist"></datalist>
-        <div class="hint">با انتخاب کالا، قیمت فی واحد از تعریف محصول خوانده می‌شود.</div>
 
-        <div class="calc-box">
-            <label>وزن ناخالص با ظرف (کیلوگرم) [اختیاری]:</label>
-            <input type="number" id="sGrossWeight" step="0.001" placeholder="مثلاً 1.250" oninput="autoCalculateSalePrice()">
-
-            <label>وزن ظرف / تار (کیلوگرم) [اختیاری]:</label>
-            <input type="number" id="sTareWeight" step="0.001" placeholder="مثلاً 0.050" oninput="autoCalculateSalePrice()">
-
-            <label>وزن خالص کالا (کیلوگرم):</label>
-            <input type="number" id="sQty" step="0.001" placeholder="مثلاً 0.250" oninput="autoCalculateSalePrice()">
-            <div class="hint">مثال: 250 گرم = 0.250 | 1 کیلو و نیم = 1.5</div>
+        <div class="tare-box">
+            <label style="margin-top:0; color:#38bdf8;">⚖️ محاسبه وزن خالص (در صورت وزن با ظرف):</label>
+            <div class="grid-2">
+                <div>
+                    <label>وزن کل با ظرف (کیلوگرم):</label>
+                    <input type="number" id="sGrossWeight" step="0.001" placeholder="مثلاً 1.250" oninput="calculateNetWeightSale()">
+                </div>
+                <div>
+                    <label>وزن ظرف/تار (کیلوگرم):</label>
+                    <input type="number" id="sTareWeight" step="0.001" placeholder="مثلاً 0.050" oninput="calculateNetWeightSale()">
+                </div>
+            </div>
         </div>
 
-        <label>قیمت کل فروش (تومان - محاسبه اتوماتیک):</label>
-        <input type="number" id="sPrice" placeholder="محاسبه خودکار..." readonly>
-        <div id="sPriceFormatted" class="price-display"></div>
+        <label>وزن خالص نهایی برای ثبت (کیلوگرم):</label>
+        <input type="number" id="sQty" step="0.001" placeholder="مثلاً 0.250 برای 250 گرم" oninput="calculateSalePriceAuto()">
+        <div class="hint">سیستم قیمت را بر اساس نرخ تعریف شده کالا در انبار خودکار حساب می‌کند. نیازی به تایپ قیمت نیست.</div>
+
+        <div id="sCalcDisplay" class="price-display">مبلغ کل فاکتور: ۰ تومان (قیمت واحد: ۰ تومان)</div>
 
         <button class="submit-btn" onclick="submitSale()">ثبت فاکتور فروش</button>
     </div>
 
-    <!-- تب مخصوص مدیر: تنظیمات شیفت‌ها -->
-    <div id="shiftSettingsTab" class="card">
-        <h2>⚙️ تنظیمات ساعت شیفت‌ها و تاخیر مجاز (ویژه مدیر)</h2>
-        <div class="calc-box">
-            <div style="display:flex; gap:10px;">
-                <div style="flex:1;">
-                    <label>ورود شیفت صبح:</label>
-                    <input type="time" id="shiftMorningStart" value="08:00">
-                </div>
-                <div style="flex:1;">
-                    <label>خروج شیفت صبح:</label>
-                    <input type="time" id="shiftMorningEnd" value="15:30">
-                </div>
-            </div>
-            <div style="display:flex; gap:10px; margin-top:5px;">
-                <div style="flex:1;">
-                    <label>ورود شیفت شب:</label>
-                    <input type="time" id="shiftEveningStart" value="15:30">
-                </div>
-                <div style="flex:1;">
-                    <label>خروج شیفت شب:</label>
-                    <input type="time" id="shiftEveningEnd" value="23:30">
-                </div>
-            </div>
-            <label>⏱️ میزان تاخیر مجاز بدون هشدار (به دقیقه):</label>
-            <input type="number" id="shiftAllowedDelay" value="15" placeholder="مثلاً 15">
-            <button class="submit-btn" style="background: linear-gradient(90deg, #0284c7, #2563eb);" onclick="saveShiftSettings()">💾 ذخیره تنظیمات شیفت‌ها</button>
-        </div>
-    </div>
-
-    <!-- فرم حضور و غیاب (فقط ویژه فروشنده‌ها) -->
+    <!-- فرم حضور و غیاب فروشنده -->
     <div id="attendanceTab" class="card">
-        <h2>⏰ حضور و غیاب روزانه (ثبت خودکار زمان شمسی)</h2>
-        
-        <div class="hint" style="margin-top:10px;">
-            📌 زمان و تاریخ ورود/خروج به‌صورت <b>خودکار بر اساس ساعت شمسی جاری سیستم</b> ثبت می‌شود.
-        </div>
+        <h2>⏰ ثبت ورود، خروج و مرخصی</h2>
+        <div class="hint">⚠️ ثبت عکس معتبر لحظه‌ای برای ورود و خروج **اجباری** است. سیستم تاخیرها را اتوماتیک چک می‌کند.</div>
 
         <label>نوع ثبت:</label>
         <select id="attType" onchange="toggleAttendanceFields()">
@@ -399,19 +357,29 @@
         </select>
 
         <div id="attTimeFields">
-            <label>اضافه‌کاری ساعتی (چند ساعت):</label>
-            <input type="number" id="attOvertimeHours" step="0.5" value="0" placeholder="مثلاً 1.5 ساعت">
+            <label>اضافه‌کاری (در صورت حضور بیشتر):</label>
+            <div class="grid-2">
+                <div>
+                    <label>مقدار اضافه:</label>
+                    <input type="number" id="attOvertimeVal" step="0.1" value="0">
+                </div>
+                <div>
+                    <label>واحد اضافه:</label>
+                    <select id="attOvertimeUnit">
+                        <option value="minute">دقیقه</option>
+                        <option value="hour" selected>ساعت</option>
+                        <option value="day">روز</option>
+                    </select>
+                </div>
+            </div>
 
-            <label>اضافه‌کاری روزانه (چند روز):</label>
-            <input type="number" id="attOvertimeDays" step="1" value="0" placeholder="مثلاً 1 روز">
-
-            <label>📸 آپلود عکس با ساعت (سلفی/عکس از محل غرفه) - <span style="color:#ef4444;">الزامی</span>:</label>
-            <input type="file" id="attPhoto" accept="image/*" capture="user" onchange="previewAttPhoto(event)">
+            <label>📸 آپلود عکس با ساعت (سلفی/عکس غرفه) - <span style="color:#ef4444; font-weight:bold;">الزامی*</span>:</label>
+            <input type="file" id="attPhoto" accept="image/*" onchange="previewAttPhoto(event)">
             <img id="photoPreview" class="photo-preview">
         </div>
 
         <label>توضیحات (اختیاری):</label>
-        <textarea id="attNote" placeholder="مثلاً دلیل تاخیر، اضافه‌کاری یا توضیحات مرخصی..."></textarea>
+        <textarea id="attNote" placeholder="مثلاً دلیل تاخیر یا توضیحات اضافه‌کاری..."></textarea>
 
         <button class="submit-btn" onclick="submitAttendance()">ثبت در سیستم حضور و غیاب</button>
     </div>
@@ -436,7 +404,7 @@
     <div id="boothTab" class="card">
         <h2>🧊 کنترل ظرف‌های یخچال غرفه</h2>
         <div class="hint">
-            💡 <b>راهنما:</b> اگر جنس همراه ظرف وزن شده، وزن کل و وزن تقریبی ظرف را وارد کنید تا وزن خالص کالا محاسبه و ثبت شود.
+            💡 در صورتی که جنس با ظرف وزن شده است، می‌توانید وزن ظرف را کسر و موجودی واقعی خالص را ثبت کنید.
         </div>
         <table>
             <thead>
@@ -445,7 +413,7 @@
                     <th>ظرفیت</th>
                     <th>موجودی فعلی غرفه</th>
                     <th>وضعیت</th>
-                    <th>عملیات شارژ / ثبت دستی (با ظرف)</th>
+                    <th>عملیات شارژ / ثبت دستی</th>
                 </tr>
             </thead>
             <tbody id="boothTable">
@@ -483,19 +451,13 @@
         <label>موجودی انبار اصلی (کیلوگرم):</label>
         <input type="number" id="pStock" step="0.001" placeholder="مثلاً 15.5">
 
-        <div class="calc-box">
-            <label>موجودی ناخالص غرفه با ظرف (کیلوگرم) [اختیاری]:</label>
-            <input type="number" id="pBoothGross" step="0.001" placeholder="مثلاً 7.500" oninput="calcBoothNetInProductForm()">
-            <label>وزن تقریبی ظرف غرفه (کیلوگرم) [اختیاری]:</label>
-            <input type="number" id="pBoothTare" step="0.001" placeholder="مثلاً 0.500" oninput="calcBoothNetInProductForm()">
-            <label>موجودی خالص فعلی ظرف غرفه (کیلوگرم):</label>
-            <input type="number" id="pBoothStock" step="0.001" placeholder="مثلاً 7">
-        </div>
+        <label>موجودی فعلی ظرف غرفه (کیلوگرم):</label>
+        <input type="number" id="pBoothStock" step="0.001" placeholder="مثلاً 7">
 
         <label>حداقل موجودی انبار به کیلوگرم (نقطه سفارش):</label>
         <input type="number" id="pMinStock" step="0.001" placeholder="مثلاً 2">
 
-        <label>قیمت فروش هر کیلو/عدد (تومان):</label>
+        <label>قیمت فروش هر کیلو/عدد (تومان) - پایه قیمت‌گذاری خودکار فاکتور:</label>
         <input type="number" id="pSellPrice" placeholder="مثلاً 120000" oninput="formatPrice(this, 'pSellPriceFormatted')">
         <div id="pSellPriceFormatted" class="price-display"></div>
 
@@ -537,7 +499,7 @@
 
     <!-- گزارش کارکرد ماهانه پرسنل مدیر -->
     <div id="workReportTab" class="card">
-        <h2>🗓️ گزارش کارکرد ماهانه و حضور و غیاب پرسنل (تاریخ شمسی)</h2>
+        <h2>🗓️ گزارش کارکرد ماهانه و حضور و غیاب پرسنل</h2>
         <label>انتخاب فروشنده:</label>
         <select id="workSellerSelect" onchange="loadWorkReport()">
             <option value="فروشنده صبح">فروشنده صبح</option>
@@ -546,7 +508,42 @@
         <div id="workReportContent" style="margin-top:15px;"></div>
     </div>
 
-    <div class="build-tag">v20 آخرین نسخه لبنیات و ترشیجات فله فامیلی ( دره میرکی )</div>
+    <!-- تنظیمات شیفت‌ها (مدیر) -->
+    <div id="shiftSettingsTab" class="card">
+        <h2>⚙️ تنظیمات شیفت‌ها و حد مجاز تاخیر (ویژه مدیر)</h2>
+        <div class="hint">ساعت شروع شیفت‌ها و حداکثر دقایق تاخیر مجاز را وارد کنید تا سیستم در صورت تاخیر به شما پیام هشدار فرستد.</div>
+        
+        <h3 style="color:#38bdf8; margin-top:15px;">🌅 شیفت صبح:</h3>
+        <div class="grid-2">
+            <div>
+                <label>ساعت ورود (HH:MM):</label>
+                <input type="time" id="shiftMorningStart" value="08:00">
+            </div>
+            <div>
+                <label>ساعت خروج (HH:MM):</label>
+                <input type="time" id="shiftMorningEnd" value="15:30">
+            </div>
+        </div>
+
+        <h3 style="color:#38bdf8; margin-top:15px;">🌙 شیفت شب:</h3>
+        <div class="grid-2">
+            <div>
+                <label>ساعت ورود (HH:MM):</label>
+                <input type="time" id="shiftEveningStart" value="15:30">
+            </div>
+            <div>
+                <label>ساعت خروج (HH:MM):</label>
+                <input type="time" id="shiftEveningEnd" value="23:00">
+            </div>
+        </div>
+
+        <label>حداکثر تاخیر مجاز پرسنل (به دقیقه):</label>
+        <input type="number" id="maxDelayAllowed" value="15" placeholder="مثلاً 15 دقیقه">
+
+        <button class="submit-btn" onclick="saveShiftSettings()">ذخیره تنظیمات شیفت‌ها</button>
+    </div>
+
+    <div class="build-tag">v20 نسخه پیشرفته سیستم جامع لبنیات و ترشیجات فامیلی ( دره میرکی )</div>
 
     <script>
         const tg = window.Telegram.WebApp;
@@ -561,33 +558,17 @@
         let currentUserLabel = "";
         let editingProductId = null;
         let uploadedPhotoBase64 = "";
+        let selectedProductUnitPrice = 0;
 
-        // تنظیمات پیش‌فرض شیفت‌ها
-        let shiftConfig = {
-            morningStart: "08:00",
-            morningEnd: "15:30",
-            eveningStart: "15:30",
-            eveningEnd: "23:30",
-            allowedDelay: 15
-        };
-
-        function getPersianDateTimeStr(dateObj = new Date()) {
-            return new Intl.DateTimeFormat('fa-IR', {
+        function updateClock() {
+            const now = new Date();
+            const options = { 
                 timeZone: 'Asia/Tehran',
                 year: 'numeric', month: '2-digit', day: '2-digit',
                 hour: '2-digit', minute: '2-digit', second: '2-digit'
-            }).format(dateObj);
-        }
-
-        function getPersianDateStr(dateObj = new Date()) {
-            return new Intl.DateTimeFormat('fa-IR', {
-                timeZone: 'Asia/Tehran',
-                year: 'numeric', month: '2-digit', day: '2-digit'
-            }).format(dateObj);
-        }
-
-        function updateClock() {
-            document.getElementById('liveClock').innerText = '🕒 ' + getPersianDateTimeStr();
+            };
+            const formatter = new Intl.DateTimeFormat('fa-IR', options);
+            document.getElementById('liveClock').innerText = '🕒 ' + formatter.format(now);
         }
         setInterval(updateClock, 1000);
         updateClock();
@@ -597,50 +578,6 @@
             evening_seller: "فروشنده شب",
             admin: "مدیر"
         };
-
-        async function loadShiftSettings() {
-            try {
-                const { data, error } = await _supabase.from('settings').select('*').eq('key', 'shift_config').maybeSingle();
-                if (data && data.value) {
-                    shiftConfig = data.value;
-                } else {
-                    const localSaved = localStorage.getItem('shift_config');
-                    if (localSaved) shiftConfig = JSON.parse(localSaved);
-                }
-            } catch (err) {
-                const localSaved = localStorage.getItem('shift_config');
-                if (localSaved) shiftConfig = JSON.parse(localSaved);
-            }
-
-            document.getElementById('shiftMorningStart').value = shiftConfig.morningStart || "08:00";
-            document.getElementById('shiftMorningEnd').value = shiftConfig.morningEnd || "15:30";
-            document.getElementById('shiftEveningStart').value = shiftConfig.eveningStart || "15:30";
-            document.getElementById('shiftEveningEnd').value = shiftConfig.eveningEnd || "23:30";
-            document.getElementById('shiftAllowedDelay').value = shiftConfig.allowedDelay || 15;
-        }
-
-        async function saveShiftSettings() {
-            shiftConfig = {
-                morningStart: document.getElementById('shiftMorningStart').value,
-                morningEnd: document.getElementById('shiftMorningEnd').value,
-                eveningStart: document.getElementById('shiftEveningStart').value,
-                eveningEnd: document.getElementById('shiftEveningEnd').value,
-                allowedDelay: parseInt(document.getElementById('shiftAllowedDelay').value) || 15
-            };
-
-            localStorage.setItem('shift_config', JSON.stringify(shiftConfig));
-
-            const { error } = await _supabase.from('settings').upsert({
-                key: 'shift_config',
-                value: shiftConfig
-            });
-
-            if (!error) {
-                alert('✅ تنظیمات شیفت‌ها با موفقیت ذخیره شد.');
-            } else {
-                alert('⚠️ تنظیمات به‌صورت محلی ذخیره شد. لطفاً جدول settings را در Supabase بسازید:\n\nخطا: ' + error.message);
-            }
-        }
 
         async function checkLogin() {
             const username = document.getElementById('accessUser').value.trim();
@@ -676,8 +613,6 @@
             currentRole = user.role;
             currentUserLabel = (roleLabels[user.role] || user.role) + ' - ' + (user.full_name || user.username);
 
-            await loadShiftSettings();
-
             const badge = document.getElementById('userBadge');
             badge.innerHTML = '👤 ' + currentUserLabel + ' <button class="logout-btn" onclick="logout()">خروج</button>';
             badge.style.display = 'block';
@@ -685,8 +620,7 @@
             document.getElementById('buyPriceField').style.display = (currentRole === 'admin') ? 'block' : 'none';
 
             if (currentRole === 'admin') {
-                // مدیر تب ثبت حضور غیاب ندارد و تب تنظیمات شیفت‌ها را دارد
-                setupView(['btnSale', 'btnShiftSettings', 'btnInbox', 'btnBooth', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport'], 'saleTab');
+                setupView(['btnSale', 'btnInbox', 'btnBooth', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnShiftSettings'], 'saleTab');
                 checkLowStockAlertNoWeight();
             } else if (currentRole === 'morning_seller') {
                 setupView(['btnSale', 'btnAttendance', 'btnMessage', 'btnBooth', 'btnProduct', 'btnInventory', 'btnReport'], 'saleTab');
@@ -744,6 +678,7 @@
             if (targetTab) targetTab.classList.add('active');
         }
 
+        // --- هشدار موجودی انبار هوشمند مدیر ---
         async function checkLowStockAlertNoWeight() {
             if (currentRole !== 'admin') return;
 
@@ -768,6 +703,43 @@
             }
         }
 
+        // --- محاسبه خودکار قیمت و وزن در فروش ---
+        function calculateNetWeightSale() {
+            const gross = parseFloat(document.getElementById('sGrossWeight').value) || 0;
+            const tare = parseFloat(document.getElementById('sTareWeight').value) || 0;
+            const net = Math.max(0, Number((gross - tare).toFixed(3)));
+            document.getElementById('sQty').value = net > 0 ? net : '';
+            calculateSalePriceAuto();
+        }
+
+        async function calculateSalePriceAuto() {
+            const nameVal = document.getElementById('sName').value.trim();
+            const qty = parseFloat(document.getElementById('sQty').value) || 0;
+            const display = document.getElementById('sCalcDisplay');
+
+            if (!nameVal) {
+                display.innerText = 'مبلغ کل فاکتور: ۰ تومان (قیمت واحد: ۰ تومان)';
+                selectedProductUnitPrice = 0;
+                return;
+            }
+
+            if (cachedProductsList.length === 0) {
+                const { data } = await _supabase.from('products').select('*');
+                cachedProductsList = data || [];
+            }
+
+            const product = cachedProductsList.find(p => p.name === nameVal || p.code === nameVal);
+            if (product) {
+                selectedProductUnitPrice = product.sell_price || 0;
+                const totalPrice = Math.round(qty * selectedProductUnitPrice);
+                display.innerText = `مبلغ کل فاکتور: ${totalPrice.toLocaleString('fa-IR')} تومان (نرخ واحد: ${selectedProductUnitPrice.toLocaleString('fa-IR')} تومان/کیلو)`;
+            } else {
+                display.innerText = '⚠️ کالا یافت نشد؛ قیمت تعریف‌نشده است';
+                selectedProductUnitPrice = 0;
+            }
+        }
+
+        // --- ثبت پیام به مدیر ---
         async function sendMessageToAdmin() {
             const title = document.getElementById('msgTitle').value.trim();
             const body = document.getElementById('msgBody').value.trim();
@@ -791,6 +763,7 @@
             }
         }
 
+        // --- بارگذاری صندوقچه پیام‌ها ---
         async function loadManagerInbox() {
             const inbox = document.getElementById('inboxList');
             inbox.innerHTML = 'در حال دریافت پیام‌ها...';
@@ -806,7 +779,7 @@
             }
 
             inbox.innerHTML = msgs.map(m => {
-                const timeStr = getPersianDateTimeStr(new Date(m.created_at));
+                const timeStr = new Date(m.created_at).toLocaleString('fa-IR', { timeZone: 'Asia/Tehran' });
                 return `
                     <div class="msg-card">
                         <h3>📩 ${m.title}</h3>
@@ -818,6 +791,35 @@
             }).join('');
         }
 
+        // --- تنظیمات شیفت‌ها ---
+        async function saveShiftSettings() {
+            const mStart = document.getElementById('shiftMorningStart').value;
+            const mEnd = document.getElementById('shiftMorningEnd').value;
+            const eStart = document.getElementById('shiftEveningStart').value;
+            const eEnd = document.getElementById('shiftEveningEnd').value;
+            const maxDelay = parseInt(document.getElementById('maxDelayAllowed').value) || 15;
+
+            const settings = { mStart, mEnd, eStart, eEnd, maxDelay };
+            localStorage.setItem('shift_settings_v20', JSON.stringify(settings));
+            alert('✅ تنظیمات شیفت‌ها با موفقیت ذخیره گردید.');
+        }
+
+        function getShiftSettings() {
+            const saved = localStorage.getItem('shift_settings_v20');
+            if (saved) return JSON.parse(saved);
+            return { mStart: "08:00", mEnd: "15:30", eStart: "15:30", eEnd: "23:00", maxDelay: 15 };
+        }
+
+        function loadShiftSettings() {
+            const s = getShiftSettings();
+            document.getElementById('shiftMorningStart').value = s.mStart;
+            document.getElementById('shiftMorningEnd').value = s.mEnd;
+            document.getElementById('shiftEveningStart').value = s.eStart;
+            document.getElementById('shiftEveningEnd').value = s.eEnd;
+            document.getElementById('maxDelayAllowed').value = s.maxDelay;
+        }
+
+        // --- حضور و غیاب (با عکس اجباری و ارسال هشدار خودکار تاخیر) ---
         function toggleAttendanceFields() {
             const type = document.getElementById('attType').value;
             document.getElementById('attTimeFields').style.display = (type === 'leave') ? 'none' : 'block';
@@ -837,73 +839,52 @@
             }
         }
 
-        function parseTimeToMinutes(timeStr) {
-            if (!timeStr) return 0;
-            const parts = timeStr.split(':');
-            return (parseInt(parts[0]) * 60) + parseInt(parts[1]);
-        }
-
         async function submitAttendance() {
             const type = document.getElementById('attType').value;
-            const overtimeHours = parseFloat(document.getElementById('attOvertimeHours').value) || 0;
-            const overtimeDays = parseFloat(document.getElementById('attOvertimeDays').value) || 0;
+            const val = parseFloat(document.getElementById('attOvertimeVal').value) || 0;
+            const unit = document.getElementById('attOvertimeUnit').value;
             const note = document.getElementById('attNote').value.trim();
 
             if (type !== 'leave' && !uploadedPhotoBase64) {
-                alert('⚠️ ثبت عکس ورود و خروج الزامی است! لطفاً ابتدا تصویر را آپلود کنید.');
+                alert('⛔ خطا: جهت ثبت ورود و خروج ارسال عکس سلفی/محل غرفه **الزامی** می‌باشد!');
                 return;
             }
 
+            let overtimeHours = val;
+            if (unit === 'minute') overtimeHours = Number((val / 60).toFixed(2));
+            if (unit === 'day') overtimeHours = Number((val * 8).toFixed(2));
+
             const now = new Date();
-            const currentMinutesInDay = (now.getHours() * 60) + now.getMinutes();
-            const persianDateTime = getPersianDateTimeStr(now);
+            const timeStrNow = now.toLocaleTimeString('fa-IR', { timeZone: 'Asia/Tehran', hour12: false });
+            const settings = getShiftSettings();
 
-            let calculatedDelayMinutes = 0;
-            let delayAlertText = "";
-
+            let targetStartTime = (currentRole === 'morning_seller') ? settings.mStart : settings.eStart;
+            
             if (type === 'entry') {
-                let shiftStartMinutes = 0;
-                let shiftName = "";
+                const [hNow, mNow] = timeStrNow.split(':').map(Number);
+                const [hTarget, mTarget] = targetStartTime.split(':').map(Number);
+                const diffMinutes = (hNow * 60 + mNow) - (hTarget * 60 + mTarget);
 
-                if (currentRole === 'morning_seller') {
-                    shiftStartMinutes = parseTimeToMinutes(shiftConfig.morningStart || "08:00");
-                    shiftName = "شیفت صبح";
-                } else if (currentRole === 'evening_seller') {
-                    shiftStartMinutes = parseTimeToMinutes(shiftConfig.eveningStart || "15:30");
-                    shiftName = "شیفت شب";
+                if (diffMinutes > settings.maxDelayAllowed) {
+                    await _supabase.from('messages').insert([{
+                        sender: "سیستم خودکار تاخیر",
+                        title: `⚠️ هشدار تاخیر ${currentUserLabel}`,
+                        body: `کاربر ${currentUserLabel} در تاریخ ${now.toLocaleDateString('fa-IR')} با ${diffMinutes} دقیقه تاخیر ورود خود را ثبت کرد. (حداکثر تاخیر مجاز: ${settings.maxDelayAllowed} دقیقه)`
+                    }]);
+                    alert(`⚠️ ثبت ورود انجام شد اما شما ${diffMinutes} دقیقه تاخیر داشتید. گزارش تاخیر خودکار برای مدیر ارسال شد.`);
                 }
-
-                const allowedDelay = shiftConfig.allowedDelay || 15;
-                const diffMinutes = currentMinutesInDay - shiftStartMinutes;
-
-                if (diffMinutes > allowedDelay) {
-                    calculatedDelayMinutes = diffMinutes;
-                    delayAlertText = `⚠️ تاخیر در ورود (${shiftName}): ثبت ورود در ${persianDateTime} با **${calculatedDelayMinutes} دقیقه تاخیر** نسبت به ساعت مقرر ثبت شد.`;
-                }
-            }
-
-            if (delayAlertText) {
-                alert(delayAlertText + '\n\nپیام هشدار تاخیر به‌صورت خودکار برای صندوقچه مدیر ارسال گردید.');
-                await _supabase.from('messages').insert([{
-                    sender: currentUserLabel,
-                    title: "🚨 هشدار تاخیر ورود پرسنل",
-                    body: delayAlertText + ` | توضیحات فروشنده: ${note || 'بدون توضیح'}`
-                }]);
             }
 
             const { error } = await _supabase.from('attendance').insert([{
                 seller_name: currentUserLabel,
                 type: type,
                 overtime_hours: overtimeHours,
-                overtime_days: overtimeDays,
                 photo_url: uploadedPhotoBase64,
-                note: note,
-                delay_minutes: calculatedDelayMinutes,
-                created_at: now.toISOString()
+                note: note
             }]);
 
             if (!error) {
-                alert(`✅ حضور و غیاب با موفقیت در تاریخ و ساعت شمسی زیر ثبت شد:\n${persianDateTime}`);
+                alert('✅ اطلاعات حضور و غیاب با موفقیت ثبت گردید.');
                 document.getElementById('attNote').value = '';
                 document.getElementById('attPhoto').value = '';
                 document.getElementById('photoPreview').style.display = 'none';
@@ -913,6 +894,7 @@
             }
         }
 
+        // --- گزارش کارکرد پرسنل ---
         async function loadWorkReport() {
             const sellerRole = document.getElementById('workSellerSelect').value;
             const container = document.getElementById('workReportContent');
@@ -930,40 +912,31 @@
             }
 
             const uniqueDays = new Set();
-            let totalOvertimeHours = 0;
-            let totalOvertimeDays = 0;
-            let totalDelayMinutes = 0;
+            let totalOvertime = 0;
             let leaveCount = 0;
 
             const rows = records.map(r => {
                 const dateObj = new Date(r.created_at);
-                const persianDate = getPersianDateStr(dateObj);
-                const persianTime = dateObj.toLocaleTimeString('fa-IR', { timeZone: 'Asia/Tehran', hour: '2-digit', minute: '2-digit' });
+                const dateStr = dateObj.toLocaleDateString('fa-IR', { timeZone: 'Asia/Tehran' });
+                const timeStr = dateObj.toLocaleTimeString('fa-IR', { timeZone: 'Asia/Tehran', hour: '2-digit', minute: '2-digit' });
 
                 if (r.type !== 'leave') {
-                    uniqueDays.add(persianDate);
+                    uniqueDays.add(dateStr);
                 } else {
                     leaveCount++;
                 }
 
-                totalOvertimeHours += (r.overtime_hours || 0);
-                totalOvertimeDays += (r.overtime_days || 0);
-                totalDelayMinutes += (r.delay_minutes || 0);
+                totalOvertime += (r.overtime_hours || 0);
 
                 let typeTitle = '🟢 ورود';
                 if (r.type === 'exit') typeTitle = '🔴 خروج';
                 if (r.type === 'leave') typeTitle = '🏖️ مرخصی';
 
-                let delayStatus = (r.delay_minutes && r.delay_minutes > 0)
-                    ? `<span class="badge-delay">${r.delay_minutes} دقیقه تاخیر</span>`
-                    : `<span class="badge-ontime">آن‌تايم / بدون تاخیر</span>`;
-
                 return `
                     <tr>
-                        <td><b>${persianDate}</b> - ${persianTime}</td>
+                        <td>${dateStr} - ${timeStr}</td>
                         <td>${typeTitle}</td>
-                        <td>${delayStatus}</td>
-                        <td>${r.overtime_hours || 0} ساعت / ${r.overtime_days || 0} روز</td>
+                        <td>${r.overtime_hours || 0} ساعت</td>
                         <td>${r.photo_url ? `<a href="${r.photo_url}" target="_blank" style="color:#38bdf8;">👁️ مشاهده عکس</a>` : 'بدون عکس'}</td>
                         <td>${r.note || '-'}</td>
                     </tr>
@@ -974,20 +947,17 @@
                 <div class="report-card">
                     <h3>📊 خلاصه کارکرد ماهانه (${sellerRole})</h3>
                     <p><b>کل روزهای حضور سرکار:</b> <span style="color:#34d399; font-weight:bold; font-size:15px;">${uniqueDays.size} روز</span></p>
-                    <p><b>مجموع تاخیر ورود:</b> <span style="color:#ef4444; font-weight:bold;">${totalDelayMinutes} دقیقه</span></p>
-                    <p><b>مجموع اضافه‌کاری ساعتی:</b> ${totalOvertimeHours} ساعت</p>
-                    <p><b>مجموع اضافه‌کاری روزانه:</b> ${totalOvertimeDays} روز</p>
+                    <p><b>مجموع اضافه‌کاری:</b> ${totalOvertime.toFixed(1)} ساعت</p>
                     <p><b>روزهای مرخصی:</b> ${leaveCount} روز</p>
                 </div>
-                <h4 style="color:#38bdf8; margin-top:15px;">📋 جزئیات دقیق ورود، خروج و تاخیرها (به شمسی):</h4>
+                <h4 style="color:#38bdf8; margin-top:15px;">📋 جزئیات ورود و خروج:</h4>
                 <table>
                     <thead>
                         <tr>
-                            <th>تاریخ و ساعت شمسی</th>
+                            <th>تاریخ و ساعت</th>
                             <th>نوع ثبت</th>
-                            <th>وضعیت تاخیر</th>
                             <th>اضافه‌کاری</th>
-                            <th>عکس</th>
+                            <th>عکس ثبت‌شده</th>
                             <th>توضیحات</th>
                         </tr>
                     </thead>
@@ -997,7 +967,7 @@
         }
 
         async function loadProductDatalist() {
-            const { data: products } = await _supabase.from('products').select('name, sell_price, code');
+            const { data: products } = await _supabase.from('products').select('*');
             cachedProductsList = products || [];
             const datalist = document.getElementById('productDatalist');
             if (!datalist) return;
@@ -1007,39 +977,6 @@
                 opt.value = p.name;
                 datalist.appendChild(opt);
             });
-        }
-
-        async function autoCalculateSalePrice() {
-            const inputVal = document.getElementById('sName').value.trim();
-            const gross = parseFloat(document.getElementById('sGrossWeight').value) || 0;
-            const tare = parseFloat(document.getElementById('sTareWeight').value) || 0;
-            let qtyInput = document.getElementById('sQty');
-
-            if (gross > 0) {
-                const net = Math.max(0, gross - tare);
-                qtyInput.value = Number(net.toFixed(3));
-            }
-
-            const qty = parseFloat(qtyInput.value) || 0;
-
-            if (!inputVal || qty <= 0) {
-                document.getElementById('sPrice').value = '';
-                document.getElementById('sPriceFormatted').innerText = '';
-                return;
-            }
-
-            let product = cachedProductsList.find(p => p.name === inputVal || p.code === inputVal);
-
-            if (!product) {
-                const { data } = await _supabase.from('products').select('*').ilike('name', inputVal).maybeSingle();
-                product = data;
-            }
-
-            if (product && product.sell_price) {
-                const totalPrice = Math.round(qty * product.sell_price);
-                document.getElementById('sPrice').value = totalPrice;
-                formatPrice(document.getElementById('sPrice'), 'sPriceFormatted');
-            }
         }
 
         function toggleEntryMode() {
@@ -1063,14 +1000,6 @@
             document.getElementById('pStock').value = total;
             document.getElementById('calcTotalDisplay').innerText =
                 total > 0 ? ('📦 موجودی کل انبار: ' + total.toLocaleString('fa-IR') + ' کیلوگرم') : '';
-        }
-
-        function calcBoothNetInProductForm() {
-            const gross = parseFloat(document.getElementById('pBoothGross').value) || 0;
-            const tare = parseFloat(document.getElementById('pBoothTare').value) || 0;
-            if (gross > 0) {
-                document.getElementById('pBoothStock').value = Number(Math.max(0, gross - tare).toFixed(3));
-            }
         }
 
         async function saveProduct() {
@@ -1128,8 +1057,6 @@
             document.querySelector('input[name="pEntryMode"][value="direct"]').checked = true;
             document.getElementById('pUnitCount').value = '';
             document.getElementById('pUnitWeight').value = '';
-            document.getElementById('pBoothGross').value = '';
-            document.getElementById('pBoothTare').value = '';
             document.getElementById('calcTotalDisplay').innerText = '';
             toggleEntryMode();
             document.getElementById('pStock').value = '';
@@ -1194,13 +1121,13 @@
             }
         }
 
+        // --- ثبت فروش بدون نیاز به تایپ قیمت ---
         async function submitSale() {
             const inputVal = document.getElementById('sName').value.trim();
             const qty = parseFloat(document.getElementById('sQty').value);
-            const price = parseFloat(document.getElementById('sPrice').value);
 
             if (!inputVal || isNaN(qty) || qty <= 0) {
-                alert('لطفاً نام کالا و وزن خالص معتبر را وارد کنید');
+                alert('لطفاً نام کالا و وزن معتبر را وارد کنید');
                 return;
             }
 
@@ -1224,11 +1151,11 @@
                 return;
             }
 
-            const finalPrice = price || Math.round(qty * product.sell_price);
+            const calculatedPrice = Math.round(qty * (product.sell_price || 0));
 
             let currentBooth = product.booth_stock || 0;
             if (currentBooth < qty) {
-                alert('⚠️ موجودی ظرف غرفه کمتر از مقدار فروش است! ظرف غرفه شارژ شد یا مقدار واقعی ثبت شد.');
+                alert('⚠️ موجودی ظرف غرفه کمتر از مقدار فروش است! ابتدا ظرف غرفه را شارژ یا موجودی واقعی را ویرایش کنید.');
             }
 
             const newBoothStock = Math.max(0, Number((currentBooth - qty).toFixed(3)));
@@ -1238,18 +1165,17 @@
             await _supabase.from('sales').insert([{
                 product_code: product.code,
                 quantity: qty,
-                sell_price: finalPrice,
+                sell_price: calculatedPrice,
                 seller_name: currentUserLabel
             }]);
 
-            alert(`✅ فروش «${product.name}» ثبت شد.\nوزن خالص: ${qty} کیلو\nمبلغ کل: ${finalPrice.toLocaleString('fa-IR')} تومان\nموجودی جدید ظرف: ${newBoothStock} کیلو`);
+            alert(`✅ فروش «${product.name}» ثبت شد.\n💰 مبلغ کل فاکتور: ${calculatedPrice.toLocaleString('fa-IR')} تومان\n🧊 موجودی جدید ظرف غرفه: ${newBoothStock} کیلوگرم`);
 
             document.getElementById('sName').value = '';
             document.getElementById('sGrossWeight').value = '';
             document.getElementById('sTareWeight').value = '';
             document.getElementById('sQty').value = '';
-            document.getElementById('sPrice').value = '';
-            document.getElementById('sPriceFormatted').innerText = '';
+            document.getElementById('sCalcDisplay').innerText = 'مبلغ کل فاکتور: ۰ تومان (قیمت واحد: ۰ تومان)';
         }
 
         function getQualitativeStatus(stock, capacity) {
@@ -1274,14 +1200,13 @@
             }
         }
 
-        async function updateDirectBoothStockWithTare(productId) {
-            const gross = parseFloat(document.getElementById(`boothGross_${productId}`).value) || 0;
-            const tare = parseFloat(document.getElementById(`boothTare_${productId}`).value) || 0;
-            const netVal = Math.max(0, Number((gross - tare).toFixed(3)));
+        async function updateDirectBoothStock(productId, newStockVal) {
+            const val = parseFloat(newStockVal);
+            if (isNaN(val) || val < 0) return alert('لطفاً یک عدد معتبر برای موجودی ظرف وارد کنید');
 
-            const { error } = await _supabase.from('products').update({ booth_stock: netVal }).eq('id', productId);
+            const { error } = await _supabase.from('products').update({ booth_stock: val }).eq('id', productId);
             if (!error) {
-                alert(`✅ موجودی فعلی ظرف غرفه به‌روزرسانی شد.\nوزن خالص محاسبه شده: ${netVal} کیلوگرم`);
+                alert('✅ موجودی فعلی ظرف غرفه به‌روزرسانی شد.');
                 loadBoothInventory();
             } else {
                 alert('خطا در به‌روزرسانی موجودی ظرف: ' + error.message);
@@ -1303,7 +1228,7 @@
             }
 
             if (currentMain < neededAmount) {
-                return alert(`⚠️ موجودی انبار اصلی کافی نیست!\nنیاز به شارژ: ${neededAmount} کیلوگرم\nموجودی انبار اصلی: ${currentMain} کیلوگرم`);
+                return alert(`⚠️ موجودی انبار اصلی کافی نیست!\nنیاز به شارژ: ${neededAmount} کیلوگرم\nموجودی انبار اصلی: ${currentMain} کیلوگرم\n\n💡 اگر داخل یخچال جنس موجود است، می‌توانید مقدار موجودی ظرف را مستقیماً تایپ و ثبت کنید.`);
             }
 
             const newMainStock = Number((currentMain - neededAmount).toFixed(3));
@@ -1315,7 +1240,7 @@
             }).eq('id', productId);
 
             if (!error) {
-                alert(`✅ ظرف «${product.name}» پر شد.\n📦 دقیقاً مقدار ${neededAmount} کیلوگرم از انبار کسر گردید.`);
+                alert(`✅ ظرف «${product.name}» پر شد.\n📦 دقیقاً مقدار ${neededAmount} کیلوگرم از انبار اصلی کسر گردید.`);
                 loadBoothInventory();
             } else {
                 alert('خطا در به‌روزرسانی موجودی: ' + error.message);
@@ -1337,6 +1262,7 @@
             products.forEach(p => {
                 const capacity = p.container_capacity || 7.0;
                 const currentBooth = p.booth_stock || 0;
+                const mainStock = p.stock || 0;
                 const needed = Number((capacity - currentBooth).toFixed(3));
                 const status = getQualitativeStatus(currentBooth, capacity);
 
@@ -1350,20 +1276,19 @@
                             : `${capacity} کیلو`
                         }
                     </td>
-                    <td><b>${Number(currentBooth).toLocaleString('fa-IR')} کیلو</b></td>
+                    <td>
+                        ${canEdit 
+                            ? `<input type="number" step="0.1" class="cap-input" id="boothStockInput_${p.id}" value="${currentBooth}"> کیلو
+                               <button class="row-btn edit-btn" style="padding:2px 5px;" title="ثبت مستقیم موجودی ظرف" onclick="updateDirectBoothStock('${p.id}', document.getElementById('boothStockInput_${p.id}').value)">💾</button>`
+                            : `${Number(currentBooth).toLocaleString('fa-IR')} کیلو`
+                        }
+                    </td>
                     <td><span class="status-tag ${status.class}">${status.label}</span></td>
                     <td>
-                        ${canEdit ? `
-                            <div style="font-size:10px; text-align:right;">
-                                کل با ظرف: <input type="number" step="0.01" class="cap-input" id="boothGross_${p.id}" placeholder="کل">
-                                ظرف: <input type="number" step="0.01" class="cap-input" id="boothTare_${p.id}" placeholder="تار">
-                                <button class="row-btn edit-btn" style="padding:2px 5px;" title="محاسبه خالص و ثبت" onclick="updateDirectBoothStockWithTare('${p.id}')">💾 ثبت</button>
-                            </div>
-                        ` : ''}
                         ${needed > 0 
-                            ? `<button class="row-btn fill-btn" style="margin-top:4px;" onclick="smartFillBooth('${p.id}')">🔄 پر کردن ظرف</button>
-                               <span class="need-charge-text">کمبود: ${needed} کیلو</span>`
-                            : `<span style="color:#10b981; font-weight:bold; font-size:11px; display:block; margin-top:4px;">✨ پر است</span>`
+                            ? `<button class="row-btn fill-btn" onclick="smartFillBooth('${p.id}')">🔄 پر کردن ظرف</button>
+                               <span class="need-charge-text">کمبود: ${needed} کیلو (انبار: ${mainStock} کیلو)</span>`
+                            : `<span style="color:#10b981; font-weight:bold; font-size:11px;">✨ ظرف پر است</span>`
                         }
                     </td>
                 `;
@@ -1414,10 +1339,10 @@
                     <td>${p.name || ''}</td>
                     <td style="color: ${p.stock <= p.min_stock ? '#ef4444' : '#10b981'}; font-weight: bold;">${Number(p.stock).toLocaleString('fa-IR', { maximumFractionDigits: 3 })} کیلو</td>
                     <td>${Number(p.booth_stock || 0).toLocaleString('fa-IR', { maximumFractionDigits: 3 })} کیلو</td>
-                    <td>${Number(p.sell_price || 0).toLocaleString('fa-IR')}</td>
+                    <td>${Number(p.sell_price || 0).toLocaleString('fa-IR')} تومان</td>
                 `;
                 if (showBuyPrice) {
-                    rowHtml += `<td>${Number(p.buy_price || 0).toLocaleString('fa-IR')}</td>`;
+                    rowHtml += `<td>${Number(p.buy_price || 0).toLocaleString('fa-IR')} تومان</td>`;
                 }
                 if (canManage) {
                     rowHtml += `<td>
@@ -1434,7 +1359,8 @@
             const content = document.getElementById('reportContent');
             content.innerHTML = 'در حال بارگذاری...';
 
-            const todayPersianStr = getPersianDateStr(new Date());
+            const now = new Date();
+            const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Tehran' });
 
             const { data: sales, error } = await _supabase
                 .from('sales')
@@ -1448,11 +1374,11 @@
 
             if (currentRole === 'morning_seller' || currentRole === 'evening_seller') {
                 const targetRolePrefix = (currentRole === 'morning_seller') ? 'فروشنده صبح' : 'فروشنده شب';
-
+                
                 const todayMySales = (sales || []).filter(s => {
                     if (!s.seller_name || s.seller_name.indexOf(targetRolePrefix) !== 0) return false;
-                    const itemPersianDate = getPersianDateStr(new Date(s.created_at));
-                    return itemPersianDate === todayPersianStr;
+                    const itemDateStr = new Date(s.created_at).toLocaleDateString('en-CA', { timeZone: 'Asia/Tehran' });
+                    return itemDateStr === todayStr;
                 });
 
                 const totalSum = todayMySales.reduce((sum, s) => sum + (Number(s.sell_price) || 0), 0);
@@ -1516,8 +1442,8 @@
                     totals[key].allCount += 1;
 
                     if (s.created_at) {
-                        const itemPersianDate = getPersianDateStr(new Date(s.created_at));
-                        if (itemPersianDate === todayPersianStr) {
+                        const itemDateStr = new Date(s.created_at).toLocaleDateString('en-CA', { timeZone: 'Asia/Tehran' });
+                        if (itemDateStr === todayStr) {
                             totals[key].today += price;
                             totals[key].todayCount += 1;
                         }
@@ -1529,21 +1455,114 @@
                         <h3>🌅 فروشنده صبح</h3>
                         <p>فروش امروز: ${totals.morning.today.toLocaleString('fa-IR')} تومان (${totals.morning.todayCount} فاکتور)</p>
                         <p>مجموع کل فروش: ${totals.morning.all.toLocaleString('fa-IR')} تومان (${totals.morning.allCount} فاکتور)</p>
+                        <button class="row-btn edit-btn" onclick="toggleDetail('morning')">📋 گزارش با جزئیات و تاریخ</button>
+                        <div id="detailPanel_morning" style="display:none; margin-top:10px;">
+                            <label>تاریخ مورد نظر را انتخاب کن:</label>
+                            <input type="date" id="detailDate_morning">
+                            <button class="submit-btn" style="margin-top:8px;" onclick="loadDetailReport('morning')">نمایش گزارش این تاریخ</button>
+                            <div id="detailResult_morning" style="margin-top:10px;"></div>
+                        </div>
                     </div>
 
                     <div class="report-card">
                         <h3>🌙 فروشنده شب</h3>
                         <p>فروش امروز: ${totals.evening.today.toLocaleString('fa-IR')} تومان (${totals.evening.todayCount} فاکتور)</p>
                         <p>مجموع کل فروش: ${totals.evening.all.toLocaleString('fa-IR')} تومان (${totals.evening.allCount} فاکتور)</p>
+                        <button class="row-btn edit-btn" onclick="toggleDetail('evening')">📋 گزارش با جزئیات و تاریخ</button>
+                        <div id="detailPanel_evening" style="display:none; margin-top:10px;">
+                            <label>تاریخ مورد نظر را انتخاب کن:</label>
+                            <input type="date" id="detailDate_evening">
+                            <button class="submit-btn" style="margin-top:8px;" onclick="loadDetailReport('evening')">نمایش گزارش این تاریخ</button>
+                            <div id="detailResult_evening" style="margin-top:10px;"></div>
+                        </div>
                     </div>
 
                     <div class="report-card">
                         <h3>👑 مدیر غرفه</h3>
                         <p>فروش امروز: ${totals.admin.today.toLocaleString('fa-IR')} تومان (${totals.admin.todayCount} فاکتور)</p>
                         <p>مجموع کل فروش: ${totals.admin.all.toLocaleString('fa-IR')} تومان (${totals.admin.allCount} فاکتور)</p>
+                        <button class="row-btn edit-btn" onclick="toggleDetail('admin')">📋 گزارش با جزئیات و تاریخ</button>
+                        <div id="detailPanel_admin" style="display:none; margin-top:10px;">
+                            <label>تاریخ مورد نظر را انتخاب کن:</label>
+                            <input type="date" id="detailDate_admin">
+                            <button class="submit-btn" style="margin-top:8px;" onclick="loadDetailReport('admin')">نمایش گزارش این تاریخ</button>
+                            <div id="detailResult_admin" style="margin-top:10px;"></div>
+                        </div>
                     </div>
                 `;
             }
+        }
+
+        function toggleDetail(key) {
+            const panel = document.getElementById('detailPanel_' + key);
+            panel.style.display = (panel.style.display === 'none' || !panel.style.display) ? 'block' : 'none';
+        }
+
+        async function loadDetailReport(key) {
+            const dateVal = document.getElementById('detailDate_' + key).value;
+            const resultEl = document.getElementById('detailResult_' + key);
+
+            if (!dateVal) {
+                resultEl.innerHTML = '<p style="color:#ef4444;">لطفاً یک تاریخ انتخاب کن.</p>';
+                return;
+            }
+
+            resultEl.innerHTML = 'در حال بارگذاری...';
+            
+            let rolePrefix = 'فروشنده صبح';
+            if (key === 'evening') rolePrefix = 'فروشنده شب';
+            if (key === 'admin') rolePrefix = 'مدیر';
+
+            const { data: sales, error } = await _supabase
+                .from('sales')
+                .select('product_code, quantity, sell_price, created_at, seller_name')
+                .order('created_at', { ascending: true });
+
+            if (error) {
+                resultEl.innerHTML = '❌ خطا در دریافت گزارش: ' + error.message;
+                return;
+            }
+
+            const daySales = (sales || []).filter(s => {
+                if (!s.seller_name || s.seller_name.indexOf(rolePrefix) !== 0) return false;
+                const itemDateStr = new Date(s.created_at).toLocaleDateString('en-CA', { timeZone: 'Asia/Tehran' });
+                return itemDateStr === dateVal;
+            });
+
+            if (daySales.length === 0) {
+                resultEl.innerHTML = '<p>هیچ فروشی در این تاریخ برای این نقش ثبت نشده است.</p>';
+                return;
+            }
+
+            const codes = [...new Set(daySales.map(s => s.product_code))];
+            const { data: productsData } = await _supabase.from('products').select('code, name').in('code', codes);
+            const nameMap = {};
+            (productsData || []).forEach(p => { nameMap[p.code] = p.name; });
+
+            let total = 0;
+            const rows = daySales.map(s => {
+                total += Number(s.sell_price) || 0;
+                const timeStr = new Date(s.created_at).toLocaleTimeString('fa-IR', { 
+                    timeZone: 'Asia/Tehran', 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+                const productName = nameMap[s.product_code] || s.product_code;
+                return `<tr>
+                    <td>${timeStr}</td>
+                    <td>${productName}</td>
+                    <td>${Number(s.quantity).toLocaleString('fa-IR', { maximumFractionDigits: 3 })} کیلو</td>
+                    <td>${Number(s.sell_price).toLocaleString('fa-IR')}</td>
+                </tr>`;
+            }).join('');
+
+            resultEl.innerHTML = `
+                <table>
+                    <thead><tr><th>ساعت</th><th>کالا</th><th>مقدار</th><th>مبلغ (تومان)</th></tr></thead>
+                    <tbody>${rows}</tbody>
+                </table>
+                <p style="margin-top:8px; font-weight:bold; color:#38bdf8;">جمع کل این روز: ${total.toLocaleString('fa-IR')} تومان (${daySales.length} فاکتور)</p>
+            `;
         }
     </script>
 </body>
