@@ -164,6 +164,24 @@
         }
         .edit-btn { background: #2563eb; color: #fff; }
         .delete-btn { background: #dc2626; color: #fff; }
+        .report-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+        .report-card h3 {
+            margin: 0 0 8px 0;
+            color: #38bdf8;
+            font-size: 14px;
+        }
+        .report-card p {
+            margin: 4px 0;
+            font-size: 13px;
+            color: #e2e8f0;
+            text-align: right;
+        }
         input[type="radio"] { width: auto; margin-left: 4px; }
         .unit-toggle {
             display: flex;
@@ -206,6 +224,7 @@
         <button class="tab-btn" id="btnSale" onclick="switchTab('sale'); loadProductDatalist();">🛍️ ثبت فروش</button>
         <button class="tab-btn" id="btnProduct" onclick="switchTab('product')">➕ تعریف کالا</button>
         <button class="tab-btn" id="btnInventory" onclick="switchTab('inventory'); loadInventory();">📦 موجودی انبار</button>
+        <button class="tab-btn" id="btnReport" onclick="switchTab('report'); loadSalesReport();">📊 گزارش فروش</button>
     </div>
 
     <!-- فرم ثبت فروش -->
@@ -290,7 +309,13 @@
         </table>
     </div>
 
-    <div class="build-tag">نسخه کد: v7 - همه‌چیز فله و بر اساس کیلوگرم است</div>
+    <!-- گزارش فروش (فقط مدیر) -->
+    <div id="reportTab" class="card">
+        <h2>📊 گزارش فروش شاگردها</h2>
+        <div id="reportContent">در حال بارگذاری...</div>
+    </div>
+
+    <div class="build-tag">نسخه کد: v8 - گزارش فروش و هشدار فوری موجودی اضافه شد</div>
 
     <script>
         const tg = window.Telegram.WebApp;
@@ -353,8 +378,9 @@
             document.getElementById('buyPriceField').style.display = (currentRole === 'admin') ? 'block' : 'none';
 
             if (currentRole === 'admin') {
-                // مدیر: دسترسی کامل + دیدن قیمت خرید + ویرایش/حذف کالا
-                setupView(['btnSale', 'btnProduct', 'btnInventory'], 'saleTab');
+                // مدیر: دسترسی کامل + دیدن قیمت خرید + ویرایش/حذف کالا + گزارش فروش
+                setupView(['btnSale', 'btnProduct', 'btnInventory', 'btnReport'], 'saleTab');
+                checkLowStockAlert();
             } else if (currentRole === 'morning_seller') {
                 // فروشنده صبح: ثبت فروش + تعریف کالا + موجودی انبار + ویرایش/حذف (بدون قیمت خرید)
                 setupView(['btnSale', 'btnProduct', 'btnInventory'], 'saleTab');
@@ -376,6 +402,7 @@
             document.getElementById('userBadge').style.display = 'none';
             document.getElementById('userBadge').innerHTML = '';
             document.getElementById('buyPriceField').style.display = 'none';
+            document.getElementById('btnInventory').innerHTML = '📦 موجودی انبار';
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.style.display = 'none';
                 btn.classList.remove('active');
@@ -415,6 +442,9 @@
             } else if (tab === 'inventory') {
                 document.getElementById('btnInventory').classList.add('active');
                 document.getElementById('inventoryTab').classList.add('active');
+            } else if (tab === 'report') {
+                document.getElementById('btnReport').classList.add('active');
+                document.getElementById('reportTab').classList.add('active');
             }
         }
 
@@ -702,6 +732,84 @@
                 tr.innerHTML = rowHtml;
                 tbody.appendChild(tr);
             });
+        }
+
+        // هشدار فوری موجودی کم - موقع ورود مدیر اجرا می‌شود
+        async function checkLowStockAlert() {
+            if (currentRole !== 'admin') return;
+
+            const { data: products } = await _supabase.from('products').select('name, stock, min_stock');
+            const btn = document.getElementById('btnInventory');
+            if (!products) return;
+
+            const low = products.filter(p => p.stock <= p.min_stock);
+            if (low.length > 0) {
+                btn.innerHTML = '📦 موجودی انبار 🔴';
+                alert('⚠️ هشدار موجودی کم!\n\n' +
+                    low.map(p => '• ' + p.name + ' (' + Number(p.stock).toLocaleString('fa-IR') + ' کیلو باقی مانده)').join('\n'));
+            } else {
+                btn.innerHTML = '📦 موجودی انبار';
+            }
+        }
+
+        // گزارش فروش شاگرد صبح و شاگرد شب (فقط مدیر می‌بیند)
+        async function loadSalesReport() {
+            const content = document.getElementById('reportContent');
+            content.innerHTML = 'در حال بارگذاری...';
+
+            const { data: sales, error } = await _supabase
+                .from('sales')
+                .select('seller_name, sell_price, quantity, created_at');
+
+            if (error) {
+                content.innerHTML = '❌ خطا در دریافت گزارش: ' + error.message;
+                return;
+            }
+
+            if (!sales || sales.length === 0) {
+                content.innerHTML = 'هنوز هیچ فروشی ثبت نشده است.';
+                return;
+            }
+
+            const now = new Date();
+            const isToday = (d) =>
+                d.getFullYear() === now.getFullYear() &&
+                d.getMonth() === now.getMonth() &&
+                d.getDate() === now.getDate();
+
+            const totals = {
+                morning: { today: 0, all: 0, todayCount: 0, allCount: 0 },
+                evening: { today: 0, all: 0, todayCount: 0, allCount: 0 }
+            };
+
+            sales.forEach(s => {
+                let key = null;
+                if (s.seller_name && s.seller_name.indexOf('فروشنده صبح') === 0) key = 'morning';
+                else if (s.seller_name && s.seller_name.indexOf('فروشنده شب') === 0) key = 'evening';
+                if (!key) return;
+
+                const price = Number(s.sell_price) || 0;
+                totals[key].all += price;
+                totals[key].allCount += 1;
+
+                if (s.created_at && isToday(new Date(s.created_at))) {
+                    totals[key].today += price;
+                    totals[key].todayCount += 1;
+                }
+            });
+
+            content.innerHTML = `
+                <div class="report-card">
+                    <h3>🌅 فروشنده صبح</h3>
+                    <p>فروش امروز: ${totals.morning.today.toLocaleString('fa-IR')} تومان (${totals.morning.todayCount} فاکتور)</p>
+                    <p>مجموع کل فروش: ${totals.morning.all.toLocaleString('fa-IR')} تومان (${totals.morning.allCount} فاکتور)</p>
+                </div>
+                <div class="report-card">
+                    <h3>🌙 فروشنده شب</h3>
+                    <p>فروش امروز: ${totals.evening.today.toLocaleString('fa-IR')} تومان (${totals.evening.todayCount} فاکتور)</p>
+                    <p>مجموع کل فروش: ${totals.evening.all.toLocaleString('fa-IR')} تومان (${totals.evening.allCount} فاکتور)</p>
+                </div>
+            `;
         }
     </script>
 </body>
