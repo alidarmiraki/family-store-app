@@ -229,7 +229,7 @@
             font-weight: bold;
         }
         .cap-input {
-            width: 50px !important;
+            width: 48px !important;
             padding: 4px !important;
             margin: 0 !important;
             text-align: center;
@@ -294,16 +294,16 @@
     <div id="boothTab" class="card">
         <h2>🧊 کنترل ظرف‌های یخچال غرفه</h2>
         <div class="hint">
-            💡 <b>راهنما:</b> می‌توانید ظرفیت هر ظرف (مثلاً ۱۶ کیلو خیارشور، ۴ کیلو ارده و...) را تغییر داده و ذخیره کنید. دکمه شارژ، **دقیقاً به میزان کمبود** از انبار کسر و ظرف غرفه را پر می‌کند.
+            💡 <b>راهنما:</b> در صورتی که کالایی در انبار موجودی نداشته باشد یا مقدار ظرف تغییر کرده باشد، می‌توانید موجودی واقعی داخل ظرف را مستقیماً ویرایش و ذخیره کنید.
         </div>
         <table>
             <thead>
                 <tr>
                     <th>نام کالا</th>
-                    <th>ظرفیت (کیلو)</th>
-                    <th>موجودی غرفه</th>
+                    <th>ظرفیت</th>
+                    <th>موجودی فعلی غرفه</th>
                     <th>وضعیت</th>
-                    <th>عملیات شارژ</th>
+                    <th>عملیات شارژ / ثبت دستی</th>
                 </tr>
             </thead>
             <tbody id="boothTable">
@@ -351,7 +351,6 @@
         <input type="number" id="pSellPrice" placeholder="مثلاً 120000" oninput="formatPrice(this, 'pSellPriceFormatted')">
         <div id="pSellPriceFormatted" class="price-display"></div>
 
-        <!-- این بخش فقط برای مدیر نمایش داده می‌شود -->
         <div id="buyPriceField" style="display:none;">
             <label>قیمت خرید هر کیلو/عدد (تومان) - فقط مدیر می‌بیند:</label>
             <input type="number" id="pBuyPrice" placeholder="مثلاً 90000" oninput="formatPrice(this, 'pBuyPriceFormatted')">
@@ -382,13 +381,13 @@
         </table>
     </div>
 
-    <!-- گزارش فروش (فقط مدیر) -->
+    <!-- گزارش فروش -->
     <div id="reportTab" class="card">
         <h2>📊 گزارش فروش غرفه</h2>
         <div id="reportContent">در حال بارگذاری...</div>
     </div>
 
-    <div class="build-tag">نسخه کد: v11 - اصلاح دقیق ساعت ایران، افزودن گزارش مدیر و تغییر سریع ظرفیت ظرف‌ها</div>
+    <div class="build-tag">نسخه کد: v13 - گزارش اختصاصی امروز برای فروشندگان و گزارش جامع با تقویم برای مدیر</div>
 
     <script>
         const tg = window.Telegram.WebApp;
@@ -465,9 +464,9 @@
                 setupView(['btnSale', 'btnBooth', 'btnProduct', 'btnInventory', 'btnReport'], 'saleTab');
                 checkLowStockAlert();
             } else if (currentRole === 'morning_seller') {
-                setupView(['btnSale', 'btnBooth', 'btnProduct', 'btnInventory'], 'saleTab');
+                setupView(['btnSale', 'btnBooth', 'btnProduct', 'btnInventory', 'btnReport'], 'saleTab');
             } else {
-                setupView(['btnSale', 'btnBooth'], 'saleTab');
+                setupView(['btnSale', 'btnBooth', 'btnReport'], 'saleTab');
             }
 
             loadProductDatalist();
@@ -718,7 +717,7 @@
 
             let currentBooth = product.booth_stock || 0;
             if (currentBooth < qty) {
-                alert('⚠️ موجودی ظرف غرفه کمتر از مقدار فروش است! لطفاً ابتدا ظرف غرفه را شارژ کنید.');
+                alert('⚠️ موجودی ظرف غرفه کمتر از مقدار فروش است! لطفاً ابتدا ظرف غرفه را شارژ یا موجودی واقعی را ویرایش کنید.');
             }
 
             const newBoothStock = Math.max(0, Number((currentBooth - qty).toFixed(3)));
@@ -762,6 +761,19 @@
             }
         }
 
+        async function updateDirectBoothStock(productId, newStockVal) {
+            const val = parseFloat(newStockVal);
+            if (isNaN(val) || val < 0) return alert('لطفاً یک عدد معتبر برای موجودی ظرف وارد کنید');
+
+            const { error } = await _supabase.from('products').update({ booth_stock: val }).eq('id', productId);
+            if (!error) {
+                alert('✅ موجودی فعلی ظرف غرفه به‌روزرسانی شد.');
+                loadBoothInventory();
+            } else {
+                alert('خطا در به‌روزرسانی موجودی ظرف: ' + error.message);
+            }
+        }
+
         async function smartFillBooth(productId) {
             const { data: product } = await _supabase.from('products').select('*').eq('id', productId).single();
             if (!product) return;
@@ -777,7 +789,7 @@
             }
 
             if (currentMain < neededAmount) {
-                return alert(`⚠️ موجودی انبار اصلی کافی نیست!\nنیاز به شارژ: ${neededAmount} کیلوگرم\nموجودی انبار اصلی: ${currentMain} کیلوگرم`);
+                return alert(`⚠️ موجودی انبار اصلی کافی نیست!\nنیاز به شارژ: ${neededAmount} کیلوگرم\nموجودی انبار اصلی: ${currentMain} کیلوگرم\n\n💡 اگر داخل یخچال جنس موجود است، می‌توانید مقدار موجودی ظرف را مستقیماً تایپ و ثبت کنید.`);
             }
 
             const newMainStock = Number((currentMain - neededAmount).toFixed(3));
@@ -806,11 +818,12 @@
                 return;
             }
 
-            const canEditCap = (currentRole === 'admin' || currentRole === 'morning_seller');
+            const canEdit = (currentRole === 'admin' || currentRole === 'morning_seller');
 
             products.forEach(p => {
                 const capacity = p.container_capacity || 7.0;
                 const currentBooth = p.booth_stock || 0;
+                const mainStock = p.stock || 0;
                 const needed = Number((capacity - currentBooth).toFixed(3));
                 const status = getQualitativeStatus(currentBooth, capacity);
 
@@ -818,18 +831,24 @@
                 tr.innerHTML = `
                     <td><b>${p.name}</b></td>
                     <td>
-                        ${canEditCap 
+                        ${canEdit 
                             ? `<input type="number" step="0.5" class="cap-input" id="cap_${p.id}" value="${capacity}"> 
                                <button class="row-btn edit-btn" style="padding:2px 5px;" onclick="updateContainerCapacity('${p.id}', document.getElementById('cap_${p.id}').value)">💾</button>`
                             : `${capacity} کیلو`
                         }
                     </td>
-                    <td>${Number(currentBooth).toLocaleString('fa-IR')} کیلو</td>
+                    <td>
+                        ${canEdit 
+                            ? `<input type="number" step="0.1" class="cap-input" id="boothStockInput_${p.id}" value="${currentBooth}"> کیلو
+                               <button class="row-btn edit-btn" style="padding:2px 5px;" title="ثبت مستقیم موجودی ظرف" onclick="updateDirectBoothStock('${p.id}', document.getElementById('boothStockInput_${p.id}').value)">💾</button>`
+                            : `${Number(currentBooth).toLocaleString('fa-IR')} کیلو`
+                        }
+                    </td>
                     <td><span class="status-tag ${status.class}">${status.label}</span></td>
                     <td>
                         ${needed > 0 
                             ? `<button class="row-btn fill-btn" onclick="smartFillBooth('${p.id}')">🔄 پر کردن ظرف</button>
-                               <span class="need-charge-text">کمبود: ${needed} کیلو</span>`
+                               <span class="need-charge-text">کمبود: ${needed} کیلو (انبار: ${mainStock} کیلو)</span>`
                             : `<span style="color:#10b981; font-weight:bold; font-size:11px;">✨ ظرف پر است</span>`
                         }
                     </td>
@@ -912,94 +931,144 @@
             }
         }
 
-        // اصلاح گزارش فروش (صبح، شب، و اضافه شدن کارت مدیر)
         async function loadSalesReport() {
             const content = document.getElementById('reportContent');
             content.innerHTML = 'در حال بارگذاری...';
 
+            const now = new Date();
+            const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Tehran' });
+
             const { data: sales, error } = await _supabase
                 .from('sales')
-                .select('seller_name, sell_price, quantity, created_at');
+                .select('product_code, quantity, sell_price, created_at, seller_name')
+                .order('created_at', { ascending: false });
 
             if (error) {
                 content.innerHTML = '❌ خطا در دریافت گزارش: ' + error.message;
                 return;
             }
 
-            if (!sales || sales.length === 0) {
-                content.innerHTML = 'هنوز هیچ فروشی ثبت نشده است.';
+            // گزارش اختصاصی فروشندگان (صبح / شب) - فقط فروش امروز خودش
+            if (currentRole === 'morning_seller' || currentRole === 'evening_seller') {
+                const targetRolePrefix = (currentRole === 'morning_seller') ? 'فروشنده صبح' : 'فروشنده شب';
+                
+                const todayMySales = (sales || []).filter(s => {
+                    if (!s.seller_name || s.seller_name.indexOf(targetRolePrefix) !== 0) return false;
+                    const itemDateStr = new Date(s.created_at).toLocaleDateString('en-CA', { timeZone: 'Asia/Tehran' });
+                    return itemDateStr === todayStr;
+                });
+
+                const totalSum = todayMySales.reduce((sum, s) => sum + (Number(s.sell_price) || 0), 0);
+
+                if (todayMySales.length === 0) {
+                    content.innerHTML = `
+                        <div class="report-card">
+                            <h3>📊 گزارش فروش امروز شما (${targetRolePrefix})</h3>
+                            <p style="color:#fbbf24;">امروز هنوز هیچ فروشی برای شما ثبت نشده است.</p>
+                        </div>`;
+                    return;
+                }
+
+                const codes = [...new Set(todayMySales.map(s => s.product_code))];
+                const { data: productsData } = await _supabase.from('products').select('code, name').in('code', codes);
+                const nameMap = {};
+                (productsData || []).forEach(p => { nameMap[p.code] = p.name; });
+
+                const rows = todayMySales.map(s => {
+                    const timeStr = new Date(s.created_at).toLocaleTimeString('fa-IR', { 
+                        timeZone: 'Asia/Tehran', hour: '2-digit', minute: '2-digit' 
+                    });
+                    const productName = nameMap[s.product_code] || s.product_code;
+                    return `<tr>
+                        <td>${timeStr}</td>
+                        <td>${productName}</td>
+                        <td>${Number(s.quantity).toLocaleString('fa-IR', { maximumFractionDigits: 3 })} کیلو</td>
+                        <td>${Number(s.sell_price).toLocaleString('fa-IR')} تومان</td>
+                    </tr>`;
+                }).join('');
+
+                content.innerHTML = `
+                    <div class="report-card">
+                        <h3>🌅 گزارش فروش امروز شما (${targetRolePrefix})</h3>
+                        <p style="font-size:15px; color:#38bdf8; font-weight:bold;">مجموع فروش امروز: ${totalSum.toLocaleString('fa-IR')} تومان (${todayMySales.length} فاکتور)</p>
+                        <h4 style="color:#cbd5e1; margin-top:12px; margin-bottom:6px;">📋 ریز فاکتورهای امروز:</h4>
+                        <table>
+                            <thead><tr><th>ساعت</th><th>کالا</th><th>مقدار</th><th>مبلغ</th></tr></thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>`;
                 return;
             }
 
-            const now = new Date();
-            const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Tehran' }); // YYYY-MM-DD ایران
+            // گزارش ویژه مدیر (مشاهده امروز، کل و انتخاب روزهای قبل)
+            if (currentRole === 'admin') {
+                const totals = {
+                    morning: { today: 0, all: 0, todayCount: 0, allCount: 0 },
+                    evening: { today: 0, all: 0, todayCount: 0, allCount: 0 },
+                    admin: { today: 0, all: 0, todayCount: 0, allCount: 0 }
+                };
 
-            const totals = {
-                morning: { today: 0, all: 0, todayCount: 0, allCount: 0 },
-                evening: { today: 0, all: 0, todayCount: 0, allCount: 0 },
-                admin: { today: 0, all: 0, todayCount: 0, allCount: 0 }
-            };
+                (sales || []).forEach(s => {
+                    let key = null;
+                    if (s.seller_name && s.seller_name.indexOf('فروشنده صبح') === 0) key = 'morning';
+                    else if (s.seller_name && s.seller_name.indexOf('فروشنده شب') === 0) key = 'evening';
+                    else if (s.seller_name && s.seller_name.indexOf('مدیر') === 0) key = 'admin';
+                    if (!key) return;
 
-            sales.forEach(s => {
-                let key = null;
-                if (s.seller_name && s.seller_name.indexOf('فروشنده صبح') === 0) key = 'morning';
-                else if (s.seller_name && s.seller_name.indexOf('فروشنده شب') === 0) key = 'evening';
-                else if (s.seller_name && s.seller_name.indexOf('مدیر') === 0) key = 'admin';
-                if (!key) return;
+                    const price = Number(s.sell_price) || 0;
+                    totals[key].all += price;
+                    totals[key].allCount += 1;
 
-                const price = Number(s.sell_price) || 0;
-                totals[key].all += price;
-                totals[key].allCount += 1;
-
-                if (s.created_at) {
-                    const itemDateStr = new Date(s.created_at).toLocaleDateString('en-CA', { timeZone: 'Asia/Tehran' });
-                    if (itemDateStr === todayStr) {
-                        totals[key].today += price;
-                        totals[key].todayCount += 1;
+                    if (s.created_at) {
+                        const itemDateStr = new Date(s.created_at).toLocaleDateString('en-CA', { timeZone: 'Asia/Tehran' });
+                        if (itemDateStr === todayStr) {
+                            totals[key].today += price;
+                            totals[key].todayCount += 1;
+                        }
                     }
-                }
-            });
+                });
 
-            content.innerHTML = `
-                <div class="report-card">
-                    <h3>🌅 فروشنده صبح</h3>
-                    <p>فروش امروز: ${totals.morning.today.toLocaleString('fa-IR')} تومان (${totals.morning.todayCount} فاکتور)</p>
-                    <p>مجموع کل فروش: ${totals.morning.all.toLocaleString('fa-IR')} تومان (${totals.morning.allCount} فاکتور)</p>
-                    <button class="row-btn edit-btn" onclick="toggleDetail('morning')">📋 گزارش با جزئیات و تاریخ</button>
-                    <div id="detailPanel_morning" style="display:none; margin-top:10px;">
-                        <label>تاریخ مورد نظر را انتخاب کن:</label>
-                        <input type="date" id="detailDate_morning">
-                        <button class="submit-btn" style="margin-top:8px;" onclick="loadDetailReport('morning')">نمایش گزارش این تاریخ</button>
-                        <div id="detailResult_morning" style="margin-top:10px;"></div>
+                content.innerHTML = `
+                    <div class="report-card">
+                        <h3>🌅 فروشنده صبح</h3>
+                        <p>فروش امروز: ${totals.morning.today.toLocaleString('fa-IR')} تومان (${totals.morning.todayCount} فاکتور)</p>
+                        <p>مجموع کل فروش: ${totals.morning.all.toLocaleString('fa-IR')} تومان (${totals.morning.allCount} فاکتور)</p>
+                        <button class="row-btn edit-btn" onclick="toggleDetail('morning')">📋 گزارش با جزئیات و تاریخ</button>
+                        <div id="detailPanel_morning" style="display:none; margin-top:10px;">
+                            <label>تاریخ مورد نظر را انتخاب کن:</label>
+                            <input type="date" id="detailDate_morning">
+                            <button class="submit-btn" style="margin-top:8px;" onclick="loadDetailReport('morning')">نمایش گزارش این تاریخ</button>
+                            <div id="detailResult_morning" style="margin-top:10px;"></div>
+                        </div>
                     </div>
-                </div>
 
-                <div class="report-card">
-                    <h3>🌙 فروشنده شب</h3>
-                    <p>فروش امروز: ${totals.evening.today.toLocaleString('fa-IR')} تومان (${totals.evening.todayCount} فاکتور)</p>
-                    <p>مجموع کل فروش: ${totals.evening.all.toLocaleString('fa-IR')} تومان (${totals.evening.allCount} فاکتور)</p>
-                    <button class="row-btn edit-btn" onclick="toggleDetail('evening')">📋 گزارش با جزئیات و تاریخ</button>
-                    <div id="detailPanel_evening" style="display:none; margin-top:10px;">
-                        <label>تاریخ مورد نظر را انتخاب کن:</label>
-                        <input type="date" id="detailDate_evening">
-                        <button class="submit-btn" style="margin-top:8px;" onclick="loadDetailReport('evening')">نمایش گزارش این تاریخ</button>
-                        <div id="detailResult_evening" style="margin-top:10px;"></div>
+                    <div class="report-card">
+                        <h3>🌙 فروشنده شب</h3>
+                        <p>فروش امروز: ${totals.evening.today.toLocaleString('fa-IR')} تومان (${totals.evening.todayCount} فاکتور)</p>
+                        <p>مجموع کل فروش: ${totals.evening.all.toLocaleString('fa-IR')} تومان (${totals.evening.allCount} فاکتور)</p>
+                        <button class="row-btn edit-btn" onclick="toggleDetail('evening')">📋 گزارش با جزئیات و تاریخ</button>
+                        <div id="detailPanel_evening" style="display:none; margin-top:10px;">
+                            <label>تاریخ مورد نظر را انتخاب کن:</label>
+                            <input type="date" id="detailDate_evening">
+                            <button class="submit-btn" style="margin-top:8px;" onclick="loadDetailReport('evening')">نمایش گزارش این تاریخ</button>
+                            <div id="detailResult_evening" style="margin-top:10px;"></div>
+                        </div>
                     </div>
-                </div>
 
-                <div class="report-card">
-                    <h3>👑 مدیر غرفه</h3>
-                    <p>فروش امروز: ${totals.admin.today.toLocaleString('fa-IR')} تومان (${totals.admin.todayCount} فاکتور)</p>
-                    <p>مجموع کل فروش: ${totals.admin.all.toLocaleString('fa-IR')} تومان (${totals.admin.allCount} فاکتور)</p>
-                    <button class="row-btn edit-btn" onclick="toggleDetail('admin')">📋 گزارش با جزئیات و تاریخ</button>
-                    <div id="detailPanel_admin" style="display:none; margin-top:10px;">
-                        <label>تاریخ مورد نظر را انتخاب کن:</label>
-                        <input type="date" id="detailDate_admin">
-                        <button class="submit-btn" style="margin-top:8px;" onclick="loadDetailReport('admin')">نمایش گزارش این تاریخ</button>
-                        <div id="detailResult_admin" style="margin-top:10px;"></div>
+                    <div class="report-card">
+                        <h3>👑 مدیر غرفه</h3>
+                        <p>فروش امروز: ${totals.admin.today.toLocaleString('fa-IR')} تومان (${totals.admin.todayCount} فاکتور)</p>
+                        <p>مجموع کل فروش: ${totals.admin.all.toLocaleString('fa-IR')} تومان (${totals.admin.allCount} فاکتور)</p>
+                        <button class="row-btn edit-btn" onclick="toggleDetail('admin')">📋 گزارش با جزئیات و تاریخ</button>
+                        <div id="detailPanel_admin" style="display:none; margin-top:10px;">
+                            <label>تاریخ مورد نظر را انتخاب کن:</label>
+                            <input type="date" id="detailDate_admin">
+                            <button class="submit-btn" style="margin-top:8px;" onclick="loadDetailReport('admin')">نمایش گزارش این تاریخ</button>
+                            <div id="detailResult_admin" style="margin-top:10px;"></div>
+                        </div>
                     </div>
-                </div>
-            `;
+                `;
+            }
         }
 
         function toggleDetail(key) {
@@ -1007,7 +1076,6 @@
             panel.style.display = (panel.style.display === 'none' || !panel.style.display) ? 'block' : 'none';
         }
 
-        // دریافت گزارش جزئیات با محاسبه کامل زمان محلی ایران
         async function loadDetailReport(key) {
             const dateVal = document.getElementById('detailDate_' + key).value;
             const resultEl = document.getElementById('detailResult_' + key);
@@ -1033,7 +1101,6 @@
                 return;
             }
 
-            // فیلتر بر اساس تاریخ انتخاب شده در منطقه زمانی ایران
             const daySales = (sales || []).filter(s => {
                 if (!s.seller_name || s.seller_name.indexOf(rolePrefix) !== 0) return false;
                 const itemDateStr = new Date(s.created_at).toLocaleDateString('en-CA', { timeZone: 'Asia/Tehran' });
@@ -1053,7 +1120,6 @@
             let total = 0;
             const rows = daySales.map(s => {
                 total += Number(s.sell_price) || 0;
-                // تبدیل زمان به ساعت:دقیقه رسمی تهران
                 const timeStr = new Date(s.created_at).toLocaleTimeString('fa-IR', { 
                     timeZone: 'Asia/Tehran', 
                     hour: '2-digit', 
@@ -1079,4 +1145,3 @@
     </script>
 </body>
 </html>
-
