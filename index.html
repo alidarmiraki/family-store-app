@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>سیستم انبار و فروش غرفه - نسخه کامل و اخر لبنیات و ترشیجات فله فامیلی</title>
+    <title>v16 آخرین نسخه لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -70,7 +70,7 @@
         .card.active { display: block; }
         h2 { color: #38bdf8; margin-top: 0; font-size: 16px; }
         label { font-size: 12px; color: #cbd5e1; display: block; margin-top: 10px; text-align: right; }
-        input, select {
+        input, select, textarea {
             width: 100%;
             padding: 12px;
             margin-top: 5px;
@@ -82,6 +82,7 @@
             font-size: 14px;
             font-family: inherit;
         }
+        textarea { resize: vertical; height: 90px; }
         .price-display {
             font-size: 12px;
             color: #38bdf8;
@@ -181,23 +182,29 @@
         .edit-btn { background: #2563eb; color: #fff; }
         .delete-btn { background: #dc2626; color: #fff; }
         .fill-btn { background: linear-gradient(90deg, #0284c7, #2563eb); color: #fff; font-weight: bold; }
-        .report-card {
+        .report-card, .msg-card {
             background: rgba(15, 23, 42, 0.6);
             border: 1px solid #334155;
             border-radius: 12px;
             padding: 14px;
             margin-bottom: 12px;
         }
-        .report-card h3 {
+        .report-card h3, .msg-card h3 {
             margin: 0 0 8px 0;
             color: #38bdf8;
             font-size: 14px;
         }
-        .report-card p {
+        .report-card p, .msg-card p {
             margin: 4px 0;
             font-size: 13px;
             color: #e2e8f0;
             text-align: right;
+        }
+        .msg-time {
+            font-size: 10px;
+            color: #94a3b8;
+            text-align: left;
+            display: block;
         }
         input[type="radio"] { width: auto; margin-left: 4px; }
         .unit-toggle {
@@ -247,6 +254,15 @@
             border-radius: 8px;
             border: 1px solid rgba(56, 189, 248, 0.2);
         }
+        .photo-preview {
+            max-width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-top: 8px;
+            display: none;
+            border: 1px solid #334155;
+        }
     </style>
 </head>
 <body>
@@ -271,10 +287,14 @@
     <!-- تب‌های بالای صفحه -->
     <div class="tabs" id="tabContainer">
         <button class="tab-btn" id="btnSale" onclick="switchTab('sale'); loadProductDatalist();">🛍️ ثبت فروش</button>
+        <button class="tab-btn" id="btnAttendance" onclick="switchTab('attendance');">⏰ حضور و غیاب</button>
+        <button class="tab-btn" id="btnMessage" onclick="switchTab('message');">📩 ارسال پیام به مدیر</button>
+        <button class="tab-btn" id="btnInbox" onclick="switchTab('inbox'); loadManagerInbox();">📥 صندوقچه پیام‌ها</button>
         <button class="tab-btn" id="btnBooth" onclick="switchTab('booth'); loadBoothInventory();">🧊 وضعیت یخچال غرفه</button>
         <button class="tab-btn" id="btnProduct" onclick="switchTab('product')">➕ تعریف کالا</button>
         <button class="tab-btn" id="btnInventory" onclick="switchTab('inventory'); loadInventory();">📦 موجودی انبار</button>
         <button class="tab-btn" id="btnReport" onclick="switchTab('report'); loadSalesReport();">📊 گزارش فروش</button>
+        <button class="tab-btn" id="btnWorkReport" onclick="switchTab('workReport'); loadWorkReport();">🗓️ کارکرد پرسنل</button>
     </div>
 
     <!-- فرم ثبت فروش -->
@@ -294,6 +314,49 @@
         <div id="sPriceFormatted" class="price-display"></div>
 
         <button class="submit-btn" onclick="submitSale()">ثبت فاکتور فروش</button>
+    </div>
+
+    <!-- فرم حضور و غیاب فروشنده -->
+    <div id="attendanceTab" class="card">
+        <h2>⏰ ثبت ورود، خروج و مرخصی</h2>
+        <div class="hint">لطفاً زمان دقیق ورود و خروج، عکس مربوط به همان لحظه و در صورت وجود مرخصی یا اضافه‌کاری را ثبت کنید.</div>
+
+        <label>نوع ثبت:</label>
+        <select id="attType" onchange="toggleAttendanceFields()">
+            <option value="entry">🟢 ثبت ورود به شیفت</option>
+            <option value="exit">🔴 ثبت خروج از شیفت</option>
+            <option value="leave">🏖️ اعلام مرخصی روزانه</option>
+        </select>
+
+        <div id="attTimeFields">
+            <label>ساعت اضافه ایستادن (اضافه‌کاری به ساعت):</label>
+            <input type="number" id="attOvertime" step="0.5" value="0" placeholder="مثلاً 1.5 ساعت">
+
+            <label>📸 آپلود عکس با ساعت (سلفی/عکس از محل غرفه):</label>
+            <input type="file" id="attPhoto" accept="image/*" onchange="previewAttPhoto(event)">
+            <img id="photoPreview" class="photo-preview">
+        </div>
+
+        <label>توضیحات (اختیاری):</label>
+        <textarea id="attNote" placeholder="مثلاً دلیل اضافه‌کاری یا توضیحات مرخصی..."></textarea>
+
+        <button class="submit-btn" onclick="submitAttendance()">ثبت در سیستم حضور و غیاب</button>
+    </div>
+
+    <!-- فرم ارسال پیام به مدیر -->
+    <div id="messageTab" class="card">
+        <h2>📩 ارسال پیام / گزارش کسری به مدیر</h2>
+        <label>عنوان پیام:</label>
+        <input type="text" id="msgTitle" placeholder="مثلاً: اعلام کسری خیارشور یا درخواست ظرف">
+        <label>متن پیام:</label>
+        <textarea id="msgBody" placeholder="توضیحات کامل پیام یا گزارش کسری را بنویسید..."></textarea>
+        <button class="submit-btn" onclick="sendMessageToAdmin()">ارسال به مدیر غرفه</button>
+    </div>
+
+    <!-- صندوقچه پیام‌های مدیر -->
+    <div id="inboxTab" class="card">
+        <h2>📥 صندوقچه پیام‌ها و گزارشات کسری</h2>
+        <div id="inboxList">در حال بارگذاری...</div>
     </div>
 
     <!-- تب مدیریت ظروف یخچال غرفه -->
@@ -393,7 +456,18 @@
         <div id="reportContent">در حال بارگذاری...</div>
     </div>
 
-    <div class="build-tag">نسخه کامل و اخر لبنیات و ترشیجات فله فامیلی - v14</div>
+    <!-- گزارش کارکرد ماهانه پرسنل مدیر -->
+    <div id="workReportTab" class="card">
+        <h2>🗓️ گزارش کارکرد ماهانه و حضور و غیاب پرسنل</h2>
+        <label>انتخاب فروشنده:</label>
+        <select id="workSellerSelect" onchange="loadWorkReport()">
+            <option value="فروشنده صبح">فروشنده صبح</option>
+            <option value="فروشنده شب">فروشنده شب</option>
+        </select>
+        <div id="workReportContent" style="margin-top:15px;"></div>
+    </div>
+
+    <div class="build-tag">v16 آخرین نسخه لبنیات و ترشیجات فله فامیلی ( دره میرکی )</div>
 
     <script>
         const tg = window.Telegram.WebApp;
@@ -404,6 +478,10 @@
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let cachedProductsList = [];
+        let currentRole = "";
+        let currentUserLabel = "";
+        let editingProductId = null;
+        let uploadedPhotoBase64 = "";
 
         function updateClock() {
             const now = new Date();
@@ -423,10 +501,6 @@
             evening_seller: "فروشنده شب",
             admin: "مدیر"
         };
-
-        let currentRole = "";
-        let currentUserLabel = "";
-        let editingProductId = null;
 
         async function checkLogin() {
             const username = document.getElementById('accessUser').value.trim();
@@ -469,12 +543,13 @@
             document.getElementById('buyPriceField').style.display = (currentRole === 'admin') ? 'block' : 'none';
 
             if (currentRole === 'admin') {
-                setupView(['btnSale', 'btnBooth', 'btnProduct', 'btnInventory', 'btnReport'], 'saleTab');
-                checkLowStockAlert();
+                setupView(['btnSale', 'btnInbox', 'btnBooth', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport'], 'saleTab');
+                checkLowStockAlertNoWeight();
             } else if (currentRole === 'morning_seller') {
-                setupView(['btnSale', 'btnBooth', 'btnProduct', 'btnInventory', 'btnReport'], 'saleTab');
+                setupView(['btnSale', 'btnAttendance', 'btnMessage', 'btnBooth', 'btnProduct', 'btnInventory', 'btnReport'], 'saleTab');
             } else {
-                setupView(['btnSale', 'btnBooth', 'btnReport'], 'saleTab');
+                // شیفت شب
+                setupView(['btnSale', 'btnAttendance', 'btnMessage', 'btnReport'], 'saleTab');
             }
 
             loadProductDatalist();
@@ -525,6 +600,203 @@
 
             if (targetBtn) targetBtn.classList.add('active');
             if (targetTab) targetTab.classList.add('active');
+        }
+
+        // --- هشدار موجودی انبار هوشمند مدیر (بدون ذکر وزن) ---
+        async function checkLowStockAlertNoWeight() {
+            if (currentRole !== 'admin') return;
+
+            const { data: products } = await _supabase.from('products').select('name, stock, min_stock');
+            const btn = document.getElementById('btnInventory');
+            if (!products) return;
+
+            const lowStockItems = [];
+            products.forEach(p => {
+                if (p.stock <= 0) {
+                    lowStockItems.push(`❌ ${p.name}: اصلاً هیچی نیست!`);
+                } else if (p.stock <= p.min_stock) {
+                    lowStockItems.push(`⚠️ ${p.name}: از این یکی هست (کمبوده)`);
+                }
+            });
+
+            if (lowStockItems.length > 0) {
+                btn.innerHTML = '📦 موجودی انبار 🔴';
+                alert('⚠️ هشدار وضعیت موجودی انبار مدیر:\n\n' + lowStockItems.join('\n'));
+            } else {
+                btn.innerHTML = '📦 موجودی انبار';
+            }
+        }
+
+        // --- ارسال پیام / گزارش کسری به مدیر ---
+        async function sendMessageToAdmin() {
+            const title = document.getElementById('msgTitle').value.trim();
+            const body = document.getElementById('msgBody').value.trim();
+
+            if (!title || !body) {
+                return alert('لطفاً عنوان و متن پیام را وارد کنید.');
+            }
+
+            const { error } = await _supabase.from('messages').insert([{
+                sender: currentUserLabel,
+                title: title,
+                body: body
+            }]);
+
+            if (!error) {
+                alert('✅ پیام شما با موفقیت برای مدیر ارسال شد.');
+                document.getElementById('msgTitle').value = '';
+                document.getElementById('msgBody').value = '';
+            } else {
+                alert('خطا در ارسال پیام: ' + error.message);
+            }
+        }
+
+        // --- بارگذاری صندوقچه پیام‌های مدیر ---
+        async function loadManagerInbox() {
+            const inbox = document.getElementById('inboxList');
+            inbox.innerHTML = 'در حال دریافت پیام‌ها...';
+
+            const { data: msgs, error } = await _supabase
+                .from('messages')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error || !msgs || msgs.length === 0) {
+                inbox.innerHTML = '<p style="text-align:center; color:#94a3b8;">هیچ پیامی در صندوقچه دریافت نشده است.</p>';
+                return;
+            }
+
+            inbox.innerHTML = msgs.map(m => {
+                const timeStr = new Date(m.created_at).toLocaleString('fa-IR', { timeZone: 'Asia/Tehran' });
+                return `
+                    <div class="msg-card">
+                        <h3>📩 ${m.title}</h3>
+                        <p style="color:#38bdf8; font-size:11px;">ارسال‌کننده: ${m.sender}</p>
+                        <p>${m.body}</p>
+                        <span class="msg-time">⏱️ ${timeStr}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // --- حضور و غیاب و آپلود عکس ---
+        function toggleAttendanceFields() {
+            const type = document.getElementById('attType').value;
+            document.getElementById('attTimeFields').style.display = (type === 'leave') ? 'none' : 'block';
+        }
+
+        function previewAttPhoto(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    uploadedPhotoBase64 = e.target.result;
+                    const img = document.getElementById('photoPreview');
+                    img.src = uploadedPhotoBase64;
+                    img.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        async function submitAttendance() {
+            const type = document.getElementById('attType').value;
+            const overtime = parseFloat(document.getElementById('attOvertime').value) || 0;
+            const note = document.getElementById('attNote').value.trim();
+
+            if (type !== 'leave' && !uploadedPhotoBase64) {
+                return alert('لطفاً جهت تأیید ورود/خروج، عکس با ساعت آپلود کنید.');
+            }
+
+            const { error } = await _supabase.from('attendance').insert([{
+                seller_name: currentUserLabel,
+                type: type,
+                overtime_hours: overtime,
+                photo_url: uploadedPhotoBase64,
+                note: note
+            }]);
+
+            if (!error) {
+                alert('✅ اطلاعات حضور و غیاب با موفقیت ثبت گردید.');
+                document.getElementById('attNote').value = '';
+                document.getElementById('attPhoto').value = '';
+                document.getElementById('photoPreview').style.display = 'none';
+                uploadedPhotoBase64 = "";
+            } else {
+                alert('خطا در ثبت حضور و غیاب: ' + error.message);
+            }
+        }
+
+        // --- گزارش کارکرد پرسنل برای مدیر ---
+        async function loadWorkReport() {
+            const sellerRole = document.getElementById('workSellerSelect').value;
+            const container = document.getElementById('workReportContent');
+            container.innerHTML = 'در حال محاسبه کارکرد ماهانه...';
+
+            const { data: records, error } = await _supabase
+                .from('attendance')
+                .select('*')
+                .ilike('seller_name', `${sellerRole}%`)
+                .order('created_at', { ascending: false });
+
+            if (error || !records || records.length === 0) {
+                container.innerHTML = `<p style="color:#fbbf24;">هیچ رکورد کارکردی برای ${sellerRole} ثبت نشده است.</p>`;
+                return;
+            }
+
+            const uniqueDays = new Set();
+            let totalOvertime = 0;
+            let leaveCount = 0;
+
+            const rows = records.map(r => {
+                const dateObj = new Date(r.created_at);
+                const dateStr = dateObj.toLocaleDateString('fa-IR', { timeZone: 'Asia/Tehran' });
+                const timeStr = dateObj.toLocaleTimeString('fa-IR', { timeZone: 'Asia/Tehran', hour: '2-digit', minute: '2-digit' });
+
+                if (r.type !== 'leave') {
+                    uniqueDays.add(dateStr);
+                } else {
+                    leaveCount++;
+                }
+
+                totalOvertime += (r.overtime_hours || 0);
+
+                let typeTitle = '🟢 ورود';
+                if (r.type === 'exit') typeTitle = '🔴 خروج';
+                if (r.type === 'leave') typeTitle = '🏖️ مرخصی';
+
+                return `
+                    <tr>
+                        <td>${dateStr} - ${timeStr}</td>
+                        <td>${typeTitle}</td>
+                        <td>${r.overtime_hours || 0} ساعت</td>
+                        <td>${r.photo_url ? `<a href="${r.photo_url}" target="_blank" style="color:#38bdf8;">👁️ مشاهده عکس</a>` : 'بدون عکس'}</td>
+                        <td>${r.note || '-'}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            container.innerHTML = `
+                <div class="report-card">
+                    <h3>📊 خلاصه کارکرد ماهانه (${sellerRole})</h3>
+                    <p><b>کل روزهای حضور سرکار در این برج:</b> <span style="color:#34d399; font-weight:bold; font-size:15px;">${uniqueDays.size} روز</span></p>
+                    <p><b>مجموع اضافه‌کاری:</b> ${totalOvertime} ساعت</p>
+                    <p><b>روزهای مرخصی:</b> ${leaveCount} روز</p>
+                </div>
+                <h4 style="color:#38bdf8; margin-top:15px;">📋 جزئیات ورود و خروج:</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>تاریخ و ساعت</th>
+                            <th>نوع ثبت</th>
+                            <th>اضافه‌کاری</th>
+                            <th>عکس ثبت‌شده</th>
+                            <th>توضیحات</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            `;
         }
 
         async function loadProductDatalist() {
@@ -927,23 +1199,6 @@
             });
         }
 
-        async function checkLowStockAlert() {
-            if (currentRole !== 'admin') return;
-
-            const { data: products } = await _supabase.from('products').select('name, stock, min_stock');
-            const btn = document.getElementById('btnInventory');
-            if (!products) return;
-
-            const low = products.filter(p => p.stock <= p.min_stock);
-            if (low.length > 0) {
-                btn.innerHTML = '📦 موجودی انبار 🔴';
-                alert('⚠️ هشدار موجودی کم انبار!\n\n' +
-                    low.map(p => '• ' + p.name + ' (' + Number(p.stock).toLocaleString('fa-IR') + ' کیلو باقی مانده)').join('\n'));
-            } else {
-                btn.innerHTML = '📦 موجودی انبار';
-            }
-        }
-
         async function loadSalesReport() {
             const content = document.getElementById('reportContent');
             content.innerHTML = 'در حال بارگذاری...';
@@ -1156,4 +1411,3 @@
     </script>
 </body>
 </html>
-
