@@ -584,7 +584,7 @@
         let uploadedPhotoBase64 = "";
         let selectedProductUnitPrice = 0;
 
-        // --- توابع اختصاصی زمان و تاریخ ---
+        // --- توابع اختصاصی زمان و تاریخ لحظه‌ای ایران ---
         function getTehranDateString(dateObj = new Date()) {
             return new Intl.DateTimeFormat('fa-IR-u-ca-persian', {
                 timeZone: 'Asia/Tehran',
@@ -794,6 +794,7 @@
         async function sendMessageToAdmin() {
             const title = document.getElementById('msgTitle').value.trim();
             const body = document.getElementById('msgBody').value.trim();
+            const now = new Date();
 
             if (!title || !body) {
                 return alert('لطفاً عنوان و متن پیام را وارد کنید.');
@@ -802,7 +803,8 @@
             const { error } = await _supabase.from('messages').insert([{
                 sender: currentUserLabel,
                 title: title,
-                body: body
+                body: body,
+                created_at: now.toISOString()
             }]);
 
             if (!error) {
@@ -904,6 +906,7 @@
 
             const now = new Date();
             const timeStrNow = getTehranTimeString(now);
+            const fullDateTimeStr = getTehranFullDateTimeString(now);
             const settings = getShiftSettings();
 
             let targetStartTime = (currentRole === 'morning_seller') ? settings.mStart : settings.eStart;
@@ -917,7 +920,8 @@
                     await _supabase.from('messages').insert([{
                         sender: "سیستم خودکار تاخیر",
                         title: `⚠️ هشدار تاخیر ${currentUserLabel}`,
-                        body: `کاربر ${currentUserLabel} در تاریخ ${getTehranDateString(now)} در ساعت ${timeStrNow} با ${diffMinutes} دقیقه تاخیر ورود خود را ثبت کرد.`
+                        body: `کاربر ${currentUserLabel} در تاریخ ${getTehranDateString(now)} در ساعت ${timeStrNow} با ${diffMinutes} دقیقه تاخیر ورود خود را ثبت کرد.`,
+                        created_at: now.toISOString()
                     }]);
                     alert(`⚠️ ثبت ورود انجام شد اما شما ${diffMinutes} دقیقه تاخیر داشتید. گزارش تاخیر خودکار برای مدیر ارسال شد.`);
                 }
@@ -928,11 +932,12 @@
                 type: type,
                 overtime_hours: overtimeHours,
                 photo_url: uploadedPhotoBase64,
-                note: note
+                note: (note ? note + " | " : "") + `زمان ثبت: ${fullDateTimeStr}`,
+                created_at: now.toISOString()
             }]);
 
             if (!error) {
-                alert('✅ اطلاعات حضور و غیاب با موفقیت ثبت گردید.');
+                alert(`✅ اطلاعات حضور و غیاب با موفقیت ثبت گردید.\n⏱️ زمان ثبت: ${fullDateTimeStr}`);
                 document.getElementById('attNote').value = '';
                 document.getElementById('attPhoto').value = '';
                 document.getElementById('photoPreview').style.display = 'none';
@@ -964,11 +969,10 @@
 
             const rows = records.map(r => {
                 const dateObj = new Date(r.created_at);
-                const dateStr = getTehranDateString(dateObj);
-                const timeStr = getTehranTimeString(dateObj);
+                const fullStr = getTehranFullDateTimeString(dateObj);
 
                 if (r.type !== 'leave') {
-                    uniqueDays.add(dateStr);
+                    uniqueDays.add(getTehranDateString(dateObj));
                 } else {
                     leaveCount++;
                 }
@@ -981,7 +985,7 @@
 
                 return `
                     <tr>
-                        <td>${dateStr} - ${timeStr}</td>
+                        <td>${fullStr}</td>
                         <td>${typeTitle}</td>
                         <td>${r.overtime_hours || 0} ساعت</td>
                         <td>${r.photo_url ? `<a href="${r.photo_url}" target="_blank" style="color:#38bdf8;">👁️ مشاهده عکس</a>` : 'بدون عکس'}</td>
@@ -997,11 +1001,11 @@
                     <p><b>مجموع اضافه‌کاری:</b> ${totalOvertime.toFixed(1)} ساعت</p>
                     <p><b>روزهای مرخصی:</b> ${leaveCount} روز</p>
                 </div>
-                <h4 style="color:#38bdf8; margin-top:15px;">📋 جزئیات ورود و خروج:</h4>
+                <h4 style="color:#38bdf8; margin-top:15px;">📋 جزئیات دقیق ورود، خروج و زمان ثبت:</h4>
                 <table>
                     <thead>
                         <tr>
-                            <th>تاریخ و ساعت</th>
+                            <th>تاریخ و ساعت دقیق ثبت</th>
                             <th>نوع ثبت</th>
                             <th>اضافه‌کاری</th>
                             <th>عکس ثبت‌شده</th>
@@ -1225,14 +1229,18 @@
 
             await _supabase.from('products').update({ booth_stock: newBoothStock }).eq('id', product.id);
 
+            const now = new Date();
+            const fullTimeText = getTehranFullDateTimeString(now);
+
             await _supabase.from('sales').insert([{
                 product_code: product.code,
                 quantity: qty,
                 sell_price: calculatedPrice,
-                seller_name: currentUserLabel
+                seller_name: currentUserLabel,
+                created_at: now.toISOString()
             }]);
 
-            alert(`✅ فروش «${product.name}» ثبت شد.\n💰 مبلغ کل فاکتور: ${calculatedPrice.toLocaleString('fa-IR')} تومان\n🧊 موجودی جدید ظرف غرفه: ${newBoothStock} کیلوگرم`);
+            alert(`✅ فروش «${product.name}» در ساعت ${getTehranTimeString(now)} ثبت شد.\n💰 مبلغ کل فاکتور: ${calculatedPrice.toLocaleString('fa-IR')} تومان\n🧊 موجودی جدید ظرف غرفه: ${newBoothStock} کیلوگرم\n⏱️ زمان دقیق: ${fullTimeText}`);
 
             document.getElementById('sName').value = '';
             document.getElementById('sQty').value = '';
@@ -1422,7 +1430,7 @@
             });
         }
 
-        // --- گزارش فروش v23: تقویم هوشمند، گزارش روزانه و بازه‌ای ---
+        // --- گزارش فروش v23: تقویم هوشمند، گزارش روزانه و بازه‌ای با زمان لحظه‌ای ---
         async function loadSalesReport() {
             const content = document.getElementById('reportContent');
             content.innerHTML = 'در حال بارگذاری...';
@@ -1466,10 +1474,10 @@
                 (productsData || []).forEach(p => { nameMap[p.code] = p.name; });
 
                 const rows = todayMySales.map(s => {
-                    const timeStr = getTehranTimeString(new Date(s.created_at));
+                    const fullTimeStr = getTehranFullDateTimeString(new Date(s.created_at));
                     const productName = nameMap[s.product_code] || s.product_code;
                     return `<tr>
-                        <td>${timeStr}</td>
+                        <td>${fullTimeStr}</td>
                         <td>${productName}</td>
                         <td>${Number(s.quantity).toLocaleString('fa-IR', { maximumFractionDigits: 3 })} کیلو</td>
                         <td>${Number(s.sell_price).toLocaleString('fa-IR')} تومان</td>
@@ -1480,9 +1488,9 @@
                     <div class="report-card">
                         <h3>🌅 گزارش فروش امروز شما (${targetRolePrefix}) - ${getTehranDateString(now)}</h3>
                         <p style="font-size:15px; color:#38bdf8; font-weight:bold;">مجموع فروش امروز: ${totalSum.toLocaleString('fa-IR')} تومان (${todayMySales.length} فاکتور)</p>
-                        <h4 style="color:#cbd5e1; margin-top:12px; margin-bottom:6px;">📋 ریز فاکتورهای امروز:</h4>
+                        <h4 style="color:#cbd5e1; margin-top:12px; margin-bottom:6px;">📋 ریز فاکتورهای امروز با ثبت زمان لحظه‌ای:</h4>
                         <table>
-                            <thead><tr><th>ساعت</th><th>کالا</th><th>مقدار</th><th>مبلغ</th></tr></thead>
+                            <thead><tr><th>تاریخ و ساعت ثبت</th><th>کالا</th><th>مقدار</th><th>مبلغ</th></tr></thead>
                             <tbody>${rows}</tbody>
                         </table>
                     </div>`;
@@ -1639,12 +1647,11 @@
             const rows = filteredSales.map(s => {
                 totalSum += Number(s.sell_price) || 0;
                 const dateObj = new Date(s.created_at);
-                const timeStr = getTehranTimeString(dateObj);
-                const faDateStr = getTehranDateString(dateObj);
+                const fullDateTimeStr = getTehranFullDateTimeString(dateObj);
                 const productName = nameMap[s.product_code] || s.product_code;
 
                 return `<tr>
-                    <td>${faDateStr} - ${timeStr}</td>
+                    <td>${fullDateTimeStr}</td>
                     <td>${productName}</td>
                     <td>${Number(s.quantity).toLocaleString('fa-IR', { maximumFractionDigits: 3 })} کیلو</td>
                     <td>${Number(s.sell_price).toLocaleString('fa-IR')} تومان</td>
@@ -1653,7 +1660,7 @@
 
             resultEl.innerHTML = `
                 <table style="margin-top:10px;">
-                    <thead><tr><th>تاریخ و ساعت</th><th>کالا</th><th>مقدار</th><th>مبلغ</th></tr></thead>
+                    <thead><tr><th>تاریخ و ساعت ثبت دقیق</th><th>کالا</th><th>مقدار</th><th>مبلغ</th></tr></thead>
                     <tbody>${rows}</tbody>
                 </table>
                 <div class="price-display" style="margin-top:10px; text-align:center;">
@@ -1664,4 +1671,3 @@
     </script>
 </body>
 </html>
-
