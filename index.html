@@ -14,31 +14,45 @@
             padding: 12px;
             margin: 0;
         }
+        .header-clock {
+            text-align: center;
+            font-size: 13px;
+            color: #38bdf8;
+            background: rgba(30, 41, 59, 0.8);
+            padding: 10px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
         .login-box {
             background: rgba(30, 41, 59, 0.9);
             border: 1px solid rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
             border-radius: 16px;
             padding: 20px;
-            margin-top: 30px;
+            margin-top: 20px;
             text-align: center;
         }
         .tabs {
             display: flex;
-            gap: 8px;
+            gap: 6px;
             margin-bottom: 15px;
+            overflow-x: auto;
         }
         .tab-btn {
             flex: 1;
-            padding: 10px;
+            padding: 10px 6px;
             background: #1e293b;
             color: #94a3b8;
             border: 1px solid #334155;
             border-radius: 10px;
             font-weight: bold;
-            font-size: 12px;
+            font-size: 11px;
             cursor: pointer;
             display: none;
+            white-space: nowrap;
         }
         .tab-btn.active {
             background: linear-gradient(90deg, #0284c7, #2563eb);
@@ -56,7 +70,7 @@
         .card.active { display: block; }
         h2 { color: #38bdf8; margin-top: 0; font-size: 16px; }
         label { font-size: 12px; color: #cbd5e1; display: block; margin-top: 10px; text-align: right; }
-        input {
+        input, select {
             width: 100%;
             padding: 12px;
             margin-top: 5px;
@@ -77,8 +91,9 @@
         .hint {
             font-size: 11px;
             color: #94a3b8;
-            margin-top: 2px;
+            margin-top: 4px;
             text-align: right;
+            line-height: 1.5;
         }
         .user-badge {
             display: none;
@@ -128,11 +143,11 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 10px;
-            font-size: 12px;
+            font-size: 11px;
         }
         th, td {
             border: 1px solid #334155;
-            padding: 8px;
+            padding: 8px 4px;
             text-align: center;
         }
         th { background: #1e293b; color: #38bdf8; }
@@ -164,6 +179,7 @@
         }
         .edit-btn { background: #2563eb; color: #fff; }
         .delete-btn { background: #dc2626; color: #fff; }
+        .fill-btn { background: linear-gradient(90deg, #0284c7, #2563eb); color: #fff; font-weight: bold; }
         .report-card {
             background: rgba(15, 23, 42, 0.6);
             border: 1px solid #334155;
@@ -195,6 +211,23 @@
             color: #f8fafc;
             margin-top: 0;
         }
+        .status-tag {
+            padding: 3px 6px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: bold;
+            display: inline-block;
+        }
+        .status-full { background: #065f46; color: #34d399; }
+        .status-half { background: #854d0e; color: #fde047; }
+        .status-empty { background: #991b1b; color: #fca5a5; }
+        .need-charge-text {
+            color: #fbbf24;
+            font-size: 10px;
+            display: block;
+            margin-top: 2px;
+            font-weight: bold;
+        }
         .build-tag {
             text-align: center;
             font-size: 10px;
@@ -205,7 +238,10 @@
 </head>
 <body>
 
-    <!-- صفحه ورود (نام کاربری + رمز عبور) -->
+    <!-- ساعت زنده شمسی -->
+    <div class="header-clock" id="liveClock">در حال دریافت زمان دقیق...</div>
+
+    <!-- صفحه ورود -->
     <div id="loginScreen" class="login-box">
         <h2>🔒 ورود به سیستم غرفه</h2>
         <label>نام کاربری:</label>
@@ -222,6 +258,7 @@
     <!-- تب‌های بالای صفحه -->
     <div class="tabs" id="tabContainer">
         <button class="tab-btn" id="btnSale" onclick="switchTab('sale'); loadProductDatalist();">🛍️ ثبت فروش</button>
+        <button class="tab-btn" id="btnBooth" onclick="switchTab('booth'); loadBoothInventory();">🧊 وضعیت یخچال غرفه</button>
         <button class="tab-btn" id="btnProduct" onclick="switchTab('product')">➕ تعریف کالا</button>
         <button class="tab-btn" id="btnInventory" onclick="switchTab('inventory'); loadInventory();">📦 موجودی انبار</button>
         <button class="tab-btn" id="btnReport" onclick="switchTab('report'); loadSalesReport();">📊 گزارش فروش</button>
@@ -246,6 +283,27 @@
         <button class="submit-btn" onclick="submitSale()">ثبت فاکتور فروش</button>
     </div>
 
+    <!-- تب مدیریت ظروف یخچال غرفه -->
+    <div id="boothTab" class="card">
+        <h2>🧊 کنترل ظرف‌های یخچال غرفه</h2>
+        <div class="hint">
+            💡 <b>راهنما:</b> مقدار خالی شده ظرف محاسبه می‌شود. با دکمه شارژ، **دقیقاً به میزان کمبود** از انبار اصلی کسر و ظرف غرفه پر می‌شود.
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>نام کالا</th>
+                    <th>موجودی غرفه</th>
+                    <th>وضعیت ظرف</th>
+                    <th>عملیات شارژ هوشمند</th>
+                </tr>
+            </thead>
+            <tbody id="boothTable">
+                <tr><td colspan="4">در حال دریافت اطلاعات...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
     <!-- فرم تعریف / ویرایش کالا -->
     <div id="productTab" class="card">
         <h2 id="productFormTitle">➕ تعریف کالای جدید به انبار</h2>
@@ -255,7 +313,10 @@
         <label>نام محصول:</label>
         <input type="text" id="pName" placeholder="مثلاً پنیر محلی">
 
-        <label>روش وارد کردن موجودی:</label>
+        <label>ظرفیت ظرف یخچال غرفه (کیلوگرم):</label>
+        <input type="number" id="pCapacity" step="0.1" value="7.0" placeholder="مثلاً 7 کیلو">
+
+        <label>روش وارد کردن موجودی انبار اصلی:</label>
         <div class="unit-toggle">
             <label><input type="radio" name="pEntryMode" value="direct" checked onchange="toggleEntryMode()"> وارد کردن مستقیم کیلوگرم</label>
             <label><input type="radio" name="pEntryMode" value="count" onchange="toggleEntryMode()"> تعداد واحد × وزن هر واحد</label>
@@ -269,10 +330,13 @@
             <div class="price-display" id="calcTotalDisplay"></div>
         </div>
 
-        <label>موجودی (کیلوگرم):</label>
+        <label>موجودی انبار اصلی (کیلوگرم):</label>
         <input type="number" id="pStock" step="0.001" placeholder="مثلاً 15.5">
 
-        <label>حداقل موجودی به کیلوگرم (نقطه سفارش):</label>
+        <label>موجودی فعلی ظرف غرفه (کیلوگرم):</label>
+        <input type="number" id="pBoothStock" step="0.001" placeholder="مثلاً 7">
+
+        <label>حداقل موجودی انبار به کیلوگرم (نقطه سفارش):</label>
         <input type="number" id="pMinStock" step="0.001" placeholder="مثلاً 2">
 
         <label>قیمت فروش هر کیلو/عدد (تومان):</label>
@@ -299,12 +363,13 @@
                 <tr id="inventoryHeaderRow">
                     <th>کد</th>
                     <th>نام</th>
-                    <th>موجودی</th>
+                    <th>انبار اصلی</th>
+                    <th>موجودی غرفه</th>
                     <th>قیمت فروش</th>
                 </tr>
             </thead>
             <tbody id="inventoryTable">
-                <tr><td colspan="4">در حال بارگذاری...</td></tr>
+                <tr><td colspan="5">در حال بارگذاری...</td></tr>
             </tbody>
         </table>
     </div>
@@ -315,7 +380,7 @@
         <div id="reportContent">در حال بارگذاری...</div>
     </div>
 
-    <div class="build-tag">نسخه کد: v9 - گزارش با جزئیات و تاریخ‌بندی اضافه شد</div>
+    <div class="build-tag">نسخه کد: v10 - کنترل ظرفیت غرفه و شارژ هوشمند انبار اضافه شد</div>
 
     <script>
         const tg = window.Telegram.WebApp;
@@ -325,7 +390,20 @@
         const SUPABASE_KEY = "sb_publishable_k3wkzKalFmLFtfx8WZWr1g_fHKT-3Sl";
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // برچسب فارسی برای هر نقش
+        // ۱. ساعت زنده شمسی
+        function updateClock() {
+            const now = new Date();
+            const options = { 
+                timeZone: 'Asia/Tehran',
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
+            };
+            const formatter = new Intl.DateTimeFormat('fa-IR', options);
+            document.getElementById('liveClock').innerText = '🕒 ' + formatter.format(now);
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
         const roleLabels = {
             morning_seller: "فروشنده صبح",
             evening_seller: "فروشنده شب",
@@ -334,7 +412,7 @@
 
         let currentRole = "";
         let currentUserLabel = "";
-        let editingProductId = null; // اگر مقدار داشته باشد یعنی در حالت ویرایش هستیم
+        let editingProductId = null;
 
         async function checkLogin() {
             const username = document.getElementById('accessUser').value.trim();
@@ -374,22 +452,17 @@
             badge.innerHTML = '👤 ' + currentUserLabel + ' <button class="logout-btn" onclick="logout()">خروج</button>';
             badge.style.display = 'block';
 
-            // نمایش/مخفی‌کردن فیلد قیمت خرید فقط برای مدیر
             document.getElementById('buyPriceField').style.display = (currentRole === 'admin') ? 'block' : 'none';
 
             if (currentRole === 'admin') {
-                // مدیر: دسترسی کامل + دیدن قیمت خرید + ویرایش/حذف کالا + گزارش فروش
-                setupView(['btnSale', 'btnProduct', 'btnInventory', 'btnReport'], 'saleTab');
+                setupView(['btnSale', 'btnBooth', 'btnProduct', 'btnInventory', 'btnReport'], 'saleTab');
                 checkLowStockAlert();
             } else if (currentRole === 'morning_seller') {
-                // فروشنده صبح: ثبت فروش + تعریف کالا + موجودی انبار + ویرایش/حذف (بدون قیمت خرید)
-                setupView(['btnSale', 'btnProduct', 'btnInventory'], 'saleTab');
+                setupView(['btnSale', 'btnBooth', 'btnProduct', 'btnInventory'], 'saleTab');
             } else {
-                // فروشنده شب: فقط ثبت فروش
-                setupView(['btnSale'], 'saleTab');
+                setupView(['btnSale', 'btnBooth'], 'saleTab');
             }
 
-            // لیست اسم‌های کالا برای پیشنهاد سریع در فروش آماده شود
             loadProductDatalist();
         }
 
@@ -433,22 +506,13 @@
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.card').forEach(card => card.classList.remove('active'));
 
-            if (tab === 'sale') {
-                document.getElementById('btnSale').classList.add('active');
-                document.getElementById('saleTab').classList.add('active');
-            } else if (tab === 'product') {
-                document.getElementById('btnProduct').classList.add('active');
-                document.getElementById('productTab').classList.add('active');
-            } else if (tab === 'inventory') {
-                document.getElementById('btnInventory').classList.add('active');
-                document.getElementById('inventoryTab').classList.add('active');
-            } else if (tab === 'report') {
-                document.getElementById('btnReport').classList.add('active');
-                document.getElementById('reportTab').classList.add('active');
-            }
+            const targetBtn = document.getElementById('btn' + tab.charAt(0).toUpperCase() + tab.slice(1));
+            const targetTab = document.getElementById(tab + 'Tab');
+
+            if (targetBtn) targetBtn.classList.add('active');
+            if (targetTab) targetTab.classList.add('active');
         }
 
-        // پر کردن لیست پیشنهادی اسم کالا برای تب فروش
         async function loadProductDatalist() {
             const { data: products } = await _supabase.from('products').select('name');
             const datalist = document.getElementById('productDatalist');
@@ -462,7 +526,6 @@
             });
         }
 
-        // وقتی روش وارد کردن موجودی (مستقیم/تعداد×وزن) توی فرم تعریف کالا عوض می‌شود
         function toggleEntryMode() {
             const mode = document.querySelector('input[name="pEntryMode"]:checked').value;
             const countFields = document.getElementById('countStockFields');
@@ -477,37 +540,35 @@
             }
         }
 
-        // محاسبه خودکار موجودی کل (کیلوگرم) از روی تعداد واحد × وزن هر واحد
         function calcTotalFromCount() {
             const count = parseFloat(document.getElementById('pUnitCount').value) || 0;
             const weight = parseFloat(document.getElementById('pUnitWeight').value) || 0;
             const total = Number((count * weight).toFixed(3));
             document.getElementById('pStock').value = total;
             document.getElementById('calcTotalDisplay').innerText =
-                total > 0 ? ('📦 موجودی کل محاسبه‌شده: ' + total.toLocaleString('fa-IR') + ' کیلوگرم') : '';
+                total > 0 ? ('📦 موجودی کل انبار: ' + total.toLocaleString('fa-IR') + ' کیلوگرم') : '';
         }
 
-        // ذخیره کالا: هم افزودن کالای جدید و هم ویرایش کالای موجود از همین تابع رد می‌شود
+        // ۲. ذخیره کالا (شامل ظرفیت و موجودی اولیه غرفه)
         async function saveProduct() {
             const code = document.getElementById('pCode').value.trim();
             const name = document.getElementById('pName').value.trim();
+            const capacity = parseFloat(document.getElementById('pCapacity').value) || 7.0;
             const stock = parseFloat(document.getElementById('pStock').value);
+            const boothStock = parseFloat(document.getElementById('pBoothStock').value) || capacity;
             const min_stock = parseFloat(document.getElementById('pMinStock').value) || 0;
             const sell_price = parseFloat(document.getElementById('pSellPrice').value) || 0;
-
-            // قیمت خرید فقط اگر مدیر باشد خوانده می‌شود، در غیر این صورت دست نمی‌خورد
             const buy_price = (currentRole === 'admin')
                 ? (parseFloat(document.getElementById('pBuyPrice').value) || 0)
                 : 0;
 
             if (!code || !name || isNaN(stock)) {
-                alert('لطفاً کد کالا، نام محصول و موجودی را وارد کنید');
+                alert('لطفاً کد کالا، نام محصول و موجودی انبار را وارد کنید');
                 return;
             }
 
             if (editingProductId) {
-                // حالت ویرایش
-                const updateData = { code, name, stock, min_stock, sell_price };
+                const updateData = { code, name, container_capacity: capacity, stock, booth_stock: boothStock, min_stock, sell_price };
                 if (currentRole === 'admin') {
                     updateData.buy_price = buy_price;
                 }
@@ -523,9 +584,8 @@
                     loadProductDatalist();
                 }
             } else {
-                // حالت افزودن کالای جدید
                 const { error } = await _supabase.from('products').insert([{
-                    code, name, stock, min_stock, sell_price, buy_price
+                    code, name, container_capacity: capacity, stock, booth_stock: boothStock, min_stock, sell_price, buy_price
                 }]);
 
                 if (error) {
@@ -541,12 +601,14 @@
         function clearProductForm() {
             document.getElementById('pCode').value = '';
             document.getElementById('pName').value = '';
+            document.getElementById('pCapacity').value = '7.0';
             document.querySelector('input[name="pEntryMode"][value="direct"]').checked = true;
             document.getElementById('pUnitCount').value = '';
             document.getElementById('pUnitWeight').value = '';
             document.getElementById('calcTotalDisplay').innerText = '';
             toggleEntryMode();
             document.getElementById('pStock').value = '';
+            document.getElementById('pBoothStock').value = '';
             document.getElementById('pMinStock').value = '';
             document.getElementById('pSellPrice').value = '';
             document.getElementById('pSellPriceFormatted').innerText = '';
@@ -554,18 +616,18 @@
             document.getElementById('pBuyPriceFormatted').innerText = '';
         }
 
-        // شروع ویرایش یک کالا (مدیر و فروشنده صبح این دکمه را می‌بینند)
         function editProduct(product) {
             editingProductId = product.id;
             document.getElementById('pCode').value = product.code;
             document.getElementById('pName').value = product.name;
-            // ویرایش همیشه با حالت "وارد کردن مستقیم کیلوگرم" باز می‌شود (موجودی فعلی کالا نشان داده می‌شود)
+            document.getElementById('pCapacity').value = product.container_capacity || 7.0;
             document.querySelector('input[name="pEntryMode"][value="direct"]').checked = true;
             document.getElementById('pUnitCount').value = '';
             document.getElementById('pUnitWeight').value = '';
             document.getElementById('calcTotalDisplay').innerText = '';
             toggleEntryMode();
             document.getElementById('pStock').value = product.stock;
+            document.getElementById('pBoothStock').value = product.booth_stock || 0;
             document.getElementById('pMinStock').value = product.min_stock;
             document.getElementById('pSellPrice').value = product.sell_price;
             formatPrice(document.getElementById('pSellPrice'), 'pSellPriceFormatted');
@@ -590,7 +652,6 @@
             document.getElementById('cancelEditBtn').style.display = 'none';
         }
 
-        // حذف کالا (مدیر و فروشنده صبح این دکمه را می‌بینند)
         async function deleteProduct(id, name) {
             const sure = confirm('آیا از حذف کالای «' + name + '» مطمئن هستید؟ این عملیات قابل بازگشت نیست.');
             if (!sure) return;
@@ -605,6 +666,7 @@
             }
         }
 
+        // ۳. ثبت فروش روزانه و کسر متناظر از غرفه
         async function submitSale() {
             const inputVal = document.getElementById('sName').value.trim();
             const qty = parseFloat(document.getElementById('sQty').value);
@@ -615,14 +677,12 @@
                 return;
             }
 
-            // مرحله ۱: جستجوی دقیق با نام (بدون حساسیت به بزرگ/کوچیک بودن حروف)
             let { data: product } = await _supabase
                 .from('products')
                 .select('*')
                 .ilike('name', inputVal)
                 .maybeSingle();
 
-            // مرحله ۲: اگر پیدا نشد، شاید کد کالا را وارد کرده - با کد هم امتحان می‌کنیم
             if (!product) {
                 const { data: byCode } = await _supabase
                     .from('products')
@@ -632,7 +692,6 @@
                 product = byCode;
             }
 
-            // مرحله ۳: اگر هنوز پیدا نشد، جستجوی تقریبی (شامل بودن بخشی از نام)
             if (!product) {
                 const { data: likeMatches } = await _supabase
                     .from('products')
@@ -648,13 +707,18 @@
             }
 
             if (!product) {
-                alert('❌ کالایی با این اسم در انبار یافت نشد! اسم رو دقیق‌تر بنویس یا از لیست پیشنهادی انتخاب کن.');
+                alert('❌ کالایی با این اسم در انبار یافت نشد!');
                 return;
             }
 
-            const newStock = Number((product.stock - qty).toFixed(3));
+            let currentBooth = product.booth_stock || 0;
+            if (currentBooth < qty) {
+                alert('⚠️ موجودی ظرف غرفه کمتر از مقدار فروش است! لطفاً ابتدا ظرف غرفه را شارژ کنید.');
+            }
 
-            await _supabase.from('products').update({ stock: newStock }).eq('id', product.id);
+            const newBoothStock = Math.max(0, Number((currentBooth - qty).toFixed(3)));
+
+            await _supabase.from('products').update({ booth_stock: newBoothStock }).eq('id', product.id);
 
             await _supabase.from('sales').insert([{
                 product_code: product.code,
@@ -663,12 +727,7 @@
                 seller_name: currentUserLabel
             }]);
 
-            // هشدار موجودی کم به همان فروشنده‌ای که فروش را ثبت کرده
-            if (newStock <= product.min_stock) {
-                alert('✅ فروش «' + product.name + '» ثبت شد و موجودی کسر گردید!\n\n⚠️ توجه: موجودی به نقطه سفارش رسیده (' + newStock + ' باقی مانده). لطفاً به مدیر اطلاع دهید.');
-            } else {
-                alert('✅ فروش «' + product.name + '» ثبت شد و موجودی کسر گردید!');
-            }
+            alert('✅ فروش «' + product.name + '» ثبت شد و از موجودی ظرف غرفه کسر گردید.\nموجودی جدید ظرف: ' + newBoothStock + ' کیلو');
 
             document.getElementById('sName').value = '';
             document.getElementById('sQty').value = '';
@@ -676,25 +735,102 @@
             document.getElementById('sPriceFormatted').innerText = '';
         }
 
+        // ۴. محاسبات هوشمند شارژ ظرف غرفه از انبار
+        function getQualitativeStatus(stock, capacity) {
+            const ratio = stock / capacity;
+            if (stock <= 0) return { label: 'خالی 🔴', class: 'status-empty' };
+            if (ratio < 0.35) return { label: 'کمتر از نصف ⚠️', class: 'status-half' };
+            if (ratio >= 0.35 && ratio <= 0.65) return { label: 'نصف 🟡', class: 'status-half' };
+            if (ratio > 0.65 && ratio < 0.98) return { label: 'بیشتر از نصف 🟢', class: 'status-full' };
+            return { label: 'کامل پر 🟢', class: 'status-full' };
+        }
+
+        async function smartFillBooth(productId) {
+            const { data: product } = await _supabase.from('products').select('*').eq('id', productId).single();
+            if (!product) return;
+
+            const capacity = product.container_capacity || 7.0;
+            const currentBooth = product.booth_stock || 0;
+            const currentMain = product.stock || 0;
+
+            const neededAmount = Number((capacity - currentBooth).toFixed(3));
+
+            if (neededAmount <= 0) {
+                return alert('ظرف غرفه در حال حاضر کامل پر است و نیازی به شارژ ندارد!');
+            }
+
+            if (currentMain < neededAmount) {
+                return alert(`⚠️ موجودی انبار اصلی کافی نیست!\nنیاز به شارژ: ${neededAmount} کیلوگرم\nموجودی انبار اصلی: ${currentMain} کیلوگرم`);
+            }
+
+            const newMainStock = Number((currentMain - neededAmount).toFixed(3));
+            const newBoothStock = capacity;
+
+            const { error } = await _supabase.from('products').update({ 
+                stock: newMainStock, 
+                booth_stock: newBoothStock 
+            }).eq('id', productId);
+
+            if (!error) {
+                alert(`✅ ظرف «${product.name}» پر شد.\n📦 دقیقاً مقدار ${neededAmount} کیلوگرم از دبه انبار کسر گردید.`);
+                loadBoothInventory();
+            } else {
+                alert('خطا در به‌روزرسانی موجودی: ' + error.message);
+            }
+        }
+
+        async function loadBoothInventory() {
+            const { data: products } = await _supabase.from('products').select('*');
+            const tbody = document.getElementById('boothTable');
+            tbody.innerHTML = '';
+
+            if (!products || products.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4">هیچ کالایی یافت نشد.</td></tr>';
+                return;
+            }
+
+            products.forEach(p => {
+                const capacity = p.container_capacity || 7.0;
+                const currentBooth = p.booth_stock || 0;
+                const needed = Number((capacity - currentBooth).toFixed(3));
+                const status = getQualitativeStatus(currentBooth, capacity);
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><b>${p.name}</b></td>
+                    <td>${Number(currentBooth).toLocaleString('fa-IR')} از ${capacity} کیلو</td>
+                    <td><span class="status-tag ${status.class}">${status.label}</span></td>
+                    <td>
+                        ${needed > 0 
+                            ? `<button class="row-btn fill-btn" onclick="smartFillBooth('${p.id}')">🔄 پر کردن ظرف</button>
+                               <span class="need-charge-text">کمبود: ${needed} کیلو</span>`
+                            : `<span style="color:#10b981; font-weight:bold; font-size:11px;">✨ ظرف پر است</span>`
+                        }
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // ۵. نمایش لیست موجودی انبار
         async function loadInventory() {
-            // مدیر و فروشنده صبح می‌توانند ویرایش/حذف کنند؛ قیمت خرید فقط برای مدیر
             const canManage = (currentRole === 'admin' || currentRole === 'morning_seller');
             const showBuyPrice = (currentRole === 'admin');
 
             const headerRow = document.getElementById('inventoryHeaderRow');
-            headerRow.innerHTML = '<th>کد</th><th>نام</th><th>موجودی</th><th>قیمت فروش</th>';
+            headerRow.innerHTML = '<th>کد</th><th>نام</th><th>انبار اصلی</th><th>موجودی غرفه</th><th>قیمت فروش</th>';
             if (showBuyPrice) headerRow.innerHTML += '<th>قیمت خرید</th>';
             if (canManage) headerRow.innerHTML += '<th>عملیات</th>';
 
             const { data: products } = await _supabase
                 .from('products')
-                .select('id, code, name, stock, min_stock, sell_price, buy_price');
+                .select('id, code, name, stock, booth_stock, min_stock, sell_price, buy_price, container_capacity');
 
             const tbody = document.getElementById('inventoryTable');
             const banner = document.getElementById('lowStockBanner');
             tbody.innerHTML = '';
 
-            const colCount = 4 + (showBuyPrice ? 1 : 0) + (canManage ? 1 : 0);
+            const colCount = 5 + (showBuyPrice ? 1 : 0) + (canManage ? 1 : 0);
 
             if (!products || products.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="' + colCount + '">هیچ کالایی در انبار ثبت نشده است.</td></tr>';
@@ -702,11 +838,10 @@
                 return;
             }
 
-            // هشدار موجودی کم - فقط برای مدیر نمایش داده می‌شود
             const lowStockItems = products.filter(p => p.stock <= p.min_stock);
             if (currentRole === 'admin' && lowStockItems.length > 0) {
                 banner.innerHTML = '⚠️ ' + lowStockItems.length + ' کالا به نقطه سفارش رسیده یا تمام شده:<br>' +
-                    lowStockItems.map(p => '• ' + p.name + ' (موجودی: ' + p.stock + ')').join('<br>');
+                    lowStockItems.map(p => '• ' + p.name + ' (موجودی انبار: ' + p.stock + ' کیلو)').join('<br>');
                 banner.style.display = 'block';
             } else {
                 banner.style.display = 'none';
@@ -718,6 +853,7 @@
                     <td>${p.code}</td>
                     <td>${p.name}</td>
                     <td style="color: ${p.stock <= p.min_stock ? '#ef4444' : '#10b981'}; font-weight: bold;">${Number(p.stock).toLocaleString('fa-IR', { maximumFractionDigits: 3 })} کیلو</td>
+                    <td>${Number(p.booth_stock || 0).toLocaleString('fa-IR', { maximumFractionDigits: 3 })} کیلو</td>
                     <td>${Number(p.sell_price || 0).toLocaleString('fa-IR')}</td>
                 `;
                 if (showBuyPrice) {
@@ -734,7 +870,6 @@
             });
         }
 
-        // هشدار فوری موجودی کم - موقع ورود مدیر اجرا می‌شود
         async function checkLowStockAlert() {
             if (currentRole !== 'admin') return;
 
@@ -745,14 +880,14 @@
             const low = products.filter(p => p.stock <= p.min_stock);
             if (low.length > 0) {
                 btn.innerHTML = '📦 موجودی انبار 🔴';
-                alert('⚠️ هشدار موجودی کم!\n\n' +
+                alert('⚠️ هشدار موجودی کم انبار!\n\n' +
                     low.map(p => '• ' + p.name + ' (' + Number(p.stock).toLocaleString('fa-IR') + ' کیلو باقی مانده)').join('\n'));
             } else {
                 btn.innerHTML = '📦 موجودی انبار';
             }
         }
 
-        // گزارش فروش شاگرد صبح و شاگرد شب (فقط مدیر می‌بیند)
+        // ۶. گزارش فروش با جزئیات و تاریخ
         async function loadSalesReport() {
             const content = document.getElementById('reportContent');
             content.innerHTML = 'در حال بارگذاری...';
@@ -826,13 +961,11 @@
             `;
         }
 
-        // باز/بسته کردن پنل گزارش با جزئیات هر فروشنده
         function toggleDetail(key) {
             const panel = document.getElementById('detailPanel_' + key);
             panel.style.display = (panel.style.display === 'none' || !panel.style.display) ? 'block' : 'none';
         }
 
-        // گزارش با جزئیات یک تاریخ مشخص برای یک فروشنده مشخص
         async function loadDetailReport(key) {
             const dateVal = document.getElementById('detailDate_' + key).value;
             const resultEl = document.getElementById('detailResult_' + key);
@@ -845,7 +978,6 @@
             resultEl.innerHTML = 'در حال بارگذاری...';
             const rolePrefix = (key === 'morning') ? 'فروشنده صبح' : 'فروشنده شب';
 
-            // بازه شروع و پایان همان روز
             const startDate = new Date(dateVal + 'T00:00:00');
             const endDate = new Date(dateVal + 'T23:59:59.999');
 
@@ -868,7 +1000,6 @@
                 return;
             }
 
-            // پیدا کردن اسم کالاها از روی کد
             const codes = [...new Set(daySales.map(s => s.product_code))];
             const { data: productsData } = await _supabase.from('products').select('code, name').in('code', codes);
             const nameMap = {};
@@ -898,4 +1029,3 @@
     </script>
 </body>
 </html>
-
