@@ -164,6 +164,19 @@
         }
         .edit-btn { background: #2563eb; color: #fff; }
         .delete-btn { background: #dc2626; color: #fff; }
+        input[type="radio"] { width: auto; margin-left: 4px; }
+        .unit-toggle {
+            display: flex;
+            gap: 14px;
+            margin-top: 8px;
+        }
+        .unit-toggle label {
+            display: flex;
+            align-items: center;
+            font-size: 13px;
+            color: #f8fafc;
+            margin-top: 0;
+        }
         .build-tag {
             text-align: center;
             font-size: 10px;
@@ -199,13 +212,14 @@
     <div id="saleTab" class="card">
         <h2>🛍️ ثبت فروش روزانه</h2>
         <label>نام کالا:</label>
-        <input type="text" id="sName" list="productDatalist" placeholder="اسم کالا را تایپ کنید یا از لیست انتخاب کنید">
+        <input type="text" id="sName" list="productDatalist" placeholder="اسم کالا را تایپ کنید یا از لیست انتخاب کنید" onchange="showSaleUnitHint()" onblur="showSaleUnitHint()">
         <datalist id="productDatalist"></datalist>
         <div class="hint">فقط اسم کالا را وارد کن، نیازی به کد نیست. سیستم خودش کالا و موجودی را پیدا و کم می‌کند.</div>
 
         <label>مقدار فروش (کیلو / عدد):</label>
         <input type="number" id="sQty" step="0.001" placeholder="مثلاً 0.250 برای 250 گرم">
         <div class="hint">مثال: 250 گرم = 0.250 | 1 کیلو و نیم = 1.5</div>
+        <div class="hint" id="saleUnitHint" style="color:#38bdf8;"></div>
 
         <label>قیمت کل فروش (تومان):</label>
         <input type="number" id="sPrice" placeholder="مثلاً 45000" oninput="formatPrice(this, 'sPriceFormatted')">
@@ -223,7 +237,13 @@
         <label>نام محصول:</label>
         <input type="text" id="pName" placeholder="مثلاً پنیر محلی">
 
-        <label>موجودی (کیلو / عدد):</label>
+        <label>واحد اندازه‌گیری:</label>
+        <div class="unit-toggle">
+            <label><input type="radio" name="pUnitType" value="kg" checked onchange="updateUnitFields()"> کیلویی (وزنی)</label>
+            <label><input type="radio" name="pUnitType" value="count" onchange="updateUnitFields()"> تعدادی (عددی)</label>
+        </div>
+
+        <label>موجودی:</label>
         <input type="number" id="pStock" step="0.001" placeholder="مثلاً 15.5">
 
         <label>حداقل موجودی (نقطه سفارش):</label>
@@ -263,7 +283,7 @@
         </table>
     </div>
 
-    <div class="build-tag">نسخه کد: v5 - ویرایش و حذف برای فروشنده صبح فعال است</div>
+    <div class="build-tag">نسخه کد: v6 - انتخاب واحد کیلویی/تعدادی فعال است</div>
 
     <script>
         const tg = window.Telegram.WebApp;
@@ -405,10 +425,64 @@
             });
         }
 
+        // وقتی نوع واحد (کیلویی/تعدادی) توی فرم تعریف کالا عوض می‌شود
+        function updateUnitFields() {
+            const unitType = document.querySelector('input[name="pUnitType"]:checked').value;
+            const stockInput = document.getElementById('pStock');
+            const minInput = document.getElementById('pMinStock');
+            if (unitType === 'count') {
+                stockInput.step = '1';
+                stockInput.placeholder = 'مثلاً 20 (عدد)';
+                minInput.step = '1';
+                minInput.placeholder = 'مثلاً 3 (عدد)';
+            } else {
+                stockInput.step = '0.001';
+                stockInput.placeholder = 'مثلاً 15.5';
+                minInput.step = '0.001';
+                minInput.placeholder = 'مثلاً 2';
+            }
+        }
+
+        // نمایش برچسب مقدار برحسب واحد کالا (کیلوگرم یا عدد)
+        function formatQty(value, unitType) {
+            const num = Number(value) || 0;
+            if (unitType === 'count') {
+                return Math.round(num).toLocaleString('fa-IR') + ' عدد';
+            }
+            return num.toLocaleString('fa-IR', { maximumFractionDigits: 3 }) + ' کیلو';
+        }
+
+        // وقتی توی فرم فروش اسم کالا وارد/انتخاب می‌شود، واحدش را نشان بده
+        async function showSaleUnitHint() {
+            const name = document.getElementById('sName').value.trim();
+            const hintEl = document.getElementById('saleUnitHint');
+            const qtyInput = document.getElementById('sQty');
+            if (!name) { hintEl.innerText = ''; return; }
+
+            const { data: product } = await _supabase
+                .from('products')
+                .select('unit_type')
+                .ilike('name', name)
+                .maybeSingle();
+
+            if (product) {
+                if (product.unit_type === 'count') {
+                    hintEl.innerText = '📏 واحد این کالا: تعدادی (عدد) - مقدار را عدد صحیح وارد کن';
+                    qtyInput.step = '1';
+                } else {
+                    hintEl.innerText = '📏 واحد این کالا: کیلویی (وزنی)';
+                    qtyInput.step = '0.001';
+                }
+            } else {
+                hintEl.innerText = '';
+            }
+        }
+
         // ذخیره کالا: هم افزودن کالای جدید و هم ویرایش کالای موجود از همین تابع رد می‌شود
         async function saveProduct() {
             const code = document.getElementById('pCode').value.trim();
             const name = document.getElementById('pName').value.trim();
+            const unit_type = document.querySelector('input[name="pUnitType"]:checked').value;
             const stock = parseFloat(document.getElementById('pStock').value);
             const min_stock = parseFloat(document.getElementById('pMinStock').value) || 0;
             const sell_price = parseFloat(document.getElementById('pSellPrice').value) || 0;
@@ -425,7 +499,7 @@
 
             if (editingProductId) {
                 // حالت ویرایش
-                const updateData = { code, name, stock, min_stock, sell_price };
+                const updateData = { code, name, unit_type, stock, min_stock, sell_price };
                 if (currentRole === 'admin') {
                     updateData.buy_price = buy_price;
                 }
@@ -443,7 +517,7 @@
             } else {
                 // حالت افزودن کالای جدید
                 const { error } = await _supabase.from('products').insert([{
-                    code, name, stock, min_stock, sell_price, buy_price
+                    code, name, unit_type, stock, min_stock, sell_price, buy_price
                 }]);
 
                 if (error) {
@@ -459,6 +533,8 @@
         function clearProductForm() {
             document.getElementById('pCode').value = '';
             document.getElementById('pName').value = '';
+            document.querySelector('input[name="pUnitType"][value="kg"]').checked = true;
+            updateUnitFields();
             document.getElementById('pStock').value = '';
             document.getElementById('pMinStock').value = '';
             document.getElementById('pSellPrice').value = '';
@@ -472,6 +548,8 @@
             editingProductId = product.id;
             document.getElementById('pCode').value = product.code;
             document.getElementById('pName').value = product.name;
+            document.querySelector('input[name="pUnitType"][value="' + (product.unit_type || 'kg') + '"]').checked = true;
+            updateUnitFields();
             document.getElementById('pStock').value = product.stock;
             document.getElementById('pMinStock').value = product.min_stock;
             document.getElementById('pSellPrice').value = product.sell_price;
@@ -595,7 +673,7 @@
 
             const { data: products } = await _supabase
                 .from('products')
-                .select('id, code, name, stock, min_stock, sell_price, buy_price');
+                .select('id, code, name, stock, min_stock, sell_price, buy_price, unit_type');
 
             const tbody = document.getElementById('inventoryTable');
             const banner = document.getElementById('lowStockBanner');
@@ -624,7 +702,7 @@
                 let rowHtml = `
                     <td>${p.code}</td>
                     <td>${p.name}</td>
-                    <td style="color: ${p.stock <= p.min_stock ? '#ef4444' : '#10b981'}; font-weight: bold;">${p.stock}</td>
+                    <td style="color: ${p.stock <= p.min_stock ? '#ef4444' : '#10b981'}; font-weight: bold;">${formatQty(p.stock, p.unit_type)}</td>
                     <td>${Number(p.sell_price || 0).toLocaleString('fa-IR')}</td>
                 `;
                 if (showBuyPrice) {
@@ -643,3 +721,4 @@
     </script>
 </body>
 </html>
+
