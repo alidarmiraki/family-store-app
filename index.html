@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>سیستم انبار و فروش غرفه</title>
+    <title>سیستم انبار و فروش غرفه - نسخه کامل و اخر لبنیات و ترشیجات فله فامیلی</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body {
             background: #0f172a;
             color: #f8fafc;
-            font-family: Tahoma, sans-serif;
+            font-family: Tahoma, 'IRANSans', sans-serif;
             padding: 12px;
             margin: 0;
         }
@@ -80,6 +80,7 @@
             color: #fff;
             box-sizing: border-box;
             font-size: 14px;
+            font-family: inherit;
         }
         .price-display {
             font-size: 12px;
@@ -237,9 +238,14 @@
         }
         .build-tag {
             text-align: center;
-            font-size: 10px;
-            color: #475569;
+            font-size: 11px;
+            color: #38bdf8;
             margin-top: 20px;
+            font-weight: bold;
+            background: rgba(30, 41, 59, 0.5);
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid rgba(56, 189, 248, 0.2);
         }
     </style>
 </head>
@@ -252,7 +258,7 @@
     <div id="loginScreen" class="login-box">
         <h2>🔒 ورود به سیستم غرفه</h2>
         <label>نام کاربری:</label>
-        <input type="text" id="accessUser" placeholder="نام کاربری خود را وارد کنید">
+        <input type="text" id="accessUser" dir="auto" placeholder="نام کاربری خود را وارد کنید">
         <label>رمز عبور:</label>
         <input type="password" id="accessPin" placeholder="رمز عبور خود را وارد کنید">
         <div class="error-msg" id="loginError">❌ نام کاربری یا رمز عبور اشتباه است!</div>
@@ -275,7 +281,7 @@
     <div id="saleTab" class="card">
         <h2>🛍️ ثبت فروش روزانه</h2>
         <label>نام کالا:</label>
-        <input type="text" id="sName" list="productDatalist" placeholder="اسم کالا را تایپ کنید یا از لیست انتخاب کنید">
+        <input type="text" id="sName" dir="auto" list="productDatalist" placeholder="اسم کالا را تایپ کنید یا از لیست انتخاب کنید">
         <datalist id="productDatalist"></datalist>
         <div class="hint">فقط اسم کالا را وارد کن، نیازی به کد نیست. سیستم خودش کالا و موجودی را پیدا و کم می‌کند.</div>
 
@@ -316,10 +322,10 @@
     <div id="productTab" class="card">
         <h2 id="productFormTitle">➕ تعریف کالای جدید به انبار</h2>
         <label>کد کالا (بارکد/کد اختصاصی):</label>
-        <input type="text" id="pCode" placeholder="مثلاً 2248441">
+        <input type="text" id="pCode" dir="auto" placeholder="مثلاً 2248441">
 
         <label>نام محصول:</label>
-        <input type="text" id="pName" placeholder="مثلاً پنیر محلی">
+        <input type="text" id="pName" dir="auto" placeholder="مثلاً پنیر محلی">
 
         <label>ظرفیت ظرف یخچال غرفه (کیلوگرم):</label>
         <input type="number" id="pCapacity" step="0.1" value="7.0" placeholder="مثلاً 7 کیلو (برای خیارشور 16، ارده 4 و...)">
@@ -387,7 +393,7 @@
         <div id="reportContent">در حال بارگذاری...</div>
     </div>
 
-    <div class="build-tag">نسخه کد: v13 - گزارش اختصاصی امروز برای فروشندگان و گزارش جامع با تقویم برای مدیر</div>
+    <div class="build-tag">نسخه کامل و اخر لبنیات و ترشیجات فله فامیلی - v14</div>
 
     <script>
         const tg = window.Telegram.WebApp;
@@ -396,6 +402,8 @@
         const SUPABASE_URL = "https://kinjpmvoyioaslpdzujg.supabase.co";
         const SUPABASE_KEY = "sb_publishable_k3wkzKalFmLFtfx8WZWr1g_fHKT-3Sl";
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let cachedProductsList = [];
 
         function updateClock() {
             const now = new Date();
@@ -621,10 +629,13 @@
             document.getElementById('pBuyPriceFormatted').innerText = '';
         }
 
-        function editProduct(product) {
+        function editProductById(pId) {
+            const product = cachedProductsList.find(item => String(item.id) === String(pId));
+            if (!product) return;
+
             editingProductId = product.id;
-            document.getElementById('pCode').value = product.code;
-            document.getElementById('pName').value = product.name;
+            document.getElementById('pCode').value = product.code || '';
+            document.getElementById('pName').value = product.name || '';
             document.getElementById('pCapacity').value = product.container_capacity || 7.0;
             document.querySelector('input[name="pEntryMode"][value="direct"]').checked = true;
             document.getElementById('pUnitCount').value = '';
@@ -870,6 +881,8 @@
                 .from('products')
                 .select('id, code, name, stock, booth_stock, min_stock, sell_price, buy_price, container_capacity');
 
+            cachedProductsList = products || [];
+
             const tbody = document.getElementById('inventoryTable');
             const banner = document.getElementById('lowStockBanner');
             tbody.innerHTML = '';
@@ -894,8 +907,8 @@
             products.forEach(p => {
                 const tr = document.createElement('tr');
                 let rowHtml = `
-                    <td>${p.code}</td>
-                    <td>${p.name}</td>
+                    <td>${p.code || ''}</td>
+                    <td>${p.name || ''}</td>
                     <td style="color: ${p.stock <= p.min_stock ? '#ef4444' : '#10b981'}; font-weight: bold;">${Number(p.stock).toLocaleString('fa-IR', { maximumFractionDigits: 3 })} کیلو</td>
                     <td>${Number(p.booth_stock || 0).toLocaleString('fa-IR', { maximumFractionDigits: 3 })} کیلو</td>
                     <td>${Number(p.sell_price || 0).toLocaleString('fa-IR')}</td>
@@ -905,8 +918,8 @@
                 }
                 if (canManage) {
                     rowHtml += `<td>
-                        <button class="row-btn edit-btn" onclick='editProduct(${JSON.stringify(p)})'>ویرایش</button>
-                        <button class="row-btn delete-btn" onclick="deleteProduct('${p.id}', '${p.name.replace(/'/g, "\\'")}')">حذف</button>
+                        <button class="row-btn edit-btn" onclick="editProductById('${p.id}')">ویرایش</button>
+                        <button class="row-btn delete-btn" onclick="deleteProduct('${p.id}', '${(p.name || '').replace(/'/g, "\\'")}')">حذف</button>
                     </td>`;
                 }
                 tr.innerHTML = rowHtml;
@@ -948,7 +961,6 @@
                 return;
             }
 
-            // گزارش اختصاصی فروشندگان (صبح / شب) - فقط فروش امروز خودش
             if (currentRole === 'morning_seller' || currentRole === 'evening_seller') {
                 const targetRolePrefix = (currentRole === 'morning_seller') ? 'فروشنده صبح' : 'فروشنده شب';
                 
@@ -1000,7 +1012,6 @@
                 return;
             }
 
-            // گزارش ویژه مدیر (مشاهده امروز، کل و انتخاب روزهای قبل)
             if (currentRole === 'admin') {
                 const totals = {
                     morning: { today: 0, all: 0, todayCount: 0, allCount: 0 },
@@ -1145,3 +1156,4 @@
     </script>
 </body>
 </html>
+
