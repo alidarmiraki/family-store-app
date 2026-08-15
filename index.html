@@ -567,7 +567,7 @@
         <button class="submit-btn" onclick="saveShiftSettings()">ذخیره تنظیمات شیفت‌ها</button>
     </div>
 
-    <div class="build-tag">v25 (رفع خطای خواندن دوباره‌ی فایل عکس) - سیستم جامع لبنیات و ترشیجات فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v26 (رفع خطای Invalid key در نام فایل عکس) - سیستم جامع لبنیات و ترشیجات فامیلی ( دره میرکی )</div>
 
     <script>
         const tg = window.Telegram.WebApp;
@@ -959,7 +959,7 @@
                 if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = '⏳ در حال آپلود عکس...'; }
                 try {
                     const compressedBlob = await compressDataUrl(selectedPhotoDataUrl);
-                    const safeName = (currentUserLabel || 'user').replace(/[^a-zA-Z0-9آ-ی]+/g, '_');
+                    const safeName = (currentRole || 'user').replace(/[^a-zA-Z0-9_-]+/g, '_');
                     const fileName = `${safeName}_${Date.now()}.jpg`;
 
                     const { error: uploadError } = await _supabase.storage
