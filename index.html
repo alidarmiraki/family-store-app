@@ -620,9 +620,10 @@
     <div class="build-tag">v30 - سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</div>
 
     <script>
-        // اجرای امن Telegram WebApp: اگر صفحه بیرون از اپ تلگرام (مثلاً مستقیم در کروم) باز شود
+        // اجرای امن Telegram WebApp: اگر صفحه بیرون از اپ تلگرام (مثلاً مستقیم در کروم یا اپ دیگری) باز شود
         // window.Telegram ممکن است اصلاً تعریف نشده باشد. اگر این خط بدون بررسی اجرا شود و خطا بدهد،
-        // کل اسکریپت (از جمله ساعت زنده و اتصال به Supabase که پایین‌تر تعریف می‌شوند) متوقف می‌شود.
+        // کل اسکریپت (از جمله ساعت زنده، ورود، و اتصال به Supabase که پایین‌تر تعریف می‌شوند) متوقف می‌شود
+        // و دقیقاً همین باعث می‌شود ساعت ثابت بماند و دکمه «ورود» هیچ‌کاری نکند.
         let tg = null;
         try {
             if (window.Telegram && window.Telegram.WebApp) {
@@ -2161,11 +2162,150 @@
                                 <label>تا تاریخ (پایان):</label>
                                 <input type="date" id="rangeEndDate_${key}" value="${todayISOTehran}">
                             </div>
-
+                            
                             <button class="submit-btn" style="margin-top:12px;" onclick="loadDetailReportV23('${key}')">نمایش گزارش</button>
                             <div id="detailResult_${key}" style="margin-top:10px;"></div>
                         </div>
                     </div>
                 `;
+                content.innerHTML = 
+                    renderRoleCard('morning', '🌅 فروشنده صبح') +
+                    renderRoleCard('evening', '🌙 فروشنده شب') +
+                    renderRoleCard('admin', '👑 مدیر غرفه');
+            }
+        }
 
-                conten
+        function toggleDetail(key) {
+            const panel = document.getElementById('detailPanel_' + key);
+            panel.style.display = (panel.style.display === 'none' || !panel.style.display) ? 'block' : 'none';
+        }
+
+        // --- سوییچ بین حالت گزارش «روزانه» و «بازه‌ای» در پنل گزارش پیشرفته ---
+        function switchReportMode(key, mode) {
+            const singleBox = document.getElementById('singleDateBox_' + key);
+            const rangeBox = document.getElementById('rangeDateBox_' + key);
+            const btnSingle = document.getElementById('btnSingle_' + key);
+            const btnRange = document.getElementById('btnRange_' + key);
+
+            if (mode === 'single') {
+                singleBox.style.display = 'block';
+                rangeBox.style.display = 'none';
+                if (btnSingle) btnSingle.classList.add('active');
+                if (btnRange) btnRange.classList.remove('active');
+            } else {
+                singleBox.style.display = 'none';
+                rangeBox.style.display = 'block';
+                if (btnSingle) btnSingle.classList.remove('active');
+                if (btnRange) btnRange.classList.add('active');
+            }
+        }
+
+        // --- گزارش تفصیلی روزانه یا بازه‌ای برای هر نقش (صبح/شب/مدیر) ---
+        async function loadDetailReportV23(key) {
+            const resultBox = document.getElementById('detailResult_' + key);
+            resultBox.innerHTML = 'در حال محاسبه گزارش...';
+
+            const rangeBoxVisible = document.getElementById('rangeDateBox_' + key).style.display !== 'none';
+
+            let startDateStr, endDateStr;
+            if (rangeBoxVisible) {
+                startDateStr = document.getElementById('rangeStartDate_' + key).value;
+                endDateStr = document.getElementById('rangeEndDate_' + key).value;
+            } else {
+                startDateStr = document.getElementById('singleDateInput_' + key).value;
+                endDateStr = startDateStr;
+            }
+
+            if (!startDateStr || !endDateStr) {
+                resultBox.innerHTML = '<p style="color:#ef4444;">⚠️ لطفاً تاریخ مورد نظر را مشخص کنید.</p>';
+                return;
+            }
+
+            if (startDateStr > endDateStr) {
+                resultBox.innerHTML = '<p style="color:#ef4444;">⚠️ تاریخ شروع نمی‌تواند بعد از تاریخ پایان باشد.</p>';
+                return;
+            }
+
+            let rolePrefix = '';
+            if (key === 'morning') rolePrefix = 'فروشنده صبح';
+            else if (key === 'evening') rolePrefix = 'فروشنده شب';
+            else if (key === 'admin') rolePrefix = 'مدیر';
+
+            const { data: sales, error } = await _supabase
+                .from('sales')
+                .select('product_code, quantity, sell_price, created_at, seller_name')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                resultBox.innerHTML = '❌ خطا در دریافت گزارش: ' + error.message;
+                return;
+            }
+
+            const filtered = (sales || []).filter(s => {
+                if (!s.seller_name || s.seller_name.indexOf(rolePrefix) !== 0) return false;
+                const itemISODate = getTehranISODate(new Date(s.created_at));
+                return itemISODate >= startDateStr && itemISODate <= endDateStr;
+            });
+
+            if (filtered.length === 0) {
+                resultBox.innerHTML = `<p style="color:#fbbf24; margin-top:8px;">هیچ فروشی در این بازه ثبت نشده است.</p>`;
+                return;
+            }
+
+            const codes = [...new Set(filtered.map(s => s.product_code))];
+            const { data: productsData } = await _supabase.from('products').select('code, name').in('code', codes);
+            const nameMap = {};
+            (productsData || []).forEach(p => { nameMap[p.code] = p.name; });
+
+            const totalSum = filtered.reduce((sum, s) => sum + (Number(s.sell_price) || 0), 0);
+
+            // جمع‌بندی بر اساس کالا
+            const productTotals = {};
+            filtered.forEach(s => {
+                const pname = nameMap[s.product_code] || s.product_code;
+                if (!productTotals[pname]) productTotals[pname] = { qty: 0, total: 0 };
+                productTotals[pname].qty += Number(s.quantity) || 0;
+                productTotals[pname].total += Number(s.sell_price) || 0;
+            });
+
+            const productRows = Object.entries(productTotals).map(([pname, v]) => `
+                <tr>
+                    <td>${pname}</td>
+                    <td>${v.qty.toLocaleString('fa-IR', { maximumFractionDigits: 3 })} کیلو</td>
+                    <td>${v.total.toLocaleString('fa-IR')} تومان</td>
+                </tr>
+            `).join('');
+
+            const invoiceRows = filtered.map(s => {
+                const fullTimeStr = getTehranFullDateTimeString(new Date(s.created_at));
+                const pname = nameMap[s.product_code] || s.product_code;
+                return `<tr>
+                    <td>${fullTimeStr}</td>
+                    <td>${pname}</td>
+                    <td>${Number(s.quantity).toLocaleString('fa-IR', { maximumFractionDigits: 3 })} کیلو</td>
+                    <td>${Number(s.sell_price).toLocaleString('fa-IR')} تومان</td>
+                </tr>`;
+            }).join('');
+
+            const rangeLabel = (startDateStr === endDateStr) ? startDateStr : (startDateStr + ' تا ' + endDateStr);
+
+            resultBox.innerHTML = `
+                <div class="report-card">
+                    <h3>📅 گزارش بازه: ${rangeLabel}</h3>
+                    <p style="font-size:15px; color:#38bdf8; font-weight:bold;">مجموع فروش: ${totalSum.toLocaleString('fa-IR')} تومان (${filtered.length} فاکتور)</p>
+                </div>
+                <h4 style="color:#38bdf8; margin-top:12px; margin-bottom:6px;">📦 جمع‌بندی بر اساس کالا:</h4>
+                <table>
+                    <thead><tr><th>کالا</th><th>مجموع مقدار</th><th>مجموع فروش</th></tr></thead>
+                    <tbody>${productRows}</tbody>
+                </table>
+                <h4 style="color:#38bdf8; margin-top:12px; margin-bottom:6px;">🧾 ریز فاکتورها:</h4>
+                <table>
+                    <thead><tr><th>زمان ثبت</th><th>کالا</th><th>مقدار</th><th>مبلغ</th></tr></thead>
+                    <tbody>${invoiceRows}</tbody>
+                </table>
+            `;
+        }
+    </script>
+</body>
+</html>
