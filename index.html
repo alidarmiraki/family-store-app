@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v28 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v29 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -356,8 +356,8 @@
         <button class="cancel-edit-btn" id="cancelSaleEditBtn" onclick="cancelSaleEdit()">لغو ویرایش و بازگشت به حالت ثبت فروش جدید</button>
 
         <div class="report-card" style="margin-top:18px;">
-            <h3>🧾 فاکتورهای اخیر (قابل ویرایش/حذف توسط همه فروشندگان و مدیر)</h3>
-            <div class="hint">با ویرایش مقدار یک فاکتور، موجودی ظرف غرفه به‌طور خودکار اصلاح می‌شود (اگر مقدار جدید کمتر باشد به موجودی غرفه اضافه، اگر بیشتر باشد از موجودی غرفه کم می‌شود). با حذف کامل یک فاکتور، کل مقدار آن به موجودی غرفه بازگردانده می‌شود.</div>
+            <h3>🧾 فاکتورهای من (قابل ویرایش تا ۳ بار / قابل حذف)</h3>
+            <div class="hint">این لیست فقط فاکتورهایی را نشان می‌دهد که خودتان ثبت کرده‌اید؛ فاکتورهای سایر فروشندگان یا مدیر در این لیست دیده یا دستکاری نمی‌شود. با ویرایش مقدار یک فاکتور، موجودی ظرف غرفه به‌طور خودکار اصلاح می‌شود (اگر مقدار جدید کمتر باشد به موجودی غرفه اضافه، اگر بیشتر باشد از موجودی غرفه کم می‌شود). با حذف کامل یک فاکتور، کل مقدار آن به موجودی غرفه بازگردانده می‌شود. هر فاکتور حداکثر ۳ بار قابل ویرایش است و پس از آن فقط قابل حذف خواهد بود.</div>
             <div class="recent-sales-wrap">
                 <table>
                     <thead>
@@ -366,7 +366,7 @@
                             <th>کالا</th>
                             <th>مقدار</th>
                             <th>مبلغ</th>
-                            <th>فروشنده</th>
+                            <th>دفعات ویرایش</th>
                             <th>عملیات</th>
                         </tr>
                     </thead>
@@ -596,7 +596,7 @@
         <button class="submit-btn" onclick="saveShiftSettings()">ذخیره تنظیمات شیفت‌ها</button>
     </div>
 
-    <div class="build-tag">v28 (ویرایش/حذف فاکتور فروش برای همه نقش‌ها + رفع خطای موقعیت مکانی در تلگرام) - سیستم جامع لبنیات و ترشیجات فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v29 (فاکتورها فقط برای صاحب‌شان قابل مشاهده/ویرایش/حذف + سقف ۳ بار ویرایش) - سیستم جامع لبنیات و ترشیجات فامیلی ( دره میرکی )</div>
 
     <script>
         const tg = window.Telegram.WebApp;
@@ -620,6 +620,8 @@
         let editingSaleId = null;
         let editingSaleOldQty = 0;
         let editingSaleProductCode = null;
+        let editingSaleEditCount = 0;
+        const MAX_SALE_EDITS = 3; // حداکثر تعداد دفعات مجاز برای ویرایش هر فاکتور
 
         // نام باکت استوریج سوپابیس برای عکس‌های حضور و غیاب
         const ATTENDANCE_BUCKET = "attendance-photos";
@@ -1421,6 +1423,23 @@
                     return;
                 }
 
+                // سقف تعداد ویرایش
+                if (editingSaleEditCount >= MAX_SALE_EDITS) {
+                    alert(`⛔ این فاکتور قبلاً ${MAX_SALE_EDITS} بار ویرایش شده و دیگر قابل ویرایش نیست. در صورت نیاز آن را حذف کنید.`);
+                    cancelSaleEdit();
+                    loadRecentSales();
+                    return;
+                }
+
+                // اطمینان از اینکه فاکتور متعلق به خود کاربر است
+                const ownerSale = cachedSalesList.find(s => String(s.id) === String(editingSaleId));
+                if (!ownerSale || ownerSale.seller_name !== currentUserLabel) {
+                    alert('⛔ شما فقط می‌توانید فاکتورهای ثبت‌شده توسط خودتان را ویرایش کنید.');
+                    cancelSaleEdit();
+                    loadRecentSales();
+                    return;
+                }
+
                 const diff = Number((editingSaleOldQty - qty).toFixed(3)); // مثبت یعنی مقدار جدید کمتر شده -> باید به غرفه برگردد
                 const currentBooth = product.booth_stock || 0;
 
@@ -1429,6 +1448,7 @@
                 }
 
                 const newBoothStock = Math.max(0, Number((currentBooth + diff).toFixed(3)));
+                const newEditCount = editingSaleEditCount + 1;
 
                 const { error: prodErr } = await _supabase.from('products').update({ booth_stock: newBoothStock }).eq('id', product.id);
                 if (prodErr) {
@@ -1437,7 +1457,7 @@
                 }
 
                 const { error: saleErr } = await _supabase.from('sales')
-                    .update({ quantity: qty, sell_price: calculatedPrice })
+                    .update({ quantity: qty, sell_price: calculatedPrice, edit_count: newEditCount })
                     .eq('id', editingSaleId);
 
                 if (saleErr) {
@@ -1445,7 +1465,7 @@
                     return;
                 }
 
-                alert(`✅ فاکتور «${product.name}» به‌روزرسانی شد.\n💰 مبلغ جدید فاکتور: ${calculatedPrice.toLocaleString('fa-IR')} تومان\n🧊 موجودی جدید ظرف غرفه: ${newBoothStock} کیلوگرم`);
+                alert(`✅ فاکتور «${product.name}» به‌روزرسانی شد (ویرایش ${newEditCount} از ${MAX_SALE_EDITS}).\n💰 مبلغ جدید فاکتور: ${calculatedPrice.toLocaleString('fa-IR')} تومان\n🧊 موجودی جدید ظرف غرفه: ${newBoothStock} کیلوگرم`);
 
                 cancelSaleEdit();
                 loadRecentSales();
@@ -1483,15 +1503,22 @@
             loadRecentSales();
         }
 
-        // نمایش لیست فاکتورهای اخیر با امکان ویرایش/حذف برای هر سه نقش
+        // نمایش فقط فاکتورهای خودِ کاربر لاگین‌شده، با امکان ویرایش (حداکثر ۳ بار) و حذف
         async function loadRecentSales() {
             const tbody = document.getElementById('recentSalesTable');
             if (!tbody) return;
             tbody.innerHTML = '<tr><td colspan="6">در حال بارگذاری...</td></tr>';
 
+            if (!currentUserLabel) {
+                tbody.innerHTML = '<tr><td colspan="6">-</td></tr>';
+                cachedSalesList = [];
+                return;
+            }
+
             const { data: sales, error } = await _supabase
                 .from('sales')
-                .select('id, product_code, quantity, sell_price, seller_name, created_at')
+                .select('id, product_code, quantity, sell_price, seller_name, created_at, edit_count')
+                .eq('seller_name', currentUserLabel)
                 .order('created_at', { ascending: false })
                 .limit(30);
 
@@ -1502,7 +1529,7 @@
             }
 
             if (!sales || sales.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6">هیچ فاکتوری ثبت نشده است.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6">شما هنوز هیچ فاکتوری ثبت نکرده‌اید.</td></tr>';
                 cachedSalesList = [];
                 return;
             }
@@ -1519,15 +1546,20 @@
             tbody.innerHTML = sales.map(s => {
                 const timeStr = getTehranFullDateTimeString(new Date(s.created_at));
                 const pname = nameMap[s.product_code] || s.product_code;
+                const editCount = s.edit_count || 0;
+                const canEditMore = editCount < MAX_SALE_EDITS;
+                const editControl = canEditMore
+                    ? `<button class="row-btn edit-btn" onclick="editSale('${s.id}')">ویرایش</button>`
+                    : `<span style="color:#94a3b8; font-size:10px; display:inline-block; padding:5px 3px;">🔒 غیرفعال</span>`;
                 return `
                     <tr>
                         <td>${timeStr}</td>
                         <td>${pname}</td>
                         <td>${Number(s.quantity).toLocaleString('fa-IR', { maximumFractionDigits: 3 })} کیلو</td>
                         <td>${Number(s.sell_price).toLocaleString('fa-IR')} تومان</td>
-                        <td>${s.seller_name || '-'}</td>
+                        <td>${editCount}/${MAX_SALE_EDITS}</td>
                         <td>
-                            <button class="row-btn edit-btn" onclick="editSale('${s.id}')">ویرایش</button>
+                            ${editControl}
                             <button class="row-btn delete-btn" onclick="deleteSale('${s.id}')">حذف</button>
                         </td>
                     </tr>
@@ -1542,16 +1574,28 @@
             const sale = cachedSalesList.find(s => String(s.id) === String(saleId));
             if (!sale) return;
 
+            if (sale.seller_name !== currentUserLabel) {
+                alert('⛔ شما فقط می‌توانید فاکتورهای ثبت‌شده توسط خودتان را ویرایش کنید.');
+                return;
+            }
+
+            const currentEditCount = sale.edit_count || 0;
+            if (currentEditCount >= MAX_SALE_EDITS) {
+                alert(`⛔ این فاکتور قبلاً ${MAX_SALE_EDITS} بار ویرایش شده و دیگر قابل ویرایش نیست. در صورت نیاز می‌توانید آن را حذف کنید.`);
+                return;
+            }
+
             editingSaleId = sale.id;
             editingSaleOldQty = Number(sale.quantity);
             editingSaleProductCode = sale.product_code;
+            editingSaleEditCount = currentEditCount;
 
             const product = cachedProductsList.find(p => p.code === sale.product_code);
             document.getElementById('sName').value = product ? product.name : sale.product_code;
             document.getElementById('sQty').value = sale.quantity;
             calculateSalePriceAuto();
 
-            document.getElementById('saleFormTitle').innerText = '✏️ ویرایش فاکتور فروش';
+            document.getElementById('saleFormTitle').innerText = `✏️ ویرایش فاکتور فروش (ویرایش ${currentEditCount + 1} از ${MAX_SALE_EDITS})`;
             document.getElementById('saleSubmitBtn').innerText = 'به‌روزرسانی فاکتور فروش';
             document.getElementById('cancelSaleEditBtn').style.display = 'block';
 
@@ -1563,6 +1607,7 @@
             editingSaleId = null;
             editingSaleOldQty = 0;
             editingSaleProductCode = null;
+            editingSaleEditCount = 0;
             document.getElementById('sName').value = '';
             document.getElementById('sQty').value = '';
             document.getElementById('sCalcDisplay').innerText = 'مبلغ کل فاکتور: ۰ تومان (قیمت واحد: ۰ تومان)';
@@ -1574,6 +1619,11 @@
         async function deleteSale(saleId) {
             const sale = cachedSalesList.find(s => String(s.id) === String(saleId));
             if (!sale) return;
+
+            if (sale.seller_name !== currentUserLabel) {
+                alert('⛔ شما فقط می‌توانید فاکتورهای ثبت‌شده توسط خودتان را حذف کنید.');
+                return;
+            }
 
             const sure = confirm('آیا از حذف این فاکتور فروش مطمئن هستید؟ کل مقدار فروخته‌شده به موجودی ظرف غرفه بازگردانده می‌شود.');
             if (!sure) return;
@@ -2027,4 +2077,3 @@
     </script>
 </body>
 </html>
-
