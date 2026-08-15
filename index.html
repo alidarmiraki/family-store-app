@@ -567,7 +567,7 @@
         <button class="submit-btn" onclick="saveShiftSettings()">ذخیره تنظیمات شیفت‌ها</button>
     </div>
 
-    <div class="build-tag">v24 (رفع خطای آپلود عکس و اصلاح ساعت ثبت) - سیستم جامع لبنیات و ترشیجات فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v25 (رفع خطای خواندن دوباره‌ی فایل عکس) - سیستم جامع لبنیات و ترشیجات فامیلی ( دره میرکی )</div>
 
     <script>
         const tg = window.Telegram.WebApp;
@@ -582,7 +582,7 @@
         let currentUserLabel = "";
         let editingProductId = null;
         let uploadedPhotoBase64 = "";
-        let selectedPhotoFile = null;
+        let selectedPhotoDataUrl = null;
         let selectedProductUnitPrice = 0;
 
         // نام باکت استوریج سوپابیس برای عکس‌های حضور و غیاب
@@ -590,33 +590,31 @@
 
         // فشرده‌سازی عکس قبل از آپلود (چون عکس خام موبایل معمولاً ۲ تا ۸ مگابایت است
         // و اگر مستقیم به صورت base64 داخل جدول ذخیره شود باعث خطای حجم درخواست می‌شود)
-        function compressImageFile(file, maxWidth = 1000, quality = 0.6) {
+        // نکته مهم: این تابع از یک data URL که قبلاً (فقط یک‌بار) خوانده شده استفاده می‌کند،
+        // نه از خودِ فایل — چون در وب‌ویوی تلگرام خواندن دوباره‌ی همان فایل عکس دوربین
+        // (content://...) معمولاً با خطا مواجه می‌شود.
+        function compressDataUrl(dataUrl, maxWidth = 1000, quality = 0.6) {
             return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const img = new Image();
-                    img.onload = () => {
-                        let width = img.width;
-                        let height = img.height;
-                        if (width > maxWidth) {
-                            height = Math.round(height * (maxWidth / width));
-                            width = maxWidth;
-                        }
-                        const canvas = document.createElement('canvas');
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
-                        canvas.toBlob((blob) => {
-                            if (blob) resolve(blob);
-                            else reject(new Error('خطا در فشرده‌سازی عکس'));
-                        }, 'image/jpeg', quality);
-                    };
-                    img.onerror = () => reject(new Error('فایل انتخاب‌شده یک عکس معتبر نیست'));
-                    img.src = e.target.result;
+                const img = new Image();
+                img.onload = () => {
+                    let width = img.width;
+                    let height = img.height;
+                    if (width > maxWidth) {
+                        height = Math.round(height * (maxWidth / width));
+                        width = maxWidth;
+                    }
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    canvas.toBlob((blob) => {
+                        if (blob) resolve(blob);
+                        else reject(new Error('خطا در فشرده‌سازی عکس'));
+                    }, 'image/jpeg', quality);
                 };
-                reader.onerror = () => reject(new Error('خطا در خواندن فایل عکس'));
-                reader.readAsDataURL(file);
+                img.onerror = () => reject(new Error('فایل انتخاب‌شده یک عکس معتبر نیست'));
+                img.src = dataUrl;
             });
         }
 
@@ -914,16 +912,20 @@
         function previewAttPhoto(event) {
             const file = event.target.files[0];
             if (file) {
-                selectedPhotoFile = file;
                 const reader = new FileReader();
                 reader.onload = function(e) {
+                    selectedPhotoDataUrl = e.target.result;
                     const img = document.getElementById('photoPreview');
-                    img.src = e.target.result;
+                    img.src = selectedPhotoDataUrl;
                     img.style.display = 'block';
+                };
+                reader.onerror = function() {
+                    selectedPhotoDataUrl = null;
+                    alert('❌ خطا در خواندن عکس انتخاب‌شده. لطفاً دوباره عکس بگیرید یا فایل دیگری انتخاب کنید.');
                 };
                 reader.readAsDataURL(file);
             } else {
-                selectedPhotoFile = null;
+                selectedPhotoDataUrl = null;
             }
         }
 
@@ -934,7 +936,7 @@
             const note = document.getElementById('attNote').value.trim();
             const submitBtn = document.querySelector('#attendanceTab .submit-btn');
 
-            if (type !== 'leave' && !selectedPhotoFile) {
+            if (type !== 'leave' && !selectedPhotoDataUrl) {
                 alert('⛔ خطا: جهت ثبت ورود و خروج ارسال عکس سلفی/محل غرفه **الزامی** می‌باشد!');
                 return;
             }
@@ -953,10 +955,10 @@
             // مرحله ۱: در صورت وجود عکس، ابتدا فشرده و در Storage سوپابیس آپلود می‌شود
             // (به جای ذخیره مستقیم base64 داخل جدول که باعث خطا و کندی می‌شد)
             let photoUrl = null;
-            if (type !== 'leave' && selectedPhotoFile) {
+            if (type !== 'leave' && selectedPhotoDataUrl) {
                 if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = '⏳ در حال آپلود عکس...'; }
                 try {
-                    const compressedBlob = await compressImageFile(selectedPhotoFile);
+                    const compressedBlob = await compressDataUrl(selectedPhotoDataUrl);
                     const safeName = (currentUserLabel || 'user').replace(/[^a-zA-Z0-9آ-ی]+/g, '_');
                     const fileName = `${safeName}_${Date.now()}.jpg`;
 
@@ -1011,7 +1013,7 @@
                 document.getElementById('attNote').value = '';
                 document.getElementById('attPhoto').value = '';
                 document.getElementById('photoPreview').style.display = 'none';
-                selectedPhotoFile = null;
+                selectedPhotoDataUrl = null;
                 uploadedPhotoBase64 = "";
             } else {
                 alert('خطا در ثبت حضور و غیاب: ' + error.message);
