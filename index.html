@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v23 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v28 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -301,6 +301,9 @@
             border-color: #38bdf8;
             font-weight: bold;
         }
+        .recent-sales-wrap {
+            overflow-x: auto;
+        }
     </style>
 </head>
 <body>
@@ -324,7 +327,7 @@
 
     <!-- تب‌های بالای صفحه -->
     <div class="tabs" id="tabContainer">
-        <button class="tab-btn" id="btnSale" onclick="switchTab('sale'); loadProductDatalist();">🛍️ ثبت فروش</button>
+        <button class="tab-btn" id="btnSale" onclick="switchTab('sale'); loadProductDatalist(); loadRecentSales();">🛍️ ثبت فروش</button>
         <button class="tab-btn" id="btnAttendance" onclick="switchTab('attendance');">⏰ حضور و غیاب</button>
         <button class="tab-btn" id="btnMessage" onclick="switchTab('message');">📩 ارسال پیام به مدیر</button>
         <button class="tab-btn" id="btnInbox" onclick="switchTab('inbox'); loadManagerInbox();">📥 صندوقچه پیام‌ها</button>
@@ -338,7 +341,7 @@
 
     <!-- فرم ثبت فروش -->
     <div id="saleTab" class="card">
-        <h2>🛍️ ثبت فروش روزانه</h2>
+        <h2 id="saleFormTitle">🛍️ ثبت فروش روزانه</h2>
         <label>انتخاب یا تایپ نام کالا:</label>
         <input type="text" id="sName" dir="auto" list="productDatalist" placeholder="نام کالا را انتخاب یا تایپ کنید" onchange="calculateSalePriceAuto()">
         <datalist id="productDatalist"></datalist>
@@ -349,7 +352,30 @@
 
         <div id="sCalcDisplay" class="price-display">مبلغ کل فاکتور: ۰ تومان (قیمت واحد: ۰ تومان)</div>
 
-        <button class="submit-btn" onclick="submitSale()">ثبت فاکتور فروش</button>
+        <button class="submit-btn" id="saleSubmitBtn" onclick="submitSale()">ثبت فاکتور فروش</button>
+        <button class="cancel-edit-btn" id="cancelSaleEditBtn" onclick="cancelSaleEdit()">لغو ویرایش و بازگشت به حالت ثبت فروش جدید</button>
+
+        <div class="report-card" style="margin-top:18px;">
+            <h3>🧾 فاکتورهای اخیر (قابل ویرایش/حذف توسط همه فروشندگان و مدیر)</h3>
+            <div class="hint">با ویرایش مقدار یک فاکتور، موجودی ظرف غرفه به‌طور خودکار اصلاح می‌شود (اگر مقدار جدید کمتر باشد به موجودی غرفه اضافه، اگر بیشتر باشد از موجودی غرفه کم می‌شود). با حذف کامل یک فاکتور، کل مقدار آن به موجودی غرفه بازگردانده می‌شود.</div>
+            <div class="recent-sales-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>زمان ثبت</th>
+                            <th>کالا</th>
+                            <th>مقدار</th>
+                            <th>مبلغ</th>
+                            <th>فروشنده</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentSalesTable">
+                        <tr><td colspan="6">در حال بارگذاری...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <!-- فرم حضور و غیاب -->
@@ -570,7 +596,7 @@
         <button class="submit-btn" onclick="saveShiftSettings()">ذخیره تنظیمات شیفت‌ها</button>
     </div>
 
-    <div class="build-tag">v27 (رفع RLS آپلود عکس + جایگزینی موقعیت مکانی) - سیستم جامع لبنیات و ترشیجات فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v28 (ویرایش/حذف فاکتور فروش برای همه نقش‌ها + رفع خطای موقعیت مکانی در تلگرام) - سیستم جامع لبنیات و ترشیجات فامیلی ( دره میرکی )</div>
 
     <script>
         const tg = window.Telegram.WebApp;
@@ -581,6 +607,7 @@
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let cachedProductsList = [];
+        let cachedSalesList = [];
         let currentRole = "";
         let currentUserLabel = "";
         let editingProductId = null;
@@ -588,6 +615,11 @@
         let selectedPhotoDataUrl = null;
         let selectedLocationText = null;
         let selectedProductUnitPrice = 0;
+
+        // وضعیت ویرایش فاکتور فروش
+        let editingSaleId = null;
+        let editingSaleOldQty = 0;
+        let editingSaleProductCode = null;
 
         // نام باکت استوریج سوپابیس برای عکس‌های حضور و غیاب
         const ATTENDANCE_BUCKET = "attendance-photos";
@@ -729,12 +761,14 @@
             }
 
             loadProductDatalist();
+            loadRecentSales();
         }
 
         function logout() {
             currentRole = "";
             currentUserLabel = "";
             editingProductId = null;
+            cancelSaleEdit();
             document.getElementById('accessUser').value = '';
             document.getElementById('accessPin').value = '';
             document.getElementById('userBadge').style.display = 'none';
@@ -913,31 +947,82 @@
             document.getElementById('attTimeFields').style.display = (type === 'leave') ? 'none' : 'block';
         }
 
+        // --- موقعیت مکانی حضور و غیاب (v28: اولویت با LocationManager تلگرام) ---
+        // در بسیاری از موبایل‌ها، درون وب‌ویوی تلگرام درخواست مستقیم
+        // navigator.geolocation به دلیل Permissions Policy مسدود یا بی‌پاسخ می‌ماند.
+        // به همین دلیل ابتدا از سیستم موقعیت مکانی خودِ تلگرام (LocationManager)
+        // استفاده می‌کنیم و فقط در صورت نبودن آن، به navigator.geolocation مرورگر می‌رویم.
         function captureAttendanceLocation() {
-            if (!navigator.geolocation) {
-                alert('❌ مرورگر/برنامه شما از موقعیت مکانی پشتیبانی نمی‌کند.');
-                return;
-            }
             const statusEl = document.getElementById('locationStatus');
             statusEl.style.display = 'block';
             statusEl.style.color = '#38bdf8';
             statusEl.innerText = '⏳ در حال دریافت موقعیت مکانی... (اجازه دسترسی را در صورت درخواست تایید کنید)';
 
-            navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    const lat = pos.coords.latitude.toFixed(6);
-                    const lng = pos.coords.longitude.toFixed(6);
-                    selectedLocationText = `📍 موقعیت مکانی ثبت: https://maps.google.com/?q=${lat},${lng}`;
-                    statusEl.style.color = '#34d399';
-                    statusEl.innerText = '✅ موقعیت مکانی دریافت شد و به‌جای عکس در توضیحات ثبت می‌شود.';
-                },
-                (err) => {
-                    selectedLocationText = null;
-                    statusEl.style.color = '#ef4444';
-                    statusEl.innerText = '❌ خطا در دریافت موقعیت مکانی: ' + err.message + ' — لطفاً دسترسی موقعیت مکانی را برای مرورگر/تلگرام فعال کنید.';
-                },
-                { enableHighAccuracy: true, timeout: 15000 }
-            );
+            if (tg && tg.LocationManager) {
+                try {
+                    tg.LocationManager.init(() => {
+                        if (!tg.LocationManager.isLocationAvailable) {
+                            statusEl.style.color = '#fbbf24';
+                            statusEl.innerText = '⚠️ موقعیت مکانی از طریق تلگرام در دسترس نیست، در حال تلاش با مرورگر...';
+                            tryBrowserGeolocation(statusEl);
+                            return;
+                        }
+                        tg.LocationManager.getLocation((locationData) => {
+                            if (!locationData) {
+                                statusEl.style.color = '#fbbf24';
+                                statusEl.innerText = '⚠️ دسترسی به موقعیت مکانی رد شد یا دریافت نشد، در حال تلاش با مرورگر...';
+                                tryBrowserGeolocation(statusEl);
+                                return;
+                            }
+                            const lat = Number(locationData.latitude).toFixed(6);
+                            const lng = Number(locationData.longitude).toFixed(6);
+                            selectedLocationText = `📍 موقعیت مکانی ثبت: https://maps.google.com/?q=${lat},${lng}`;
+                            statusEl.style.color = '#34d399';
+                            statusEl.innerText = '✅ موقعیت مکانی از طریق تلگرام دریافت شد و به‌جای عکس در توضیحات ثبت می‌شود.';
+                        });
+                    });
+                } catch (e) {
+                    tryBrowserGeolocation(statusEl);
+                }
+            } else {
+                tryBrowserGeolocation(statusEl);
+            }
+        }
+
+        function tryBrowserGeolocation(statusEl) {
+            if (!navigator.geolocation) {
+                selectedLocationText = null;
+                statusEl.style.color = '#ef4444';
+                statusEl.innerText = '❌ مرورگر/برنامه شما از موقعیت مکانی پشتیبانی نمی‌کند. لطفاً به‌جای آن از گزینه آپلود عکس استفاده کنید.';
+                return;
+            }
+            try {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        const lat = pos.coords.latitude.toFixed(6);
+                        const lng = pos.coords.longitude.toFixed(6);
+                        selectedLocationText = `📍 موقعیت مکانی ثبت: https://maps.google.com/?q=${lat},${lng}`;
+                        statusEl.style.color = '#34d399';
+                        statusEl.innerText = '✅ موقعیت مکانی دریافت شد و به‌جای عکس در توضیحات ثبت می‌شود.';
+                    },
+                    (err) => {
+                        selectedLocationText = null;
+                        statusEl.style.color = '#ef4444';
+                        let extra = '';
+                        if (err.code === 1) extra = ' — دسترسی موقعیت مکانی رد شده است؛ آن را در تنظیمات مرورگر یا تلگرام برای این صفحه فعال کنید.';
+                        else if (err.code === 2) extra = ' — موقعیت مکانی در دسترس نیست (GPS یا اینترنت دستگاه را بررسی کنید).';
+                        else if (err.code === 3) extra = ' — زمان دریافت موقعیت مکانی به پایان رسید، دوباره تلاش کنید.';
+                        statusEl.innerText = '❌ خطا در دریافت موقعیت مکانی' + extra + ' در صورت تکرار خطا، لطفاً از گزینه آپلود عکس استفاده کنید.';
+                    },
+                    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+                );
+            } catch (e) {
+                // برخی وب‌ویوها (از جمله تلگرام) به‌خاطر Permissions Policy
+                // همین‌جا و بلافاصله خطا می‌دهند (نه در callback خطا)
+                selectedLocationText = null;
+                statusEl.style.color = '#ef4444';
+                statusEl.innerText = '❌ دسترسی به موقعیت مکانی توسط تنظیمات امنیتی این صفحه مسدود شده است. لطفاً از گزینه آپلود عکس استفاده کنید.';
+            }
         }
 
         function previewAttPhoto(event) {
@@ -1297,6 +1382,7 @@
             }
         }
 
+        // --- ثبت / ویرایش فاکتور فروش (v28) ---
         async function submitSale() {
             const inputVal = document.getElementById('sName').value.trim();
             const qty = parseFloat(document.getElementById('sQty').value);
@@ -1328,6 +1414,46 @@
 
             const calculatedPrice = Math.round(qty * (product.sell_price || 0));
 
+            // --- حالت ویرایش یک فاکتور موجود ---
+            if (editingSaleId) {
+                if (product.code !== editingSaleProductCode) {
+                    alert('⚠️ در حالت ویرایش امکان تغییر نام کالا وجود ندارد. ابتدا روی «لغو ویرایش» بزنید و یک فاکتور جدید ثبت کنید.');
+                    return;
+                }
+
+                const diff = Number((editingSaleOldQty - qty).toFixed(3)); // مثبت یعنی مقدار جدید کمتر شده -> باید به غرفه برگردد
+                const currentBooth = product.booth_stock || 0;
+
+                if (diff < 0 && currentBooth < Math.abs(diff)) {
+                    alert('⚠️ توجه: موجودی ظرف غرفه برای افزایش این مقدار کافی نیست؛ موجودی غرفه به صفر می‌رسد و ظرف نیاز به شارژ مجدد دارد.');
+                }
+
+                const newBoothStock = Math.max(0, Number((currentBooth + diff).toFixed(3)));
+
+                const { error: prodErr } = await _supabase.from('products').update({ booth_stock: newBoothStock }).eq('id', product.id);
+                if (prodErr) {
+                    alert('❌ خطا در به‌روزرسانی موجودی غرفه: ' + prodErr.message);
+                    return;
+                }
+
+                const { error: saleErr } = await _supabase.from('sales')
+                    .update({ quantity: qty, sell_price: calculatedPrice })
+                    .eq('id', editingSaleId);
+
+                if (saleErr) {
+                    alert('❌ خطا در به‌روزرسانی فاکتور: ' + saleErr.message);
+                    return;
+                }
+
+                alert(`✅ فاکتور «${product.name}» به‌روزرسانی شد.\n💰 مبلغ جدید فاکتور: ${calculatedPrice.toLocaleString('fa-IR')} تومان\n🧊 موجودی جدید ظرف غرفه: ${newBoothStock} کیلوگرم`);
+
+                cancelSaleEdit();
+                loadRecentSales();
+                loadProductDatalist();
+                return;
+            }
+
+            // --- حالت ثبت فاکتور جدید ---
             let currentBooth = product.booth_stock || 0;
             if (currentBooth < qty) {
                 alert('⚠️ موجودی ظرف غرفه کمتر از مقدار فروش است! موجودی غرفه کسر گردید اما ظرف نیاز به شارژ دارد.');
@@ -1353,6 +1479,128 @@
             document.getElementById('sName').value = '';
             document.getElementById('sQty').value = '';
             document.getElementById('sCalcDisplay').innerText = 'مبلغ کل فاکتور: ۰ تومان (قیمت واحد: ۰ تومان)';
+
+            loadRecentSales();
+        }
+
+        // نمایش لیست فاکتورهای اخیر با امکان ویرایش/حذف برای هر سه نقش
+        async function loadRecentSales() {
+            const tbody = document.getElementById('recentSalesTable');
+            if (!tbody) return;
+            tbody.innerHTML = '<tr><td colspan="6">در حال بارگذاری...</td></tr>';
+
+            const { data: sales, error } = await _supabase
+                .from('sales')
+                .select('id, product_code, quantity, sell_price, seller_name, created_at')
+                .order('created_at', { ascending: false })
+                .limit(30);
+
+            if (error) {
+                tbody.innerHTML = '<tr><td colspan="6">❌ خطا در دریافت فاکتورها: ' + error.message + '</td></tr>';
+                cachedSalesList = [];
+                return;
+            }
+
+            if (!sales || sales.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6">هیچ فاکتوری ثبت نشده است.</td></tr>';
+                cachedSalesList = [];
+                return;
+            }
+
+            cachedSalesList = sales;
+
+            if (cachedProductsList.length === 0) {
+                const { data: products } = await _supabase.from('products').select('*');
+                cachedProductsList = products || [];
+            }
+            const nameMap = {};
+            cachedProductsList.forEach(p => { nameMap[p.code] = p.name; });
+
+            tbody.innerHTML = sales.map(s => {
+                const timeStr = getTehranFullDateTimeString(new Date(s.created_at));
+                const pname = nameMap[s.product_code] || s.product_code;
+                return `
+                    <tr>
+                        <td>${timeStr}</td>
+                        <td>${pname}</td>
+                        <td>${Number(s.quantity).toLocaleString('fa-IR', { maximumFractionDigits: 3 })} کیلو</td>
+                        <td>${Number(s.sell_price).toLocaleString('fa-IR')} تومان</td>
+                        <td>${s.seller_name || '-'}</td>
+                        <td>
+                            <button class="row-btn edit-btn" onclick="editSale('${s.id}')">ویرایش</button>
+                            <button class="row-btn delete-btn" onclick="deleteSale('${s.id}')">حذف</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function editSale(saleId) {
+            if (cachedProductsList.length === 0) {
+                await loadProductDatalist();
+            }
+            const sale = cachedSalesList.find(s => String(s.id) === String(saleId));
+            if (!sale) return;
+
+            editingSaleId = sale.id;
+            editingSaleOldQty = Number(sale.quantity);
+            editingSaleProductCode = sale.product_code;
+
+            const product = cachedProductsList.find(p => p.code === sale.product_code);
+            document.getElementById('sName').value = product ? product.name : sale.product_code;
+            document.getElementById('sQty').value = sale.quantity;
+            calculateSalePriceAuto();
+
+            document.getElementById('saleFormTitle').innerText = '✏️ ویرایش فاکتور فروش';
+            document.getElementById('saleSubmitBtn').innerText = 'به‌روزرسانی فاکتور فروش';
+            document.getElementById('cancelSaleEditBtn').style.display = 'block';
+
+            switchTab('sale');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function cancelSaleEdit() {
+            editingSaleId = null;
+            editingSaleOldQty = 0;
+            editingSaleProductCode = null;
+            document.getElementById('sName').value = '';
+            document.getElementById('sQty').value = '';
+            document.getElementById('sCalcDisplay').innerText = 'مبلغ کل فاکتور: ۰ تومان (قیمت واحد: ۰ تومان)';
+            document.getElementById('saleFormTitle').innerText = '🛍️ ثبت فروش روزانه';
+            document.getElementById('saleSubmitBtn').innerText = 'ثبت فاکتور فروش';
+            document.getElementById('cancelSaleEditBtn').style.display = 'none';
+        }
+
+        async function deleteSale(saleId) {
+            const sale = cachedSalesList.find(s => String(s.id) === String(saleId));
+            if (!sale) return;
+
+            const sure = confirm('آیا از حذف این فاکتور فروش مطمئن هستید؟ کل مقدار فروخته‌شده به موجودی ظرف غرفه بازگردانده می‌شود.');
+            if (!sure) return;
+
+            const { data: product } = await _supabase.from('products').select('*').eq('code', sale.product_code).maybeSingle();
+
+            if (product) {
+                const newBoothStock = Number(((product.booth_stock || 0) + Number(sale.quantity)).toFixed(3));
+                const { error: prodErr } = await _supabase.from('products').update({ booth_stock: newBoothStock }).eq('id', product.id);
+                if (prodErr) {
+                    alert('❌ خطا در بازگرداندن موجودی به غرفه: ' + prodErr.message);
+                    return;
+                }
+            }
+
+            const { error } = await _supabase.from('sales').delete().eq('id', saleId);
+
+            if (!error) {
+                alert('✅ فاکتور حذف شد و مقدار آن به موجودی ظرف غرفه بازگشت.');
+                if (String(editingSaleId) === String(saleId)) {
+                    cancelSaleEdit();
+                }
+                loadRecentSales();
+                loadProductDatalist();
+            } else {
+                alert('❌ خطا در حذف فاکتور: ' + error.message);
+            }
         }
 
         function getQualitativeStatus(stock, capacity) {
@@ -1779,3 +2027,4 @@
     </script>
 </body>
 </html>
+
