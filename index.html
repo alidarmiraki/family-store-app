@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v31 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v33 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -210,6 +210,16 @@
             text-align: left;
             display: block;
         }
+        .msg-recipient-tag {
+            display: inline-block;
+            font-size: 10px;
+            color: #34d399;
+            background: rgba(16,185,129,0.12);
+            border: 1px solid rgba(16,185,129,0.3);
+            border-radius: 6px;
+            padding: 2px 6px;
+            margin-right: 6px;
+        }
         input[type="radio"] { width: auto; margin-left: 4px; }
         .unit-toggle {
             display: flex;
@@ -365,6 +375,18 @@
             font-weight:bold;
             font-size:11px;
         }
+        .dismiss-alert-btn {
+            width:100%;
+            padding:11px;
+            margin-top:10px;
+            border-radius:10px;
+            border:none;
+            background: linear-gradient(90deg, #334155, #1e293b);
+            color:#e2e8f0;
+            font-weight:bold;
+            font-size:12px;
+            cursor:pointer;
+        }
     </style>
 </head>
 <body>
@@ -394,7 +416,8 @@
         <button class="tab-btn" id="btnSale" onclick="switchTab('sale'); loadProductDatalist(); loadRecentSales();">🛍️ ثبت فروش</button>
         <button class="tab-btn" id="btnAttendance" onclick="switchTab('attendance');">⏰ حضور و غیاب</button>
         <button class="tab-btn" id="btnMessage" onclick="switchTab('message');">📩 ارسال پیام به مدیر</button>
-        <button class="tab-btn" id="btnInbox" onclick="switchTab('inbox'); loadManagerInbox();">📥 صندوقچه پیام‌ها</button>
+        <button class="tab-btn" id="btnStaffMessage" onclick="switchTab('staffMessage');">📤 پیام به پرسنل</button>
+        <button class="tab-btn" id="btnInbox" onclick="switchTab('inbox'); loadInbox();">📥 صندوقچه پیام‌ها</button>
         <button class="tab-btn" id="btnBooth" onclick="switchTab('booth'); loadBoothInventory();">🧊 وضعیت یخچال غرفه</button>
         <button class="tab-btn" id="btnPurchaseOrders" onclick="switchTab('purchaseOrders'); loadPurchaseOrders();">🧾 سفارشات خرید</button>
         <button class="tab-btn" id="btnProduct" onclick="switchTab('product')">➕ تعریف کالا</button>
@@ -501,7 +524,26 @@
         <button class="submit-btn" onclick="sendMessageToAdmin()">ارسال به مدیر غرفه</button>
     </div>
 
-    <!-- صندوقچه پیام‌های مدیر -->
+    <!-- فرم ارسال پیام مدیر به پرسنل (جدا جدا) -->
+    <div id="staffMessageTab" class="card">
+        <h2>📤 ارسال پیام به پرسنل</h2>
+        <div class="hint">می‌توانید پیام را فقط برای یکی از فروشنده‌ها بفرستید یا برای هر دو (همه) ارسال کنید. این پیام فقط در صندوقچهٔ پیام‌های همان فروشنده(ها) نمایش داده می‌شود.</div>
+
+        <label>گیرنده پیام:</label>
+        <select id="staffMsgTarget">
+            <option value="فروشنده صبح">🌅 فقط فروشنده صبح</option>
+            <option value="فروشنده شب">🌙 فقط فروشنده شب</option>
+            <option value="all">👥 هر دو فروشنده (همه)</option>
+        </select>
+
+        <label>عنوان پیام:</label>
+        <input type="text" id="staffMsgTitle" placeholder="مثلاً: یادآوری یا دستور کاری">
+        <label>متن پیام:</label>
+        <textarea id="staffMsgBody" placeholder="متن پیام را بنویسید..."></textarea>
+        <button class="submit-btn" onclick="sendMessageToStaff()">ارسال پیام به فروشنده</button>
+    </div>
+
+    <!-- صندوقچه پیام‌ها -->
     <div id="inboxTab" class="card">
         <h2>📥 صندوقچه پیام‌ها و هشدارها</h2>
         <div id="inboxList">در حال بارگذاری...</div>
@@ -717,7 +759,7 @@
         <button class="submit-btn" onclick="saveShiftSettings()">ذخیره تنظیمات شیفت‌ها</button>
     </div>
 
-    <div class="build-tag">v32 - سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v33 - سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</div>
 
     <script>
         // اجرای امن Telegram WebApp
@@ -744,6 +786,7 @@
         let selectedPhotoDataUrl = null;
         let selectedLocationText = null;
         let selectedProductUnitPrice = 0;
+        let alertDismissedThisSession = false;
 
         let editingSaleId = null;
         let editingSaleOldQty = 0;
@@ -885,6 +928,7 @@
 
             currentRole = user.role;
             currentUserLabel = (roleLabels[user.role] || user.role) + ' - ' + (user.full_name || user.username);
+            alertDismissedThisSession = false;
 
             const badge = document.getElementById('userBadge');
             badge.innerHTML = '👤 ' + currentUserLabel + ' <button class="logout-btn" onclick="logout()">خروج</button>';
@@ -893,12 +937,12 @@
             document.getElementById('buyPriceField').style.display = (currentRole === 'admin') ? 'block' : 'none';
 
             if (currentRole === 'admin') {
-                setupView(['btnSale', 'btnInbox', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnShiftSettings'], 'saleTab');
+                setupView(['btnSale', 'btnInbox', 'btnStaffMessage', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnShiftSettings'], 'saleTab');
                 checkLowStockAlertNoWeight();
             } else if (currentRole === 'morning_seller') {
-                setupView(['btnSale', 'btnAttendance', 'btnMessage', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport'], 'saleTab');
+                setupView(['btnSale', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport'], 'saleTab');
             } else {
-                setupView(['btnSale', 'btnAttendance', 'btnMessage', 'btnReport'], 'saleTab');
+                setupView(['btnSale', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnReport'], 'saleTab');
             }
 
             loadProductDatalist();
@@ -909,6 +953,7 @@
             currentRole = "";
             currentUserLabel = "";
             editingProductId = null;
+            alertDismissedThisSession = false;
             cancelSaleEdit();
             document.getElementById('accessUser').value = '';
             document.getElementById('accessPin').value = '';
@@ -978,6 +1023,16 @@
             return new Set(entries.filter(e => e[1] > avg).map(e => e[0]));
         }
 
+        // --- مخفی کردن دستی مرکز هشدار توسط مدیر (فقط برای همین ورود؛ دفعه بعد که وارد شود دوباره نشان داده می‌شود) ---
+        function dismissAdminAlerts() {
+            alertDismissedThisSession = true;
+            const panel = document.getElementById('adminAlertPanel');
+            if (panel) {
+                panel.style.display = 'none';
+                panel.innerHTML = '';
+            }
+        }
+
         // --- رندر مرکز هشدار موجودی مخصوص مدیر (جایگزین alert ساده) ---
         function renderAdminAlertPanel(urgentItems, reorderItems, calmItems) {
             const panel = document.getElementById('adminAlertPanel');
@@ -985,6 +1040,12 @@
             const total = urgentItems.length + reorderItems.length + calmItems.length;
 
             if (total === 0) {
+                panel.style.display = 'none';
+                panel.innerHTML = '';
+                return;
+            }
+
+            if (alertDismissedThisSession) {
                 panel.style.display = 'none';
                 panel.innerHTML = '';
                 return;
@@ -1016,6 +1077,7 @@
                 </div>`;
             }
 
+            html += `<button class="dismiss-alert-btn" onclick="dismissAdminAlerts()">✅ متوجه شدم، مخفی کن</button>`;
             html += `</div>`;
             panel.innerHTML = html;
             panel.style.display = 'block';
@@ -1116,6 +1178,7 @@
                 await _supabase.from('products').update({ low_stock_alert_since: now.toISOString() }).eq('id', product.id);
                 await _supabase.from('messages').insert([{
                     sender: "سیستم خودکار موجودی",
+                    recipient: "admin",
                     title: `⛔ کاهش بحرانی موجودی: ${product.name}`,
                     body: `انبار اصلی «${product.name}» خالی است و با این فروش، موجودی غرفه هم به ${newBoothStock} کیلو رسید (حد هشدار: ${threshold} کیلو).\nاین کالا دیگر در چک‌لیست شارژ صبحگاهی قابل پر کردن نیست چون انبار اصلی خالی است. لطفاً هرچه سریع‌تر سفارش دهید.`,
                     created_at: now.toISOString()
@@ -1152,6 +1215,7 @@
             }
         }
 
+        // --- ارسال پیام از فروشنده به مدیر ---
         async function sendMessageToAdmin() {
             const title = document.getElementById('msgTitle').value.trim();
             const body = document.getElementById('msgBody').value.trim();
@@ -1163,6 +1227,7 @@
 
             const { error } = await _supabase.from('messages').insert([{
                 sender: currentUserLabel,
+                recipient: "admin",
                 title: title,
                 body: body,
                 created_at: now.toISOString()
@@ -1177,26 +1242,70 @@
             }
         }
 
-        async function loadManagerInbox() {
+        // --- ارسال پیام مدیر به یکی از فروشنده‌ها یا هر دو ---
+        async function sendMessageToStaff() {
+            const target = document.getElementById('staffMsgTarget').value;
+            const title = document.getElementById('staffMsgTitle').value.trim();
+            const body = document.getElementById('staffMsgBody').value.trim();
+            const now = new Date();
+
+            if (!title || !body) {
+                return alert('لطفاً عنوان و متن پیام را وارد کنید.');
+            }
+
+            const { error } = await _supabase.from('messages').insert([{
+                sender: currentUserLabel,
+                recipient: target,
+                title: title,
+                body: body,
+                created_at: now.toISOString()
+            }]);
+
+            if (!error) {
+                const targetLabel = (target === 'all') ? 'هر دو فروشنده' : target;
+                alert('✅ پیام برای ' + targetLabel + ' ارسال شد.');
+                document.getElementById('staffMsgTitle').value = '';
+                document.getElementById('staffMsgBody').value = '';
+            } else {
+                alert('❌ خطا در ارسال پیام: ' + error.message + '\n\nاگر این خطا تکرار شد، مطمئن شوید ستون recipient در جدول messages داخل Supabase ساخته شده است.');
+            }
+        }
+
+        // --- بارگذاری صندوقچه پیام‌ها: برای مدیر پیام‌های خطاب به مدیر، برای فروشنده پیام‌های خطاب به همان فروشنده یا «همه» ---
+        async function loadInbox() {
             const inbox = document.getElementById('inboxList');
             inbox.innerHTML = 'در حال دریافت پیام‌ها...';
 
-            const { data: msgs, error } = await _supabase
-                .from('messages')
-                .select('*')
-                .order('created_at', { ascending: false });
+            let query = _supabase.from('messages').select('*').order('created_at', { ascending: false });
 
-            if (error || !msgs || msgs.length === 0) {
+            if (currentRole === 'admin') {
+                query = query.eq('recipient', 'admin');
+            } else {
+                const myLabel = roleLabels[currentRole];
+                query = query.or(`recipient.eq.${myLabel},recipient.eq.all`);
+            }
+
+            const { data: msgs, error } = await query;
+
+            if (error) {
+                inbox.innerHTML = `<p style="text-align:center; color:#ef4444;">❌ خطا در دریافت پیام‌ها: ${error.message}<br><span style="font-size:10px; color:#94a3b8;">اگر پیام درباره ستون recipient است، آن را در جدول messages داخل Supabase اضافه کنید.</span></p>`;
+                return;
+            }
+
+            if (!msgs || msgs.length === 0) {
                 inbox.innerHTML = '<p style="text-align:center; color:#94a3b8;">هیچ پیامی در صندوقچه دریافت نشده است.</p>';
                 return;
             }
 
             inbox.innerHTML = msgs.map(m => {
                 const timeStr = getTehranFullDateTimeString(new Date(m.created_at));
+                const recipientTag = (currentRole === 'admin')
+                    ? ''
+                    : `<span class="msg-recipient-tag">${m.recipient === 'all' ? 'برای همه پرسنل' : 'برای شما'}</span>`;
                 return `
                     <div class="msg-card">
                         <h3>📩 ${m.title}</h3>
-                        <p style="color:#38bdf8; font-size:11px;">ارسال‌کننده: ${m.sender}</p>
+                        <p style="color:#38bdf8; font-size:11px;">ارسال‌کننده: ${m.sender} ${recipientTag}</p>
                         <p style="white-space:pre-line;">${linkify(m.body)}</p>
                         <span class="msg-time">⏱️ ${timeStr}</span>
                     </div>
@@ -1410,6 +1519,7 @@
                 const overBy = delayMinutes - settings.maxDelay;
                 await _supabase.from('messages').insert([{
                     sender: "سیستم خودکار تاخیر",
+                    recipient: "admin",
                     title: `⚠️ هشدار تاخیر ${currentUserLabel}`,
                     body: `کاربر ${currentUserLabel} در تاریخ ${getTehranDateString(now)} ساعت ${timeStrNow} ورود خود را ثبت کرد.\nمیزان تاخیر: ${delayMinutes} دقیقه\nحداکثر تاخیر مجاز طبق تنظیمات: ${settings.maxDelay} دقیقه\nمقدار بیش از حد مجاز: ${overBy} دقیقه`,
                     created_at: now.toISOString()
@@ -2428,7 +2538,7 @@
                 .order('ordered_at', { ascending: false });
 
             if (error) {
-                pendingBox.innerHTML = `<p style="color:#ef4444;">❌ خطا در دریافت سفارشات: ${error.message}<br><span style="font-size:10px; color:#94a3b8;">مطمئن شوید جدول purchase_orders در Supabase ساخته شده است.</span></p>`;
+                pendingBox.innerHTML = `<p style="color:#ef4444;">❌ خطا در دریافت سفارشات: ${error.message}<br><span style="font-size:10px; color:#94a3b8;">مطمئن شوید جدول purchase_orders در Supabase تمام ستون‌های لازم (product_code, product_name, quantity, eta_days, note, status, ordered_at, received_at) را دارد.</span></p>`;
                 return;
             }
 
@@ -2519,7 +2629,7 @@
                 document.getElementById('poNote').value = '';
                 loadPurchaseOrders();
             } else {
-                alert('❌ خطا در ثبت سفارش: ' + error.message + '\n\nمطمئن شوید جدول purchase_orders در Supabase ساخته شده است.');
+                alert('❌ خطا در ثبت سفارش: ' + error.message + '\n\nمطمئن شوید جدول purchase_orders در Supabase تمام ستون‌های لازم را دارد (به‌خصوص eta_days و ordered_at). فایل fix_supabase.sql را اجرا کنید.');
             }
         }
 
