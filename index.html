@@ -386,6 +386,9 @@
     <!-- نوار کاربر لاگین‌شده -->
     <div class="user-badge" id="userBadge"></div>
 
+    <!-- مرکز هشدار موجودی مخصوص مدیر -->
+    <div id="adminAlertPanel" style="display:none;"></div>
+
     <!-- تب‌های بالای صفحه -->
     <div class="tabs" id="tabContainer">
         <button class="tab-btn" id="btnSale" onclick="switchTab('sale'); loadProductDatalist(); loadRecentSales();">🛍️ ثبت فروش</button>
@@ -393,6 +396,7 @@
         <button class="tab-btn" id="btnMessage" onclick="switchTab('message');">📩 ارسال پیام به مدیر</button>
         <button class="tab-btn" id="btnInbox" onclick="switchTab('inbox'); loadManagerInbox();">📥 صندوقچه پیام‌ها</button>
         <button class="tab-btn" id="btnBooth" onclick="switchTab('booth'); loadBoothInventory();">🧊 وضعیت یخچال غرفه</button>
+        <button class="tab-btn" id="btnPurchaseOrders" onclick="switchTab('purchaseOrders'); loadPurchaseOrders();">🧾 سفارشات خرید</button>
         <button class="tab-btn" id="btnProduct" onclick="switchTab('product')">➕ تعریف کالا</button>
         <button class="tab-btn" id="btnInventory" onclick="switchTab('inventory'); loadInventory();">📦 موجودی انبار</button>
         <button class="tab-btn" id="btnReport" onclick="switchTab('report'); loadSalesReport();">📊 گزارش فروش</button>
@@ -528,6 +532,30 @@
                 <tr><td colspan="5">در حال دریافت اطلاعات...</td></tr>
             </tbody>
         </table>
+    </div>
+
+    <!-- تب سفارشات خرید -->
+    <div id="purchaseOrdersTab" class="card">
+        <h2>🧾 سفارشات خرید از تامین‌کننده</h2>
+        <div class="hint">مدیر هر سفارشی که به تامین‌کننده می‌دهد را اینجا ثبت می‌کند تا فروشنده صبح بداند چه مقدار سفارش داده شده، آیا به انبار رسیده یا چند روز دیگر می‌رسد.</div>
+
+        <div id="poFormBox" style="display:none; margin-top:10px;">
+            <label>انتخاب یا تایپ نام کالا:</label>
+            <input type="text" id="poProductName" dir="auto" list="productDatalist" placeholder="نام کالا را انتخاب یا تایپ کنید">
+            <label>مقدار سفارش (کیلوگرم یا تعداد):</label>
+            <input type="number" id="poQty" step="0.001" placeholder="مثلاً 20">
+            <label>تخمین تعداد روز تا رسیدن سفارش (اختیاری):</label>
+            <input type="number" id="poEtaDays" step="0.5" placeholder="مثلاً 3">
+            <label>توضیحات سفارش (اختیاری):</label>
+            <textarea id="poNote" placeholder="مثلاً نام تامین‌کننده یا توضیحات..."></textarea>
+            <button class="submit-btn" onclick="submitPurchaseOrder()">ثبت سفارش جدید</button>
+        </div>
+
+        <h3 style="color:#38bdf8; margin-top:18px;">📦 سفارشات در راه (هنوز نرسیده)</h3>
+        <div id="poPendingList">در حال بارگذاری...</div>
+
+        <h3 style="color:#38bdf8; margin-top:18px;">✅ سفارشات دریافت‌شده اخیر</h3>
+        <div id="poReceivedList"></div>
     </div>
 
     <!-- فرم تعریف / ویرایش کالا -->
@@ -689,7 +717,7 @@
         <button class="submit-btn" onclick="saveShiftSettings()">ذخیره تنظیمات شیفت‌ها</button>
     </div>
 
-    <div class="build-tag">v31 - سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v32 - سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</div>
 
     <script>
         // اجرای امن Telegram WebApp
@@ -727,6 +755,7 @@
         const SALES_PAGE_SIZE = 8;
 
         const ATTENDANCE_BUCKET = "attendance-photos";
+        const CRITICAL_ALERT_COOLDOWN_HOURS = 6;
 
         function compressDataUrl(dataUrl, maxWidth = 1000, quality = 0.6) {
             return new Promise((resolve, reject) => {
@@ -864,10 +893,10 @@
             document.getElementById('buyPriceField').style.display = (currentRole === 'admin') ? 'block' : 'none';
 
             if (currentRole === 'admin') {
-                setupView(['btnSale', 'btnInbox', 'btnBooth', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnShiftSettings'], 'saleTab');
+                setupView(['btnSale', 'btnInbox', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnShiftSettings'], 'saleTab');
                 checkLowStockAlertNoWeight();
             } else if (currentRole === 'morning_seller') {
-                setupView(['btnSale', 'btnAttendance', 'btnMessage', 'btnBooth', 'btnProduct', 'btnInventory', 'btnReport'], 'saleTab');
+                setupView(['btnSale', 'btnAttendance', 'btnMessage', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport'], 'saleTab');
             } else {
                 setupView(['btnSale', 'btnAttendance', 'btnMessage', 'btnReport'], 'saleTab');
             }
@@ -887,6 +916,9 @@
             document.getElementById('userBadge').innerHTML = '';
             document.getElementById('buyPriceField').style.display = 'none';
             document.getElementById('btnInventory').innerHTML = '📦 موجودی انبار';
+            const alertPanel = document.getElementById('adminAlertPanel');
+            alertPanel.style.display = 'none';
+            alertPanel.innerHTML = '';
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.style.display = 'none';
                 btn.classList.remove('active');
@@ -946,6 +978,49 @@
             return new Set(entries.filter(e => e[1] > avg).map(e => e[0]));
         }
 
+        // --- رندر مرکز هشدار موجودی مخصوص مدیر (جایگزین alert ساده) ---
+        function renderAdminAlertPanel(urgentItems, reorderItems, calmItems) {
+            const panel = document.getElementById('adminAlertPanel');
+            if (!panel) return;
+            const total = urgentItems.length + reorderItems.length + calmItems.length;
+
+            if (total === 0) {
+                panel.style.display = 'none';
+                panel.innerHTML = '';
+                return;
+            }
+
+            let html = `
+                <div class="report-card" style="border:1px solid #ef4444; background:rgba(239,68,68,0.08); margin-bottom:12px;">
+                    <h3 style="color:#ef4444; display:flex; align-items:center; gap:6px;">🚨 مرکز هشدار موجودی <span style="background:#ef4444; color:#fff; border-radius:20px; padding:1px 8px; font-size:11px;">${total.toLocaleString('fa-IR')}</span></h3>
+            `;
+
+            if (urgentItems.length > 0) {
+                html += `<div style="margin-bottom:10px;">
+                    <b style="color:#fca5a5; font-size:12px;">⛔ فوری - همین الان سفارش بده:</b>
+                    ${urgentItems.map(t => `<p style="margin:6px 0; padding:8px 10px; background:rgba(239,68,68,0.15); border-radius:8px; border-right:3px solid #ef4444;">${t}</p>`).join('')}
+                </div>`;
+            }
+
+            if (reorderItems.length > 0) {
+                html += `<div style="margin-bottom:10px;">
+                    <b style="color:#fde047; font-size:12px;">⚠️ رسیده به نقطه سفارش انبار:</b>
+                    ${reorderItems.map(t => `<p style="margin:6px 0; padding:8px 10px; background:rgba(251,191,36,0.12); border-radius:8px; border-right:3px solid #fbbf24;">${t}</p>`).join('')}
+                </div>`;
+            }
+
+            if (calmItems.length > 0) {
+                html += `<div>
+                    <b style="color:#38bdf8; font-size:12px;">🟡 عجله‌ای نیست، ولی حواست باشه:</b>
+                    ${calmItems.map(t => `<p style="margin:6px 0; padding:8px 10px; background:rgba(56,189,248,0.1); border-radius:8px; border-right:3px solid #38bdf8;">${t}</p>`).join('')}
+                </div>`;
+            }
+
+            html += `</div>`;
+            panel.innerHTML = html;
+            panel.style.display = 'block';
+        }
+
         // --- هشدار هوشمند موجودی انبار / غرفه ---
         async function checkLowStockAlertNoWeight() {
             if (currentRole !== 'admin') return;
@@ -972,33 +1047,33 @@
 
                 // نقطه سفارش استاندارد انبار (وقتی هنوز کاملاً صفر نشده)
                 if (stock > 0 && stock <= p.min_stock) {
-                    reorderItems.push(`⚠️ ${p.name}: موجودی انبار اصلی کمتر از نقطه سفارش شده (${stock} کیلو باقی مانده)`);
+                    reorderItems.push(`⚠️ <b>${p.name}</b>: موجودی انبار اصلی کمتر از نقطه سفارش شده (${stock} کیلو باقی مانده)`);
                 }
 
                 if (mainEmpty && boothEmpty) {
-                    urgentItems.push(`🚨 ${p.name}: نه داخل انبار هست و نه داخل غرفه — سریع‌تر سفارش بده!`);
+                    urgentItems.push(`🚨 <b>${p.name}</b>: نه داخل انبار هست و نه داخل غرفه — سریع‌تر سفارش بده!`);
                     if (p.low_stock_alert_since) {
                         pendingUpdates.push({ id: p.id, value: null });
                     }
                 } else if (mainEmpty && !boothEmpty) {
                     const isBest = bestSellerCodes.has(p.code);
                     if (isBest) {
-                        urgentItems.push(`🔥 ${p.name} (پرفروش): انبار اصلی خالی شده، فقط ${boothStock} کیلو در غرفه باقی مانده — سریع‌تر سفارش بده!`);
+                        urgentItems.push(`🔥 <b>${p.name}</b> (پرفروش): انبار اصلی خالی شده، فقط ${boothStock} کیلو در غرفه باقی مانده — سریع‌تر سفارش بده!`);
                         if (p.low_stock_alert_since) {
                             pendingUpdates.push({ id: p.id, value: null });
                         }
                     } else {
                         if (!p.low_stock_alert_since) {
                             pendingUpdates.push({ id: p.id, value: now.toISOString() });
-                            calmItems.push(`🟡 ${p.name} (کم‌فروش): انبار اصلی تمام شده، ولی هنوز ${boothStock} کیلو در غرفه هست — عجله‌ای نیست، یکی دو روز دیگه سفارش بده.`);
+                            calmItems.push(`🟡 <b>${p.name}</b> (کم‌فروش): انبار اصلی تمام شده، ولی هنوز ${boothStock} کیلو در غرفه هست — عجله‌ای نیست، یکی دو روز دیگه سفارش بده.`);
                         } else {
                             const since = new Date(p.low_stock_alert_since);
                             const daysPassed = (now - since) / (1000 * 60 * 60 * 24);
                             if (daysPassed >= 2) {
-                                urgentItems.push(`⛔ ${p.name} (کم‌فروش): بیشتر از ۲ روزه انبار اصلی خالیه — دیگه صبر نکن، همین الان سفارش بده و شارژ کن!`);
+                                urgentItems.push(`⛔ <b>${p.name}</b> (کم‌فروش): بیشتر از ۲ روزه انبار اصلی خالیه — دیگه صبر نکن، همین الان سفارش بده و شارژ کن!`);
                             } else {
                                 const daysLeft = Math.max(0, 2 - daysPassed).toFixed(1);
-                                calmItems.push(`🟡 ${p.name} (کم‌فروش): عجله‌ای نیست، حدود ${daysLeft} روز دیگه فرصت داری سفارش بدی.`);
+                                calmItems.push(`🟡 <b>${p.name}</b> (کم‌فروش): عجله‌ای نیست، حدود ${daysLeft} روز دیگه فرصت داری سفارش بدی.`);
                             }
                         }
                     }
@@ -1011,8 +1086,6 @@
                 await _supabase.from('products').update({ low_stock_alert_since: u.value }).eq('id', u.id);
             }
 
-            const allWarnings = [...urgentItems, ...reorderItems, ...calmItems];
-
             if (urgentItems.length > 0 || reorderItems.length > 0) {
                 btn.innerHTML = '📦 موجودی انبار 🔴';
             } else if (calmItems.length > 0) {
@@ -1021,8 +1094,34 @@
                 btn.innerHTML = '📦 موجودی انبار';
             }
 
-            if (allWarnings.length > 0) {
-                alert('⚠️ وضعیت موجودی:\n\n' + allWarnings.join('\n'));
+            renderAdminAlertPanel(urgentItems, reorderItems, calmItems);
+        }
+
+        // --- بررسی بحران موجودی بلافاصله بعد از یک فروش (وقتی انبار اصلی خالی است) ---
+        async function checkCriticalAfterSale(product, newBoothStock) {
+            try {
+                const mainStock = product.stock || 0;
+                if (mainStock > 0) return; // انبار اصلی هنوز موجودی دارد، فعلاً بحرانی نیست
+
+                const threshold = product.booth_min_stock || 0;
+                if (newBoothStock > threshold) return; // هنوز به حد هشدار غرفه نرسیده
+
+                const now = new Date();
+                if (product.low_stock_alert_since) {
+                    const since = new Date(product.low_stock_alert_since);
+                    const hoursPassed = (now - since) / (1000 * 60 * 60);
+                    if (hoursPassed < CRITICAL_ALERT_COOLDOWN_HOURS) return; // اخیراً هشدار داده شده، از اسپم جلوگیری کن
+                }
+
+                await _supabase.from('products').update({ low_stock_alert_since: now.toISOString() }).eq('id', product.id);
+                await _supabase.from('messages').insert([{
+                    sender: "سیستم خودکار موجودی",
+                    title: `⛔ کاهش بحرانی موجودی: ${product.name}`,
+                    body: `انبار اصلی «${product.name}» خالی است و با این فروش، موجودی غرفه هم به ${newBoothStock} کیلو رسید (حد هشدار: ${threshold} کیلو).\nاین کالا دیگر در چک‌لیست شارژ صبحگاهی قابل پر کردن نیست چون انبار اصلی خالی است. لطفاً هرچه سریع‌تر سفارش دهید.`,
+                    created_at: now.toISOString()
+                }]);
+            } catch (e) {
+                console.warn('خطا در بررسی بحران موجودی بعد از فروش', e);
             }
         }
 
@@ -1815,6 +1914,7 @@
                 cancelSaleEdit();
                 loadRecentSales();
                 loadProductDatalist();
+                checkCriticalAfterSale(product, newBoothStock);
                 return;
             }
 
@@ -1845,6 +1945,7 @@
             document.getElementById('sCalcDisplay').innerText = 'مبلغ کل فاکتور: ۰ تومان (قیمت واحد: ۰ تومان)';
 
             loadRecentSales();
+            checkCriticalAfterSale(product, newBoothStock);
         }
 
         async function loadRecentSales() {
@@ -2119,8 +2220,58 @@
             if (!error) {
                 alert(`✅ ظرف «${product.name}» پر شد.\n📦 دقیقاً مقدار ${neededAmount} کیلوگرم از انبار اصلی کسر گردید.`);
                 loadBoothInventory();
+                if (currentRole === 'admin') checkLowStockAlertNoWeight();
             } else {
                 alert('خطا در به‌روزرسانی موجودی: ' + error.message);
+            }
+        }
+
+        // --- ثبت مقدار واقعی شارژ شده توسط فروشنده صبح از داخل چک‌لیست (مقدار دستی، نه لزوماً پر تا ظرفیت کامل) ---
+        async function applyChecklistFill(productId) {
+            const amtInput = document.getElementById(`checklistFillAmt_${productId}`);
+            if (!amtInput) return;
+            const amt = parseFloat(amtInput.value);
+
+            if (isNaN(amt) || amt <= 0) {
+                return alert('لطفاً مقدار واقعی‌ای که پر کردید را به‌صورت عدد معتبر وارد کنید');
+            }
+
+            const { data: product } = await _supabase.from('products').select('*').eq('id', productId).single();
+            if (!product) return;
+
+            const capacity = product.container_capacity || 7.0;
+            const currentBooth = product.booth_stock || 0;
+            const currentMain = product.stock || 0;
+
+            if (amt > currentMain) {
+                return alert(`⚠️ موجودی انبار اصلی برای «${product.name}» فقط ${currentMain} کیلوگرم است؛ مقدار وارد شده بیشتر از موجودی انبار است.`);
+            }
+
+            const newBoothStockRaw = currentBooth + amt;
+            const newBoothStock = Math.min(capacity, Number(newBoothStockRaw.toFixed(3)));
+            const actuallyUsed = Number((newBoothStock - currentBooth).toFixed(3));
+
+            if (actuallyUsed <= 0) {
+                return alert('ظرف غرفه از قبل پر بوده؛ نیازی به شارژ نیست.');
+            }
+
+            const newMainStock = Number((currentMain - actuallyUsed).toFixed(3));
+
+            const { error } = await _supabase.from('products').update({
+                stock: newMainStock,
+                booth_stock: newBoothStock
+            }).eq('id', productId);
+
+            if (!error) {
+                let msg = `✅ مقدار ${actuallyUsed.toLocaleString('fa-IR')} کیلو به ظرف «${product.name}» اضافه شد.\n🧊 موجودی جدید غرفه: ${newBoothStock.toLocaleString('fa-IR')} کیلو`;
+                if (newBoothStockRaw > capacity + 0.0001) {
+                    msg += `\n⚠️ توجه: مقدار وارد شده بیشتر از ظرفیت خالی ظرف بود، فقط تا سقف ظرفیت ثبت شد.`;
+                }
+                alert(msg);
+                loadBoothInventory();
+                if (currentRole === 'admin') checkLowStockAlertNoWeight();
+            } else {
+                alert('❌ خطا در ثبت شارژ: ' + error.message);
             }
         }
 
@@ -2151,20 +2302,49 @@
                 return;
             }
 
-            const items = needItems.map(p => {
-                const capacity = p.container_capacity || 7.0;
-                const currentBooth = p.booth_stock || 0;
-                const needed = Number((capacity - currentBooth).toFixed(3));
-                return `<li class="checklist-item"><span><b>${p.name}</b></span><span class="checklist-need">نیاز به ${needed.toLocaleString('fa-IR')} کیلو</span></li>`;
-            }).join('');
+            // فقط کالاهایی که انبار اصلی برایشان موجودی دارد قابل شارژ توسط فروشنده هستند
+            const fillableItems = needItems.filter(p => (p.stock || 0) > 0);
+            const blockedItems = needItems.filter(p => (p.stock || 0) <= 0);
 
-            box.innerHTML = `
-                <div class="checklist-box">
-                    <h3>📋 چک‌لیست شارژ صبحگاهی غرفه (${needItems.length} مورد باقی مانده)</h3>
-                    <ul style="list-style:none; padding:0; margin:0;">${items}</ul>
-                    <div class="hint" style="margin-top:8px;">با دکمه «🔄 پر کردن ظرف» پایین همین صفحه هر کالا رو پر کن؛ این لیست خودکار به‌روز می‌شود.</div>
-                </div>
-            `;
+            let html = '';
+
+            if (fillableItems.length > 0) {
+                html += `<div class="checklist-box">
+                    <h3>📋 چک‌لیست شارژ صبحگاهی غرفه (${fillableItems.length.toLocaleString('fa-IR')} مورد قابل شارژ)</h3>
+                    <div class="hint" style="margin-top:0; margin-bottom:8px;">مقدار پیشنهادی از قبل داخل کادر نوشته شده؛ اگر مقدار واقعی که ریختی فرق داشت، عدد را عوض کن و روی «ثبت شارژ» بزن.</div>`;
+
+                html += fillableItems.map(p => {
+                    const capacity = p.container_capacity || 7.0;
+                    const currentBooth = p.booth_stock || 0;
+                    const mainStock = p.stock || 0;
+                    const needed = Number((capacity - currentBooth).toFixed(3));
+                    const suggested = Math.min(needed, mainStock);
+                    return `
+                        <div class="checklist-item" style="flex-direction:column; align-items:stretch; gap:6px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span><b>${p.name}</b></span>
+                                <span class="checklist-need">کمبود: ${needed.toLocaleString('fa-IR')} کیلو (انبار: ${mainStock.toLocaleString('fa-IR')} کیلو)</span>
+                            </div>
+                            <div style="display:flex; gap:6px; align-items:center;">
+                                <input type="number" step="0.05" style="flex:1; margin-top:0;" id="checklistFillAmt_${p.id}" value="${suggested}" placeholder="مقداری که واقعاً پر کردی">
+                                <button class="row-btn fill-btn" style="white-space:nowrap;" onclick="applyChecklistFill('${p.id}')">✅ ثبت شارژ</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                html += `</div>`;
+            }
+
+            if (blockedItems.length > 0) {
+                html += `<div class="checklist-box" style="border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.08);">
+                    <h3 style="color:#fca5a5;">⛔ نیاز به سفارش (انبار اصلی خالی است، فعلاً قابل شارژ نیست)</h3>
+                    ${blockedItems.map(p => `<div class="checklist-item"><span><b>${p.name}</b></span><span style="color:#fca5a5; font-size:11px;">موجودی غرفه: ${(p.booth_stock || 0).toLocaleString('fa-IR')} کیلو</span></div>`).join('')}
+                    <div class="hint" style="margin-top:4px;">این کالاها نیازی به شارژ توسط شما ندارند؛ وقتی موجودی غرفه‌شان کم بشود، به‌صورت خودکار به مدیر هشدار سفارش داده می‌شود.</div>
+                </div>`;
+            }
+
+            box.innerHTML = html;
         }
 
         async function loadBoothInventory() {
@@ -2187,6 +2367,16 @@
                 const mainStock = p.stock || 0;
                 const needed = Number((capacity - currentBooth).toFixed(3));
                 const status = getQualitativeStatus(currentBooth, capacity);
+
+                let fillCell;
+                if (needed > 0 && mainStock > 0) {
+                    fillCell = `<button class="row-btn fill-btn" onclick="smartFillBooth('${p.id}')">🔄 پر کردن ظرف</button>
+                                <span class="need-charge-text">کمبود: ${needed} کیلو (انبار: ${mainStock} کیلو)</span>`;
+                } else if (needed > 0 && mainStock <= 0) {
+                    fillCell = `<span style="color:#fca5a5; font-weight:bold; font-size:11px;">⛔ نیاز به سفارش (انبار خالی)</span>`;
+                } else {
+                    fillCell = `<span style="color:#10b981; font-weight:bold; font-size:11px;">✨ ظرف پر است</span>`;
+                }
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
@@ -2215,15 +2405,149 @@
                                </div>` 
                             : ''
                         }
-                        ${needed > 0 
-                            ? `<button class="row-btn fill-btn" onclick="smartFillBooth('${p.id}')">🔄 پر کردن ظرف</button>
-                               <span class="need-charge-text">کمبود: ${needed} کیلو (انبار: ${mainStock} کیلو)</span>`
-                            : `<span style="color:#10b981; font-weight:bold; font-size:11px;">✨ ظرف پر است</span>`
-                        }
+                        ${fillCell}
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
+        }
+
+        // --- بخش سفارشات خرید (مخصوص مدیر برای ثبت، مخصوص مدیر و فروشنده صبح برای مشاهده) ---
+        async function loadPurchaseOrders() {
+            const formBox = document.getElementById('poFormBox');
+            if (formBox) formBox.style.display = (currentRole === 'admin') ? 'block' : 'none';
+
+            const pendingBox = document.getElementById('poPendingList');
+            const receivedBox = document.getElementById('poReceivedList');
+            pendingBox.innerHTML = 'در حال بارگذاری...';
+            receivedBox.innerHTML = '';
+
+            const { data: orders, error } = await _supabase
+                .from('purchase_orders')
+                .select('*')
+                .order('ordered_at', { ascending: false });
+
+            if (error) {
+                pendingBox.innerHTML = `<p style="color:#ef4444;">❌ خطا در دریافت سفارشات: ${error.message}<br><span style="font-size:10px; color:#94a3b8;">مطمئن شوید جدول purchase_orders در Supabase ساخته شده است.</span></p>`;
+                return;
+            }
+
+            const pending = (orders || []).filter(o => o.status !== 'received');
+            const received = (orders || []).filter(o => o.status === 'received').slice(0, 8);
+
+            if (pending.length === 0) {
+                pendingBox.innerHTML = '<p style="color:#94a3b8; font-size:12px;">در حال حاضر هیچ سفارش بازی در راه نیست.</p>';
+            } else {
+                pendingBox.innerHTML = pending.map(o => buildOrderCard(o, false)).join('');
+            }
+
+            if (received.length === 0) {
+                receivedBox.innerHTML = '<p style="color:#94a3b8; font-size:12px;">هنوز سفارشی دریافت نشده است.</p>';
+            } else {
+                receivedBox.innerHTML = received.map(o => buildOrderCard(o, true)).join('');
+            }
+        }
+
+        function buildOrderCard(o, isReceived) {
+            const orderedDate = getTehranFullDateTimeString(new Date(o.ordered_at));
+            let statusHtml = '';
+
+            if (isReceived) {
+                const receivedDate = o.received_at ? getTehranFullDateTimeString(new Date(o.received_at)) : '';
+                statusHtml = `<p style="color:#34d399;">✅ دریافت شد در: ${receivedDate}</p>`;
+            } else {
+                if (o.eta_days !== null && o.eta_days !== undefined && o.eta_days !== '') {
+                    const orderedTime = new Date(o.ordered_at).getTime();
+                    const expectedTime = orderedTime + (Number(o.eta_days) * 24 * 60 * 60 * 1000);
+                    const diffDays = (expectedTime - Date.now()) / (1000 * 60 * 60 * 24);
+                    if (diffDays > 0) {
+                        statusHtml = `<p style="color:#fbbf24;">⏳ حدود ${diffDays.toFixed(1)} روز دیگر می‌رسد</p>`;
+                    } else {
+                        statusHtml = `<p style="color:#ef4444;">⛔ زمان تخمینی رسیدن گذشته (حدود ${Math.abs(diffDays).toFixed(1)} روز تاخیر)، پیگیری کنید</p>`;
+                    }
+                } else {
+                    statusHtml = `<p style="color:#94a3b8;">⏳ زمان دقیق رسیدن مشخص نشده</p>`;
+                }
+            }
+
+            const canMarkReceived = (!isReceived && currentRole === 'admin');
+
+            return `
+                <div class="report-card">
+                    <h3>📦 ${o.product_name} — ${Number(o.quantity).toLocaleString('fa-IR')} کیلو/عدد</h3>
+                    <p style="font-size:11px; color:#94a3b8;">تاریخ ثبت سفارش: ${orderedDate}</p>
+                    ${o.note ? `<p>📝 ${o.note}</p>` : ''}
+                    ${statusHtml}
+                    ${canMarkReceived ? `<button class="row-btn edit-btn" style="width:100%; margin-top:8px;" onclick="markOrderReceived('${o.id}')">✅ سفارش رسید - اضافه به انبار</button>` : ''}
+                </div>
+            `;
+        }
+
+        async function submitPurchaseOrder() {
+            const nameVal = document.getElementById('poProductName').value.trim();
+            const qty = parseFloat(document.getElementById('poQty').value);
+            const etaDaysRaw = document.getElementById('poEtaDays').value;
+            const etaDays = etaDaysRaw ? parseFloat(etaDaysRaw) : null;
+            const note = document.getElementById('poNote').value.trim();
+
+            if (!nameVal || isNaN(qty) || qty <= 0) {
+                return alert('لطفاً نام کالا و مقدار سفارش را وارد کنید');
+            }
+
+            if (cachedProductsList.length === 0) await loadProductDatalist();
+            const product = cachedProductsList.find(p => p.name === nameVal || p.code === nameVal);
+            if (!product) {
+                return alert('❌ این کالا در انبار تعریف نشده است؛ ابتدا آن را از بخش «تعریف کالا» اضافه کنید.');
+            }
+
+            const now = new Date();
+            const { error } = await _supabase.from('purchase_orders').insert([{
+                product_code: product.code,
+                product_name: product.name,
+                quantity: qty,
+                eta_days: etaDays,
+                note: note,
+                status: 'pending',
+                ordered_at: now.toISOString()
+            }]);
+
+            if (!error) {
+                alert('✅ سفارش با موفقیت ثبت شد و فروشنده صبح می‌تواند آن را ببیند.');
+                document.getElementById('poProductName').value = '';
+                document.getElementById('poQty').value = '';
+                document.getElementById('poEtaDays').value = '';
+                document.getElementById('poNote').value = '';
+                loadPurchaseOrders();
+            } else {
+                alert('❌ خطا در ثبت سفارش: ' + error.message + '\n\nمطمئن شوید جدول purchase_orders در Supabase ساخته شده است.');
+            }
+        }
+
+        async function markOrderReceived(orderId) {
+            const sure = confirm('آیا سفارش رسیده و می‌خواهید مقدار آن به موجودی انبار اصلی اضافه شود؟');
+            if (!sure) return;
+
+            const { data: order } = await _supabase.from('purchase_orders').select('*').eq('id', orderId).maybeSingle();
+            if (!order) return;
+
+            const { data: product } = await _supabase.from('products').select('*').eq('code', order.product_code).maybeSingle();
+            const now = new Date();
+
+            if (product) {
+                const newStock = Number(((product.stock || 0) + Number(order.quantity)).toFixed(3));
+                await _supabase.from('products').update({ stock: newStock, low_stock_alert_since: null }).eq('id', product.id);
+            }
+
+            const { error } = await _supabase.from('purchase_orders').update({ status: 'received', received_at: now.toISOString() }).eq('id', orderId);
+
+            if (!error) {
+                alert('✅ سفارش دریافت شد و به موجودی انبار اصلی اضافه گردید.');
+                loadPurchaseOrders();
+                loadProductDatalist();
+                if (currentRole === 'admin') checkLowStockAlertNoWeight();
+            } else {
+                alert('❌ خطا: ' + error.message);
+            }
         }
 
         async function loadInventory() {
