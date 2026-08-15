@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v29 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v30 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -304,6 +304,17 @@
         .recent-sales-wrap {
             overflow-x: auto;
         }
+        .pagination-bar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .pagination-bar span {
+            font-size: 11px;
+            color: #94a3b8;
+        }
     </style>
 </head>
 <body>
@@ -356,8 +367,8 @@
         <button class="cancel-edit-btn" id="cancelSaleEditBtn" onclick="cancelSaleEdit()">لغو ویرایش و بازگشت به حالت ثبت فروش جدید</button>
 
         <div class="report-card" style="margin-top:18px;">
-            <h3>🧾 فاکتورهای من (قابل ویرایش تا ۳ بار / قابل حذف)</h3>
-            <div class="hint">این لیست فقط فاکتورهایی را نشان می‌دهد که خودتان ثبت کرده‌اید؛ فاکتورهای سایر فروشندگان یا مدیر در این لیست دیده یا دستکاری نمی‌شود. با ویرایش مقدار یک فاکتور، موجودی ظرف غرفه به‌طور خودکار اصلاح می‌شود (اگر مقدار جدید کمتر باشد به موجودی غرفه اضافه، اگر بیشتر باشد از موجودی غرفه کم می‌شود). با حذف کامل یک فاکتور، کل مقدار آن به موجودی غرفه بازگردانده می‌شود. هر فاکتور حداکثر ۳ بار قابل ویرایش است و پس از آن فقط قابل حذف خواهد بود.</div>
+            <h3>🧾 فاکتورهای من</h3>
+            <div class="hint">این لیست فقط فاکتورهایی را نشان می‌دهد که خودتان ثبت کرده‌اید؛ فاکتورهای سایر فروشندگان یا مدیر در این لیست دیده یا دستکاری نمی‌شود. <b>فقط فاکتورهای همین امروز</b> قابل ویرایش یا حذف هستند؛ فاکتورهای روزهای قبل صرفاً برای مشاهده نگهداری می‌شوند و قفل هستند. با ویرایش مقدار یک فاکتور، موجودی ظرف غرفه به‌طور خودکار اصلاح می‌شود و با حذف کامل یک فاکتور، کل مقدار آن به موجودی غرفه بازگردانده می‌شود. هر فاکتور حداکثر ۳ بار قابل ویرایش است.</div>
             <div class="recent-sales-wrap">
                 <table>
                     <thead>
@@ -374,6 +385,11 @@
                         <tr><td colspan="6">در حال بارگذاری...</td></tr>
                     </tbody>
                 </table>
+            </div>
+            <div class="pagination-bar">
+                <button class="row-btn edit-btn" onclick="changeSalesPage(-1)">◀ قبلی</button>
+                <span id="salesPageIndicator">صفحه ۱</span>
+                <button class="row-btn edit-btn" onclick="changeSalesPage(1)">بعدی ▶</button>
             </div>
         </div>
     </div>
@@ -442,6 +458,7 @@
         <h2>🧊 کنترل ظرف‌های یخچال غرفه</h2>
         <div class="hint">
             💡 می‌توانید وزن کل (جنس + ظرف) و تار (وزن ظرف) را وارد کنید تا سیستم وزن خالص داخل غرفه را دقیق محاسبه و ثبت کند.
+            همچنین می‌توانید «حداقل موجودی غرفه» را برای هر کالا تعیین کنید؛ برای کالاهای کم‌فروش، وقتی موجودی غرفه به این حد برسد و انبار اصلی هم خالی باشد، به مدیر هشدار خرید ارسال می‌شود.
         </div>
         <table>
             <thead>
@@ -450,7 +467,7 @@
                     <th>ظرفیت</th>
                     <th>موجودی فعلی غرفه</th>
                     <th>وضعیت</th>
-                    <th>شارژ / محاسبه وزن خالص ظرف</th>
+                    <th>شارژ / محاسبه وزن خالص ظرف / حداقل هشدار</th>
                 </tr>
             </thead>
             <tbody id="boothTable">
@@ -507,8 +524,12 @@
         <label>موجودی فعلی ظرف غرفه (کیلوگرم):</label>
         <input type="number" id="pBoothStock" step="0.001" placeholder="مثلاً 7">
 
-        <label>حداقل موجودی انبار به کیلوگرم (نقطه سفارش):</label>
+        <label>حداقل موجودی انبار به کیلوگرم (نقطه سفارش انبار اصلی):</label>
         <input type="number" id="pMinStock" step="0.001" placeholder="مثلاً 2">
+
+        <label>حداقل موجودی غرفه برای هشدار خرید کالای کم‌فروش (کیلوگرم):</label>
+        <input type="number" id="pBoothMinStock" step="0.1" value="0" placeholder="مثلاً 1">
+        <div class="hint">اگر این کالا پرفروش باشد، به محض تمام‌شدن انبار اصلی (حتی اگر هنوز مقداری در غرفه باشد) بلافاصله به مدیر هشدار داده می‌شود. اگر کم‌فروش باشد، فقط وقتی موجودی غرفه به همین حداقل برسد و انبار اصلی هم خالی باشد هشدار خرید ارسال می‌شود. تشخیص پرفروش/کم‌فروش به‌صورت خودکار و بر اساس فروش ۳۰ روز اخیر انجام می‌شود.</div>
 
         <label>قیمت فروش هر کیلو/عدد (تومان):</label>
         <input type="number" id="pSellPrice" placeholder="مثلاً 120000" oninput="formatPrice(this, 'pSellPriceFormatted')">
@@ -564,7 +585,7 @@
     <!-- تنظیمات شیفت‌ها -->
     <div id="shiftSettingsTab" class="card">
         <h2>⚙️ تنظیمات شیفت‌ها و حد مجاز تاخیر (ویژه مدیر)</h2>
-        <div class="hint">ساعت شروع شیفت‌ها و حداکثر دقایق تاخیر مجاز را وارد کنید تا سیستم در صورت تاخیر پیام هشدار ارسال کند.</div>
+        <div class="hint">ساعت شروع شیفت‌ها و حداکثر دقایق تاخیر مجاز را وارد کنید تا سیستم در صورت تاخیر پیام هشدار ارسال کند. این تنظیمات به‌صورت مرکزی ذخیره می‌شود و برای همهٔ کاربران (روی هر گوشی) یکسان اعمال خواهد شد.</div>
 
         <h3 style="color:#38bdf8; margin-top:15px;">🌅 شیفت صبح:</h3>
         <div class="grid-2">
@@ -596,7 +617,7 @@
         <button class="submit-btn" onclick="saveShiftSettings()">ذخیره تنظیمات شیفت‌ها</button>
     </div>
 
-    <div class="build-tag">v29 (فاکتورها فقط برای صاحب‌شان قابل مشاهده/ویرایش/حذف + سقف ۳ بار ویرایش) - سیستم جامع لبنیات و ترشیجات فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v30 - سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</div>
 
     <script>
         const tg = window.Telegram.WebApp;
@@ -622,6 +643,10 @@
         let editingSaleProductCode = null;
         let editingSaleEditCount = 0;
         const MAX_SALE_EDITS = 3; // حداکثر تعداد دفعات مجاز برای ویرایش هر فاکتور
+
+        // صفحه‌بندی لیست «فاکتورهای من»
+        let salesPage = 0;
+        const SALES_PAGE_SIZE = 8;
 
         // نام باکت استوریج سوپابیس برای عکس‌های حضور و غیاب
         const ATTENDANCE_BUCKET = "attendance-photos";
@@ -814,25 +839,70 @@
             if (targetTab) targetTab.classList.add('active');
         }
 
+        // --- تشخیص خودکار کالاهای پرفروش بر اساس مجموع فروش ۳۰ روز اخیر ---
+        async function computeBestSellerCodes() {
+            const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+            const { data: recentSales } = await _supabase
+                .from('sales')
+                .select('product_code, quantity')
+                .gte('created_at', since);
+
+            const totals = {};
+            (recentSales || []).forEach(s => {
+                totals[s.product_code] = (totals[s.product_code] || 0) + (Number(s.quantity) || 0);
+            });
+
+            const entries = Object.entries(totals);
+            if (entries.length === 0) return new Set();
+
+            const sum = entries.reduce((acc, e) => acc + e[1], 0);
+            const avg = sum / entries.length;
+
+            // پرفروش = کالایی که فروش ۳۰ روز اخیرش بیشتر از میانگین فروش کل کالاهاست
+            return new Set(entries.filter(e => e[1] > avg).map(e => e[0]));
+        }
+
         async function checkLowStockAlertNoWeight() {
             if (currentRole !== 'admin') return;
 
-            const { data: products } = await _supabase.from('products').select('name, stock, min_stock');
+            const { data: products } = await _supabase
+                .from('products')
+                .select('code, name, stock, min_stock, booth_stock, booth_min_stock');
             const btn = document.getElementById('btnInventory');
             if (!products) return;
 
+            const bestSellerCodes = await computeBestSellerCodes();
+
             const lowStockItems = [];
+            const boothWarnItems = [];
+
             products.forEach(p => {
+                // هشدار استاندارد نقطه سفارش / اتمام انبار اصلی
                 if (p.stock <= 0) {
-                    lowStockItems.push(`❌ ${p.name}: موجودی تمام شده!`);
+                    lowStockItems.push(`❌ ${p.name}: موجودی انبار اصلی تمام شده!`);
                 } else if (p.stock <= p.min_stock) {
-                    lowStockItems.push(`⚠️ ${p.name}: کمتر از نقطه سفارش`);
+                    lowStockItems.push(`⚠️ ${p.name}: کمتر از نقطه سفارش انبار`);
+                }
+
+                // هشدار اختصاصی: انبار اصلی خالی است ولی هنوز مقداری در غرفه باقی مانده
+                if ((p.stock || 0) <= 0 && (p.booth_stock || 0) > 0) {
+                    const isBest = bestSellerCodes.has(p.code);
+                    if (isBest) {
+                        boothWarnItems.push(`🔥 ${p.name} (پرفروش): انبار اصلی خالی شده، فقط ${p.booth_stock} کیلو در غرفه باقی مانده — سریعاً خرید و تامین شود!`);
+                    } else {
+                        const boothMin = p.booth_min_stock || 0;
+                        if ((p.booth_stock || 0) <= boothMin) {
+                            boothWarnItems.push(`🟡 ${p.name} (کم‌فروش): موجودی غرفه به حداقل تعیین‌شده (${boothMin} کیلو) رسید و انبار اصلی هم خالی است — نیاز به خرید.`);
+                        }
+                    }
                 }
             });
 
-            if (lowStockItems.length > 0) {
+            const allWarnings = [...lowStockItems, ...boothWarnItems];
+
+            if (allWarnings.length > 0) {
                 btn.innerHTML = '📦 موجودی انبار 🔴';
-                alert('⚠️ هشدار وضعیت موجودی انبار مدیر:\n\n' + lowStockItems.join('\n'));
+                alert('⚠️ هشدار وضعیت موجودی:\n\n' + allWarnings.join('\n'));
             } else {
                 btn.innerHTML = '📦 موجودی انبار';
             }
@@ -910,13 +980,15 @@
                     <div class="msg-card">
                         <h3>📩 ${m.title}</h3>
                         <p style="color:#38bdf8; font-size:11px;">ارسال‌کننده: ${m.sender}</p>
-                        <p>${m.body}</p>
+                        <p style="white-space:pre-line;">${m.body}</p>
                         <span class="msg-time">⏱️ ${timeStr}</span>
                     </div>
                 `;
             }).join('');
         }
 
+        // --- تنظیمات شیفت‌ها: به‌صورت مرکزی در جدول shift_settings ذخیره می‌شود
+        // تا برای همه کاربران (روی هر گوشی/مرورگری) یکسان باشد، نه فقط localStorage محلی ---
         async function saveShiftSettings() {
             const mStart = document.getElementById('shiftMorningStart').value;
             const mEnd = document.getElementById('shiftMorningEnd').value;
@@ -924,19 +996,41 @@
             const eEnd = document.getElementById('shiftEveningEnd').value;
             const maxDelay = parseInt(document.getElementById('maxDelayAllowed').value) || 15;
 
-            const settings = { mStart, mEnd, eStart, eEnd, maxDelay };
-            localStorage.setItem('shift_settings_v23', JSON.stringify(settings));
-            alert('✅ تنظیمات شیفت‌ها با موفقیت ذخیره گردید.');
+            const { error } = await _supabase.from('shift_settings').upsert([{
+                id: 1,
+                morning_start: mStart,
+                morning_end: mEnd,
+                evening_start: eStart,
+                evening_end: eEnd,
+                max_delay: maxDelay
+            }]);
+
+            if (!error) {
+                alert('✅ تنظیمات شیفت‌ها با موفقیت ذخیره شد و برای همه کاربران فعال است.');
+            } else {
+                alert('❌ خطا در ذخیره تنظیمات: ' + error.message + '\n\nمطمئن شوید جدول shift_settings در Supabase ساخته شده است.');
+            }
         }
 
-        function getShiftSettings() {
-            const saved = localStorage.getItem('shift_settings_v23');
-            if (saved) return JSON.parse(saved);
-            return { mStart: "08:00", mEnd: "15:30", eStart: "15:30", eEnd: "23:00", maxDelay: 15 };
+        async function getShiftSettings() {
+            const defaults = { mStart: "08:00", mEnd: "15:30", eStart: "15:30", eEnd: "23:00", maxDelay: 15 };
+            try {
+                const { data, error } = await _supabase.from('shift_settings').select('*').eq('id', 1).maybeSingle();
+                if (error || !data) return defaults;
+                return {
+                    mStart: data.morning_start || defaults.mStart,
+                    mEnd: data.morning_end || defaults.mEnd,
+                    eStart: data.evening_start || defaults.eStart,
+                    eEnd: data.evening_end || defaults.eEnd,
+                    maxDelay: (data.max_delay !== null && data.max_delay !== undefined) ? data.max_delay : defaults.maxDelay
+                };
+            } catch (e) {
+                return defaults;
+            }
         }
 
-        function loadShiftSettings() {
-            const s = getShiftSettings();
+        async function loadShiftSettings() {
+            const s = await getShiftSettings();
             document.getElementById('shiftMorningStart').value = s.mStart;
             document.getElementById('shiftMorningEnd').value = s.mEnd;
             document.getElementById('shiftEveningStart').value = s.eStart;
@@ -949,11 +1043,7 @@
             document.getElementById('attTimeFields').style.display = (type === 'leave') ? 'none' : 'block';
         }
 
-        // --- موقعیت مکانی حضور و غیاب (v28: اولویت با LocationManager تلگرام) ---
-        // در بسیاری از موبایل‌ها، درون وب‌ویوی تلگرام درخواست مستقیم
-        // navigator.geolocation به دلیل Permissions Policy مسدود یا بی‌پاسخ می‌ماند.
-        // به همین دلیل ابتدا از سیستم موقعیت مکانی خودِ تلگرام (LocationManager)
-        // استفاده می‌کنیم و فقط در صورت نبودن آن، به navigator.geolocation مرورگر می‌رویم.
+        // --- موقعیت مکانی حضور و غیاب (اولویت با LocationManager تلگرام) ---
         function captureAttendanceLocation() {
             const statusEl = document.getElementById('locationStatus');
             statusEl.style.display = 'block';
@@ -1019,8 +1109,6 @@
                     { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
                 );
             } catch (e) {
-                // برخی وب‌ویوها (از جمله تلگرام) به‌خاطر Permissions Policy
-                // همین‌جا و بلافاصله خطا می‌دهند (نه در callback خطا)
                 selectedLocationText = null;
                 statusEl.style.color = '#ef4444';
                 statusEl.innerText = '❌ دسترسی به موقعیت مکانی توسط تنظیمات امنیتی این صفحه مسدود شده است. لطفاً از گزینه آپلود عکس استفاده کنید.';
@@ -1066,12 +1154,19 @@
             const now = new Date();
             const timeStrNow = getTehranTimeString(now);
             const fullDateTimeStr = getTehranFullDateTimeString(now);
-            const settings = getShiftSettings();
+            const settings = await getShiftSettings();
 
             let targetStartTime = (currentRole === 'morning_seller') ? settings.mStart : settings.eStart;
 
+            // محاسبه میزان تاخیر (فقط برای نوع «ورود»)
+            let delayMinutes = null;
+            if (type === 'entry') {
+                const [hNow, mNow] = timeStrNow.split(':').map(Number);
+                const [hTarget, mTarget] = targetStartTime.split(':').map(Number);
+                delayMinutes = (hNow * 60 + mNow) - (hTarget * 60 + mTarget);
+            }
+
             // مرحله ۱: در صورت وجود عکس، ابتدا فشرده و در Storage سوپابیس آپلود می‌شود
-            // (به جای ذخیره مستقیم base64 داخل جدول که باعث خطا و کندی می‌شد)
             let photoUrl = null;
             if (type !== 'leave' && selectedPhotoDataUrl) {
                 if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = '⏳ در حال آپلود عکس...'; }
@@ -1099,26 +1194,22 @@
                 if (submitBtn) { submitBtn.innerText = '⏳ در حال ثبت...'; }
             }
 
-            if (type === 'entry') {
-                const [hNow, mNow] = timeStrNow.split(':').map(Number);
-                const [hTarget, mTarget] = targetStartTime.split(':').map(Number);
-                const diffMinutes = (hNow * 60 + mNow) - (hTarget * 60 + mTarget);
-
-                if (diffMinutes > settings.maxDelay) {
-                    await _supabase.from('messages').insert([{
-                        sender: "سیستم خودکار تاخیر",
-                        title: `⚠️ هشدار تاخیر ${currentUserLabel}`,
-                        body: `کاربر ${currentUserLabel} در تاریخ ${getTehranDateString(now)} در ساعت ${timeStrNow} با ${diffMinutes} دقیقه تاخیر ورود خود را ثبت کرد.`,
-                        created_at: now.toISOString()
-                    }]);
-                    alert(`⚠️ ثبت ورود انجام شد اما شما ${diffMinutes} دقیقه تاخیر داشتید. گزارش تاخیر خودکار برای مدیر ارسال شد.`);
-                }
+            // مرحله ۲: اگر تاخیر بیش از حد مجاز بود، پیام دقیق برای مدیر ثبت می‌شود
+            if (type === 'entry' && delayMinutes !== null && delayMinutes > settings.maxDelay) {
+                const overBy = delayMinutes - settings.maxDelay;
+                await _supabase.from('messages').insert([{
+                    sender: "سیستم خودکار تاخیر",
+                    title: `⚠️ هشدار تاخیر ${currentUserLabel}`,
+                    body: `کاربر ${currentUserLabel} در تاریخ ${getTehranDateString(now)} ساعت ${timeStrNow} ورود خود را ثبت کرد.\nمیزان تاخیر: ${delayMinutes} دقیقه\nحداکثر تاخیر مجاز طبق تنظیمات: ${settings.maxDelay} دقیقه\nمقدار بیش از حد مجاز: ${overBy} دقیقه`,
+                    created_at: now.toISOString()
+                }]);
             }
 
             const { error } = await _supabase.from('attendance').insert([{
                 seller_name: currentUserLabel,
                 type: type,
                 overtime_hours: overtimeHours,
+                delay_minutes: delayMinutes,
                 photo_url: photoUrl,
                 note: (note ? note + " | " : "") + (selectedLocationText ? selectedLocationText + " | " : "") + `زمان ثبت: ${fullDateTimeStr}`,
                 created_at: now.toISOString()
@@ -1127,7 +1218,20 @@
             if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'ثبت در سیستم حضور و غیاب'; }
 
             if (!error) {
-                alert(`✅ اطلاعات حضور و غیاب با موفقیت ثبت گردید.\n⏱️ زمان ثبت: ${fullDateTimeStr}`);
+                let successMsg = `✅ اطلاعات حضور و غیاب با موفقیت ثبت گردید.\n⏱️ زمان ثبت: ${fullDateTimeStr}`;
+
+                if (type === 'entry' && delayMinutes !== null) {
+                    if (delayMinutes > settings.maxDelay) {
+                        successMsg += `\n\n⚠️ امروز شما ${delayMinutes} دقیقه تاخیر داشتید (حداکثر مجاز: ${settings.maxDelay} دقیقه).\nفردا لطفاً زودتر بیایید تا حقوق شما دچار افت نشود. این تاخیر برای مدیر گزارش شد.`;
+                    } else if (delayMinutes > 0) {
+                        successMsg += `\n\n🕐 امروز ${delayMinutes} دقیقه تاخیر داشتید، اما در محدوده مجاز (${settings.maxDelay} دقیقه) بود.`;
+                    } else {
+                        successMsg += `\n\n✅ به‌موقع سر کار حاضر شدید.`;
+                    }
+                }
+
+                alert(successMsg);
+
                 document.getElementById('attNote').value = '';
                 document.getElementById('attPhoto').value = '';
                 document.getElementById('photoPreview').style.display = 'none';
@@ -1147,6 +1251,8 @@
             const container = document.getElementById('workReportContent');
             container.innerHTML = 'در حال محاسبه کارکرد ماهانه...';
 
+            const settings = await getShiftSettings();
+
             const { data: records, error } = await _supabase
                 .from('attendance')
                 .select('*')
@@ -1161,6 +1267,8 @@
             const uniqueDays = new Set();
             let totalOvertime = 0;
             let leaveCount = 0;
+            let lateDaysCount = 0;
+            let totalDelayMinutes = 0;
 
             const rows = records.map(r => {
                 const dateObj = new Date(r.created_at);
@@ -1178,10 +1286,27 @@
                 if (r.type === 'exit') typeTitle = '🔴 خروج';
                 if (r.type === 'leave') typeTitle = '🏖️ مرخصی';
 
+                let delayCell = '—';
+                if (r.type === 'entry') {
+                    const d = (r.delay_minutes === null || r.delay_minutes === undefined) ? null : Number(r.delay_minutes);
+                    if (d === null) {
+                        delayCell = '—';
+                    } else if (d > settings.maxDelay) {
+                        delayCell = `<span style="color:#ef4444; font-weight:bold;">${d} دقیقه تاخیر<br><span style="font-size:9px; color:#94a3b8;">(مجاز: ${settings.maxDelay} دقیقه)</span></span>`;
+                        lateDaysCount++;
+                        totalDelayMinutes += d;
+                    } else if (d > 0) {
+                        delayCell = `<span style="color:#fbbf24;">${d} دقیقه<br><span style="font-size:9px; color:#94a3b8;">(در محدوده مجاز)</span></span>`;
+                    } else {
+                        delayCell = `<span style="color:#34d399;">به‌موقع ✅</span>`;
+                    }
+                }
+
                 return `
                     <tr>
                         <td>${fullStr}</td>
                         <td>${typeTitle}</td>
+                        <td>${delayCell}</td>
                         <td>${r.overtime_hours || 0} ساعت</td>
                         <td>${r.photo_url ? `<a href="${r.photo_url}" target="_blank" style="color:#38bdf8;">👁️ مشاهده عکس</a>` : 'بدون عکس'}</td>
                         <td>${r.note || '-'}</td>
@@ -1195,6 +1320,7 @@
                     <p><b>کل روزهای حضور سرکار:</b> <span style="color:#34d399; font-weight:bold; font-size:15px;">${uniqueDays.size} روز</span></p>
                     <p><b>مجموع اضافه‌کاری:</b> ${totalOvertime.toFixed(1)} ساعت</p>
                     <p><b>روزهای مرخصی:</b> ${leaveCount} روز</p>
+                    <p><b>روزهای دارای تاخیر بیش از حد مجاز (${settings.maxDelay} دقیقه):</b> <span style="color:#ef4444; font-weight:bold;">${lateDaysCount} روز</span> (مجموع ${totalDelayMinutes} دقیقه تاخیر)</p>
                 </div>
                 <h4 style="color:#38bdf8; margin-top:15px;">📋 جزئیات دقیق ورود، خروج و زمان ثبت:</h4>
                 <table>
@@ -1202,6 +1328,7 @@
                         <tr>
                             <th>تاریخ و ساعت دقیق ثبت</th>
                             <th>نوع ثبت</th>
+                            <th>میزان تاخیر</th>
                             <th>اضافه‌کاری</th>
                             <th>عکس ثبت‌شده</th>
                             <th>توضیحات</th>
@@ -1268,6 +1395,7 @@
             const stock = parseFloat(document.getElementById('pStock').value);
             const boothStock = parseFloat(document.getElementById('pBoothStock').value) || capacity;
             const min_stock = parseFloat(document.getElementById('pMinStock').value) || 0;
+            const booth_min_stock = parseFloat(document.getElementById('pBoothMinStock').value) || 0;
             const sell_price = parseFloat(document.getElementById('pSellPrice').value) || 0;
             const buy_price = (currentRole === 'admin')
                 ? (parseFloat(document.getElementById('pBuyPrice').value) || 0)
@@ -1279,7 +1407,7 @@
             }
 
             if (editingProductId) {
-                const updateData = { code, name, container_capacity: capacity, stock, booth_stock: boothStock, min_stock, sell_price };
+                const updateData = { code, name, container_capacity: capacity, stock, booth_stock: boothStock, min_stock, booth_min_stock, sell_price };
                 if (currentRole === 'admin') {
                     updateData.buy_price = buy_price;
                 }
@@ -1296,7 +1424,7 @@
                 }
             } else {
                 const { error } = await _supabase.from('products').insert([{
-                    code, name, container_capacity: capacity, stock, booth_stock: boothStock, min_stock, sell_price, buy_price
+                    code, name, container_capacity: capacity, stock, booth_stock: boothStock, min_stock, booth_min_stock, sell_price, buy_price
                 }]);
 
                 if (error) {
@@ -1323,6 +1451,7 @@
             document.getElementById('pStock').value = '';
             document.getElementById('pBoothStock').value = '';
             document.getElementById('pMinStock').value = '';
+            document.getElementById('pBoothMinStock').value = '0';
             document.getElementById('pSellPrice').value = '';
             document.getElementById('pSellPriceFormatted').innerText = '';
             document.getElementById('pBuyPrice').value = '';
@@ -1347,6 +1476,7 @@
             document.getElementById('pStock').value = product.stock;
             document.getElementById('pBoothStock').value = product.booth_stock || 0;
             document.getElementById('pMinStock').value = product.min_stock;
+            document.getElementById('pBoothMinStock').value = product.booth_min_stock || 0;
             document.getElementById('pSellPrice').value = product.sell_price;
             formatPrice(document.getElementById('pSellPrice'), 'pSellPriceFormatted');
 
@@ -1384,7 +1514,7 @@
             }
         }
 
-        // --- ثبت / ویرایش فاکتور فروش (v28) ---
+        // --- ثبت / ویرایش فاکتور فروش ---
         async function submitSale() {
             const inputVal = document.getElementById('sName').value.trim();
             const qty = parseFloat(document.getElementById('sQty').value);
@@ -1416,7 +1546,7 @@
 
             const calculatedPrice = Math.round(qty * (product.sell_price || 0));
 
-            // --- حالت ویرایش یک فاکتور موجود ---
+            // --- حالت ویرایش یک فاکتور موجود (فقط فاکتورهای همان روز مجاز است) ---
             if (editingSaleId) {
                 if (product.code !== editingSaleProductCode) {
                     alert('⚠️ در حالت ویرایش امکان تغییر نام کالا وجود ندارد. ابتدا روی «لغو ویرایش» بزنید و یک فاکتور جدید ثبت کنید.');
@@ -1431,10 +1561,16 @@
                     return;
                 }
 
-                // اطمینان از اینکه فاکتور متعلق به خود کاربر است
+                // اطمینان از اینکه فاکتور متعلق به خود کاربر و مربوط به همین امروز است
                 const ownerSale = cachedSalesList.find(s => String(s.id) === String(editingSaleId));
                 if (!ownerSale || ownerSale.seller_name !== currentUserLabel) {
                     alert('⛔ شما فقط می‌توانید فاکتورهای ثبت‌شده توسط خودتان را ویرایش کنید.');
+                    cancelSaleEdit();
+                    loadRecentSales();
+                    return;
+                }
+                if (getTehranISODate(new Date(ownerSale.created_at)) !== getTehranISODate(new Date())) {
+                    alert('⛔ فقط فاکتورهای ثبت‌شده در همین امروز قابل ویرایش هستند.');
                     cancelSaleEdit();
                     loadRecentSales();
                     return;
@@ -1503,11 +1639,12 @@
             loadRecentSales();
         }
 
-        // نمایش فقط فاکتورهای خودِ کاربر لاگین‌شده، با امکان ویرایش (حداکثر ۳ بار) و حذف
+        // نمایش فقط فاکتورهای خودِ کاربر لاگین‌شده، به‌صورت صفحه‌بندی‌شده
         async function loadRecentSales() {
             const tbody = document.getElementById('recentSalesTable');
             if (!tbody) return;
             tbody.innerHTML = '<tr><td colspan="6">در حال بارگذاری...</td></tr>';
+            salesPage = 0;
 
             if (!currentUserLabel) {
                 tbody.innerHTML = '<tr><td colspan="6">-</td></tr>';
@@ -1520,7 +1657,7 @@
                 .select('id, product_code, quantity, sell_price, seller_name, created_at, edit_count')
                 .eq('seller_name', currentUserLabel)
                 .order('created_at', { ascending: false })
-                .limit(30);
+                .limit(90);
 
             if (error) {
                 tbody.innerHTML = '<tr><td colspan="6">❌ خطا در دریافت فاکتورها: ' + error.message + '</td></tr>';
@@ -1528,29 +1665,61 @@
                 return;
             }
 
-            if (!sales || sales.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6">شما هنوز هیچ فاکتوری ثبت نکرده‌اید.</td></tr>';
-                cachedSalesList = [];
-                return;
-            }
-
-            cachedSalesList = sales;
+            cachedSalesList = sales || [];
 
             if (cachedProductsList.length === 0) {
                 const { data: products } = await _supabase.from('products').select('*');
                 cachedProductsList = products || [];
             }
+
+            renderSalesPage();
+        }
+
+        function changeSalesPage(direction) {
+            const totalPages = Math.max(1, Math.ceil(cachedSalesList.length / SALES_PAGE_SIZE));
+            salesPage = Math.min(totalPages - 1, Math.max(0, salesPage + direction));
+            renderSalesPage();
+        }
+
+        function renderSalesPage() {
+            const tbody = document.getElementById('recentSalesTable');
+            const indicator = document.getElementById('salesPageIndicator');
+            if (!tbody) return;
+
+            if (!cachedSalesList || cachedSalesList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6">شما هنوز هیچ فاکتوری ثبت نکرده‌اید.</td></tr>';
+                if (indicator) indicator.innerText = 'صفحه ۱ از ۱';
+                return;
+            }
+
             const nameMap = {};
             cachedProductsList.forEach(p => { nameMap[p.code] = p.name; });
 
-            tbody.innerHTML = sales.map(s => {
-                const timeStr = getTehranFullDateTimeString(new Date(s.created_at));
+            const totalPages = Math.max(1, Math.ceil(cachedSalesList.length / SALES_PAGE_SIZE));
+            if (salesPage > totalPages - 1) salesPage = totalPages - 1;
+
+            const start = salesPage * SALES_PAGE_SIZE;
+            const pageItems = cachedSalesList.slice(start, start + SALES_PAGE_SIZE);
+            const todayISO = getTehranISODate(new Date());
+
+            tbody.innerHTML = pageItems.map(s => {
+                const saleDateObj = new Date(s.created_at);
+                const timeStr = getTehranFullDateTimeString(saleDateObj);
                 const pname = nameMap[s.product_code] || s.product_code;
                 const editCount = s.edit_count || 0;
-                const canEditMore = editCount < MAX_SALE_EDITS;
-                const editControl = canEditMore
-                    ? `<button class="row-btn edit-btn" onclick="editSale('${s.id}')">ویرایش</button>`
-                    : `<span style="color:#94a3b8; font-size:10px; display:inline-block; padding:5px 3px;">🔒 غیرفعال</span>`;
+                const isToday = getTehranISODate(saleDateObj) === todayISO;
+                const canEditMore = isToday && (editCount < MAX_SALE_EDITS);
+
+                let actionsCell;
+                if (!isToday) {
+                    actionsCell = `<span style="color:#94a3b8; font-size:10px; display:inline-block; padding:5px 3px;">🔒 مربوط به روز قبل</span>`;
+                } else if (canEditMore) {
+                    actionsCell = `<button class="row-btn edit-btn" onclick="editSale('${s.id}')">ویرایش</button>
+                                   <button class="row-btn delete-btn" onclick="deleteSale('${s.id}')">حذف</button>`;
+                } else {
+                    actionsCell = `<span style="color:#94a3b8; font-size:10px; display:inline-block; padding:5px 3px;">🔒 غیرفعال</span>`;
+                }
+
                 return `
                     <tr>
                         <td>${timeStr}</td>
@@ -1558,13 +1727,14 @@
                         <td>${Number(s.quantity).toLocaleString('fa-IR', { maximumFractionDigits: 3 })} کیلو</td>
                         <td>${Number(s.sell_price).toLocaleString('fa-IR')} تومان</td>
                         <td>${editCount}/${MAX_SALE_EDITS}</td>
-                        <td>
-                            ${editControl}
-                            <button class="row-btn delete-btn" onclick="deleteSale('${s.id}')">حذف</button>
-                        </td>
+                        <td>${actionsCell}</td>
                     </tr>
                 `;
             }).join('');
+
+            if (indicator) {
+                indicator.innerText = `صفحه ${(salesPage + 1).toLocaleString('fa-IR')} از ${totalPages.toLocaleString('fa-IR')} (${cachedSalesList.length.toLocaleString('fa-IR')} فاکتور)`;
+            }
         }
 
         async function editSale(saleId) {
@@ -1576,6 +1746,11 @@
 
             if (sale.seller_name !== currentUserLabel) {
                 alert('⛔ شما فقط می‌توانید فاکتورهای ثبت‌شده توسط خودتان را ویرایش کنید.');
+                return;
+            }
+
+            if (getTehranISODate(new Date(sale.created_at)) !== getTehranISODate(new Date())) {
+                alert('⛔ فقط فاکتورهای ثبت‌شده در همین امروز قابل ویرایش هستند.');
                 return;
             }
 
@@ -1622,6 +1797,11 @@
 
             if (sale.seller_name !== currentUserLabel) {
                 alert('⛔ شما فقط می‌توانید فاکتورهای ثبت‌شده توسط خودتان را حذف کنید.');
+                return;
+            }
+
+            if (getTehranISODate(new Date(sale.created_at)) !== getTehranISODate(new Date())) {
+                alert('⛔ فقط فاکتورهای ثبت‌شده در همین امروز قابل حذف هستند.');
                 return;
             }
 
@@ -1687,6 +1867,19 @@
                 loadBoothInventory();
             } else {
                 alert('خطا در به‌روزرسانی موجودی ظرف: ' + error.message);
+            }
+        }
+
+        async function updateBoothMinStock(productId, val) {
+            const num = parseFloat(val);
+            if (isNaN(num) || num < 0) return alert('لطفاً یک عدد معتبر برای حداقل موجودی غرفه وارد کنید');
+
+            const { error } = await _supabase.from('products').update({ booth_min_stock: num }).eq('id', productId);
+            if (!error) {
+                alert('✅ حداقل موجودی هشدار غرفه ذخیره شد. برای کالاهای کم‌فروش، وقتی موجودی غرفه به این مقدار برسد و انبار اصلی هم خالی باشد، به مدیر هشدار خرید داده می‌شود.');
+                loadBoothInventory();
+            } else {
+                alert('خطا: ' + error.message);
             }
         }
 
@@ -1760,6 +1953,10 @@
                     <td>
                         ${canEdit 
                             ? `<div style="display:flex; gap:4px; align-items:center; justify-content:center; margin-bottom:4px;">
+                                 <input type="number" step="0.1" class="cap-input" id="boothMin_${p.id}" value="${p.booth_min_stock || 0}" placeholder="حداقل غرفه">
+                                 <button class="row-btn edit-btn" title="ذخیره حداقل موجودی هشدار غرفه" onclick="updateBoothMinStock('${p.id}', document.getElementById('boothMin_${p.id}').value)">💾حد</button>
+                               </div>
+                               <div style="display:flex; gap:4px; align-items:center; justify-content:center; margin-bottom:4px;">
                                  <input type="number" step="0.01" class="cap-input" id="grossBooth_${p.id}" placeholder="وزن کل">
                                  <input type="number" step="0.01" class="cap-input" id="tareBooth_${p.id}" placeholder="تار">
                                  <button class="row-btn edit-btn" title="محاسبه خالص" onclick="updateDirectBoothStockWithTare('${p.id}')">💾</button>
@@ -1788,7 +1985,7 @@
 
             const { data: products } = await _supabase
                 .from('products')
-                .select('id, code, name, stock, booth_stock, min_stock, sell_price, buy_price, container_capacity');
+                .select('id, code, name, stock, booth_stock, min_stock, booth_min_stock, sell_price, buy_price, container_capacity');
 
             cachedProductsList = products || [];
 
@@ -1836,7 +2033,7 @@
             });
         }
 
-        // --- گزارش فروش v23: تقویم هوشمند، گزارش روزانه و بازه‌ای با زمان لحظه‌ای ---
+        // --- گزارش فروش: تقویم هوشمند، گزارش روزانه و بازه‌ای با زمان لحظه‌ای ---
         async function loadSalesReport() {
             const content = document.getElementById('reportContent');
             content.innerHTML = 'در حال بارگذاری...';
@@ -1975,105 +2172,4 @@
 
         function switchReportMode(key, mode) {
             const singleBox = document.getElementById('singleDateBox_' + key);
-            const rangeBox = document.getElementById('rangeDateBox_' + key);
-            const btnSingle = document.getElementById('btnSingle_' + key);
-            const btnRange = document.getElementById('btnRange_' + key);
-
-            if (mode === 'single') {
-                singleBox.style.display = 'block';
-                rangeBox.style.display = 'none';
-                btnSingle.classList.add('active');
-                btnRange.classList.remove('active');
-            } else {
-                singleBox.style.display = 'none';
-                rangeBox.style.display = 'block';
-                btnSingle.classList.remove('active');
-                btnRange.classList.add('active');
-            }
-        }
-
-        async function loadDetailReportV23(key) {
-            const resultEl = document.getElementById('detailResult_' + key);
-            const isSingleMode = document.getElementById('btnSingle_' + key).classList.contains('active');
-
-            resultEl.innerHTML = 'در حال پردازش فاکتورها...';
-
-            let rolePrefix = 'فروشنده صبح';
-            if (key === 'evening') rolePrefix = 'فروشنده شب';
-            if (key === 'admin') rolePrefix = 'مدیر';
-
-            const { data: sales, error } = await _supabase
-                .from('sales')
-                .select('product_code, quantity, sell_price, created_at, seller_name')
-                .order('created_at', { ascending: true });
-
-            if (error) {
-                resultEl.innerHTML = '❌ خطا در دریافت اطلاعات: ' + error.message;
-                return;
-            }
-
-            let filteredSales = [];
-
-            if (isSingleMode) {
-                const targetDate = document.getElementById('singleDateInput_' + key).value;
-                if (!targetDate) {
-                    resultEl.innerHTML = '<p style="color:#ef4444;">لطفاً تاریخ را انتخاب کنید.</p>';
-                    return;
-                }
-                filteredSales = (sales || []).filter(s => {
-                    if (!s.seller_name || s.seller_name.indexOf(rolePrefix) !== 0) return false;
-                    const isoStr = getTehranISODate(new Date(s.created_at));
-                    return isoStr === targetDate;
-                });
-            } else {
-                const startDate = document.getElementById('rangeStartDate_' + key).value;
-                const endDate = document.getElementById('rangeEndDate_' + key).value;
-                if (!startDate || !endDate) {
-                    resultEl.innerHTML = '<p style="color:#ef4444;">لطفاً بازه زمانی را کامل انتخاب کنید.</p>';
-                    return;
-                }
-                filteredSales = (sales || []).filter(s => {
-                    if (!s.seller_name || s.seller_name.indexOf(rolePrefix) !== 0) return false;
-                    const isoStr = getTehranISODate(new Date(s.created_at));
-                    return isoStr >= startDate && isoStr <= endDate;
-                });
-            }
-
-            if (filteredSales.length === 0) {
-                resultEl.innerHTML = '<p style="color:#fbbf24; text-align:center;">هیچ فاکتور فروشی در این تاریخ/بازه یافت نشد.</p>';
-                return;
-            }
-
-            const codes = [...new Set(filteredSales.map(s => s.product_code))];
-            const { data: productsData } = await _supabase.from('products').select('code, name').in('code', codes);
-            const nameMap = {};
-            (productsData || []).forEach(p => { nameMap[p.code] = p.name; });
-
-            let totalSum = 0;
-            const rows = filteredSales.map(s => {
-                totalSum += Number(s.sell_price) || 0;
-                const dateObj = new Date(s.created_at);
-                const fullDateTimeStr = getTehranFullDateTimeString(dateObj);
-                const productName = nameMap[s.product_code] || s.product_code;
-
-                return `<tr>
-                    <td>${fullDateTimeStr}</td>
-                    <td>${productName}</td>
-                    <td>${Number(s.quantity).toLocaleString('fa-IR', { maximumFractionDigits: 3 })} کیلو</td>
-                    <td>${Number(s.sell_price).toLocaleString('fa-IR')} تومان</td>
-                </tr>`;
-            }).join('');
-
-            resultEl.innerHTML = `
-                <table style="margin-top:10px;">
-                    <thead><tr><th>تاریخ و ساعت ثبت دقیق</th><th>کالا</th><th>مقدار</th><th>مبلغ</th></tr></thead>
-                    <tbody>${rows}</tbody>
-                </table>
-                <div class="price-display" style="margin-top:10px; text-align:center;">
-                    مجموع فروش این گزارش: ${totalSum.toLocaleString('fa-IR')} تومان (${filteredSales.length} فاکتور)
-                </div>
-            `;
-        }
-    </script>
-</body>
-</html>
+            const range
