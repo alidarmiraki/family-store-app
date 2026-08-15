@@ -620,8 +620,18 @@
     <div class="build-tag">v30 - سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</div>
 
     <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
+        // اجرای امن Telegram WebApp: اگر صفحه بیرون از اپ تلگرام (مثلاً مستقیم در کروم) باز شود
+        // window.Telegram ممکن است اصلاً تعریف نشده باشد. اگر این خط بدون بررسی اجرا شود و خطا بدهد،
+        // کل اسکریپت (از جمله ساعت زنده و اتصال به Supabase که پایین‌تر تعریف می‌شوند) متوقف می‌شود.
+        let tg = null;
+        try {
+            if (window.Telegram && window.Telegram.WebApp) {
+                tg = window.Telegram.WebApp;
+                if (typeof tg.expand === 'function') tg.expand();
+            }
+        } catch (e) {
+            console.warn('Telegram WebApp در دسترس نیست یا مقداردهی نشد؛ برنامه در حالت مرورگر عادی ادامه می‌یابد.', e);
+        }
 
         const SUPABASE_URL = "https://kinjpmvoyioaslpdzujg.supabase.co";
         const SUPABASE_KEY = "sb_publishable_k3wkzKalFmLFtfx8WZWr1g_fHKT-3Sl";
@@ -2158,18 +2168,4 @@
                     </div>
                 `;
 
-                content.innerHTML = 
-                    renderRoleCard('morning', '🌅 فروشنده صبح') +
-                    renderRoleCard('evening', '🌙 فروشنده شب') +
-                    renderRoleCard('admin', '👑 مدیر غرفه');
-            }
-        }
-
-        function toggleDetail(key) {
-            const panel = document.getElementById('detailPanel_' + key);
-            panel.style.display = (panel.style.display === 'none' || !panel.style.display) ? 'block' : 'none';
-        }
-
-        function switchReportMode(key, mode) {
-            const singleBox = document.getElementById('singleDateBox_' + key);
-            const range
+                conten
