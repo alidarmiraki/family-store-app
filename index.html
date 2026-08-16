@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v33 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v34 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -175,6 +175,18 @@
             text-align: right;
             line-height: 1.9;
         }
+        .reminder-banner {
+            display: none;
+            background: rgba(251,191,36,0.15);
+            border: 1px solid #f59e0b;
+            color: #fde68a;
+            border-radius: 10px;
+            padding: 10px;
+            font-size: 12px;
+            margin-bottom: 10px;
+            text-align: right;
+            line-height: 1.9;
+        }
         .row-btn {
             border: none;
             border-radius: 6px;
@@ -186,6 +198,7 @@
         .edit-btn { background: #2563eb; color: #fff; }
         .delete-btn { background: #dc2626; color: #fff; }
         .fill-btn { background: linear-gradient(90deg, #0284c7, #2563eb); color: #fff; font-weight: bold; }
+        .confirm-btn { background: linear-gradient(90deg, #059669, #10b981); color: #fff; font-weight: bold; }
         .report-card, .msg-card {
             background: rgba(15, 23, 42, 0.6);
             border: 1px solid #334155;
@@ -387,6 +400,25 @@
             font-size:12px;
             cursor:pointer;
         }
+        .search-box { margin-bottom: 10px; }
+        .summary-mini {
+            background: rgba(15,23,42,0.5);
+            border-radius: 8px;
+            padding: 8px 10px;
+            margin-bottom: 6px;
+            font-size: 12px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+        }
+        .qty-inline-input {
+            width: 70px !important;
+            display: inline-block !important;
+            padding: 5px !important;
+            margin: 0 4px !important;
+            text-align: center;
+            font-size: 11px !important;
+        }
     </style>
 </head>
 <body>
@@ -408,6 +440,9 @@
     <!-- نوار کاربر لاگین‌شده -->
     <div class="user-badge" id="userBadge"></div>
 
+    <!-- یادآوری خودکار ورود/خروج فراموش‌شده -->
+    <div class="reminder-banner" id="attendanceReminderBanner"></div>
+
     <!-- مرکز هشدار موجودی مخصوص مدیر -->
     <div id="adminAlertPanel" style="display:none;"></div>
 
@@ -425,18 +460,27 @@
         <button class="tab-btn" id="btnReport" onclick="switchTab('report'); loadSalesReport();">📊 گزارش فروش</button>
         <button class="tab-btn" id="btnWorkReport" onclick="switchTab('workReport'); loadWorkReport();">🗓️ کارکرد پرسنل</button>
         <button class="tab-btn" id="btnShiftSettings" onclick="switchTab('shiftSettings'); loadShiftSettings();">⚙️ تنظیمات شیفت‌ها</button>
+        <button class="tab-btn" id="btnPurchaseInvoices" onclick="switchTab('purchaseInvoices'); loadPurchaseInvoices();">🧾 فاکتور خرید (مدیر)</button>
+        <button class="tab-btn" id="btnTakeoutAdmin" onclick="switchTab('takeoutAdmin'); loadTakeoutAdminSummary();">🧺 برداشت‌های حساب‌نشده</button>
+        <button class="tab-btn" id="btnSalary" onclick="switchTab('salary'); loadSalaryTab();">💰 واریز حقوق</button>
+        <button class="tab-btn" id="btnPersonalTakeout" onclick="switchTab('personalTakeout'); loadMyTakeouts();">🛒 برداشت شخصی</button>
     </div>
 
     <!-- فرم ثبت فروش -->
     <div id="saleTab" class="card">
         <h2 id="saleFormTitle">🛍️ ثبت فروش روزانه</h2>
         <label>انتخاب یا تایپ نام کالا:</label>
-        <input type="text" id="sName" dir="auto" list="productDatalist" placeholder="نام کالا را انتخاب یا تایپ کنید" onchange="calculateSalePriceAuto()">
+        <input type="text" id="sName" dir="auto" list="productDatalist" placeholder="نام کالا را انتخاب یا تایپ کنید (لیست بر اساس الفبا مرتب است)" onchange="calculateSalePriceAuto()">
         <datalist id="productDatalist"></datalist>
 
-        <label>وزن خالص کالا (کیلوگرم):</label>
-        <input type="number" id="sQty" step="0.001" placeholder="مثلاً 0.250 برای 250 گرم یا 1.5" oninput="calculateSalePriceAuto()">
-        <div class="hint">سیستم قیمت را بر اساس نرخ کالا در انبار خودکار محاسبه می‌کند.</div>
+        <label>واحد وزن:</label>
+        <div class="unit-toggle">
+            <label><input type="radio" name="sQtyUnit" value="kg" checked onchange="onSaleUnitChange()"> کیلوگرم</label>
+            <label><input type="radio" name="sQtyUnit" value="gram" onchange="onSaleUnitChange()"> گرم (زیر یک کیلو)</label>
+        </div>
+        <label id="sQtyLabel">مقدار (کیلوگرم):</label>
+        <input type="number" id="sQty" step="0.001" placeholder="مثلاً 1.5" oninput="calculateSalePriceAuto()">
+        <div class="hint">سیستم قیمت را بر اساس نرخ کالا در انبار خودکار محاسبه می‌کند. اگر مقدار زیر یک کیلوست، واحد «گرم» را انتخاب کنید و مثلاً 250 وارد کنید.</div>
 
         <div id="sCalcDisplay" class="price-display">مبلغ کل فاکتور: ۰ تومان (قیمت واحد: ۰ تومان)</div>
 
@@ -474,7 +518,7 @@
     <!-- فرم حضور و غیاب -->
     <div id="attendanceTab" class="card">
         <h2>⏰ ثبت ورود، خروج و مرخصی</h2>
-        <div class="hint">⚠️ ثبت عکس یا موقعیت مکانی لحظه‌ای برای ورود و خروج **اجباری** است. سیستم تاخیرها را اتوماتیک بررسی می‌کند.</div>
+        <div class="hint">⚠️ ثبت عکس یا موقعیت مکانی لحظه‌ای برای ورود و خروج **اجباری** است. سیستم تاخیرها و زودتر‌رفتن‌ها را اتوماتیک بررسی می‌کند.</div>
 
         <label>نوع ثبت:</label>
         <select id="attType" onchange="toggleAttendanceFields()">
@@ -560,6 +604,8 @@
         <!-- چک‌لیست شارژ صبحگاهی، فقط برای فروشنده صبح ساخته می‌شود -->
         <div id="morningChecklistBox"></div>
 
+        <div class="search-box"><input type="text" id="boothSearchInput" dir="auto" placeholder="🔎 جستجوی نام کالا در یخچال غرفه..." oninput="filterBoothTable()"></div>
+
         <table>
             <thead>
                 <tr>
@@ -579,9 +625,10 @@
     <!-- تب سفارشات خرید -->
     <div id="purchaseOrdersTab" class="card">
         <h2>🧾 سفارشات خرید از تامین‌کننده</h2>
-        <div class="hint">مدیر هر سفارشی که به تامین‌کننده می‌دهد را اینجا ثبت می‌کند تا فروشنده صبح بداند چه مقدار سفارش داده شده، آیا به انبار رسیده یا چند روز دیگر می‌رسد.</div>
+        <div class="hint">مدیر هر سفارشی که به تامین‌کننده می‌دهد را اینجا ثبت می‌کند تا فروشنده صبح بداند چه مقدار سفارش داده شده، آیا به انبار رسیده یا چند روز دیگر می‌رسد. وقتی بار برسد، هم مدیر و هم فروشنده صبح می‌توانند مقدار واقعی تحویل‌گرفته‌شده را تایید کنند.</div>
 
         <div id="poFormBox" style="display:none; margin-top:10px;">
+            <h3 id="poFormTitle" style="color:#38bdf8; font-size:14px;">➕ ثبت سفارش جدید</h3>
             <label>انتخاب یا تایپ نام کالا:</label>
             <input type="text" id="poProductName" dir="auto" list="productDatalist" placeholder="نام کالا را انتخاب یا تایپ کنید">
             <label>مقدار سفارش (کیلوگرم یا تعداد):</label>
@@ -590,7 +637,8 @@
             <input type="number" id="poEtaDays" step="0.5" placeholder="مثلاً 3">
             <label>توضیحات سفارش (اختیاری):</label>
             <textarea id="poNote" placeholder="مثلاً نام تامین‌کننده یا توضیحات..."></textarea>
-            <button class="submit-btn" onclick="submitPurchaseOrder()">ثبت سفارش جدید</button>
+            <button class="submit-btn" id="poSubmitBtn" onclick="submitPurchaseOrder()">ثبت سفارش جدید</button>
+            <button class="cancel-edit-btn" id="cancelPoEditBtn" onclick="cancelPoEdit()">لغو ویرایش سفارش</button>
         </div>
 
         <h3 style="color:#38bdf8; margin-top:18px;">📦 سفارشات در راه (هنوز نرسیده)</h3>
@@ -673,6 +721,7 @@
     <div id="inventoryTab" class="card">
         <h2>📦 لیست کالاهای انبار</h2>
         <div class="low-stock-banner" id="lowStockBanner"></div>
+        <div class="search-box"><input type="text" id="inventorySearchInput" dir="auto" placeholder="🔎 جستجوی نام کالا در انبار..." oninput="filterInventoryTable()"></div>
         <table>
             <thead>
                 <tr id="inventoryHeaderRow">
@@ -753,13 +802,103 @@
             </div>
         </div>
 
-        <label>حداکثر تاخیر مجاز پرسنل (به دقیقه):</label>
+        <label>حداکثر تاخیر/زودرفتن مجاز پرسنل (به دقیقه):</label>
         <input type="number" id="maxDelayAllowed" value="15" placeholder="مثلاً 15 دقیقه">
+
+        <label>چند دقیقه بعد از شروع/پایان شیفت، در صورت فراموشی، به پرسنل یادآوری ثبت ورود/خروج نمایش داده شود؟</label>
+        <input type="number" id="reminderMinutes" value="10" placeholder="مثلاً 10 دقیقه">
 
         <button class="submit-btn" onclick="saveShiftSettings()">ذخیره تنظیمات شیفت‌ها</button>
     </div>
 
-    <div class="build-tag">v33 - سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</div>
+    <!-- تب فاکتور خرید مدیر و گزارش سود -->
+    <div id="purchaseInvoicesTab" class="card">
+        <h2>🧾 ثبت فاکتور خرید و گزارش سود</h2>
+        <div class="hint">هر بار که از تامین‌کننده خرید نقدی/فاکتوری انجام می‌دهید، اینجا ثبت کنید تا در گزارش سود بازه‌ای محاسبه شود. این جدا از «سفارشات خرید» (که مقدار کالا را دنبال می‌کند) است و صرفاً مبلغ خرج‌شده را ثبت می‌کند.</div>
+        <label>عنوان / شرح خرید:</label>
+        <input type="text" id="piTitle" placeholder="مثلاً خرید پنیر و ماست از تامین‌کننده">
+        <label>مبلغ کل خرید (تومان):</label>
+        <input type="number" id="piAmount" placeholder="مثلاً 5000000">
+        <label>توضیحات (اختیاری):</label>
+        <textarea id="piNote" placeholder="توضیحات تکمیلی..."></textarea>
+        <button class="submit-btn" onclick="submitPurchaseInvoice()">ثبت فاکتور خرید</button>
+
+        <div class="report-card" style="margin-top:16px;">
+            <h3>📋 فاکتورهای خرید اخیر</h3>
+            <div id="purchaseInvoicesList">در حال بارگذاری...</div>
+        </div>
+
+        <div class="report-card" style="margin-top:16px;">
+            <h3>📈 گزارش سود بازه‌ای</h3>
+            <div class="hint">سود بر اساس اختلاف «قیمت فروش ثبت‌شده در فاکتورهای فروش» و «قیمت خرید فعلی هر کالا در تعریف کالا» محاسبه می‌شود. «اصل پول خرج‌شده» یعنی مجموع فاکتورهای خریدی که در این بازه ثبت کرده‌اید.</div>
+            <div class="grid-2">
+                <div><label>از تاریخ:</label><input type="date" id="profitRangeStart"></div>
+                <div><label>تا تاریخ:</label><input type="date" id="profitRangeEnd"></div>
+            </div>
+            <button class="submit-btn" onclick="loadProfitReport()">نمایش گزارش سود این بازه</button>
+            <div id="profitReportResult" style="margin-top:12px;"></div>
+        </div>
+    </div>
+
+    <!-- تب برداشت شخصی حساب نشده پرسنل -->
+    <div id="personalTakeoutTab" class="card">
+        <h2>🛒 ثبت برداشت شخصی (حساب‌نشده)</h2>
+        <div class="hint">اگر چیزی از غرفه برای خودتان وزن کردید و برداشتید ولی هنوز حسابش نکردید، همین‌جا ثبت کنید تا بعداً از حقوقتان کسر شود. این لیست فقط برای شما و مدیر قابل مشاهده است.</div>
+        <label>نام کالا:</label>
+        <input type="text" id="ptItemName" dir="auto" list="productDatalist" placeholder="نام کالا را انتخاب یا تایپ کنید">
+        <label>وزن/مقدار (اختیاری):</label>
+        <input type="number" id="ptWeight" step="0.001" placeholder="مثلاً 0.5 کیلو">
+        <label>مبلغ (تومان):</label>
+        <input type="number" id="ptAmount" placeholder="مبلغی که باید از حقوقتان کسر شود">
+        <label>توضیحات (اختیاری):</label>
+        <textarea id="ptNote"></textarea>
+        <button class="submit-btn" onclick="submitPersonalTakeout()">ثبت برداشت</button>
+
+        <div class="report-card" style="margin-top:16px;">
+            <h3>📋 برداشت‌های ثبت‌شده شما</h3>
+            <div id="myTakeoutList">در حال بارگذاری...</div>
+            <div class="pagination-bar">
+                <button class="row-btn edit-btn" onclick="changeTakeoutPage(-1)">◀ قبلی</button>
+                <span id="takeoutPageIndicator">صفحه ۱</span>
+                <button class="row-btn edit-btn" onclick="changeTakeoutPage(1)">بعدی ▶</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- تب مدیریت برداشت‌های حساب‌نشده پرسنل (مدیر) -->
+    <div id="takeoutAdminTab" class="card">
+        <h2>🧺 برداشت‌های حساب‌نشده پرسنل</h2>
+        <div class="hint">مجموع برداشت‌های هر فروشنده در بازه انتخابی را ببینید تا هنگام واریز حقوق از آن کسر کنید.</div>
+        <div class="grid-2">
+            <div><label>از تاریخ:</label><input type="date" id="takeoutRangeStart"></div>
+            <div><label>تا تاریخ:</label><input type="date" id="takeoutRangeEnd"></div>
+        </div>
+        <button class="submit-btn" onclick="loadTakeoutAdminSummary()">نمایش برداشت‌های این بازه</button>
+        <div id="takeoutAdminSummary" style="margin-top:12px;">برای مشاهده، بازه تاریخ را انتخاب و دکمه بالا را بزنید.</div>
+    </div>
+
+    <!-- تب واریز حقوق -->
+    <div id="salaryTab" class="card">
+        <h2>💰 واریز حقوق پرسنل</h2>
+        <div id="salaryAdminForm" style="display:none;">
+            <label>انتخاب فروشنده:</label>
+            <select id="salaryTargetSeller">
+                <option value="فروشنده صبح">فروشنده صبح</option>
+                <option value="فروشنده شب">فروشنده شب</option>
+            </select>
+            <label>مبلغ واریزی (تومان):</label>
+            <input type="number" id="salaryAmount" placeholder="مثلاً 15000000">
+            <label>بابت (توضیحات/دوره):</label>
+            <input type="text" id="salaryNote" placeholder="مثلاً حقوق مرداد ماه">
+            <button class="submit-btn" onclick="submitSalaryPayment()">ثبت واریز حقوق</button>
+        </div>
+        <div class="report-card" style="margin-top:16px;">
+            <h3>📋 تاریخچه واریز حقوق</h3>
+            <div id="salaryList">در حال بارگذاری...</div>
+        </div>
+    </div>
+
+    <div class="build-tag">v34 - سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</div>
 
     <script>
         // اجرای امن Telegram WebApp
@@ -787,6 +926,7 @@
         let selectedLocationText = null;
         let selectedProductUnitPrice = 0;
         let alertDismissedThisSession = false;
+        let reminderDismissedThisSession = false;
 
         let editingSaleId = null;
         let editingSaleOldQty = 0;
@@ -796,6 +936,17 @@
 
         let salesPage = 0;
         const SALES_PAGE_SIZE = 8;
+
+        let cachedInventoryFull = [];
+        let cachedBoothFull = [];
+
+        let editingPurchaseOrderId = null;
+
+        let cachedTakeoutList = [];
+        let takeoutPage = 0;
+        const TAKEOUT_PAGE_SIZE = 8;
+
+        let attendanceReminderInterval = null;
 
         const ATTENDANCE_BUCKET = "attendance-photos";
         const CRITICAL_ALERT_COOLDOWN_HOURS = 6;
@@ -869,6 +1020,17 @@
             return `${y}-${m}-${d}`;
         }
 
+        function getTehranMinutesOfDay(dateObj = new Date()) {
+            const timeStr = getTehranTimeString(dateObj);
+            const [h, m] = timeStr.split(':').map(Number);
+            return h * 60 + m;
+        }
+
+        function timeStrToMinutes(timeStr) {
+            const [h, m] = timeStr.split(':').map(Number);
+            return h * 60 + m;
+        }
+
         function updateClock() {
             const now = new Date();
             document.getElementById('liveClock').innerText = '🕒 ' + getTehranFullDateTimeString(now);
@@ -887,6 +1049,10 @@
             return escaped.replace(urlRegex, (url) => {
                 return `<a href="${url}" target="_blank" class="location-link">🗺️ مشاهده روی نقشه</a>`;
             });
+        }
+
+        function sortProductsAlpha(list) {
+            return [...list].sort((a, b) => (a.name || '').localeCompare((b.name || ''), 'fa'));
         }
 
         const roleLabels = {
@@ -929,6 +1095,7 @@
             currentRole = user.role;
             currentUserLabel = (roleLabels[user.role] || user.role) + ' - ' + (user.full_name || user.username);
             alertDismissedThisSession = false;
+            reminderDismissedThisSession = false;
 
             const badge = document.getElementById('userBadge');
             badge.innerHTML = '👤 ' + currentUserLabel + ' <button class="logout-btn" onclick="logout()">خروج</button>';
@@ -937,16 +1104,25 @@
             document.getElementById('buyPriceField').style.display = (currentRole === 'admin') ? 'block' : 'none';
 
             if (currentRole === 'admin') {
-                setupView(['btnSale', 'btnInbox', 'btnStaffMessage', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnShiftSettings'], 'saleTab');
+                setupView(['btnSale', 'btnInbox', 'btnStaffMessage', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnShiftSettings', 'btnPurchaseInvoices', 'btnTakeoutAdmin', 'btnSalary'], 'saleTab');
+                document.getElementById('salaryAdminForm').style.display = 'block';
                 checkLowStockAlertNoWeight();
             } else if (currentRole === 'morning_seller') {
-                setupView(['btnSale', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport'], 'saleTab');
+                setupView(['btnSale', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnPersonalTakeout', 'btnSalary'], 'saleTab');
+                document.getElementById('salaryAdminForm').style.display = 'none';
             } else {
-                setupView(['btnSale', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnReport'], 'saleTab');
+                setupView(['btnSale', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnReport', 'btnPersonalTakeout', 'btnSalary'], 'saleTab');
+                document.getElementById('salaryAdminForm').style.display = 'none';
             }
 
             loadProductDatalist();
             loadRecentSales();
+
+            if (currentRole === 'morning_seller' || currentRole === 'evening_seller') {
+                checkAttendanceReminders();
+                if (attendanceReminderInterval) clearInterval(attendanceReminderInterval);
+                attendanceReminderInterval = setInterval(checkAttendanceReminders, 60000);
+            }
         }
 
         function logout() {
@@ -954,7 +1130,9 @@
             currentUserLabel = "";
             editingProductId = null;
             alertDismissedThisSession = false;
+            reminderDismissedThisSession = false;
             cancelSaleEdit();
+            if (attendanceReminderInterval) { clearInterval(attendanceReminderInterval); attendanceReminderInterval = null; }
             document.getElementById('accessUser').value = '';
             document.getElementById('accessPin').value = '';
             document.getElementById('userBadge').style.display = 'none';
@@ -964,6 +1142,9 @@
             const alertPanel = document.getElementById('adminAlertPanel');
             alertPanel.style.display = 'none';
             alertPanel.innerHTML = '';
+            const reminderPanel = document.getElementById('attendanceReminderBanner');
+            reminderPanel.style.display = 'none';
+            reminderPanel.innerHTML = '';
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.style.display = 'none';
                 btn.classList.remove('active');
@@ -1027,6 +1208,15 @@
         function dismissAdminAlerts() {
             alertDismissedThisSession = true;
             const panel = document.getElementById('adminAlertPanel');
+            if (panel) {
+                panel.style.display = 'none';
+                panel.innerHTML = '';
+            }
+        }
+
+        function dismissReminderBanner() {
+            reminderDismissedThisSession = true;
+            const panel = document.getElementById('attendanceReminderBanner');
             if (panel) {
                 panel.style.display = 'none';
                 panel.innerHTML = '';
@@ -1107,7 +1297,6 @@
                 const mainEmpty = stock <= 0;
                 const boothEmpty = boothStock <= 0;
 
-                // نقطه سفارش استاندارد انبار (وقتی هنوز کاملاً صفر نشده)
                 if (stock > 0 && stock <= p.min_stock) {
                     reorderItems.push(`⚠️ <b>${p.name}</b>: موجودی انبار اصلی کمتر از نقطه سفارش شده (${stock} کیلو باقی مانده)`);
                 }
@@ -1163,16 +1352,16 @@
         async function checkCriticalAfterSale(product, newBoothStock) {
             try {
                 const mainStock = product.stock || 0;
-                if (mainStock > 0) return; // انبار اصلی هنوز موجودی دارد، فعلاً بحرانی نیست
+                if (mainStock > 0) return;
 
                 const threshold = product.booth_min_stock || 0;
-                if (newBoothStock > threshold) return; // هنوز به حد هشدار غرفه نرسیده
+                if (newBoothStock > threshold) return;
 
                 const now = new Date();
                 if (product.low_stock_alert_since) {
                     const since = new Date(product.low_stock_alert_since);
                     const hoursPassed = (now - since) / (1000 * 60 * 60);
-                    if (hoursPassed < CRITICAL_ALERT_COOLDOWN_HOURS) return; // اخیراً هشدار داده شده، از اسپم جلوگیری کن
+                    if (hoursPassed < CRITICAL_ALERT_COOLDOWN_HOURS) return;
                 }
 
                 await _supabase.from('products').update({ low_stock_alert_since: now.toISOString() }).eq('id', product.id);
@@ -1188,9 +1377,30 @@
             }
         }
 
+        // --- انتخاب واحد کیلو/گرم در ثبت فروش ---
+        function onSaleUnitChange() {
+            const unit = document.querySelector('input[name="sQtyUnit"]:checked').value;
+            const label = document.getElementById('sQtyLabel');
+            const input = document.getElementById('sQty');
+            if (unit === 'gram') {
+                label.innerText = 'مقدار (گرم):';
+                input.placeholder = 'مثلاً 250 برای 250 گرم';
+            } else {
+                label.innerText = 'مقدار (کیلوگرم):';
+                input.placeholder = 'مثلاً 1.5';
+            }
+            calculateSalePriceAuto();
+        }
+
+        function getSaleQtyInKg() {
+            const raw = parseFloat(document.getElementById('sQty').value) || 0;
+            const unit = document.querySelector('input[name="sQtyUnit"]:checked').value;
+            return unit === 'gram' ? Number((raw / 1000).toFixed(4)) : raw;
+        }
+
         async function calculateSalePriceAuto() {
             const nameVal = document.getElementById('sName').value.trim();
-            const qty = parseFloat(document.getElementById('sQty').value) || 0;
+            const qty = getSaleQtyInKg();
             const display = document.getElementById('sCalcDisplay');
 
             if (!nameVal) {
@@ -1201,7 +1411,7 @@
 
             if (cachedProductsList.length === 0) {
                 const { data } = await _supabase.from('products').select('*');
-                cachedProductsList = data || [];
+                cachedProductsList = sortProductsAlpha(data || []);
             }
 
             const product = cachedProductsList.find(p => p.name === nameVal || p.code === nameVal);
@@ -1271,7 +1481,7 @@
             }
         }
 
-        // --- بارگذاری صندوقچه پیام‌ها: برای مدیر پیام‌های خطاب به مدیر، برای فروشنده پیام‌های خطاب به همان فروشنده یا «همه» ---
+        // --- بارگذاری صندوقچه پیام‌ها ---
         async function loadInbox() {
             const inbox = document.getElementById('inboxList');
             inbox.innerHTML = 'در حال دریافت پیام‌ها...';
@@ -1319,6 +1529,7 @@
             const eStart = document.getElementById('shiftEveningStart').value;
             const eEnd = document.getElementById('shiftEveningEnd').value;
             const maxDelay = parseInt(document.getElementById('maxDelayAllowed').value) || 15;
+            const reminderMin = parseInt(document.getElementById('reminderMinutes').value) || 10;
 
             const { error } = await _supabase.from('shift_settings').upsert([{
                 id: 1,
@@ -1326,18 +1537,19 @@
                 morning_end: mEnd,
                 evening_start: eStart,
                 evening_end: eEnd,
-                max_delay: maxDelay
+                max_delay: maxDelay,
+                reminder_minutes: reminderMin
             }]);
 
             if (!error) {
                 alert('✅ تنظیمات شیفت‌ها با موفقیت ذخیره شد و برای همه کاربران فعال است.');
             } else {
-                alert('❌ خطا در ذخیره تنظیمات: ' + error.message + '\n\nمطمئن شوید جدول shift_settings در Supabase ساخته شده است.');
+                alert('❌ خطا در ذخیره تنظیمات: ' + error.message + '\n\nمطمئن شوید جدول shift_settings در Supabase ساخته شده و ستون reminder_minutes را دارد.');
             }
         }
 
         async function getShiftSettings() {
-            const defaults = { mStart: "08:00", mEnd: "15:30", eStart: "15:30", eEnd: "23:00", maxDelay: 15 };
+            const defaults = { mStart: "08:00", mEnd: "15:30", eStart: "15:30", eEnd: "23:00", maxDelay: 15, reminderMinutes: 10 };
             try {
                 const { data, error } = await _supabase.from('shift_settings').select('*').eq('id', 1).maybeSingle();
                 if (error || !data) return defaults;
@@ -1346,7 +1558,8 @@
                     mEnd: data.morning_end || defaults.mEnd,
                     eStart: data.evening_start || defaults.eStart,
                     eEnd: data.evening_end || defaults.eEnd,
-                    maxDelay: (data.max_delay !== null && data.max_delay !== undefined) ? data.max_delay : defaults.maxDelay
+                    maxDelay: (data.max_delay !== null && data.max_delay !== undefined) ? data.max_delay : defaults.maxDelay,
+                    reminderMinutes: (data.reminder_minutes !== null && data.reminder_minutes !== undefined) ? data.reminder_minutes : defaults.reminderMinutes
                 };
             } catch (e) {
                 return defaults;
@@ -1360,11 +1573,65 @@
             document.getElementById('shiftEveningStart').value = s.eStart;
             document.getElementById('shiftEveningEnd').value = s.eEnd;
             document.getElementById('maxDelayAllowed').value = s.maxDelay;
+            document.getElementById('reminderMinutes').value = s.reminderMinutes;
         }
 
         function toggleAttendanceFields() {
             const type = document.getElementById('attType').value;
             document.getElementById('attTimeFields').style.display = (type === 'leave') ? 'none' : 'block';
+        }
+
+        // --- یادآوری خودکار ثبت ورود/خروج فراموش‌شده (فقط برای فروشنده‌ها) ---
+        async function checkAttendanceReminders() {
+            if (currentRole !== 'morning_seller' && currentRole !== 'evening_seller') return;
+            if (reminderDismissedThisSession) return;
+
+            const settings = await getShiftSettings();
+            const todayISO = getTehranISODate(new Date());
+            const shiftStart = (currentRole === 'morning_seller') ? settings.mStart : settings.eStart;
+            const shiftEnd = (currentRole === 'morning_seller') ? settings.mEnd : settings.eEnd;
+            const nowMinutes = getTehranMinutesOfDay(new Date());
+            const startMinutes = timeStrToMinutes(shiftStart);
+            const endMinutes = timeStrToMinutes(shiftEnd);
+            const reminderAfter = settings.reminderMinutes;
+
+            const { data: records } = await _supabase
+                .from('attendance')
+                .select('type, created_at')
+                .eq('seller_name', currentUserLabel)
+                .order('created_at', { ascending: false })
+                .limit(20);
+
+            const todayRecords = (records || []).filter(r => getTehranISODate(new Date(r.created_at)) === todayISO);
+            const hasEntry = todayRecords.some(r => r.type === 'entry');
+            const hasExit = todayRecords.some(r => r.type === 'exit');
+            const hasLeave = todayRecords.some(r => r.type === 'leave');
+
+            const panel = document.getElementById('attendanceReminderBanner');
+            if (!panel) return;
+
+            if (hasLeave) {
+                panel.style.display = 'none';
+                panel.innerHTML = '';
+                return;
+            }
+
+            if (!hasEntry && nowMinutes >= (startMinutes + reminderAfter)) {
+                panel.innerHTML = `⏰ <b>یادآوری:</b> شیفت شما از ساعت ${shiftStart} شروع شده و هنوز ورودتان را ثبت نکرده‌اید! لطفاً هر چه سریع‌تر از تب «حضور و غیاب» ورود بزنید.
+                    <button class="dismiss-alert-btn" onclick="dismissReminderBanner()">باشه، الان می‌زنم</button>`;
+                panel.style.display = 'block';
+                return;
+            }
+
+            if (hasEntry && !hasExit && nowMinutes >= (endMinutes + reminderAfter)) {
+                panel.innerHTML = `⏰ <b>یادآوری:</b> ساعت پایان شیفت شما (${shiftEnd}) گذشته و هنوز خروجتان را ثبت نکرده‌اید! لطفاً از تب «حضور و غیاب» خروج بزنید.
+                    <button class="dismiss-alert-btn" onclick="dismissReminderBanner()">باشه، الان می‌زنم</button>`;
+                panel.style.display = 'block';
+                return;
+            }
+
+            panel.style.display = 'none';
+            panel.innerHTML = '';
         }
 
         function captureAttendanceLocation() {
@@ -1480,12 +1747,20 @@
             const settings = await getShiftSettings();
 
             let targetStartTime = (currentRole === 'morning_seller') ? settings.mStart : settings.eStart;
+            let targetEndTime = (currentRole === 'morning_seller') ? settings.mEnd : settings.eEnd;
 
             let delayMinutes = null;
+            let exitDiffMinutes = null;
+
             if (type === 'entry') {
                 const [hNow, mNow] = timeStrNow.split(':').map(Number);
                 const [hTarget, mTarget] = targetStartTime.split(':').map(Number);
                 delayMinutes = (hNow * 60 + mNow) - (hTarget * 60 + mTarget);
+            } else if (type === 'exit') {
+                const [hNow, mNow] = timeStrNow.split(':').map(Number);
+                const [hTarget, mTarget] = targetEndTime.split(':').map(Number);
+                // مثبت یعنی دیرتر از ساعت مقرر رفته (اشکالی ندارد)، منفی یعنی زودتر رفته
+                exitDiffMinutes = (hNow * 60 + mNow) - (hTarget * 60 + mTarget);
             }
 
             let photoUrl = null;
@@ -1526,11 +1801,23 @@
                 }]);
             }
 
+            if (type === 'exit' && exitDiffMinutes !== null && exitDiffMinutes < -settings.maxDelay) {
+                const earlyBy = Math.abs(exitDiffMinutes) - settings.maxDelay;
+                await _supabase.from('messages').insert([{
+                    sender: "سیستم خودکار خروج زودهنگام",
+                    recipient: "admin",
+                    title: `⚠️ خروج زودتر از موعد: ${currentUserLabel}`,
+                    body: `کاربر ${currentUserLabel} در تاریخ ${getTehranDateString(now)} ساعت ${timeStrNow} خروج خود را ثبت کرد.\nساعت مقرر پایان شیفت: ${targetEndTime}\nمیزان زودتر رفتن: ${Math.abs(exitDiffMinutes)} دقیقه\nمقدار بیش از حد مجاز: ${earlyBy} دقیقه`,
+                    created_at: now.toISOString()
+                }]);
+            }
+
             const { error } = await _supabase.from('attendance').insert([{
                 seller_name: currentUserLabel,
                 type: type,
                 overtime_hours: overtimeHours,
                 delay_minutes: delayMinutes,
+                exit_diff_minutes: exitDiffMinutes,
                 photo_url: photoUrl,
                 note: (note ? note + " | " : "") + (selectedLocationText ? selectedLocationText + " | " : "") + `زمان ثبت: ${fullDateTimeStr}`,
                 created_at: now.toISOString()
@@ -1551,6 +1838,16 @@
                     }
                 }
 
+                if (type === 'exit' && exitDiffMinutes !== null) {
+                    if (exitDiffMinutes < -settings.maxDelay) {
+                        successMsg += `\n\n⚠️ شما ${Math.abs(exitDiffMinutes)} دقیقه زودتر از ساعت مقرر (${targetEndTime}) خارج شدید. این موضوع برای مدیر گزارش شد.`;
+                    } else if (exitDiffMinutes < 0) {
+                        successMsg += `\n\n🕐 شما ${Math.abs(exitDiffMinutes)} دقیقه زودتر از ساعت مقرر خارج شدید، اما در محدوده مجاز بود.`;
+                    } else {
+                        successMsg += `\n\n✅ خروج شما به‌موقع یا دیرتر از ساعت مقرر (${targetEndTime}) ثبت شد.`;
+                    }
+                }
+
                 alert(successMsg);
 
                 document.getElementById('attNote').value = '';
@@ -1562,6 +1859,7 @@
                 const locStatus = document.getElementById('locationStatus');
                 locStatus.style.display = 'none';
                 locStatus.innerText = '';
+                checkAttendanceReminders();
             } else {
                 alert('خطا در ثبت حضور و غیاب: ' + error.message);
             }
@@ -1588,6 +1886,19 @@
                 } else {
                     delayCell = `<span style="color:#34d399;">به‌موقع ✅</span>`;
                 }
+            } else if (r.type === 'exit') {
+                const d = (r.exit_diff_minutes === null || r.exit_diff_minutes === undefined) ? null : Number(r.exit_diff_minutes);
+                if (d === null) {
+                    delayCell = '—';
+                } else if (d < -settings.maxDelay) {
+                    delayCell = `<span style="color:#ef4444; font-weight:bold;">${Math.abs(d)} دقیقه زودتر رفته<br><span style="font-size:9px; color:#94a3b8;">(مجاز: ${settings.maxDelay} دقیقه)</span></span>`;
+                } else if (d < 0) {
+                    delayCell = `<span style="color:#fbbf24;">${Math.abs(d)} دقیقه زودتر<br><span style="font-size:9px; color:#94a3b8;">(در محدوده مجاز)</span></span>`;
+                } else if (d === 0) {
+                    delayCell = `<span style="color:#34d399;">دقیقاً به‌موقع ✅</span>`;
+                } else {
+                    delayCell = `<span style="color:#34d399;">${d} دقیقه دیرتر (بدون اشکال) ✅</span>`;
+                }
             }
 
             return `
@@ -1608,6 +1919,8 @@
             let leaveCount = 0;
             let lateDaysCount = 0;
             let totalDelayMinutes = 0;
+            let earlyExitDaysCount = 0;
+            let totalEarlyExitMinutes = 0;
 
             records.forEach(r => {
                 if (r.type !== 'leave') {
@@ -1623,6 +1936,13 @@
                         totalDelayMinutes += d;
                     }
                 }
+                if (r.type === 'exit' && r.exit_diff_minutes !== null && r.exit_diff_minutes !== undefined) {
+                    const d = Number(r.exit_diff_minutes);
+                    if (d < -settings.maxDelay) {
+                        earlyExitDaysCount++;
+                        totalEarlyExitMinutes += Math.abs(d);
+                    }
+                }
             });
 
             return {
@@ -1630,11 +1950,12 @@
                 totalOvertime,
                 leaveCount,
                 lateDaysCount,
-                totalDelayMinutes
+                totalDelayMinutes,
+                earlyExitDaysCount,
+                totalEarlyExitMinutes
             };
         }
 
-        // --- گزارش کارکرد: پیش‌فرض فقط امروز ---
         async function loadWorkReport() {
             const sellerRole = document.getElementById('workSellerSelect').value;
             const container = document.getElementById('workReportTodayContent');
@@ -1670,7 +1991,7 @@
                         <tr>
                             <th>تاریخ و ساعت دقیق ثبت</th>
                             <th>نوع ثبت</th>
-                            <th>میزان تاخیر</th>
+                            <th>میزان تاخیر / زودرفتن</th>
                             <th>اضافه‌کاری</th>
                             <th>عکس ثبت‌شده</th>
                             <th>توضیحات</th>
@@ -1691,7 +2012,6 @@
             }
         }
 
-        // --- گزارش کارکرد بازه‌ای: چند روز اومده، چند روز مرخصی، تاخیر و اضافه‌کاری در یک بازه انتخابی ---
         async function loadWorkReportRange() {
             const sellerRole = document.getElementById('workSellerSelect').value;
             const startStr = document.getElementById('workRangeStart').value;
@@ -1742,7 +2062,8 @@
                     <p><b>کل روزهای حضور سرکار:</b> <span style="color:#34d399; font-weight:bold; font-size:15px;">${summary.presentDays} روز</span></p>
                     <p><b>مجموع اضافه‌کاری:</b> ${summary.totalOvertime.toFixed(1)} ساعت</p>
                     <p><b>روزهای مرخصی:</b> ${summary.leaveCount} روز</p>
-                    <p><b>روزهای دارای تاخیر بیش از حد مجاز (${settings.maxDelay} دقیقه):</b> <span style="color:#ef4444; font-weight:bold;">${summary.lateDaysCount} روز</span> (مجموع ${summary.totalDelayMinutes} دقیقه تاخیر)</p>
+                    <p><b>روزهای دارای تاخیر ورود بیش از حد مجاز (${settings.maxDelay} دقیقه):</b> <span style="color:#ef4444; font-weight:bold;">${summary.lateDaysCount} روز</span> (مجموع ${summary.totalDelayMinutes} دقیقه تاخیر)</p>
+                    <p><b>روزهای خروج زودتر از موعد بیش از حد مجاز:</b> <span style="color:#ef4444; font-weight:bold;">${summary.earlyExitDaysCount} روز</span> (مجموع ${summary.totalEarlyExitMinutes} دقیقه زودتر رفتن)</p>
                 </div>
                 <h4 style="color:#38bdf8; margin-top:15px;">📋 جزئیات دقیق این بازه:</h4>
                 <table>
@@ -1750,7 +2071,7 @@
                         <tr>
                             <th>تاریخ و ساعت دقیق ثبت</th>
                             <th>نوع ثبت</th>
-                            <th>میزان تاخیر</th>
+                            <th>میزان تاخیر / زودرفتن</th>
                             <th>اضافه‌کاری</th>
                             <th>عکس ثبت‌شده</th>
                             <th>توضیحات</th>
@@ -1763,7 +2084,7 @@
 
         async function loadProductDatalist() {
             const { data: products } = await _supabase.from('products').select('*');
-            cachedProductsList = products || [];
+            cachedProductsList = sortProductsAlpha(products || []);
             const datalist = document.getElementById('productDatalist');
             if (!datalist) return;
             datalist.innerHTML = '';
@@ -1938,7 +2259,7 @@
 
         async function submitSale() {
             const inputVal = document.getElementById('sName').value.trim();
-            const qty = parseFloat(document.getElementById('sQty').value);
+            const qty = getSaleQtyInKg();
 
             if (!inputVal || isNaN(qty) || qty <= 0) {
                 alert('لطفاً نام کالا و وزن معتبر را وارد کنید');
@@ -2052,7 +2373,8 @@
 
             document.getElementById('sName').value = '';
             document.getElementById('sQty').value = '';
-            document.getElementById('sCalcDisplay').innerText = 'مبلغ کل فاکتور: ۰ تومان (قیمت واحد: ۰ تومان)';
+            document.querySelector('input[name="sQtyUnit"][value="kg"]').checked = true;
+            onSaleUnitChange();
 
             loadRecentSales();
             checkCriticalAfterSale(product, newBoothStock);
@@ -2087,7 +2409,7 @@
 
             if (cachedProductsList.length === 0) {
                 const { data: products } = await _supabase.from('products').select('*');
-                cachedProductsList = products || [];
+                cachedProductsList = sortProductsAlpha(products || []);
             }
 
             renderSalesPage();
@@ -2185,6 +2507,8 @@
 
             const product = cachedProductsList.find(p => p.code === sale.product_code);
             document.getElementById('sName').value = product ? product.name : sale.product_code;
+            document.querySelector('input[name="sQtyUnit"][value="kg"]').checked = true;
+            onSaleUnitChange();
             document.getElementById('sQty').value = sale.quantity;
             calculateSalePriceAuto();
 
@@ -2203,6 +2527,8 @@
             editingSaleEditCount = 0;
             document.getElementById('sName').value = '';
             document.getElementById('sQty').value = '';
+            const kgRadio = document.querySelector('input[name="sQtyUnit"][value="kg"]');
+            if (kgRadio) kgRadio.checked = true;
             document.getElementById('sCalcDisplay').innerText = 'مبلغ کل فاکتور: ۰ تومان (قیمت واحد: ۰ تومان)';
             document.getElementById('saleFormTitle').innerText = '🛍️ ثبت فروش روزانه';
             document.getElementById('saleSubmitBtn').innerText = 'ثبت فاکتور فروش';
@@ -2336,7 +2662,6 @@
             }
         }
 
-        // --- ثبت مقدار واقعی شارژ شده توسط فروشنده صبح از داخل چک‌لیست (مقدار دستی، نه لزوماً پر تا ظرفیت کامل) ---
         async function applyChecklistFill(productId) {
             const amtInput = document.getElementById(`checklistFillAmt_${productId}`);
             if (!amtInput) return;
@@ -2385,7 +2710,6 @@
             }
         }
 
-        // --- چک‌لیست شارژ صبحگاهی غرفه، فقط برای فروشنده صبح ---
         function renderMorningChecklist(products) {
             const box = document.getElementById('morningChecklistBox');
             if (!box) return;
@@ -2412,7 +2736,6 @@
                 return;
             }
 
-            // فقط کالاهایی که انبار اصلی برایشان موجودی دارد قابل شارژ توسط فروشنده هستند
             const fillableItems = needItems.filter(p => (p.stock || 0) > 0);
             const blockedItems = needItems.filter(p => (p.stock || 0) <= 0);
 
@@ -2459,10 +2782,29 @@
 
         async function loadBoothInventory() {
             const { data: products } = await _supabase.from('products').select('*');
+            cachedBoothFull = sortProductsAlpha(products || []);
+
+            renderMorningChecklist(cachedBoothFull);
+
+            const searchInput = document.getElementById('boothSearchInput');
+            if (searchInput) searchInput.value = '';
+
+            renderBoothRows(cachedBoothFull);
+        }
+
+        function filterBoothTable() {
+            const term = (document.getElementById('boothSearchInput').value || '').trim();
+            if (!term) {
+                renderBoothRows(cachedBoothFull);
+                return;
+            }
+            const filtered = cachedBoothFull.filter(p => (p.name || '').includes(term));
+            renderBoothRows(filtered);
+        }
+
+        function renderBoothRows(products) {
             const tbody = document.getElementById('boothTable');
             tbody.innerHTML = '';
-
-            renderMorningChecklist(products || []);
 
             if (!products || products.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5">هیچ کالایی یافت نشد.</td></tr>';
@@ -2522,7 +2864,7 @@
             });
         }
 
-        // --- بخش سفارشات خرید (مخصوص مدیر برای ثبت، مخصوص مدیر و فروشنده صبح برای مشاهده) ---
+        // --- سفارشات خرید: ثبت، ویرایش، تایید دریافت با مقدار واقعی توسط مدیر یا فروشنده صبح ---
         async function loadPurchaseOrders() {
             const formBox = document.getElementById('poFormBox');
             if (formBox) formBox.style.display = (currentRole === 'admin') ? 'block' : 'none';
@@ -2538,7 +2880,7 @@
                 .order('ordered_at', { ascending: false });
 
             if (error) {
-                pendingBox.innerHTML = `<p style="color:#ef4444;">❌ خطا در دریافت سفارشات: ${error.message}<br><span style="font-size:10px; color:#94a3b8;">مطمئن شوید جدول purchase_orders در Supabase تمام ستون‌های لازم (product_code, product_name, quantity, eta_days, note, status, ordered_at, received_at) را دارد.</span></p>`;
+                pendingBox.innerHTML = `<p style="color:#ef4444;">❌ خطا در دریافت سفارشات: ${error.message}<br><span style="font-size:10px; color:#94a3b8;">مطمئن شوید جدول purchase_orders در Supabase تمام ستون‌های لازم (product_code, product_name, quantity, eta_days, note, status, ordered_at, received_at, received_qty, received_by) را دارد.</span></p>`;
                 return;
             }
 
@@ -2564,7 +2906,9 @@
 
             if (isReceived) {
                 const receivedDate = o.received_at ? getTehranFullDateTimeString(new Date(o.received_at)) : '';
-                statusHtml = `<p style="color:#34d399;">✅ دریافت شد در: ${receivedDate}</p>`;
+                const recvQty = (o.received_qty !== null && o.received_qty !== undefined) ? o.received_qty : o.quantity;
+                statusHtml = `<p style="color:#34d399;">✅ دریافت شد در: ${receivedDate}</p>
+                              <p style="color:#34d399;">📦 مقدار واقعی تحویل‌گرفته‌شده: ${Number(recvQty).toLocaleString('fa-IR')} کیلو/عدد ${o.received_by ? '(توسط: ' + o.received_by + ')' : ''}</p>`;
             } else {
                 if (o.eta_days !== null && o.eta_days !== undefined && o.eta_days !== '') {
                     const orderedTime = new Date(o.ordered_at).getTime();
@@ -2580,15 +2924,28 @@
                 }
             }
 
-            const canMarkReceived = (!isReceived && currentRole === 'admin');
+            const canManage = (!isReceived && (currentRole === 'admin' || currentRole === 'morning_seller'));
+            const canEditOrder = (!isReceived && currentRole === 'admin');
+
+            let actionsHtml = '';
+            if (canManage) {
+                actionsHtml += `
+                    <div style="display:flex; gap:4px; align-items:center; margin-top:8px;">
+                        <input type="number" step="0.01" class="qty-inline-input" id="recvQty_${o.id}" value="${o.quantity}" placeholder="مقدار واقعی">
+                        <button class="row-btn confirm-btn" style="flex:1;" onclick="markOrderReceived('${o.id}')">✅ تایید دریافت با این مقدار</button>
+                    </div>`;
+            }
+            if (canEditOrder) {
+                actionsHtml += `<button class="row-btn edit-btn" style="width:100%; margin-top:6px;" onclick="editPurchaseOrder('${o.id}')">✏️ ویرایش سفارش</button>`;
+            }
 
             return `
                 <div class="report-card">
-                    <h3>📦 ${o.product_name} — ${Number(o.quantity).toLocaleString('fa-IR')} کیلو/عدد</h3>
+                    <h3>📦 ${o.product_name} — ${Number(o.quantity).toLocaleString('fa-IR')} کیلو/عدد (سفارش‌داده‌شده)</h3>
                     <p style="font-size:11px; color:#94a3b8;">تاریخ ثبت سفارش: ${orderedDate}</p>
                     ${o.note ? `<p>📝 ${o.note}</p>` : ''}
                     ${statusHtml}
-                    ${canMarkReceived ? `<button class="row-btn edit-btn" style="width:100%; margin-top:8px;" onclick="markOrderReceived('${o.id}')">✅ سفارش رسید - اضافه به انبار</button>` : ''}
+                    ${actionsHtml}
                 </div>
             `;
         }
@@ -2608,6 +2965,25 @@
             const product = cachedProductsList.find(p => p.name === nameVal || p.code === nameVal);
             if (!product) {
                 return alert('❌ این کالا در انبار تعریف نشده است؛ ابتدا آن را از بخش «تعریف کالا» اضافه کنید.');
+            }
+
+            if (editingPurchaseOrderId) {
+                const { error } = await _supabase.from('purchase_orders').update({
+                    product_code: product.code,
+                    product_name: product.name,
+                    quantity: qty,
+                    eta_days: etaDays,
+                    note: note
+                }).eq('id', editingPurchaseOrderId);
+
+                if (!error) {
+                    alert('✅ سفارش با موفقیت ویرایش شد.');
+                    cancelPoEdit();
+                    loadPurchaseOrders();
+                } else {
+                    alert('❌ خطا در ویرایش سفارش: ' + error.message);
+                }
+                return;
             }
 
             const now = new Date();
@@ -2633,8 +3009,41 @@
             }
         }
 
+        function editPurchaseOrder(orderId) {
+            _supabase.from('purchase_orders').select('*').eq('id', orderId).maybeSingle().then(({ data: order }) => {
+                if (!order) return;
+                editingPurchaseOrderId = order.id;
+                document.getElementById('poProductName').value = order.product_name;
+                document.getElementById('poQty').value = order.quantity;
+                document.getElementById('poEtaDays').value = (order.eta_days !== null && order.eta_days !== undefined) ? order.eta_days : '';
+                document.getElementById('poNote').value = order.note || '';
+                document.getElementById('poFormTitle').innerText = '✏️ ویرایش سفارش: ' + order.product_name;
+                document.getElementById('poSubmitBtn').innerText = 'به‌روزرسانی سفارش';
+                document.getElementById('cancelPoEditBtn').style.display = 'block';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        }
+
+        function cancelPoEdit() {
+            editingPurchaseOrderId = null;
+            document.getElementById('poProductName').value = '';
+            document.getElementById('poQty').value = '';
+            document.getElementById('poEtaDays').value = '';
+            document.getElementById('poNote').value = '';
+            document.getElementById('poFormTitle').innerText = '➕ ثبت سفارش جدید';
+            document.getElementById('poSubmitBtn').innerText = 'ثبت سفارش جدید';
+            document.getElementById('cancelPoEditBtn').style.display = 'none';
+        }
+
         async function markOrderReceived(orderId) {
-            const sure = confirm('آیا سفارش رسیده و می‌خواهید مقدار آن به موجودی انبار اصلی اضافه شود؟');
+            const qtyInput = document.getElementById(`recvQty_${orderId}`);
+            const actualQty = qtyInput ? parseFloat(qtyInput.value) : null;
+
+            if (isNaN(actualQty) || actualQty === null || actualQty <= 0) {
+                return alert('لطفاً مقدار واقعی تحویل‌گرفته‌شده را به‌صورت عدد معتبر وارد کنید.');
+            }
+
+            const sure = confirm(`آیا تایید می‌کنید که مقدار ${actualQty} کیلو/عدد دریافت شده و به موجودی انبار اصلی اضافه شود؟`);
             if (!sure) return;
 
             const { data: order } = await _supabase.from('purchase_orders').select('*').eq('id', orderId).maybeSingle();
@@ -2644,23 +3053,35 @@
             const now = new Date();
 
             if (product) {
-                const newStock = Number(((product.stock || 0) + Number(order.quantity)).toFixed(3));
+                const newStock = Number(((product.stock || 0) + actualQty).toFixed(3));
                 await _supabase.from('products').update({ stock: newStock, low_stock_alert_since: null }).eq('id', product.id);
             }
 
-            const { error } = await _supabase.from('purchase_orders').update({ status: 'received', received_at: now.toISOString() }).eq('id', orderId);
+            const { error } = await _supabase.from('purchase_orders').update({
+                status: 'received',
+                received_at: now.toISOString(),
+                received_qty: actualQty,
+                received_by: currentUserLabel
+            }).eq('id', orderId);
 
             if (!error) {
-                alert('✅ سفارش دریافت شد و به موجودی انبار اصلی اضافه گردید.');
+                alert('✅ سفارش دریافت شد و مقدار ' + actualQty.toLocaleString('fa-IR') + ' به موجودی انبار اصلی اضافه گردید.');
                 loadPurchaseOrders();
                 loadProductDatalist();
                 if (currentRole === 'admin') checkLowStockAlertNoWeight();
             } else {
-                alert('❌ خطا: ' + error.message);
+                alert('❌ خطا: ' + error.message + '\n\nمطمئن شوید ستون‌های received_qty و received_by در جدول purchase_orders موجود است.');
             }
         }
 
         async function loadInventory() {
+            const { data: products } = await _supabase
+                .from('products')
+                .select('id, code, name, stock, booth_stock, min_stock, booth_min_stock, sell_price, buy_price, container_capacity');
+
+            cachedProductsList = sortProductsAlpha(products || []);
+            cachedInventoryFull = cachedProductsList;
+
             const canManage = (currentRole === 'admin' || currentRole === 'morning_seller');
             const showBuyPrice = (currentRole === 'admin');
 
@@ -2669,31 +3090,43 @@
             if (showBuyPrice) headerRow.innerHTML += '<th>قیمت خرید</th>';
             if (canManage) headerRow.innerHTML += '<th>عملیات</th>';
 
-            const { data: products } = await _supabase
-                .from('products')
-                .select('id, code, name, stock, booth_stock, min_stock, booth_min_stock, sell_price, buy_price, container_capacity');
-
-            cachedProductsList = products || [];
-
-            const tbody = document.getElementById('inventoryTable');
             const banner = document.getElementById('lowStockBanner');
-            tbody.innerHTML = '';
-
-            const colCount = 5 + (showBuyPrice ? 1 : 0) + (canManage ? 1 : 0);
-
-            if (!products || products.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="' + colCount + '">هیچ کالایی در انبار ثبت نشده است.</td></tr>';
-                banner.style.display = 'none';
-                return;
-            }
-
-            const lowStockItems = products.filter(p => p.stock <= p.min_stock);
+            const lowStockItems = cachedInventoryFull.filter(p => p.stock <= p.min_stock);
             if (currentRole === 'admin' && lowStockItems.length > 0) {
                 banner.innerHTML = '⚠️ ' + lowStockItems.length + ' کالا به نقطه سفارش رسیده یا تمام شده:<br>' +
                     lowStockItems.map(p => '• ' + p.name + ' (موجودی انبار: ' + p.stock + ' کیلو)').join('<br>');
                 banner.style.display = 'block';
             } else {
                 banner.style.display = 'none';
+            }
+
+            const searchInput = document.getElementById('inventorySearchInput');
+            if (searchInput) searchInput.value = '';
+
+            renderInventoryRows(cachedInventoryFull);
+        }
+
+        function filterInventoryTable() {
+            const term = (document.getElementById('inventorySearchInput').value || '').trim();
+            if (!term) {
+                renderInventoryRows(cachedInventoryFull);
+                return;
+            }
+            const filtered = cachedInventoryFull.filter(p => (p.name || '').includes(term) || (p.code || '').includes(term));
+            renderInventoryRows(filtered);
+        }
+
+        function renderInventoryRows(products) {
+            const canManage = (currentRole === 'admin' || currentRole === 'morning_seller');
+            const showBuyPrice = (currentRole === 'admin');
+            const tbody = document.getElementById('inventoryTable');
+            tbody.innerHTML = '';
+
+            const colCount = 5 + (showBuyPrice ? 1 : 0) + (canManage ? 1 : 0);
+
+            if (!products || products.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="' + colCount + '">کالایی یافت نشد.</td></tr>';
+                return;
             }
 
             products.forEach(p => {
@@ -2977,6 +3410,327 @@
                     <tbody>${invoiceRows}</tbody>
                 </table>
             `;
+        }
+
+        // ================== فاکتور خرید مدیر و گزارش سود ==================
+        async function submitPurchaseInvoice() {
+            const title = document.getElementById('piTitle').value.trim();
+            const amount = parseFloat(document.getElementById('piAmount').value);
+            const note = document.getElementById('piNote').value.trim();
+
+            if (!title || isNaN(amount) || amount <= 0) {
+                return alert('لطفاً عنوان و مبلغ معتبر را وارد کنید.');
+            }
+
+            const now = new Date();
+            const { error } = await _supabase.from('purchase_invoices').insert([{
+                title, amount, note, created_at: now.toISOString()
+            }]);
+
+            if (!error) {
+                alert('✅ فاکتور خرید ثبت شد.');
+                document.getElementById('piTitle').value = '';
+                document.getElementById('piAmount').value = '';
+                document.getElementById('piNote').value = '';
+                loadPurchaseInvoices();
+            } else {
+                alert('❌ خطا در ثبت فاکتور خرید: ' + error.message + '\n\nمطمئن شوید جدول purchase_invoices در Supabase با ستون‌های title, amount, note, created_at ساخته شده است.');
+            }
+        }
+
+        async function loadPurchaseInvoices() {
+            const box = document.getElementById('purchaseInvoicesList');
+            box.innerHTML = 'در حال بارگذاری...';
+
+            const { data, error } = await _supabase.from('purchase_invoices').select('*').order('created_at', { ascending: false }).limit(30);
+
+            if (error) {
+                box.innerHTML = `<p style="color:#ef4444;">❌ خطا: ${error.message}</p>`;
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                box.innerHTML = '<p style="color:#94a3b8;">هنوز فاکتور خریدی ثبت نشده است.</p>';
+                return;
+            }
+
+            box.innerHTML = data.map(inv => `
+                <div class="summary-mini">
+                    <span>🧾 <b>${inv.title}</b>${inv.note ? ' — ' + inv.note : ''}<br><span style="font-size:10px; color:#94a3b8;">${getTehranFullDateTimeString(new Date(inv.created_at))}</span></span>
+                    <span style="display:flex; align-items:center; gap:6px;">
+                        <b style="color:#f87171;">${Number(inv.amount).toLocaleString('fa-IR')} تومان</b>
+                        <button class="row-btn delete-btn" onclick="deletePurchaseInvoice('${inv.id}')">حذف</button>
+                    </span>
+                </div>
+            `).join('');
+        }
+
+        async function deletePurchaseInvoice(id) {
+            const sure = confirm('آیا از حذف این فاکتور خرید مطمئن هستید؟');
+            if (!sure) return;
+            const { error } = await _supabase.from('purchase_invoices').delete().eq('id', id);
+            if (!error) {
+                loadPurchaseInvoices();
+            } else {
+                alert('❌ خطا در حذف: ' + error.message);
+            }
+        }
+
+        async function loadProfitReport() {
+            const startStr = document.getElementById('profitRangeStart').value;
+            const endStr = document.getElementById('profitRangeEnd').value;
+            const resultBox = document.getElementById('profitReportResult');
+
+            if (!startStr || !endStr) {
+                resultBox.innerHTML = '<p style="color:#ef4444;">لطفاً بازه تاریخ را مشخص کنید.</p>';
+                return;
+            }
+            if (startStr > endStr) {
+                resultBox.innerHTML = '<p style="color:#ef4444;">تاریخ شروع نمی‌تواند بعد از تاریخ پایان باشد.</p>';
+                return;
+            }
+
+            resultBox.innerHTML = 'در حال محاسبه...';
+
+            const [{ data: sales }, { data: invoices }, { data: products }, { data: orders }] = await Promise.all([
+                _supabase.from('sales').select('product_code, quantity, sell_price, created_at'),
+                _supabase.from('purchase_invoices').select('amount, created_at'),
+                _supabase.from('products').select('code, buy_price'),
+                _supabase.from('purchase_orders').select('quantity, ordered_at')
+            ]);
+
+            const buyPriceMap = {};
+            (products || []).forEach(p => { buyPriceMap[p.code] = p.buy_price || 0; });
+
+            const filteredSales = (sales || []).filter(s => {
+                const iso = getTehranISODate(new Date(s.created_at));
+                return iso >= startStr && iso <= endStr;
+            });
+
+            const filteredInvoices = (invoices || []).filter(inv => {
+                const iso = getTehranISODate(new Date(inv.created_at));
+                return iso >= startStr && iso <= endStr;
+            });
+
+            const filteredOrders = (orders || []).filter(o => {
+                const iso = getTehranISODate(new Date(o.ordered_at));
+                return iso >= startStr && iso <= endStr;
+            });
+
+            const totalSalesRevenue = filteredSales.reduce((sum, s) => sum + (Number(s.sell_price) || 0), 0);
+            const totalCost = filteredSales.reduce((sum, s) => sum + ((Number(s.quantity) || 0) * (buyPriceMap[s.product_code] || 0)), 0);
+            const totalProfit = totalSalesRevenue - totalCost;
+            const totalInvoicesAmount = filteredInvoices.reduce((sum, inv) => sum + (Number(inv.amount) || 0), 0);
+            const totalOrderedQty = filteredOrders.reduce((sum, o) => sum + (Number(o.quantity) || 0), 0);
+
+            const rangeLabel = (startStr === endStr) ? startStr : `${startStr} تا ${endStr}`;
+
+            resultBox.innerHTML = `
+                <div class="report-card">
+                    <h3>📈 گزارش سود بازه (${rangeLabel})</h3>
+                    <p>📦 مجموع مقدار سفارش داده‌شده به تامین‌کننده: <b>${totalOrderedQty.toLocaleString('fa-IR')}</b> کیلو/عدد</p>
+                    <p>💵 اصل پول خرج‌شده (مجموع فاکتورهای خرید ثبت‌شده): <b style="color:#f87171;">${totalInvoicesAmount.toLocaleString('fa-IR')} تومان</b></p>
+                    <p>🛍️ مجموع فروش ثبت‌شده: <b style="color:#38bdf8;">${totalSalesRevenue.toLocaleString('fa-IR')} تومان</b> (${filteredSales.length} فاکتور)</p>
+                    <p>📉 مجموع بهای تمام‌شده کالای فروخته‌شده (بر اساس قیمت خرید فعلی هر کالا): <b>${totalCost.toLocaleString('fa-IR')} تومان</b></p>
+                    <p>✅ سود ناخالص تخمینی: <b style="color:${totalProfit >= 0 ? '#34d399' : '#ef4444'};">${totalProfit.toLocaleString('fa-IR')} تومان</b></p>
+                    <div class="hint">توجه: این محاسبه سود بر اساس قیمت خرید فعلی هر کالا (در بخش تعریف کالا) انجام می‌شود، نه لزوماً مبلغ دقیق فاکتورهای خرید. اصل پول خرج‌شده جدا از این محاسبه، از فاکتورهای خرید ثبت‌شده در همین بازه به دست می‌آید.</div>
+                </div>
+            `;
+        }
+
+        // ================== برداشت شخصی حساب‌نشده پرسنل ==================
+        async function submitPersonalTakeout() {
+            const itemName = document.getElementById('ptItemName').value.trim();
+            const weight = parseFloat(document.getElementById('ptWeight').value) || null;
+            const amount = parseFloat(document.getElementById('ptAmount').value);
+            const note = document.getElementById('ptNote').value.trim();
+
+            if (!itemName || isNaN(amount) || amount <= 0) {
+                return alert('لطفاً نام کالا و مبلغ معتبر را وارد کنید.');
+            }
+
+            const now = new Date();
+            const { error } = await _supabase.from('personal_takeouts').insert([{
+                seller_name: currentUserLabel,
+                item_name: itemName,
+                weight: weight,
+                amount: amount,
+                note: note,
+                created_at: now.toISOString()
+            }]);
+
+            if (!error) {
+                alert('✅ برداشت شما ثبت شد و برای مدیر قابل مشاهده است.');
+                document.getElementById('ptItemName').value = '';
+                document.getElementById('ptWeight').value = '';
+                document.getElementById('ptAmount').value = '';
+                document.getElementById('ptNote').value = '';
+                loadMyTakeouts();
+            } else {
+                alert('❌ خطا در ثبت برداشت: ' + error.message + '\n\nمطمئن شوید جدول personal_takeouts در Supabase با ستون‌های seller_name, item_name, weight, amount, note, created_at ساخته شده است.');
+            }
+        }
+
+        async function loadMyTakeouts() {
+            takeoutPage = 0;
+            const { data, error } = await _supabase
+                .from('personal_takeouts')
+                .select('*')
+                .eq('seller_name', currentUserLabel)
+                .order('created_at', { ascending: false })
+                .limit(90);
+
+            if (error) {
+                document.getElementById('myTakeoutList').innerHTML = `<p style="color:#ef4444;">❌ خطا: ${error.message}</p>`;
+                return;
+            }
+
+            cachedTakeoutList = data || [];
+            renderTakeoutPage();
+        }
+
+        function changeTakeoutPage(direction) {
+            const totalPages = Math.max(1, Math.ceil(cachedTakeoutList.length / TAKEOUT_PAGE_SIZE));
+            takeoutPage = Math.min(totalPages - 1, Math.max(0, takeoutPage + direction));
+            renderTakeoutPage();
+        }
+
+        function renderTakeoutPage() {
+            const box = document.getElementById('myTakeoutList');
+            const indicator = document.getElementById('takeoutPageIndicator');
+
+            if (!cachedTakeoutList || cachedTakeoutList.length === 0) {
+                box.innerHTML = '<p style="color:#94a3b8;">شما هنوز هیچ برداشتی ثبت نکرده‌اید.</p>';
+                if (indicator) indicator.innerText = 'صفحه ۱ از ۱';
+                return;
+            }
+
+            const totalPages = Math.max(1, Math.ceil(cachedTakeoutList.length / TAKEOUT_PAGE_SIZE));
+            const start = takeoutPage * TAKEOUT_PAGE_SIZE;
+            const pageItems = cachedTakeoutList.slice(start, start + TAKEOUT_PAGE_SIZE);
+
+            const totalAmount = cachedTakeoutList.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+
+            box.innerHTML = `<p style="color:#fbbf24; font-weight:bold; margin-bottom:8px;">مجموع کل برداشت‌های شما: ${totalAmount.toLocaleString('fa-IR')} تومان</p>` +
+                pageItems.map(t => `
+                    <div class="summary-mini">
+                        <span>🛒 <b>${t.item_name}</b>${t.weight ? ' (' + Number(t.weight).toLocaleString('fa-IR') + ' کیلو)' : ''}${t.note ? ' — ' + t.note : ''}<br><span style="font-size:10px; color:#94a3b8;">${getTehranFullDateTimeString(new Date(t.created_at))}</span></span>
+                        <b style="color:#f87171;">${Number(t.amount).toLocaleString('fa-IR')} تومان</b>
+                    </div>
+                `).join('');
+
+            if (indicator) {
+                indicator.innerText = `صفحه ${(takeoutPage + 1).toLocaleString('fa-IR')} از ${totalPages.toLocaleString('fa-IR')}`;
+            }
+        }
+
+        async function loadTakeoutAdminSummary() {
+            const startStr = document.getElementById('takeoutRangeStart').value;
+            const endStr = document.getElementById('takeoutRangeEnd').value;
+            const box = document.getElementById('takeoutAdminSummary');
+            box.innerHTML = 'در حال بارگذاری...';
+
+            const { data, error } = await _supabase.from('personal_takeouts').select('*').order('created_at', { ascending: false });
+
+            if (error) {
+                box.innerHTML = `<p style="color:#ef4444;">❌ خطا: ${error.message}</p>`;
+                return;
+            }
+
+            let filtered = data || [];
+            if (startStr && endStr) {
+                filtered = filtered.filter(t => {
+                    const iso = getTehranISODate(new Date(t.created_at));
+                    return iso >= startStr && iso <= endStr;
+                });
+            }
+
+            if (filtered.length === 0) {
+                box.innerHTML = '<p style="color:#94a3b8;">هیچ برداشتی در این بازه ثبت نشده است.</p>';
+                return;
+            }
+
+            const perSeller = {};
+            filtered.forEach(t => {
+                if (!perSeller[t.seller_name]) perSeller[t.seller_name] = { total: 0, items: [] };
+                perSeller[t.seller_name].total += Number(t.amount) || 0;
+                perSeller[t.seller_name].items.push(t);
+            });
+
+            let html = '';
+            Object.entries(perSeller).forEach(([seller, info]) => {
+                html += `<div class="report-card">
+                    <h3>👤 ${seller}</h3>
+                    <p style="font-size:15px; color:#f87171; font-weight:bold;">مجموع قابل کسر از حقوق: ${info.total.toLocaleString('fa-IR')} تومان (${info.items.length} مورد)</p>
+                    ${info.items.map(t => `
+                        <div class="summary-mini">
+                            <span>🛒 ${t.item_name}${t.weight ? ' (' + Number(t.weight).toLocaleString('fa-IR') + ' کیلو)' : ''}${t.note ? ' — ' + t.note : ''}<br><span style="font-size:10px; color:#94a3b8;">${getTehranFullDateTimeString(new Date(t.created_at))}</span></span>
+                            <b style="color:#f87171;">${Number(t.amount).toLocaleString('fa-IR')} تومان</b>
+                        </div>
+                    `).join('')}
+                </div>`;
+            });
+
+            box.innerHTML = html;
+        }
+
+        // ================== واریز حقوق ==================
+        async function submitSalaryPayment() {
+            const target = document.getElementById('salaryTargetSeller').value;
+            const amount = parseFloat(document.getElementById('salaryAmount').value);
+            const note = document.getElementById('salaryNote').value.trim();
+
+            if (isNaN(amount) || amount <= 0) {
+                return alert('لطفاً مبلغ معتبری وارد کنید.');
+            }
+
+            const now = new Date();
+            const { error } = await _supabase.from('salary_payments').insert([{
+                seller_name: target,
+                amount: amount,
+                note: note,
+                paid_at: now.toISOString()
+            }]);
+
+            if (!error) {
+                alert('✅ واریز حقوق ثبت شد.');
+                document.getElementById('salaryAmount').value = '';
+                document.getElementById('salaryNote').value = '';
+                loadSalaryTab();
+            } else {
+                alert('❌ خطا در ثبت واریز حقوق: ' + error.message + '\n\nمطمئن شوید جدول salary_payments در Supabase با ستون‌های seller_name, amount, note, paid_at ساخته شده است.');
+            }
+        }
+
+        async function loadSalaryTab() {
+            const box = document.getElementById('salaryList');
+            box.innerHTML = 'در حال بارگذاری...';
+
+            let query = _supabase.from('salary_payments').select('*').order('paid_at', { ascending: false });
+
+            if (currentRole !== 'admin') {
+                const myPrefix = roleLabels[currentRole];
+                query = query.eq('seller_name', myPrefix);
+            }
+
+            const { data, error } = await query;
+
+            if (error) {
+                box.innerHTML = `<p style="color:#ef4444;">❌ خطا: ${error.message}</p>`;
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                box.innerHTML = '<p style="color:#94a3b8;">هنوز واریزی ثبت نشده است.</p>';
+                return;
+            }
+
+            box.innerHTML = data.map(s => `
+                <div class="summary-mini">
+                    <span>👤 <b>${s.seller_name}</b>${s.note ? ' — ' + s.note : ''}<br><span style="font-size:10px; color:#94a3b8;">${getTehranFullDateTimeString(new Date(s.paid_at))}</span></span>
+                    <b style="color:#34d399;">${Number(s.amount).toLocaleString('fa-IR')} تومان</b>
+                </div>
+            `).join('');
         }
     </script>
 </body>
