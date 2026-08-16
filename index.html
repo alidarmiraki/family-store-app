@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v34 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v35 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -448,7 +448,8 @@
 
     <!-- تب‌های بالای صفحه -->
     <div class="tabs" id="tabContainer">
-        <button class="tab-btn" id="btnSale" onclick="switchTab('sale'); loadProductDatalist(); loadRecentSales();">🛍️ ثبت فروش</button>
+        <button class="tab-btn" id="btnSale" onclick="switchTab('sale'); loadProductDatalist(); loadRecentSales('instore');">🛍️ ثبت فروش حضوری</button>
+        <button class="tab-btn" id="btnSaleEkala" onclick="switchTab('saleEkala'); loadProductDatalist(); loadRecentSales('ekala');">🛒 ثبت فروش اکالا</button>
         <button class="tab-btn" id="btnAttendance" onclick="switchTab('attendance');">⏰ حضور و غیاب</button>
         <button class="tab-btn" id="btnMessage" onclick="switchTab('message');">📩 ارسال پیام به مدیر</button>
         <button class="tab-btn" id="btnStaffMessage" onclick="switchTab('staffMessage');">📤 پیام به پرسنل</button>
@@ -466,30 +467,30 @@
         <button class="tab-btn" id="btnPersonalTakeout" onclick="switchTab('personalTakeout'); loadMyTakeouts();">🛒 برداشت شخصی</button>
     </div>
 
-    <!-- فرم ثبت فروش -->
+    <!-- فرم ثبت فروش حضوری -->
     <div id="saleTab" class="card">
-        <h2 id="saleFormTitle">🛍️ ثبت فروش روزانه</h2>
+        <h2 id="saleFormTitle">🛍️ ثبت فروش حضوری روزانه</h2>
         <label>انتخاب یا تایپ نام کالا:</label>
-        <input type="text" id="sName" dir="auto" list="productDatalist" placeholder="نام کالا را انتخاب یا تایپ کنید (لیست بر اساس الفبا مرتب است)" onchange="calculateSalePriceAuto()">
+        <input type="text" id="sName" dir="auto" list="productDatalist" placeholder="نام کالا را انتخاب یا تایپ کنید (لیست بر اساس الفبا مرتب است)" onchange="calculateSalePriceAuto('instore')">
         <datalist id="productDatalist"></datalist>
 
         <label>واحد وزن:</label>
         <div class="unit-toggle">
-            <label><input type="radio" name="sQtyUnit" value="kg" checked onchange="onSaleUnitChange()"> کیلوگرم</label>
-            <label><input type="radio" name="sQtyUnit" value="gram" onchange="onSaleUnitChange()"> گرم (زیر یک کیلو)</label>
+            <label><input type="radio" name="sQtyUnit" value="kg" checked onchange="onSaleUnitChange('instore')"> کیلوگرم</label>
+            <label><input type="radio" name="sQtyUnit" value="gram" onchange="onSaleUnitChange('instore')"> گرم (زیر یک کیلو)</label>
         </div>
         <label id="sQtyLabel">مقدار (کیلوگرم):</label>
-        <input type="number" id="sQty" step="0.001" placeholder="مثلاً 1.5" oninput="calculateSalePriceAuto()">
-        <div class="hint">سیستم قیمت را بر اساس نرخ کالا در انبار خودکار محاسبه می‌کند. اگر مقدار زیر یک کیلوست، واحد «گرم» را انتخاب کنید و مثلاً 250 وارد کنید.</div>
+        <input type="number" id="sQty" step="0.001" placeholder="مثلاً 1.5" oninput="calculateSalePriceAuto('instore')">
+        <div class="hint">سیستم قیمت را بر اساس نرخ کالا در انبار خودکار محاسبه می‌کند. اگر مقدار زیر یک کیلوست، واحد «گرم» را انتخاب کنید و مثلاً 250 وارد کنید. این تب فقط برای فروش‌های حضوری داخل غرفه است.</div>
 
         <div id="sCalcDisplay" class="price-display">مبلغ کل فاکتور: ۰ تومان (قیمت واحد: ۰ تومان)</div>
 
-        <button class="submit-btn" id="saleSubmitBtn" onclick="submitSale()">ثبت فاکتور فروش</button>
-        <button class="cancel-edit-btn" id="cancelSaleEditBtn" onclick="cancelSaleEdit()">لغو ویرایش و بازگشت به حالت ثبت فروش جدید</button>
+        <button class="submit-btn" id="saleSubmitBtn" onclick="submitSale('instore')">ثبت فاکتور فروش حضوری</button>
+        <button class="cancel-edit-btn" id="cancelSaleEditBtn" onclick="cancelSaleEdit('instore')">لغو ویرایش و بازگشت به حالت ثبت فروش جدید</button>
 
         <div class="report-card" style="margin-top:18px;">
-            <h3>🧾 فاکتورهای من</h3>
-            <div class="hint">این لیست فقط فاکتورهایی را نشان می‌دهد که خودتان ثبت کرده‌اید؛ فاکتورهای سایر فروشندگان یا مدیر در این لیست دیده یا دستکاری نمی‌شود. <b>فقط فاکتورهای همین امروز</b> قابل ویرایش یا حذف هستند؛ فاکتورهای روزهای قبل صرفاً برای مشاهده نگهداری می‌شوند و قفل هستند. با ویرایش مقدار یک فاکتور، موجودی ظرف غرفه به‌طور خودکار اصلاح می‌شود و با حذف کامل یک فاکتور، کل مقدار آن به موجودی غرفه بازگردانده می‌شود. هر فاکتور حداکثر ۳ بار قابل ویرایش است.</div>
+            <h3>🧾 فاکتورهای حضوری من</h3>
+            <div class="hint">این لیست فقط فاکتورهای <b>فروش حضوری</b> ثبت‌شده توسط خودتان را نشان می‌دهد؛ فاکتورهای اکالا در تب جدا نمایش داده می‌شوند. <b>فقط فاکتورهای همین امروز</b> قابل ویرایش یا حذف هستند؛ فاکتورهای روزهای قبل صرفاً برای مشاهده نگهداری می‌شوند و قفل هستند. با ویرایش مقدار یک فاکتور، موجودی ظرف غرفه به‌طور خودکار اصلاح می‌شود و با حذف کامل یک فاکتور، کل مقدار آن به موجودی غرفه بازگردانده می‌شود. هر فاکتور حداکثر ۳ بار قابل ویرایش است.</div>
             <div class="recent-sales-wrap">
                 <table>
                     <thead>
@@ -508,9 +509,57 @@
                 </table>
             </div>
             <div class="pagination-bar">
-                <button class="row-btn edit-btn" onclick="changeSalesPage(-1)">◀ قبلی</button>
+                <button class="row-btn edit-btn" onclick="changeSalesPage('instore', -1)">◀ قبلی</button>
                 <span id="salesPageIndicator">صفحه ۱</span>
-                <button class="row-btn edit-btn" onclick="changeSalesPage(1)">بعدی ▶</button>
+                <button class="row-btn edit-btn" onclick="changeSalesPage('instore', 1)">بعدی ▶</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- فرم ثبت فروش اکالا -->
+    <div id="saleEkalaTab" class="card">
+        <h2 id="saleEkalaFormTitle">🛒 ثبت فروش اکالا</h2>
+        <div class="hint">وقتی سفارشی از طریق اکالا می‌آید و شما کالا را وزن و آماده تحویل به پیک/مشتری می‌کنید، همین‌جا ثبت کنید. این کاملاً از فروش حضوری جدا نگهداری می‌شود.</div>
+        <label>انتخاب یا تایپ نام کالا:</label>
+        <input type="text" id="seName" dir="auto" list="productDatalist" placeholder="نام کالا را انتخاب یا تایپ کنید" onchange="calculateSalePriceAuto('ekala')">
+
+        <label>واحد وزن:</label>
+        <div class="unit-toggle">
+            <label><input type="radio" name="seQtyUnit" value="kg" checked onchange="onSaleUnitChange('ekala')"> کیلوگرم</label>
+            <label><input type="radio" name="seQtyUnit" value="gram" onchange="onSaleUnitChange('ekala')"> گرم (زیر یک کیلو)</label>
+        </div>
+        <label id="seQtyLabel">مقدار (کیلوگرم):</label>
+        <input type="number" id="seQty" step="0.001" placeholder="مثلاً 1.5" oninput="calculateSalePriceAuto('ekala')">
+
+        <div id="seCalcDisplay" class="price-display">مبلغ کل فاکتور: ۰ تومان (قیمت واحد: ۰ تومان)</div>
+
+        <button class="submit-btn" id="saleEkalaSubmitBtn" onclick="submitSale('ekala')">ثبت فاکتور فروش اکالا</button>
+        <button class="cancel-edit-btn" id="cancelSaleEkalaEditBtn" onclick="cancelSaleEdit('ekala')">لغو ویرایش و بازگشت به حالت ثبت فروش جدید</button>
+
+        <div class="report-card" style="margin-top:18px;">
+            <h3>🧾 فاکتورهای اکالای من</h3>
+            <div class="hint">این لیست فقط فاکتورهای <b>فروش اکالا</b> ثبت‌شده توسط خودتان را نشان می‌دهد. <b>فقط فاکتورهای همین امروز</b> قابل ویرایش یا حذف هستند. هر فاکتور حداکثر ۳ بار قابل ویرایش است.</div>
+            <div class="recent-sales-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>زمان ثبت</th>
+                            <th>کالا</th>
+                            <th>مقدار</th>
+                            <th>مبلغ</th>
+                            <th>دفعات ویرایش</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentSalesTableEkala">
+                        <tr><td colspan="6">در حال بارگذاری...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="pagination-bar">
+                <button class="row-btn edit-btn" onclick="changeSalesPage('ekala', -1)">◀ قبلی</button>
+                <span id="salesPageIndicatorEkala">صفحه ۱</span>
+                <button class="row-btn edit-btn" onclick="changeSalesPage('ekala', 1)">بعدی ▶</button>
             </div>
         </div>
     </div>
@@ -843,16 +892,21 @@
     <!-- تب برداشت شخصی حساب نشده پرسنل -->
     <div id="personalTakeoutTab" class="card">
         <h2>🛒 ثبت برداشت شخصی (حساب‌نشده)</h2>
-        <div class="hint">اگر چیزی از غرفه برای خودتان وزن کردید و برداشتید ولی هنوز حسابش نکردید، همین‌جا ثبت کنید تا بعداً از حقوقتان کسر شود. این لیست فقط برای شما و مدیر قابل مشاهده است.</div>
+        <div class="hint">اگر چیزی از غرفه برای خودتان وزن کردید و برداشتید ولی هنوز حسابش نکردید، همین‌جا ثبت کنید. <b>مبلغ به‌صورت خودکار با ۱۰٪ تخفیف از قیمت فروش محاسبه می‌شود</b> و بعداً از حقوقتان کسر خواهد شد. عکس بارکد کالایی که وزن کردید <b>الزامی</b> است. این لیست فقط برای شما و مدیر قابل مشاهده است.</div>
         <label>نام کالا:</label>
-        <input type="text" id="ptItemName" dir="auto" list="productDatalist" placeholder="نام کالا را انتخاب یا تایپ کنید">
-        <label>وزن/مقدار (اختیاری):</label>
-        <input type="number" id="ptWeight" step="0.001" placeholder="مثلاً 0.5 کیلو">
-        <label>مبلغ (تومان):</label>
-        <input type="number" id="ptAmount" placeholder="مبلغی که باید از حقوقتان کسر شود">
+        <input type="text" id="ptItemName" dir="auto" list="productDatalist" placeholder="نام کالا را انتخاب یا تایپ کنید" oninput="calculatePersonalTakeoutPrice()" onchange="calculatePersonalTakeoutPrice()">
+        <label>وزن/مقدار (کیلوگرم):</label>
+        <input type="number" id="ptWeight" step="0.001" placeholder="مثلاً 0.5 کیلو" oninput="calculatePersonalTakeoutPrice()">
+
+        <div id="ptCalcDisplay" class="price-display">مبلغ قابل کسر (با ۱۰٪ تخفیف): ۰ تومان</div>
+
+        <label>📸 عکس بارکد کالای وزن‌شده - <span style="color:#ef4444; font-weight:bold;">الزامی*</span>:</label>
+        <input type="file" id="ptPhoto" accept="image/*" onchange="previewTakeoutPhoto(event)">
+        <img id="ptPhotoPreview" class="photo-preview">
+
         <label>توضیحات (اختیاری):</label>
         <textarea id="ptNote"></textarea>
-        <button class="submit-btn" onclick="submitPersonalTakeout()">ثبت برداشت</button>
+        <button class="submit-btn" onclick="submitPersonalTakeout()">✅ تایید برداشت</button>
 
         <div class="report-card" style="margin-top:16px;">
             <h3>📋 برداشت‌های ثبت‌شده شما</h3>
@@ -898,7 +952,7 @@
         </div>
     </div>
 
-    <div class="build-tag">v34 - سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v35 - سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</div>
 
     <script>
         // اجرای امن Telegram WebApp
@@ -917,25 +971,44 @@
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let cachedProductsList = [];
-        let cachedSalesList = [];
         let currentRole = "";
         let currentUserLabel = "";
         let editingProductId = null;
         let uploadedPhotoBase64 = "";
         let selectedPhotoDataUrl = null;
         let selectedLocationText = null;
-        let selectedProductUnitPrice = 0;
         let alertDismissedThisSession = false;
         let reminderDismissedThisSession = false;
 
-        let editingSaleId = null;
-        let editingSaleOldQty = 0;
-        let editingSaleProductCode = null;
-        let editingSaleEditCount = 0;
-        const MAX_SALE_EDITS = 3;
+        // --- ساختار داده‌های جدا برای فروش حضوری و فروش اکالا ---
+        const SALE_FORM_IDS = {
+            instore: {
+                name: 'sName', qtyUnitName: 'sQtyUnit', qty: 'sQty', qtyLabel: 'sQtyLabel',
+                calc: 'sCalcDisplay', submitBtn: 'saleSubmitBtn', formTitle: 'saleFormTitle',
+                cancelBtn: 'cancelSaleEditBtn', table: 'recentSalesTable', pageIndicator: 'salesPageIndicator',
+                defaultFormTitle: '🛍️ ثبت فروش حضوری روزانه', defaultSubmitText: 'ثبت فاکتور فروش حضوری'
+            },
+            ekala: {
+                name: 'seName', qtyUnitName: 'seQtyUnit', qty: 'seQty', qtyLabel: 'seQtyLabel',
+                calc: 'seCalcDisplay', submitBtn: 'saleEkalaSubmitBtn', formTitle: 'saleEkalaFormTitle',
+                cancelBtn: 'cancelSaleEkalaEditBtn', table: 'recentSalesTableEkala', pageIndicator: 'salesPageIndicatorEkala',
+                defaultFormTitle: '🛒 ثبت فروش اکالا', defaultSubmitText: 'ثبت فاکتور فروش اکالا'
+            }
+        };
 
-        let salesPage = 0;
+        let selectedProductUnitPrice = { instore: 0, ekala: 0 };
+        let cachedSalesList = { instore: [], ekala: [] };
+        let editingSale = {
+            instore: { id: null, oldQty: 0, productCode: null, editCount: 0 },
+            ekala: { id: null, oldQty: 0, productCode: null, editCount: 0 }
+        };
+        let salesPage = { instore: 0, ekala: 0 };
+        const MAX_SALE_EDITS = 3;
         const SALES_PAGE_SIZE = 8;
+
+        let selectedTakeoutPhotoDataUrl = null;
+        const TAKEOUT_DISCOUNT = 0.9; // ۱۰٪ تخفیف
+        const TAKEOUT_BUCKET = "takeout-photos";
 
         let cachedInventoryFull = [];
         let cachedBoothFull = [];
@@ -1104,19 +1177,20 @@
             document.getElementById('buyPriceField').style.display = (currentRole === 'admin') ? 'block' : 'none';
 
             if (currentRole === 'admin') {
-                setupView(['btnSale', 'btnInbox', 'btnStaffMessage', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnShiftSettings', 'btnPurchaseInvoices', 'btnTakeoutAdmin', 'btnSalary'], 'saleTab');
+                setupView(['btnSale', 'btnSaleEkala', 'btnInbox', 'btnStaffMessage', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnShiftSettings', 'btnPurchaseInvoices', 'btnTakeoutAdmin', 'btnSalary'], 'saleTab');
                 document.getElementById('salaryAdminForm').style.display = 'block';
                 checkLowStockAlertNoWeight();
             } else if (currentRole === 'morning_seller') {
-                setupView(['btnSale', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnPersonalTakeout', 'btnSalary'], 'saleTab');
+                setupView(['btnSale', 'btnSaleEkala', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnPersonalTakeout', 'btnSalary'], 'saleTab');
                 document.getElementById('salaryAdminForm').style.display = 'none';
             } else {
-                setupView(['btnSale', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnReport', 'btnPersonalTakeout', 'btnSalary'], 'saleTab');
+                setupView(['btnSale', 'btnSaleEkala', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnReport', 'btnPersonalTakeout', 'btnSalary'], 'saleTab');
                 document.getElementById('salaryAdminForm').style.display = 'none';
             }
 
             loadProductDatalist();
-            loadRecentSales();
+            loadRecentSales('instore');
+            loadRecentSales('ekala');
 
             if (currentRole === 'morning_seller' || currentRole === 'evening_seller') {
                 checkAttendanceReminders();
@@ -1131,7 +1205,8 @@
             editingProductId = null;
             alertDismissedThisSession = false;
             reminderDismissedThisSession = false;
-            cancelSaleEdit();
+            cancelSaleEdit('instore');
+            cancelSaleEdit('ekala');
             if (attendanceReminderInterval) { clearInterval(attendanceReminderInterval); attendanceReminderInterval = null; }
             document.getElementById('accessUser').value = '';
             document.getElementById('accessPin').value = '';
@@ -1377,11 +1452,12 @@
             }
         }
 
-        // --- انتخاب واحد کیلو/گرم در ثبت فروش ---
-        function onSaleUnitChange() {
-            const unit = document.querySelector('input[name="sQtyUnit"]:checked').value;
-            const label = document.getElementById('sQtyLabel');
-            const input = document.getElementById('sQty');
+        // --- انتخاب واحد کیلو/گرم در ثبت فروش (حضوری/اکالا) ---
+        function onSaleUnitChange(type) {
+            const ids = SALE_FORM_IDS[type];
+            const unit = document.querySelector(`input[name="${ids.qtyUnitName}"]:checked`).value;
+            const label = document.getElementById(ids.qtyLabel);
+            const input = document.getElementById(ids.qty);
             if (unit === 'gram') {
                 label.innerText = 'مقدار (گرم):';
                 input.placeholder = 'مثلاً 250 برای 250 گرم';
@@ -1389,23 +1465,25 @@
                 label.innerText = 'مقدار (کیلوگرم):';
                 input.placeholder = 'مثلاً 1.5';
             }
-            calculateSalePriceAuto();
+            calculateSalePriceAuto(type);
         }
 
-        function getSaleQtyInKg() {
-            const raw = parseFloat(document.getElementById('sQty').value) || 0;
-            const unit = document.querySelector('input[name="sQtyUnit"]:checked').value;
+        function getSaleQtyInKg(type) {
+            const ids = SALE_FORM_IDS[type];
+            const raw = parseFloat(document.getElementById(ids.qty).value) || 0;
+            const unit = document.querySelector(`input[name="${ids.qtyUnitName}"]:checked`).value;
             return unit === 'gram' ? Number((raw / 1000).toFixed(4)) : raw;
         }
 
-        async function calculateSalePriceAuto() {
-            const nameVal = document.getElementById('sName').value.trim();
-            const qty = getSaleQtyInKg();
-            const display = document.getElementById('sCalcDisplay');
+        async function calculateSalePriceAuto(type) {
+            const ids = SALE_FORM_IDS[type];
+            const nameVal = document.getElementById(ids.name).value.trim();
+            const qty = getSaleQtyInKg(type);
+            const display = document.getElementById(ids.calc);
 
             if (!nameVal) {
                 display.innerText = 'مبلغ کل فاکتور: ۰ تومان (قیمت واحد: ۰ تومان)';
-                selectedProductUnitPrice = 0;
+                selectedProductUnitPrice[type] = 0;
                 return;
             }
 
@@ -1416,12 +1494,12 @@
 
             const product = cachedProductsList.find(p => p.name === nameVal || p.code === nameVal);
             if (product) {
-                selectedProductUnitPrice = product.sell_price || 0;
-                const totalPrice = Math.round(qty * selectedProductUnitPrice);
-                display.innerText = `مبلغ کل فاکتور: ${totalPrice.toLocaleString('fa-IR')} تومان (نرخ واحد: ${selectedProductUnitPrice.toLocaleString('fa-IR')} تومان/کیلو)`;
+                selectedProductUnitPrice[type] = product.sell_price || 0;
+                const totalPrice = Math.round(qty * selectedProductUnitPrice[type]);
+                display.innerText = `مبلغ کل فاکتور: ${totalPrice.toLocaleString('fa-IR')} تومان (نرخ واحد: ${selectedProductUnitPrice[type].toLocaleString('fa-IR')} تومان/کیلو)`;
             } else {
                 display.innerText = '⚠️ کالا یافت نشد؛ قیمت تعریف‌نشده است';
-                selectedProductUnitPrice = 0;
+                selectedProductUnitPrice[type] = 0;
             }
         }
 
@@ -2257,9 +2335,12 @@
             }
         }
 
-        async function submitSale() {
-            const inputVal = document.getElementById('sName').value.trim();
-            const qty = getSaleQtyInKg();
+        async function submitSale(type) {
+            const ids = SALE_FORM_IDS[type];
+            const typeLabel = (type === 'ekala') ? 'اکالا' : 'حضوری';
+            const inputVal = document.getElementById(ids.name).value.trim();
+            const qty = getSaleQtyInKg(type);
+            const editing = editingSale[type];
 
             if (!inputVal || isNaN(qty) || qty <= 0) {
                 alert('لطفاً نام کالا و وزن معتبر را وارد کنید');
@@ -2288,34 +2369,34 @@
 
             const calculatedPrice = Math.round(qty * (product.sell_price || 0));
 
-            if (editingSaleId) {
-                if (product.code !== editingSaleProductCode) {
+            if (editing.id) {
+                if (product.code !== editing.productCode) {
                     alert('⚠️ در حالت ویرایش امکان تغییر نام کالا وجود ندارد. ابتدا روی «لغو ویرایش» بزنید و یک فاکتور جدید ثبت کنید.');
                     return;
                 }
 
-                if (editingSaleEditCount >= MAX_SALE_EDITS) {
+                if (editing.editCount >= MAX_SALE_EDITS) {
                     alert(`⛔ این فاکتور قبلاً ${MAX_SALE_EDITS} بار ویرایش شده و دیگر قابل ویرایش نیست. در صورت نیاز آن را حذف کنید.`);
-                    cancelSaleEdit();
-                    loadRecentSales();
+                    cancelSaleEdit(type);
+                    loadRecentSales(type);
                     return;
                 }
 
-                const ownerSale = cachedSalesList.find(s => String(s.id) === String(editingSaleId));
+                const ownerSale = cachedSalesList[type].find(s => String(s.id) === String(editing.id));
                 if (!ownerSale || ownerSale.seller_name !== currentUserLabel) {
                     alert('⛔ شما فقط می‌توانید فاکتورهای ثبت‌شده توسط خودتان را ویرایش کنید.');
-                    cancelSaleEdit();
-                    loadRecentSales();
+                    cancelSaleEdit(type);
+                    loadRecentSales(type);
                     return;
                 }
                 if (getTehranISODate(new Date(ownerSale.created_at)) !== getTehranISODate(new Date())) {
                     alert('⛔ فقط فاکتورهای ثبت‌شده در همین امروز قابل ویرایش هستند.');
-                    cancelSaleEdit();
-                    loadRecentSales();
+                    cancelSaleEdit(type);
+                    loadRecentSales(type);
                     return;
                 }
 
-                const diff = Number((editingSaleOldQty - qty).toFixed(3));
+                const diff = Number((editing.oldQty - qty).toFixed(3));
                 const currentBooth = product.booth_stock || 0;
 
                 if (diff < 0 && currentBooth < Math.abs(diff)) {
@@ -2323,7 +2404,7 @@
                 }
 
                 const newBoothStock = Math.max(0, Number((currentBooth + diff).toFixed(3)));
-                const newEditCount = editingSaleEditCount + 1;
+                const newEditCount = editing.editCount + 1;
 
                 const { error: prodErr } = await _supabase.from('products').update({ booth_stock: newBoothStock }).eq('id', product.id);
                 if (prodErr) {
@@ -2333,17 +2414,17 @@
 
                 const { error: saleErr } = await _supabase.from('sales')
                     .update({ quantity: qty, sell_price: calculatedPrice, edit_count: newEditCount })
-                    .eq('id', editingSaleId);
+                    .eq('id', editing.id);
 
                 if (saleErr) {
                     alert('❌ خطا در به‌روزرسانی فاکتور: ' + saleErr.message);
                     return;
                 }
 
-                alert(`✅ فاکتور «${product.name}» به‌روزرسانی شد (ویرایش ${newEditCount} از ${MAX_SALE_EDITS}).\n💰 مبلغ جدید فاکتور: ${calculatedPrice.toLocaleString('fa-IR')} تومان\n🧊 موجودی جدید ظرف غرفه: ${newBoothStock} کیلوگرم`);
+                alert(`✅ فاکتور ${typeLabel} «${product.name}» به‌روزرسانی شد (ویرایش ${newEditCount} از ${MAX_SALE_EDITS}).\n💰 مبلغ جدید فاکتور: ${calculatedPrice.toLocaleString('fa-IR')} تومان\n🧊 موجودی جدید ظرف غرفه: ${newBoothStock} کیلوگرم`);
 
-                cancelSaleEdit();
-                loadRecentSales();
+                cancelSaleEdit(type);
+                loadRecentSales(type);
                 loadProductDatalist();
                 checkCriticalAfterSale(product, newBoothStock);
                 return;
@@ -2366,67 +2447,73 @@
                 quantity: qty,
                 sell_price: calculatedPrice,
                 seller_name: currentUserLabel,
+                sale_type: type,
                 created_at: now.toISOString()
             }]);
 
-            alert(`✅ فروش «${product.name}» در ساعت ${getTehranTimeString(now)} ثبت شد.\n💰 مبلغ کل فاکتور: ${calculatedPrice.toLocaleString('fa-IR')} تومان\n🧊 موجودی جدید ظرف غرفه: ${newBoothStock} کیلوگرم\n⏱️ زمان دقیق: ${fullTimeText}`);
+            alert(`✅ فروش ${typeLabel} «${product.name}» در ساعت ${getTehranTimeString(now)} ثبت شد.\n💰 مبلغ کل فاکتور: ${calculatedPrice.toLocaleString('fa-IR')} تومان\n🧊 موجودی جدید ظرف غرفه: ${newBoothStock} کیلوگرم\n⏱️ زمان دقیق: ${fullTimeText}`);
 
-            document.getElementById('sName').value = '';
-            document.getElementById('sQty').value = '';
-            document.querySelector('input[name="sQtyUnit"][value="kg"]').checked = true;
-            onSaleUnitChange();
+            document.getElementById(ids.name).value = '';
+            document.getElementById(ids.qty).value = '';
+            document.querySelector(`input[name="${ids.qtyUnitName}"][value="kg"]`).checked = true;
+            onSaleUnitChange(type);
 
-            loadRecentSales();
+            loadRecentSales(type);
             checkCriticalAfterSale(product, newBoothStock);
         }
 
-        async function loadRecentSales() {
-            const tbody = document.getElementById('recentSalesTable');
+        async function loadRecentSales(type) {
+            const ids = SALE_FORM_IDS[type];
+            const tbody = document.getElementById(ids.table);
             if (!tbody) return;
             tbody.innerHTML = '<tr><td colspan="6">در حال بارگذاری...</td></tr>';
-            salesPage = 0;
+            salesPage[type] = 0;
 
             if (!currentUserLabel) {
                 tbody.innerHTML = '<tr><td colspan="6">-</td></tr>';
-                cachedSalesList = [];
+                cachedSalesList[type] = [];
                 return;
             }
 
             const { data: sales, error } = await _supabase
                 .from('sales')
-                .select('id, product_code, quantity, sell_price, seller_name, created_at, edit_count')
+                .select('id, product_code, quantity, sell_price, seller_name, created_at, edit_count, sale_type')
                 .eq('seller_name', currentUserLabel)
+                .eq('sale_type', type)
                 .order('created_at', { ascending: false })
                 .limit(90);
 
             if (error) {
                 tbody.innerHTML = '<tr><td colspan="6">❌ خطا در دریافت فاکتورها: ' + error.message + '</td></tr>';
-                cachedSalesList = [];
+                cachedSalesList[type] = [];
                 return;
             }
 
-            cachedSalesList = sales || [];
+            cachedSalesList[type] = sales || [];
 
             if (cachedProductsList.length === 0) {
                 const { data: products } = await _supabase.from('products').select('*');
                 cachedProductsList = sortProductsAlpha(products || []);
             }
 
-            renderSalesPage();
+            renderSalesPage(type);
         }
 
-        function changeSalesPage(direction) {
-            const totalPages = Math.max(1, Math.ceil(cachedSalesList.length / SALES_PAGE_SIZE));
-            salesPage = Math.min(totalPages - 1, Math.max(0, salesPage + direction));
-            renderSalesPage();
+        function changeSalesPage(type, direction) {
+            const totalPages = Math.max(1, Math.ceil(cachedSalesList[type].length / SALES_PAGE_SIZE));
+            salesPage[type] = Math.min(totalPages - 1, Math.max(0, salesPage[type] + direction));
+            renderSalesPage(type);
         }
 
-        function renderSalesPage() {
-            const tbody = document.getElementById('recentSalesTable');
-            const indicator = document.getElementById('salesPageIndicator');
+        function renderSalesPage(type) {
+            const ids = SALE_FORM_IDS[type];
+            const tbody = document.getElementById(ids.table);
+            const indicator = document.getElementById(ids.pageIndicator);
             if (!tbody) return;
 
-            if (!cachedSalesList || cachedSalesList.length === 0) {
+            const list = cachedSalesList[type];
+
+            if (!list || list.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="6">شما هنوز هیچ فاکتوری ثبت نکرده‌اید.</td></tr>';
                 if (indicator) indicator.innerText = 'صفحه ۱ از ۱';
                 return;
@@ -2435,11 +2522,11 @@
             const nameMap = {};
             cachedProductsList.forEach(p => { nameMap[p.code] = p.name; });
 
-            const totalPages = Math.max(1, Math.ceil(cachedSalesList.length / SALES_PAGE_SIZE));
-            if (salesPage > totalPages - 1) salesPage = totalPages - 1;
+            const totalPages = Math.max(1, Math.ceil(list.length / SALES_PAGE_SIZE));
+            if (salesPage[type] > totalPages - 1) salesPage[type] = totalPages - 1;
 
-            const start = salesPage * SALES_PAGE_SIZE;
-            const pageItems = cachedSalesList.slice(start, start + SALES_PAGE_SIZE);
+            const start = salesPage[type] * SALES_PAGE_SIZE;
+            const pageItems = list.slice(start, start + SALES_PAGE_SIZE);
             const todayISO = getTehranISODate(new Date());
 
             tbody.innerHTML = pageItems.map(s => {
@@ -2454,8 +2541,8 @@
                 if (!isToday) {
                     actionsCell = `<span style="color:#94a3b8; font-size:10px; display:inline-block; padding:5px 3px;">🔒 مربوط به روز قبل</span>`;
                 } else if (canEditMore) {
-                    actionsCell = `<button class="row-btn edit-btn" onclick="editSale('${s.id}')">ویرایش</button>
-                                   <button class="row-btn delete-btn" onclick="deleteSale('${s.id}')">حذف</button>`;
+                    actionsCell = `<button class="row-btn edit-btn" onclick="editSale('${type}', '${s.id}')">ویرایش</button>
+                                   <button class="row-btn delete-btn" onclick="deleteSale('${type}', '${s.id}')">حذف</button>`;
                 } else {
                     actionsCell = `<span style="color:#94a3b8; font-size:10px; display:inline-block; padding:5px 3px;">🔒 غیرفعال</span>`;
                 }
@@ -2473,15 +2560,16 @@
             }).join('');
 
             if (indicator) {
-                indicator.innerText = `صفحه ${(salesPage + 1).toLocaleString('fa-IR')} از ${totalPages.toLocaleString('fa-IR')} (${cachedSalesList.length.toLocaleString('fa-IR')} فاکتور)`;
+                indicator.innerText = `صفحه ${(salesPage[type] + 1).toLocaleString('fa-IR')} از ${totalPages.toLocaleString('fa-IR')} (${list.length.toLocaleString('fa-IR')} فاکتور)`;
             }
         }
 
-        async function editSale(saleId) {
+        async function editSale(type, saleId) {
+            const ids = SALE_FORM_IDS[type];
             if (cachedProductsList.length === 0) {
                 await loadProductDatalist();
             }
-            const sale = cachedSalesList.find(s => String(s.id) === String(saleId));
+            const sale = cachedSalesList[type].find(s => String(s.id) === String(saleId));
             if (!sale) return;
 
             if (sale.seller_name !== currentUserLabel) {
@@ -2500,43 +2588,38 @@
                 return;
             }
 
-            editingSaleId = sale.id;
-            editingSaleOldQty = Number(sale.quantity);
-            editingSaleProductCode = sale.product_code;
-            editingSaleEditCount = currentEditCount;
+            editingSale[type] = { id: sale.id, oldQty: Number(sale.quantity), productCode: sale.product_code, editCount: currentEditCount };
 
             const product = cachedProductsList.find(p => p.code === sale.product_code);
-            document.getElementById('sName').value = product ? product.name : sale.product_code;
-            document.querySelector('input[name="sQtyUnit"][value="kg"]').checked = true;
-            onSaleUnitChange();
-            document.getElementById('sQty').value = sale.quantity;
-            calculateSalePriceAuto();
+            document.getElementById(ids.name).value = product ? product.name : sale.product_code;
+            document.querySelector(`input[name="${ids.qtyUnitName}"][value="kg"]`).checked = true;
+            onSaleUnitChange(type);
+            document.getElementById(ids.qty).value = sale.quantity;
+            calculateSalePriceAuto(type);
 
-            document.getElementById('saleFormTitle').innerText = `✏️ ویرایش فاکتور فروش (ویرایش ${currentEditCount + 1} از ${MAX_SALE_EDITS})`;
-            document.getElementById('saleSubmitBtn').innerText = 'به‌روزرسانی فاکتور فروش';
-            document.getElementById('cancelSaleEditBtn').style.display = 'block';
+            document.getElementById(ids.formTitle).innerText = `✏️ ویرایش فاکتور فروش (ویرایش ${currentEditCount + 1} از ${MAX_SALE_EDITS})`;
+            document.getElementById(ids.submitBtn).innerText = 'به‌روزرسانی فاکتور فروش';
+            document.getElementById(ids.cancelBtn).style.display = 'block';
 
-            switchTab('sale');
+            switchTab(type === 'ekala' ? 'saleEkala' : 'sale');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        function cancelSaleEdit() {
-            editingSaleId = null;
-            editingSaleOldQty = 0;
-            editingSaleProductCode = null;
-            editingSaleEditCount = 0;
-            document.getElementById('sName').value = '';
-            document.getElementById('sQty').value = '';
-            const kgRadio = document.querySelector('input[name="sQtyUnit"][value="kg"]');
+        function cancelSaleEdit(type) {
+            const ids = SALE_FORM_IDS[type];
+            editingSale[type] = { id: null, oldQty: 0, productCode: null, editCount: 0 };
+            document.getElementById(ids.name).value = '';
+            document.getElementById(ids.qty).value = '';
+            const kgRadio = document.querySelector(`input[name="${ids.qtyUnitName}"][value="kg"]`);
             if (kgRadio) kgRadio.checked = true;
-            document.getElementById('sCalcDisplay').innerText = 'مبلغ کل فاکتور: ۰ تومان (قیمت واحد: ۰ تومان)';
-            document.getElementById('saleFormTitle').innerText = '🛍️ ثبت فروش روزانه';
-            document.getElementById('saleSubmitBtn').innerText = 'ثبت فاکتور فروش';
-            document.getElementById('cancelSaleEditBtn').style.display = 'none';
+            document.getElementById(ids.calc).innerText = 'مبلغ کل فاکتور: ۰ تومان (قیمت واحد: ۰ تومان)';
+            document.getElementById(ids.formTitle).innerText = ids.defaultFormTitle;
+            document.getElementById(ids.submitBtn).innerText = ids.defaultSubmitText;
+            document.getElementById(ids.cancelBtn).style.display = 'none';
         }
 
-        async function deleteSale(saleId) {
-            const sale = cachedSalesList.find(s => String(s.id) === String(saleId));
+        async function deleteSale(type, saleId) {
+            const sale = cachedSalesList[type].find(s => String(s.id) === String(saleId));
             if (!sale) return;
 
             if (sale.seller_name !== currentUserLabel) {
@@ -2567,10 +2650,10 @@
 
             if (!error) {
                 alert('✅ فاکتور حذف شد و مقدار آن به موجودی ظرف غرفه بازگشت.');
-                if (String(editingSaleId) === String(saleId)) {
-                    cancelSaleEdit();
+                if (String(editingSale[type].id) === String(saleId)) {
+                    cancelSaleEdit(type);
                 }
-                loadRecentSales();
+                loadRecentSales(type);
                 loadProductDatalist();
             } else {
                 alert('❌ خطا در حذف فاکتور: ' + error.message);
@@ -3161,7 +3244,7 @@
 
             const { data: sales, error } = await _supabase
                 .from('sales')
-                .select('product_code, quantity, sell_price, created_at, seller_name')
+                .select('product_code, quantity, sell_price, created_at, seller_name, sale_type')
                 .order('created_at', { ascending: false });
 
             if (error) {
@@ -3179,6 +3262,10 @@
                 });
 
                 const totalSum = todayMySales.reduce((sum, s) => sum + (Number(s.sell_price) || 0), 0);
+                const instoreSales = todayMySales.filter(s => (s.sale_type || 'instore') === 'instore');
+                const ekalaSales = todayMySales.filter(s => s.sale_type === 'ekala');
+                const instoreSum = instoreSales.reduce((sum, s) => sum + (Number(s.sell_price) || 0), 0);
+                const ekalaSum = ekalaSales.reduce((sum, s) => sum + (Number(s.sell_price) || 0), 0);
 
                 if (todayMySales.length === 0) {
                     content.innerHTML = `
@@ -3197,9 +3284,11 @@
                 const rows = todayMySales.map(s => {
                     const fullTimeStr = getTehranFullDateTimeString(new Date(s.created_at));
                     const productName = nameMap[s.product_code] || s.product_code;
+                    const typeTag = (s.sale_type === 'ekala') ? '🛒 اکالا' : '🛍️ حضوری';
                     return `<tr>
                         <td>${fullTimeStr}</td>
                         <td>${productName}</td>
+                        <td>${typeTag}</td>
                         <td>${Number(s.quantity).toLocaleString('fa-IR', { maximumFractionDigits: 3 })} کیلو</td>
                         <td>${Number(s.sell_price).toLocaleString('fa-IR')} تومان</td>
                     </tr>`;
@@ -3209,9 +3298,10 @@
                     <div class="report-card">
                         <h3>🌅 گزارش فروش امروز شما (${targetRolePrefix}) - ${getTehranDateString(now)}</h3>
                         <p style="font-size:15px; color:#38bdf8; font-weight:bold;">مجموع فروش امروز: ${totalSum.toLocaleString('fa-IR')} تومان (${todayMySales.length} فاکتور)</p>
+                        <p style="font-size:11px; color:#94a3b8;">🛍️ حضوری: ${instoreSum.toLocaleString('fa-IR')} تومان (${instoreSales.length} فاکتور) &nbsp; | &nbsp; 🛒 اکالا: ${ekalaSum.toLocaleString('fa-IR')} تومان (${ekalaSales.length} فاکتور)</p>
                         <h4 style="color:#cbd5e1; margin-top:12px; margin-bottom:6px;">📋 ریز فاکتورهای امروز با ثبت زمان لحظه‌ای:</h4>
                         <table>
-                            <thead><tr><th>تاریخ و ساعت ثبت</th><th>کالا</th><th>مقدار</th><th>مبلغ</th></tr></thead>
+                            <thead><tr><th>تاریخ و ساعت ثبت</th><th>کالا</th><th>نوع</th><th>مقدار</th><th>مبلغ</th></tr></thead>
                             <tbody>${rows}</tbody>
                         </table>
                     </div>`;
@@ -3219,10 +3309,11 @@
             }
 
             if (currentRole === 'admin') {
+                const emptyTypeTotals = () => ({ sum: 0, count: 0 });
                 const totals = {
-                    morning: { today: 0, all: 0, todayCount: 0, allCount: 0 },
-                    evening: { today: 0, all: 0, todayCount: 0, allCount: 0 },
-                    admin: { today: 0, all: 0, todayCount: 0, allCount: 0 }
+                    morning: { today: 0, all: 0, todayCount: 0, allCount: 0, todayByType: { instore: emptyTypeTotals(), ekala: emptyTypeTotals() }, allByType: { instore: emptyTypeTotals(), ekala: emptyTypeTotals() } },
+                    evening: { today: 0, all: 0, todayCount: 0, allCount: 0, todayByType: { instore: emptyTypeTotals(), ekala: emptyTypeTotals() }, allByType: { instore: emptyTypeTotals(), ekala: emptyTypeTotals() } },
+                    admin: { today: 0, all: 0, todayCount: 0, allCount: 0, todayByType: { instore: emptyTypeTotals(), ekala: emptyTypeTotals() }, allByType: { instore: emptyTypeTotals(), ekala: emptyTypeTotals() } }
                 };
 
                 (sales || []).forEach(s => {
@@ -3233,14 +3324,19 @@
                     if (!key) return;
 
                     const price = Number(s.sell_price) || 0;
+                    const saleType = (s.sale_type === 'ekala') ? 'ekala' : 'instore';
                     totals[key].all += price;
                     totals[key].allCount += 1;
+                    totals[key].allByType[saleType].sum += price;
+                    totals[key].allByType[saleType].count += 1;
 
                     if (s.created_at) {
                         const itemISODate = getTehranISODate(new Date(s.created_at));
                         if (itemISODate === todayISOTehran) {
                             totals[key].today += price;
                             totals[key].todayCount += 1;
+                            totals[key].todayByType[saleType].sum += price;
+                            totals[key].todayByType[saleType].count += 1;
                         }
                     }
                 });
@@ -3249,7 +3345,9 @@
                     <div class="report-card">
                         <h3>${title}</h3>
                         <p>فروش امروز: ${totals[key].today.toLocaleString('fa-IR')} تومان (${totals[key].todayCount} فاکتور)</p>
+                        <p style="font-size:11px; color:#94a3b8;">🛍️ حضوری: ${totals[key].todayByType.instore.sum.toLocaleString('fa-IR')} تومان (${totals[key].todayByType.instore.count}) &nbsp;|&nbsp; 🛒 اکالا: ${totals[key].todayByType.ekala.sum.toLocaleString('fa-IR')} تومان (${totals[key].todayByType.ekala.count})</p>
                         <p>مجموع کل فروش: ${totals[key].all.toLocaleString('fa-IR')} تومان (${totals[key].allCount} فاکتور)</p>
+                        <p style="font-size:11px; color:#94a3b8;">🛍️ حضوری: ${totals[key].allByType.instore.sum.toLocaleString('fa-IR')} تومان (${totals[key].allByType.instore.count}) &nbsp;|&nbsp; 🛒 اکالا: ${totals[key].allByType.ekala.sum.toLocaleString('fa-IR')} تومان (${totals[key].allByType.ekala.count})</p>
                         <button class="row-btn edit-btn" onclick="toggleDetail('${key}')">📋 گزارش گیری پیشرفته (تقویم / بازه‌ای)</button>
 
                         <div id="detailPanel_${key}" style="display:none; margin-top:12px; background:rgba(15, 23, 42, 0.7); padding:10px; border-radius:10px;">
@@ -3339,7 +3437,7 @@
 
             const { data: sales, error } = await _supabase
                 .from('sales')
-                .select('product_code, quantity, sell_price, created_at, seller_name')
+                .select('product_code, quantity, sell_price, created_at, seller_name, sale_type')
                 .order('created_at', { ascending: false });
 
             if (error) {
@@ -3364,6 +3462,10 @@
             (productsData || []).forEach(p => { nameMap[p.code] = p.name; });
 
             const totalSum = filtered.reduce((sum, s) => sum + (Number(s.sell_price) || 0), 0);
+            const instoreFiltered = filtered.filter(s => (s.sale_type || 'instore') === 'instore');
+            const ekalaFiltered = filtered.filter(s => s.sale_type === 'ekala');
+            const instoreSum = instoreFiltered.reduce((sum, s) => sum + (Number(s.sell_price) || 0), 0);
+            const ekalaSum = ekalaFiltered.reduce((sum, s) => sum + (Number(s.sell_price) || 0), 0);
 
             const productTotals = {};
             filtered.forEach(s => {
@@ -3384,9 +3486,11 @@
             const invoiceRows = filtered.map(s => {
                 const fullTimeStr = getTehranFullDateTimeString(new Date(s.created_at));
                 const pname = nameMap[s.product_code] || s.product_code;
+                const typeTag = (s.sale_type === 'ekala') ? '🛒 اکالا' : '🛍️ حضوری';
                 return `<tr>
                     <td>${fullTimeStr}</td>
                     <td>${pname}</td>
+                    <td>${typeTag}</td>
                     <td>${Number(s.quantity).toLocaleString('fa-IR', { maximumFractionDigits: 3 })} کیلو</td>
                     <td>${Number(s.sell_price).toLocaleString('fa-IR')} تومان</td>
                 </tr>`;
@@ -3397,7 +3501,9 @@
             resultBox.innerHTML = `
                 <div class="report-card">
                     <h3>📅 گزارش بازه: ${rangeLabel}</h3>
-                    <p style="font-size:15px; color:#38bdf8; font-weight:bold;">مجموع فروش: ${totalSum.toLocaleString('fa-IR')} تومان (${filtered.length} فاکتور)</p>
+                    <p>🛍️ سفارش‌های حضوری: <b style="color:#38bdf8;">${instoreSum.toLocaleString('fa-IR')} تومان</b> (${instoreFiltered.length} فاکتور)</p>
+                    <p>🛒 سفارش‌های اکالا: <b style="color:#34d399;">${ekalaSum.toLocaleString('fa-IR')} تومان</b> (${ekalaFiltered.length} فاکتور)</p>
+                    <p style="font-size:15px; color:#f8fafc; font-weight:bold;">➕ مجموع کل سفارش: ${totalSum.toLocaleString('fa-IR')} تومان (${filtered.length} فاکتور)</p>
                 </div>
                 <h4 style="color:#38bdf8; margin-top:12px; margin-bottom:6px;">📦 جمع‌بندی بر اساس کالا:</h4>
                 <table>
@@ -3406,7 +3512,7 @@
                 </table>
                 <h4 style="color:#38bdf8; margin-top:12px; margin-bottom:6px;">🧾 ریز فاکتورها:</h4>
                 <table>
-                    <thead><tr><th>زمان ثبت</th><th>کالا</th><th>مقدار</th><th>مبلغ</th></tr></thead>
+                    <thead><tr><th>زمان ثبت</th><th>کالا</th><th>نوع</th><th>مقدار</th><th>مبلغ</th></tr></thead>
                     <tbody>${invoiceRows}</tbody>
                 </table>
             `;
@@ -3538,36 +3644,131 @@
             `;
         }
 
-        // ================== برداشت شخصی حساب‌نشده پرسنل ==================
+        // ================== برداشت شخصی حساب‌نشده پرسنل (با ۱۰٪ تخفیف خودکار و عکس بارکد الزامی) ==================
+        function previewTakeoutPhoto(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    selectedTakeoutPhotoDataUrl = e.target.result;
+                    const img = document.getElementById('ptPhotoPreview');
+                    img.src = selectedTakeoutPhotoDataUrl;
+                    img.style.display = 'block';
+                };
+                reader.onerror = function() {
+                    selectedTakeoutPhotoDataUrl = null;
+                    alert('❌ خطا در خواندن عکس انتخاب‌شده. لطفاً دوباره تلاش کنید.');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                selectedTakeoutPhotoDataUrl = null;
+            }
+        }
+
+        async function calculatePersonalTakeoutPrice() {
+            const itemName = document.getElementById('ptItemName').value.trim();
+            const weight = parseFloat(document.getElementById('ptWeight').value) || 0;
+            const display = document.getElementById('ptCalcDisplay');
+
+            if (!itemName || weight <= 0) {
+                display.innerText = 'مبلغ قابل کسر (با ۱۰٪ تخفیف): ۰ تومان';
+                return;
+            }
+
+            if (cachedProductsList.length === 0) {
+                const { data } = await _supabase.from('products').select('*');
+                cachedProductsList = sortProductsAlpha(data || []);
+            }
+
+            const product = cachedProductsList.find(p => p.name === itemName || p.code === itemName);
+            if (product) {
+                const originalPrice = Math.round(weight * (product.sell_price || 0));
+                const discountedPrice = Math.round(originalPrice * TAKEOUT_DISCOUNT);
+                display.innerText = `مبلغ قابل کسر (با ۱۰٪ تخفیف): ${discountedPrice.toLocaleString('fa-IR')} تومان (قیمت بدون تخفیف: ${originalPrice.toLocaleString('fa-IR')} تومان)`;
+            } else {
+                display.innerText = '⚠️ کالا یافت نشد؛ قیمت تعریف‌نشده است';
+            }
+        }
+
         async function submitPersonalTakeout() {
             const itemName = document.getElementById('ptItemName').value.trim();
-            const weight = parseFloat(document.getElementById('ptWeight').value) || null;
-            const amount = parseFloat(document.getElementById('ptAmount').value);
+            const weight = parseFloat(document.getElementById('ptWeight').value);
             const note = document.getElementById('ptNote').value.trim();
+            const submitBtn = document.querySelector('#personalTakeoutTab .submit-btn');
 
-            if (!itemName || isNaN(amount) || amount <= 0) {
-                return alert('لطفاً نام کالا و مبلغ معتبر را وارد کنید.');
+            if (!itemName || isNaN(weight) || weight <= 0) {
+                return alert('لطفاً نام کالا و وزن معتبر را وارد کنید.');
             }
+
+            if (!selectedTakeoutPhotoDataUrl) {
+                return alert('⛔ عکس بارکد کالای وزن‌شده الزامی است. لطفاً ابتدا عکس را آپلود کنید.');
+            }
+
+            if (cachedProductsList.length === 0) {
+                const { data } = await _supabase.from('products').select('*');
+                cachedProductsList = sortProductsAlpha(data || []);
+            }
+
+            const product = cachedProductsList.find(p => p.name === itemName || p.code === itemName);
+            if (!product) {
+                return alert('❌ کالایی با این اسم در انبار یافت نشد! لطفاً از لیست پیشنهادی انتخاب کنید.');
+            }
+
+            const originalPrice = Math.round(weight * (product.sell_price || 0));
+            const discountedPrice = Math.round(originalPrice * TAKEOUT_DISCOUNT);
+
+            if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = '⏳ در حال آپلود عکس...'; }
+
+            let photoUrl = null;
+            try {
+                const compressedBlob = await compressDataUrl(selectedTakeoutPhotoDataUrl);
+                const safeName = (currentRole || 'user').replace(/[^a-zA-Z0-9_-]+/g, '_');
+                const fileName = `${safeName}_${Date.now()}.jpg`;
+
+                const { error: uploadError } = await _supabase.storage
+                    .from(TAKEOUT_BUCKET)
+                    .upload(fileName, compressedBlob, { contentType: 'image/jpeg', upsert: true });
+
+                if (uploadError) throw uploadError;
+
+                const { data: publicUrlData } = _supabase.storage
+                    .from(TAKEOUT_BUCKET)
+                    .getPublicUrl(fileName);
+
+                photoUrl = publicUrlData ? publicUrlData.publicUrl : null;
+            } catch (uploadErr) {
+                alert('❌ خطا در آپلود عکس بارکد: ' + uploadErr.message + '\n\nمطمئن شوید باکت "takeout-photos" در Supabase Storage ساخته شده و عمومی (Public) است.');
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = '✅ تایید برداشت'; }
+                return;
+            }
+
+            if (submitBtn) { submitBtn.innerText = '⏳ در حال ثبت...'; }
 
             const now = new Date();
             const { error } = await _supabase.from('personal_takeouts').insert([{
                 seller_name: currentUserLabel,
-                item_name: itemName,
+                item_name: product.name,
                 weight: weight,
-                amount: amount,
+                amount: discountedPrice,
+                photo_url: photoUrl,
                 note: note,
                 created_at: now.toISOString()
             }]);
 
+            if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = '✅ تایید برداشت'; }
+
             if (!error) {
-                alert('✅ برداشت شما ثبت شد و برای مدیر قابل مشاهده است.');
+                alert(`✅ برداشت شما ثبت شد.\n💰 مبلغ قابل کسر (با ۱۰٪ تخفیف): ${discountedPrice.toLocaleString('fa-IR')} تومان\nاین مبلغ برای مدیر قابل مشاهده است و از حقوقتان کسر خواهد شد.`);
                 document.getElementById('ptItemName').value = '';
                 document.getElementById('ptWeight').value = '';
-                document.getElementById('ptAmount').value = '';
                 document.getElementById('ptNote').value = '';
+                document.getElementById('ptPhoto').value = '';
+                document.getElementById('ptPhotoPreview').style.display = 'none';
+                selectedTakeoutPhotoDataUrl = null;
+                document.getElementById('ptCalcDisplay').innerText = 'مبلغ قابل کسر (با ۱۰٪ تخفیف): ۰ تومان';
                 loadMyTakeouts();
             } else {
-                alert('❌ خطا در ثبت برداشت: ' + error.message + '\n\nمطمئن شوید جدول personal_takeouts در Supabase با ستون‌های seller_name, item_name, weight, amount, note, created_at ساخته شده است.');
+                alert('❌ خطا در ثبت برداشت: ' + error.message + '\n\nمطمئن شوید جدول personal_takeouts در Supabase ستون photo_url را دارد.');
             }
         }
 
@@ -3611,10 +3812,10 @@
 
             const totalAmount = cachedTakeoutList.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
 
-            box.innerHTML = `<p style="color:#fbbf24; font-weight:bold; margin-bottom:8px;">مجموع کل برداشت‌های شما: ${totalAmount.toLocaleString('fa-IR')} تومان</p>` +
+            box.innerHTML = `<p style="color:#fbbf24; font-weight:bold; margin-bottom:8px;">مجموع کل برداشت‌های شما (با ۱۰٪ تخفیف): ${totalAmount.toLocaleString('fa-IR')} تومان</p>` +
                 pageItems.map(t => `
                     <div class="summary-mini">
-                        <span>🛒 <b>${t.item_name}</b>${t.weight ? ' (' + Number(t.weight).toLocaleString('fa-IR') + ' کیلو)' : ''}${t.note ? ' — ' + t.note : ''}<br><span style="font-size:10px; color:#94a3b8;">${getTehranFullDateTimeString(new Date(t.created_at))}</span></span>
+                        <span>🛒 <b>${t.item_name}</b>${t.weight ? ' (' + Number(t.weight).toLocaleString('fa-IR') + ' کیلو)' : ''}${t.note ? ' — ' + t.note : ''}<br><span style="font-size:10px; color:#94a3b8;">${getTehranFullDateTimeString(new Date(t.created_at))}</span>${t.photo_url ? ` — <a href="${t.photo_url}" target="_blank" style="color:#38bdf8;">👁️ عکس بارکد</a>` : ''}</span>
                         <b style="color:#f87171;">${Number(t.amount).toLocaleString('fa-IR')} تومان</b>
                     </div>
                 `).join('');
@@ -3664,7 +3865,7 @@
                     <p style="font-size:15px; color:#f87171; font-weight:bold;">مجموع قابل کسر از حقوق: ${info.total.toLocaleString('fa-IR')} تومان (${info.items.length} مورد)</p>
                     ${info.items.map(t => `
                         <div class="summary-mini">
-                            <span>🛒 ${t.item_name}${t.weight ? ' (' + Number(t.weight).toLocaleString('fa-IR') + ' کیلو)' : ''}${t.note ? ' — ' + t.note : ''}<br><span style="font-size:10px; color:#94a3b8;">${getTehranFullDateTimeString(new Date(t.created_at))}</span></span>
+                            <span>🛒 ${t.item_name}${t.weight ? ' (' + Number(t.weight).toLocaleString('fa-IR') + ' کیلو)' : ''}${t.note ? ' — ' + t.note : ''}<br><span style="font-size:10px; color:#94a3b8;">${getTehranFullDateTimeString(new Date(t.created_at))}</span>${t.photo_url ? ` — <a href="${t.photo_url}" target="_blank" style="color:#38bdf8;">👁️ عکس بارکد</a>` : ' — <span style="color:#ef4444;">بدون عکس</span>'}</span>
                             <b style="color:#f87171;">${Number(t.amount).toLocaleString('fa-IR')} تومان</b>
                         </div>
                     `).join('')}
