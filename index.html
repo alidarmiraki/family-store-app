@@ -1112,6 +1112,7 @@
 
         let cachedInventoryFull = [];
         let cachedBoothFull = [];
+        let pendingMorningConfirmItems = [];
 
         let editingPurchaseOrderId = null;
 
@@ -1459,7 +1460,7 @@
 
             const { data: products } = await _supabase
                 .from('products')
-                .select('id, code, name, stock, min_stock, booth_stock, booth_min_stock, low_stock_alert_since');
+                .select('id, code, name, stock, min_stock, booth_stock, booth_min_stock, low_stock_alert_since, stock_confirmed_empty');
             const btn = document.getElementById('btnInventory');
             if (!products) return;
 
@@ -1482,10 +1483,13 @@
                 }
 
                 if (mainEmpty && boothEmpty) {
-                    urgentItems.push(`🚨 <b>${p.name}</b>: نه داخل انبار هست و نه داخل غرفه — سریع‌تر سفارش بده!`);
-                    if (p.low_stock_alert_since) {
-                        pendingUpdates.push({ id: p.id, value: null });
+                    if (p.stock_confirmed_empty) {
+                        urgentItems.push(`🚨 <b>${p.name}</b>: نه داخل انبار هست و نه داخل غرفه (توسط فروشنده صبح تایید شده) — سریع‌تر سفارش بده!`);
+                        if (p.low_stock_alert_since) {
+                            pendingUpdates.push({ id: p.id, value: null });
+                        }
                     }
+                    // اگر هنوز توسط فروشنده صبح تایید نشده، منتظر تایید او می‌مانیم و هنوز به مدیر هشدار داده نمی‌شود
                 } else if (mainEmpty && !boothEmpty) {
                     const isBest = bestSellerCodes.has(p.code);
                     if (isBest) {
@@ -1800,14 +1804,23 @@
             }
 
             if (!hasEntry && nowMinutes >= (startMinutes + reminderAfter)) {
-                panel.innerHTML = `⏰ <b>یادآوری:</b> شیفت شما از ساعت ${shiftStart} شروع شده و هنوز ورودتان را ثبت نکرده‌اید! لطفاً هر چه سریع‌تر از تب «حضور و غیاب» ورود بزنید.
-                    <button class="dismiss-alert-btn" onclick="dismissReminderBanner()">باشه، الان می‌زنم</button>`;
+                const lateBy = nowMinutes - startMinutes;
+                panel.innerHTML = `⛔ <b>هشدار تاخیر:</b> شیفت شما از ساعت ${shiftStart} شروع شده و شما حدود ${lateBy} دقیقه تاخیر دارید و هنوز ورودتان را ثبت نکرده‌اید! هرچه دیرتر ثبت کنید، تاخیر بیشتری برای مدیر گزارش می‌شود — همین الان این کار را انجام دهید:
+                    <br>۱) روی تب «⏰ حضور و غیاب» بزنید
+                    <br>۲) در «نوع ثبت»، گزینه «🟢 ثبت ورود به شیفت» را انتخاب کنید
+                    <br>۳) یک عکس از خودتان یا داخل غرفه بگیرید (اگر عکس نشد، از دکمه «📍 استفاده از موقعیت مکانی» استفاده کنید)
+                    <br>۴) روی دکمه «ثبت در سیستم حضور و غیاب» بزنید
+                    <button class="dismiss-alert-btn" onclick="dismissReminderBanner()">باشه، همین الان ثبت می‌کنم</button>`;
                 panel.style.display = 'block';
                 return;
             }
 
             if (hasEntry && !hasExit && nowMinutes >= (endMinutes + reminderAfter)) {
-                panel.innerHTML = `⏰ <b>یادآوری:</b> ساعت پایان شیفت شما (${shiftEnd}) گذشته و هنوز خروجتان را ثبت نکرده‌اید! لطفاً از تب «حضور و غیاب» خروج بزنید.
+                const lateBy = nowMinutes - endMinutes;
+                panel.innerHTML = `⏰ <b>یادآوری:</b> ساعت پایان شیفت شما (${shiftEnd}) گذشته (حدود ${lateBy} دقیقه) و هنوز خروجتان را ثبت نکرده‌اید! لطفاً همین الان:
+                    <br>۱) روی تب «⏰ حضور و غیاب» بزنید
+                    <br>۲) در «نوع ثبت»، گزینه «🔴 ثبت خروج از شیفت» را انتخاب کنید
+                    <br>۳) عکس یا موقعیت مکانی را ثبت کنید و روی دکمه «ثبت در سیستم حضور و غیاب» بزنید
                     <button class="dismiss-alert-btn" onclick="dismissReminderBanner()">باشه، الان می‌زنم</button>`;
                 panel.style.display = 'block';
                 return;
@@ -2346,7 +2359,7 @@
             }
 
             if (editingProductId) {
-                const updateData = { code, name, category, container_capacity: capacity, stock, booth_stock: boothStock, min_stock, booth_min_stock, sell_price };
+                const updateData = { code, name, category, container_capacity: capacity, stock, booth_stock: boothStock, min_stock, booth_min_stock, sell_price, stock_confirmed_empty: false };
                 if (currentRole === 'admin') {
                     updateData.buy_price = buy_price;
                 }
@@ -2978,14 +2991,64 @@
             }
 
             if (blockedItems.length > 0) {
+                const unconfirmed = blockedItems.filter(p => !p.stock_confirmed_empty);
+                pendingMorningConfirmItems = unconfirmed.map(p => ({ id: p.id, name: p.name }));
+
+                if (unconfirmed.length > 0) {
+                    html += `<div class="checklist-box" style="border-color:#f59e0b; background:rgba(251,191,36,0.1);">
+                        <h3 style="color:#fbbf24;">⚠️ قبل از ادامه، این را تایید کن</h3>
+                        <p style="font-size:12px; color:#fde68a; margin:0 0 8px 0;">طبق سیستم، موجودی انبار اصلی برای کالاهای زیر «صفر» ثبت شده:</p>
+                        ${unconfirmed.map(p => `<div class="checklist-item"><span><b>${p.name}</b></span></div>`).join('')}
+                        <div class="hint" style="margin-top:6px;">لطفاً قبل از هر کاری مطمئن شو:<br>۱) واقعاً داخل انبار چیزی برای پرکردن غرفه نمانده باشد (یک نگاه دوباره به انبار بینداز)<br>۲) عددهایی که برای موجودی انبار اصلی و موجودی غرفه این کالاها ثبت شده، درست و دقیق باشند (نه از روی حدس)</div>
+                        <button class="row-btn edit-btn" style="width:100%; margin-top:8px;" onclick="handleMorningStockConfirm(false)">❌ نه، ببخشید حواسم نبود</button>
+                        <button class="row-btn confirm-btn" style="width:100%; margin-top:6px;" onclick="handleMorningStockConfirm(true)">✅ مطمئنم، واقعاً هردو خالی است</button>
+                    </div>`;
+                }
+
                 html += `<div class="checklist-box" style="border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.08);">
                     <h3 style="color:#fca5a5;">⛔ نیاز به سفارش (انبار اصلی خالی است، فعلاً قابل شارژ نیست)</h3>
-                    ${blockedItems.map(p => `<div class="checklist-item"><span><b>${p.name}</b></span><span style="color:#fca5a5; font-size:11px;">موجودی غرفه: ${(p.booth_stock || 0).toLocaleString('fa-IR')} کیلو</span></div>`).join('')}
-                    <div class="hint" style="margin-top:4px;">این کالاها نیازی به شارژ توسط شما ندارند؛ وقتی موجودی غرفه‌شان کم بشود، به‌صورت خودکار به مدیر هشدار سفارش داده می‌شود.</div>
+                    ${blockedItems.map(p => `<div class="checklist-item"><span><b>${p.name}</b> ${p.stock_confirmed_empty ? '<span style="color:#34d399; font-size:10px;">(تایید شده ✅)</span>' : '<span style="color:#fbbf24; font-size:10px;">(در انتظار تایید شما)</span>'}</span><span style="color:#fca5a5; font-size:11px;">موجودی غرفه: ${(p.booth_stock || 0).toLocaleString('fa-IR')} کیلو</span></div>`).join('')}
+                    <div class="hint" style="margin-top:4px;">تا وقتی این کالاها را تایید نکنی، هشدار خالی بودن آن‌ها برای مدیر ارسال نمی‌شود.</div>
                 </div>`;
+            } else {
+                pendingMorningConfirmItems = [];
             }
 
             box.innerHTML = html;
+        }
+
+        async function handleMorningStockConfirm(isSure) {
+            if (!pendingMorningConfirmItems || pendingMorningConfirmItems.length === 0) return;
+
+            if (!isSure) {
+                alert('باشه، مشکلی نیست 🙂\nلطفاً همین الان به تب «📦 موجودی انبار» و «🧊 وضعیت یخچال غرفه» برو و مطمئن شو که عدد موجودی انبار اصلی و موجودی غرفه این کالاها را درست و دقیق ثبت کرده‌ای. بعد از اصلاح، دوباره سر بزن تا این پیام بررسی شود.');
+                return;
+            }
+
+            const sure = confirm('با تایید این گزینه، بلافاصله به مدیر پیام داده می‌شود که این کالاها واقعاً در انبار اصلی و غرفه هردو تمام شده‌اند. مطمئنی؟');
+            if (!sure) return;
+
+            const ids = pendingMorningConfirmItems.map(i => i.id);
+            const names = pendingMorningConfirmItems.map(i => i.name).join('، ');
+
+            const { error } = await _supabase.from('products').update({ stock_confirmed_empty: true }).in('id', ids);
+            if (error) {
+                alert('❌ خطا در ثبت تایید: ' + error.message + '\n\nمطمئن شوید ستون stock_confirmed_empty در جدول products ساخته شده است.');
+                return;
+            }
+
+            const now = new Date();
+            await _supabase.from('messages').insert([{
+                sender: currentUserLabel || 'فروشنده صبح',
+                recipient: "admin",
+                title: `🚨 تایید شد: کالا(ها) در انبار و غرفه هردو خالی است`,
+                body: `فروشنده صبح تایید کرد که کالاهای زیر واقعاً هم در انبار اصلی و هم در غرفه به اتمام رسیده‌اند و آماده هشدار سفارش هستند:\n${names}\n\nلطفاً هرچه سریع‌تر سفارش بده.`,
+                created_at: now.toISOString()
+            }]);
+
+            alert('✅ به مدیر اطلاع داده شد.');
+            loadBoothInventory();
+            if (currentRole === 'admin') checkLowStockAlertNoWeight();
         }
 
         async function loadBoothInventory() {
@@ -3262,7 +3325,7 @@
 
             if (product) {
                 const newStock = Number(((product.stock || 0) + actualQty).toFixed(3));
-                await _supabase.from('products').update({ stock: newStock, low_stock_alert_since: null }).eq('id', product.id);
+                await _supabase.from('products').update({ stock: newStock, low_stock_alert_since: null, stock_confirmed_empty: false }).eq('id', product.id);
             }
 
             const { error } = await _supabase.from('purchase_orders').update({
