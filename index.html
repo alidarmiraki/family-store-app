@@ -487,6 +487,22 @@
 
         <div id="sCalcDisplay" class="price-display">مبلغ کل فاکتور: ۰ تومان (قیمت واحد: ۰ تومان)</div>
 
+        <div class="tare-box" style="margin-top:14px;">
+            <label style="margin-top:0; display:flex; align-items:center; gap:6px;">
+                <input type="checkbox" id="sLateToggle" style="width:auto;" onchange="toggleLateSale('instore')"> ⏰ این فروش مربوط به الان نیست (ثبت با تاخیر برای روز قبل)
+            </label>
+            <div id="sLateBox" style="display:none; margin-top:8px;">
+                <label>تاریخ واقعی این فروش:</label>
+                <input type="date" id="sLateDate">
+                <label>این فروش مربوط به کدام شیفت است؟</label>
+                <select id="sLateShift">
+                    <option value="morning">🌅 شیفت صبح</option>
+                    <option value="evening">🌙 شیفت شب</option>
+                </select>
+                <div class="hint">با انتخاب این گزینه، فاکتور با تاریخ و شیفت انتخاب‌شده در گزارش‌ها ثبت می‌شود، نه امروز.</div>
+            </div>
+        </div>
+
         <button class="submit-btn" id="saleSubmitBtn" onclick="submitSale('instore')">ثبت فاکتور فروش حضوری</button>
         <button class="cancel-edit-btn" id="cancelSaleEditBtn" onclick="cancelSaleEdit('instore')">لغو ویرایش و بازگشت به حالت ثبت فروش جدید</button>
 
@@ -535,6 +551,22 @@
 
         <div id="seCalcDisplay" class="price-display">مبلغ کل فاکتور: ۰ تومان (قیمت واحد: ۰ تومان)</div>
 
+        <div class="tare-box" style="margin-top:14px;">
+            <label style="margin-top:0; display:flex; align-items:center; gap:6px;">
+                <input type="checkbox" id="seLateToggle" style="width:auto;" onchange="toggleLateSale('ekala')"> ⏰ این فروش مربوط به الان نیست (ثبت با تاخیر برای روز قبل)
+            </label>
+            <div id="seLateBox" style="display:none; margin-top:8px;">
+                <label>تاریخ واقعی این فروش:</label>
+                <input type="date" id="seLateDate">
+                <label>این فروش مربوط به کدام شیفت است؟</label>
+                <select id="seLateShift">
+                    <option value="morning">🌅 شیفت صبح</option>
+                    <option value="evening">🌙 شیفت شب</option>
+                </select>
+                <div class="hint">با انتخاب این گزینه، فاکتور با تاریخ و شیفت انتخاب‌شده در گزارش‌ها ثبت می‌شود، نه امروز.</div>
+            </div>
+        </div>
+
         <button class="submit-btn" id="saleEkalaSubmitBtn" onclick="submitSale('ekala')">ثبت فاکتور فروش اکالا</button>
         <button class="cancel-edit-btn" id="cancelSaleEkalaEditBtn" onclick="cancelSaleEdit('ekala')">لغو ویرایش و بازگشت به حالت ثبت فروش جدید</button>
 
@@ -582,6 +614,22 @@
         <input type="number" id="ssQty" step="0.001" placeholder="مثلاً 1.5" oninput="calculateSalePriceAuto('sausage')">
 
         <div id="ssCalcDisplay" class="price-display">مبلغ کل فاکتور: ۰ تومان (قیمت واحد: ۰ تومان)</div>
+
+        <div class="tare-box" style="margin-top:14px;">
+            <label style="margin-top:0; display:flex; align-items:center; gap:6px;">
+                <input type="checkbox" id="ssLateToggle" style="width:auto;" onchange="toggleLateSale('sausage')"> ⏰ این فروش مربوط به الان نیست (ثبت با تاخیر برای روز قبل)
+            </label>
+            <div id="ssLateBox" style="display:none; margin-top:8px;">
+                <label>تاریخ واقعی این فروش:</label>
+                <input type="date" id="ssLateDate">
+                <label>این فروش مربوط به کدام شیفت است؟</label>
+                <select id="ssLateShift">
+                    <option value="morning">🌅 شیفت صبح</option>
+                    <option value="evening">🌙 شیفت شب</option>
+                </select>
+                <div class="hint">با انتخاب این گزینه، فاکتور با تاریخ و شیفت انتخاب‌شده در گزارش‌ها ثبت می‌شود، نه امروز.</div>
+            </div>
+        </div>
 
         <button class="submit-btn" id="saleSausageSubmitBtn" onclick="submitSale('sausage')">ثبت فاکتور فروش سوسیس و کالباس</button>
         <button class="cancel-edit-btn" id="cancelSaleSausageEditBtn" onclick="cancelSaleEdit('sausage')">لغو ویرایش و بازگشت به حالت ثبت فروش جدید</button>
@@ -702,6 +750,11 @@
 
         <!-- چک‌لیست شارژ صبحگاهی، فقط برای فروشنده صبح ساخته می‌شود -->
         <div id="morningChecklistBox"></div>
+
+        <div class="mode-selector">
+            <button class="mode-btn active" id="boothCatBtn_general" onclick="switchBoothCategory('general')">🧀 لبنیات و ترشیجات</button>
+            <button class="mode-btn" id="boothCatBtn_sausage" onclick="switchBoothCategory('sausage')">🌭 سوسیس و کالباس</button>
+        </div>
 
         <div class="search-box"><input type="text" id="boothSearchInput" dir="auto" placeholder="🔎 جستجوی نام کالا در یخچال غرفه..." oninput="filterBoothTable()"></div>
 
@@ -827,6 +880,10 @@
     <div id="inventoryTab" class="card">
         <h2>📦 لیست کالاهای انبار</h2>
         <div class="low-stock-banner" id="lowStockBanner"></div>
+        <div class="mode-selector">
+            <button class="mode-btn active" id="invCatBtn_general" onclick="switchInventoryCategory('general')">🧀 لبنیات و ترشیجات</button>
+            <button class="mode-btn" id="invCatBtn_sausage" onclick="switchInventoryCategory('sausage')">🌭 سوسیس و کالباس</button>
+        </div>
         <div class="search-box"><input type="text" id="inventorySearchInput" dir="auto" placeholder="🔎 جستجوی نام کالا در انبار..." oninput="filterInventoryTable()"></div>
         <table>
             <thead>
@@ -1079,18 +1136,21 @@
                 name: 'sName', qtyUnitName: 'sQtyUnit', qty: 'sQty', qtyLabel: 'sQtyLabel',
                 calc: 'sCalcDisplay', submitBtn: 'saleSubmitBtn', formTitle: 'saleFormTitle',
                 cancelBtn: 'cancelSaleEditBtn', table: 'recentSalesTable', pageIndicator: 'salesPageIndicator',
+                lateToggle: 'sLateToggle', lateBox: 'sLateBox', lateDate: 'sLateDate', lateShift: 'sLateShift',
                 defaultFormTitle: '🛍️ ثبت فروش حضوری روزانه', defaultSubmitText: 'ثبت فاکتور فروش حضوری'
             },
             ekala: {
                 name: 'seName', qtyUnitName: 'seQtyUnit', qty: 'seQty', qtyLabel: 'seQtyLabel',
                 calc: 'seCalcDisplay', submitBtn: 'saleEkalaSubmitBtn', formTitle: 'saleEkalaFormTitle',
                 cancelBtn: 'cancelSaleEkalaEditBtn', table: 'recentSalesTableEkala', pageIndicator: 'salesPageIndicatorEkala',
+                lateToggle: 'seLateToggle', lateBox: 'seLateBox', lateDate: 'seLateDate', lateShift: 'seLateShift',
                 defaultFormTitle: '🛒 ثبت فروش اکالا', defaultSubmitText: 'ثبت فاکتور فروش اکالا'
             },
             sausage: {
                 name: 'ssName', qtyUnitName: 'ssQtyUnit', qty: 'ssQty', qtyLabel: 'ssQtyLabel',
                 calc: 'ssCalcDisplay', submitBtn: 'saleSausageSubmitBtn', formTitle: 'saleSausageFormTitle',
                 cancelBtn: 'cancelSaleSausageEditBtn', table: 'recentSalesTableSausage', pageIndicator: 'salesPageIndicatorSausage',
+                lateToggle: 'ssLateToggle', lateBox: 'ssLateBox', lateDate: 'ssLateDate', lateShift: 'ssLateShift',
                 defaultFormTitle: '🌭 ثبت فروش سوسیس و کالباس', defaultSubmitText: 'ثبت فاکتور فروش سوسیس و کالباس'
             }
         };
@@ -1948,15 +2008,32 @@
             let delayMinutes = null;
             let exitDiffMinutes = null;
 
-            if (type === 'entry') {
-                const [hNow, mNow] = timeStrNow.split(':').map(Number);
-                const [hTarget, mTarget] = targetStartTime.split(':').map(Number);
-                delayMinutes = (hNow * 60 + mNow) - (hTarget * 60 + mTarget);
-            } else if (type === 'exit') {
-                const [hNow, mNow] = timeStrNow.split(':').map(Number);
-                const [hTarget, mTarget] = targetEndTime.split(':').map(Number);
-                // مثبت یعنی دیرتر از ساعت مقرر رفته (اشکالی ندارد)، منفی یعنی زودتر رفته
-                exitDiffMinutes = (hNow * 60 + mNow) - (hTarget * 60 + mTarget);
+            try {
+                if (type === 'entry') {
+                    const [hNow, mNow] = timeStrNow.split(':').map(Number);
+                    const [hTarget, mTarget] = (targetStartTime || '08:00').split(':').map(Number);
+                    const computed = (hNow * 60 + mNow) - (hTarget * 60 + mTarget);
+                    delayMinutes = Number.isFinite(computed) ? computed : 0;
+                } else if (type === 'exit') {
+                    const [hNow, mNow] = timeStrNow.split(':').map(Number);
+                    const [hTarget, mTarget] = (targetEndTime || '15:30').split(':').map(Number);
+                    // مثبت یعنی دیرتر از ساعت مقرر رفته (اشکالی ندارد)، منفی یعنی زودتر رفته
+                    const computed = (hNow * 60 + mNow) - (hTarget * 60 + mTarget);
+                    exitDiffMinutes = Number.isFinite(computed) ? computed : 0;
+                }
+            } catch (calcErr) {
+                console.warn('خطا در محاسبه تاخیر/زودرفتن، مقدار صفر در نظر گرفته شد', calcErr);
+                if (type === 'entry') delayMinutes = 0;
+                if (type === 'exit') exitDiffMinutes = 0;
+            }
+
+            // اگر واقعاً دیرتر از ساعت پایان شیفت مانده، این مقدار را به‌عنوان اضافه‌کاری خودکار
+            // حساب می‌کنیم (حتی اگر کاربر چیزی در کادر اضافه‌کاری ننوشته یا کمتر نوشته باشد)
+            if (type === 'exit' && exitDiffMinutes !== null && exitDiffMinutes > 0) {
+                const autoOvertimeHours = Number((exitDiffMinutes / 60).toFixed(2));
+                if (autoOvertimeHours > overtimeHours) {
+                    overtimeHours = autoOvertimeHours;
+                }
             }
 
             let photoUrl = null;
@@ -1979,8 +2056,13 @@
 
                     photoUrl = publicUrlData ? publicUrlData.publicUrl : null;
                 } catch (uploadErr) {
-                    alert('❌ خطا در آپلود عکس: ' + uploadErr.message + '\n\nاگر این خطا تکرار شد، مطمئن شوید باکت "attendance-photos" در Supabase Storage ساخته شده و عمومی (Public) است.');
                     if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'ثبت در سیستم حضور و غیاب'; }
+                    alert(`❌ آپلود عکس با مشکل مواجه شد و ثبت انجام نشد.\n\n📶 دلیل احتمالی: اینترنت شما (وای‌فای یا موبایل‌دیتا) در همین لحظه ضعیف یا قطع است.\n\nلطفاً:\n۱) آنتن یا وای‌فای خودتان را چک کنید و اگر می‌شود به یک سیگنال قوی‌تر وصل شوید\n۲) دوباره روی دکمه «ثبت در سیستم حضور و غیاب» بزنید\n۳) اگر باز هم درست نشد، می‌توانید به‌جای عکس از گزینه «📍 موقعیت مکانی» استفاده کنید که حجم کمتری دارد\n\n(جزئیات فنی: ${uploadErr.message})`);
+                    const wantsNotify = confirm('آیا می‌خواهید همین الان یک پیام برای مدیر ارسال شود که در ثبت حضور/غیاب با مشکل اینترنت مواجه شده‌اید تا مدیر در جریان باشد؟');
+                    if (wantsNotify) {
+                        await notifyAdminAboutAttendanceIssue('خطا در آپلود عکس (احتمالاً به دلیل اینترنت ضعیف): ' + uploadErr.message);
+                        alert('✅ پیام برای مدیر ارسال شد.');
+                    }
                     return;
                 }
                 if (submitBtn) { submitBtn.innerText = '⏳ در حال ثبت...'; }
@@ -2057,7 +2139,28 @@
                 locStatus.innerText = '';
                 checkAttendanceReminders();
             } else {
-                alert('خطا در ثبت حضور و غیاب: ' + error.message);
+                alert(`❌ ثبت حضور و غیاب ذخیره نشد.\n\n📶 دلیل احتمالی: قطعی یا ضعف اینترنت شما در این لحظه بوده است.\n\nلطفاً چند ثانیه صبر کنید و دوباره روی دکمه «ثبت در سیستم حضور و غیاب» بزنید. اگر چند بار امتحان کردید و باز هم ثبت نشد، می‌توانید به مدیر اطلاع دهید.\n\n(جزئیات فنی: ${error.message})`);
+                const wantsNotify = confirm('آیا می‌خواهید همین الان یک پیام برای مدیر ارسال شود که در ثبت حضور/غیاب مشکل داشته‌اید؟');
+                if (wantsNotify) {
+                    await notifyAdminAboutAttendanceIssue('خطا در ذخیره رکورد حضور و غیاب: ' + error.message);
+                    alert('✅ پیام برای مدیر ارسال شد.');
+                }
+            }
+        }
+
+        // --- ارسال خودکار پیام به مدیر وقتی ثبت حضور و غیاب با خطا مواجه می‌شود ---
+        async function notifyAdminAboutAttendanceIssue(reasonText) {
+            try {
+                const now = new Date();
+                await _supabase.from('messages').insert([{
+                    sender: currentUserLabel || 'کاربر',
+                    recipient: 'admin',
+                    title: '⚠️ مشکل در ثبت حضور و غیاب',
+                    body: `${currentUserLabel} هنگام تلاش برای ثبت حضور/غیاب با خطا مواجه شد و ثبت با موفقیت انجام نشد.\nجزئیات: ${reasonText}\nزمان تلاش: ${getTehranFullDateTimeString(now)}\n\nلطفاً از او بخواهید دوباره با اینترنت بهتر تلاش کند، یا اگر لازم بود ورود/خروج او را به‌صورت دستی پیگیری کنید.`,
+                    created_at: now.toISOString()
+                }]);
+            } catch (e) {
+                console.warn('خطا در ارسال پیام هشدار به مدیر', e);
             }
         }
 
@@ -2366,7 +2469,7 @@
                 const { error } = await _supabase.from('products').update(updateData).eq('id', editingProductId);
 
                 if (error) {
-                    alert('❌ خطا در به‌روزرسانی: ' + error.message);
+                    alert(buildProductSaveErrorMessage(error, code));
                 } else {
                     alert('✅ کالا با موفقیت به‌روزرسانی شد');
                     cancelEdit();
@@ -2380,13 +2483,27 @@
                 }]);
 
                 if (error) {
-                    alert('❌ خطا در ذخیره: ' + error.message + '\n\nاگر پیام درباره ستون category است، آن را (نوع text، پیش‌فرض general) در جدول products در Supabase اضافه کنید.');
+                    alert(buildProductSaveErrorMessage(error, code));
                 } else {
                     alert('✅ کالای جدید با موفقیت ذخیره شد');
                     clearProductForm();
                     loadProductDatalist();
                 }
             }
+        }
+
+        function buildProductSaveErrorMessage(error, code) {
+            const msg = (error && error.message) ? error.message : 'خطای نامشخص';
+
+            if (msg.includes('duplicate key') && msg.includes('products_code_key')) {
+                return `❌ کد کالای «${code}» از قبل در انبار وجود دارد و هر کد باید یکتا باشد.\n\nراه‌حل:\n۱) یک کد دیگر برای این کالا انتخاب کنید، یا\n۲) اگر می‌خواهید کالای موجود را ویرایش کنید، از تب «📦 موجودی انبار» روی دکمه «ویرایش» همان کالا بزنید (نه ثبت کالای جدید با همان کد).`;
+            }
+
+            if (msg.includes('column') && msg.includes('does not exist')) {
+                return `❌ خطا در ذخیره: ${msg}\n\nظاهراً یک ستون در جدول products در Supabase وجود ندارد. فایل‌های SQL که قبلاً برایتان ارسال شده را دوباره در Supabase -> SQL Editor اجرا کنید تا همه ستون‌های لازم ساخته شوند.`;
+            }
+
+            return `❌ خطا در ذخیره کالا: ${msg}\n\nاگر این خطا تکرار شد، اتصال اینترنت خود را چک کنید یا دوباره تلاش کنید.`;
         }
 
         function clearProductForm() {
@@ -2468,12 +2585,71 @@
             }
         }
 
+        function toggleLateSale(type) {
+            const ids = SALE_FORM_IDS[type];
+            const toggle = document.getElementById(ids.lateToggle);
+            const box = document.getElementById(ids.lateBox);
+            box.style.display = toggle.checked ? 'block' : 'none';
+            if (toggle.checked) {
+                const dateInput = document.getElementById(ids.lateDate);
+                if (!dateInput.value) {
+                    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+                    dateInput.value = getTehranISODate(yesterday);
+                }
+            }
+        }
+
+        function resetLateSaleFields(type) {
+            const ids = SALE_FORM_IDS[type];
+            const toggle = document.getElementById(ids.lateToggle);
+            const box = document.getElementById(ids.lateBox);
+            if (toggle) toggle.checked = false;
+            if (box) box.style.display = 'none';
+            const dateInput = document.getElementById(ids.lateDate);
+            if (dateInput) dateInput.value = '';
+            const shiftInput = document.getElementById(ids.lateShift);
+            if (shiftInput) shiftInput.value = 'morning';
+        }
+
+        // تعیین اینکه یک فاکتور فروش متعلق به کدام شیفت است؛ اولویت با برچسب shift_label
+        // (که برای فاکتورهای ثبت‌شده با تاخیر استفاده می‌شود) و در غیر این صورت بر اساس نام فروشنده
+        function getSaleShiftKey(s) {
+            if (s.shift_label === 'morning') return 'morning';
+            if (s.shift_label === 'evening') return 'evening';
+            if (s.seller_name && s.seller_name.indexOf('فروشنده صبح') === 0) return 'morning';
+            if (s.seller_name && s.seller_name.indexOf('فروشنده شب') === 0) return 'evening';
+            if (s.seller_name && s.seller_name.indexOf('مدیر') === 0) return 'admin';
+            return null;
+        }
+
         async function submitSale(type) {
             const ids = SALE_FORM_IDS[type];
             const typeLabel = (type === 'ekala') ? 'اکالا' : (type === 'sausage' ? 'سوسیس و کالباس' : 'حضوری');
             const inputVal = document.getElementById(ids.name).value.trim();
             const qty = getSaleQtyInKg(type);
             const editing = editingSale[type];
+
+            const isLateEntry = document.getElementById(ids.lateToggle).checked;
+            let lateDateVal = null;
+            let lateShiftVal = null;
+
+            if (isLateEntry) {
+                if (editing.id) {
+                    alert('⛔ ثبت با تاخیر فقط برای فاکتور جدید ممکن است، نه در حالت ویرایش. ابتدا روی «لغو ویرایش» بزنید.');
+                    return;
+                }
+                lateDateVal = document.getElementById(ids.lateDate).value;
+                lateShiftVal = document.getElementById(ids.lateShift).value;
+                if (!lateDateVal) {
+                    alert('لطفاً تاریخ واقعی این فروش را انتخاب کنید.');
+                    return;
+                }
+                const todayISO = getTehranISODate(new Date());
+                if (lateDateVal > todayISO) {
+                    alert('⛔ تاریخ انتخاب‌شده نمی‌تواند در آینده باشد.');
+                    return;
+                }
+            }
 
             if (!inputVal || isNaN(qty) || qty <= 0) {
                 alert('لطفاً نام کالا و وزن معتبر را وارد کنید');
@@ -2577,8 +2753,9 @@
 
             await _supabase.from('products').update({ booth_stock: newBoothStock }).eq('id', product.id);
 
-            const now = new Date();
+            const now = isLateEntry ? new Date(`${lateDateVal}T12:00:00+03:30`) : new Date();
             const fullTimeText = getTehranFullDateTimeString(now);
+            const shiftLabelToSave = isLateEntry ? lateShiftVal : null;
 
             await _supabase.from('sales').insert([{
                 product_code: product.code,
@@ -2586,15 +2763,22 @@
                 sell_price: calculatedPrice,
                 seller_name: currentUserLabel,
                 sale_type: type,
+                shift_label: shiftLabelToSave,
                 created_at: now.toISOString()
             }]);
 
-            alert(`✅ فروش ${typeLabel} «${product.name}» در ساعت ${getTehranTimeString(now)} ثبت شد.\n💰 مبلغ کل فاکتور: ${calculatedPrice.toLocaleString('fa-IR')} تومان\n🧊 موجودی جدید ظرف غرفه: ${newBoothStock} کیلوگرم\n⏱️ زمان دقیق: ${fullTimeText}`);
+            if (isLateEntry) {
+                const shiftLabelText = (lateShiftVal === 'morning') ? 'شیفت صبح' : 'شیفت شب';
+                alert(`✅ فروش ${typeLabel} «${product.name}» با تاریخ ${lateDateVal} برای ${shiftLabelText} ثبت شد (ثبت با تاخیر).\n💰 مبلغ کل فاکتور: ${calculatedPrice.toLocaleString('fa-IR')} تومان\n🧊 موجودی جدید ظرف غرفه: ${newBoothStock} کیلوگرم`);
+            } else {
+                alert(`✅ فروش ${typeLabel} «${product.name}» در ساعت ${getTehranTimeString(now)} ثبت شد.\n💰 مبلغ کل فاکتور: ${calculatedPrice.toLocaleString('fa-IR')} تومان\n🧊 موجودی جدید ظرف غرفه: ${newBoothStock} کیلوگرم\n⏱️ زمان دقیق: ${fullTimeText}`);
+            }
 
             document.getElementById(ids.name).value = '';
             document.getElementById(ids.qty).value = '';
             document.querySelector(`input[name="${ids.qtyUnitName}"][value="kg"]`).checked = true;
             onSaleUnitChange(type);
+            resetLateSaleFields(type);
 
             loadRecentSales(type);
             checkCriticalAfterSale(product, newBoothStock);
@@ -2727,6 +2911,7 @@
             }
 
             editingSale[type] = { id: sale.id, oldQty: Number(sale.quantity), productCode: sale.product_code, editCount: currentEditCount };
+            resetLateSaleFields(type);
 
             const product = cachedProductsList.find(p => p.code === sale.product_code);
             document.getElementById(ids.name).value = product ? product.name : sale.product_code;
@@ -2754,6 +2939,7 @@
             document.getElementById(ids.formTitle).innerText = ids.defaultFormTitle;
             document.getElementById(ids.submitBtn).innerText = ids.defaultSubmitText;
             document.getElementById(ids.cancelBtn).style.display = 'none';
+            resetLateSaleFields(type);
         }
 
         async function deleteSale(type, saleId) {
@@ -3051,25 +3237,41 @@
             if (currentRole === 'admin') checkLowStockAlertNoWeight();
         }
 
+        let boothCategoryFilter = 'general';
+
         async function loadBoothInventory() {
             const { data: products } = await _supabase.from('products').select('*');
             cachedBoothFull = sortProductsAlpha(products || []);
 
-            renderMorningChecklist(cachedBoothFull);
-
             const searchInput = document.getElementById('boothSearchInput');
             if (searchInput) searchInput.value = '';
 
-            renderBoothRows(cachedBoothFull);
+            renderBoothCategoryView();
+        }
+
+        function switchBoothCategory(cat) {
+            boothCategoryFilter = cat;
+            document.getElementById('boothCatBtn_general').classList.toggle('active', cat === 'general');
+            document.getElementById('boothCatBtn_sausage').classList.toggle('active', cat === 'sausage');
+            const searchInput = document.getElementById('boothSearchInput');
+            if (searchInput) searchInput.value = '';
+            renderBoothCategoryView();
+        }
+
+        function renderBoothCategoryView() {
+            const byCategory = cachedBoothFull.filter(p => (boothCategoryFilter === 'sausage') ? (p.category === 'sausage') : (p.category !== 'sausage'));
+            renderMorningChecklist(byCategory);
+            renderBoothRows(byCategory);
         }
 
         function filterBoothTable() {
             const term = (document.getElementById('boothSearchInput').value || '').trim();
+            const byCategory = cachedBoothFull.filter(p => (boothCategoryFilter === 'sausage') ? (p.category === 'sausage') : (p.category !== 'sausage'));
             if (!term) {
-                renderBoothRows(cachedBoothFull);
+                renderBoothRows(byCategory);
                 return;
             }
-            const filtered = cachedBoothFull.filter(p => (p.name || '').includes(term));
+            const filtered = byCategory.filter(p => (p.name || '').includes(term));
             renderBoothRows(filtered);
         }
 
@@ -3345,6 +3547,8 @@
             }
         }
 
+        let inventoryCategoryFilter = 'general';
+
         async function loadInventory() {
             const { data: products } = await _supabase
                 .from('products')
@@ -3361,8 +3565,26 @@
             if (showBuyPrice) headerRow.innerHTML += '<th>قیمت خرید</th>';
             if (canManage) headerRow.innerHTML += '<th>عملیات</th>';
 
+            const searchInput = document.getElementById('inventorySearchInput');
+            if (searchInput) searchInput.value = '';
+
+            renderInventoryCategoryView();
+        }
+
+        function switchInventoryCategory(cat) {
+            inventoryCategoryFilter = cat;
+            document.getElementById('invCatBtn_general').classList.toggle('active', cat === 'general');
+            document.getElementById('invCatBtn_sausage').classList.toggle('active', cat === 'sausage');
+            const searchInput = document.getElementById('inventorySearchInput');
+            if (searchInput) searchInput.value = '';
+            renderInventoryCategoryView();
+        }
+
+        function renderInventoryCategoryView() {
+            const byCategory = cachedInventoryFull.filter(p => (inventoryCategoryFilter === 'sausage') ? (p.category === 'sausage') : (p.category !== 'sausage'));
+
             const banner = document.getElementById('lowStockBanner');
-            const lowStockItems = cachedInventoryFull.filter(p => p.stock <= p.min_stock);
+            const lowStockItems = byCategory.filter(p => p.stock <= p.min_stock);
             if (currentRole === 'admin' && lowStockItems.length > 0) {
                 banner.innerHTML = '⚠️ ' + lowStockItems.length + ' کالا به نقطه سفارش رسیده یا تمام شده:<br>' +
                     lowStockItems.map(p => '• ' + p.name + ' (موجودی انبار: ' + p.stock + ' کیلو)').join('<br>');
@@ -3371,19 +3593,17 @@
                 banner.style.display = 'none';
             }
 
-            const searchInput = document.getElementById('inventorySearchInput');
-            if (searchInput) searchInput.value = '';
-
-            renderInventoryRows(cachedInventoryFull);
+            renderInventoryRows(byCategory);
         }
 
         function filterInventoryTable() {
             const term = (document.getElementById('inventorySearchInput').value || '').trim();
+            const byCategory = cachedInventoryFull.filter(p => (inventoryCategoryFilter === 'sausage') ? (p.category === 'sausage') : (p.category !== 'sausage'));
             if (!term) {
-                renderInventoryRows(cachedInventoryFull);
+                renderInventoryRows(byCategory);
                 return;
             }
-            const filtered = cachedInventoryFull.filter(p => (p.name || '').includes(term) || (p.code || '').includes(term));
+            const filtered = byCategory.filter(p => (p.name || '').includes(term) || (p.code || '').includes(term));
             renderInventoryRows(filtered);
         }
 
@@ -3439,7 +3659,7 @@
 
             const { data: sales, error } = await _supabase
                 .from('sales')
-                .select('product_code, quantity, sell_price, created_at, seller_name, sale_type')
+                .select('product_code, quantity, sell_price, created_at, seller_name, sale_type, shift_label')
                 .order('created_at', { ascending: false });
 
             if (error) {
@@ -3513,10 +3733,7 @@
                 };
 
                 (sales || []).forEach(s => {
-                    let key = null;
-                    if (s.seller_name && s.seller_name.indexOf('فروشنده صبح') === 0) key = 'morning';
-                    else if (s.seller_name && s.seller_name.indexOf('فروشنده شب') === 0) key = 'evening';
-                    else if (s.seller_name && s.seller_name.indexOf('مدیر') === 0) key = 'admin';
+                    const key = getSaleShiftKey(s);
                     if (!key) return;
 
                     const price = Number(s.sell_price) || 0;
@@ -3633,7 +3850,7 @@
 
             const { data: sales, error } = await _supabase
                 .from('sales')
-                .select('product_code, quantity, sell_price, created_at, seller_name, sale_type')
+                .select('product_code, quantity, sell_price, created_at, seller_name, sale_type, shift_label')
                 .order('created_at', { ascending: false });
 
             if (error) {
@@ -3642,7 +3859,7 @@
             }
 
             const filtered = (sales || []).filter(s => {
-                if (!s.seller_name || s.seller_name.indexOf(rolePrefix) !== 0) return false;
+                if (getSaleShiftKey(s) !== key) return false;
                 const itemISODate = getTehranISODate(new Date(s.created_at));
                 return itemISODate >= startDateStr && itemISODate <= endDateStr;
             });
