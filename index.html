@@ -419,9 +419,120 @@
             text-align: center;
             font-size: 11px !important;
         }
+
+        /* --- سیستم اعلان (Toast) و تاییدیه سفارشی --- */
+        #toastContainer {
+            position: fixed;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: min(92vw, 420px);
+            pointer-events: none;
+        }
+        .toast-item {
+            background: rgba(15, 23, 42, 0.98);
+            border: 1px solid #334155;
+            border-right: 4px solid #38bdf8;
+            border-radius: 12px;
+            padding: 14px 34px 14px 14px;
+            font-size: 13px;
+            line-height: 1.9;
+            color: #f8fafc;
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+            white-space: pre-line;
+            text-align: right;
+            pointer-events: auto;
+            position: relative;
+            animation: toastIn 0.22s ease-out;
+        }
+        .toast-item.success { border-right-color: #10b981; }
+        .toast-item.error { border-right-color: #ef4444; }
+        .toast-item.warning { border-right-color: #f59e0b; }
+        .toast-close {
+            position: absolute;
+            top: 8px;
+            left: 10px;
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 15px;
+            cursor: pointer;
+            line-height: 1;
+            padding: 2px;
+        }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        #confirmOverlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.65);
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        #confirmOverlay.active { display: flex; }
+        .confirm-box {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 20px;
+            max-width: 400px;
+            width: 100%;
+            text-align: right;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        }
+        .confirm-box p {
+            font-size: 14px;
+            line-height: 1.9;
+            color: #f8fafc;
+            white-space: pre-line;
+            margin: 0 0 18px 0;
+        }
+        .confirm-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .confirm-actions button {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .confirm-btn-ok {
+            background: linear-gradient(90deg, #10b981, #059669);
+            color: #fff;
+        }
+        .confirm-btn-cancel {
+            background: #334155;
+            color: #e2e8f0;
+        }
     </style>
 </head>
 <body>
+
+    <!-- سیستم اعلان (Toast) و تاییدیه سفارشی، جایگزین alert()/confirm() پیش‌فرض مرورگر -->
+    <div id="toastContainer"></div>
+    <div id="confirmOverlay">
+        <div class="confirm-box">
+            <p id="confirmMessage"></p>
+            <div class="confirm-actions">
+                <button class="confirm-btn-cancel" id="confirmCancelBtn">انصراف</button>
+                <button class="confirm-btn-ok" id="confirmOkBtn">تایید</button>
+            </div>
+        </div>
+    </div>
+
 
     <!-- ساعت زنده و تاریخ شمسی -->
     <div class="header-clock" id="liveClock">در حال دریافت زمان دقیق ایران...</div>
@@ -1121,6 +1232,55 @@
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let cachedProductsList = [];
+
+        // --- سیستم اعلان (Toast) به‌جای showToast() پیش‌فرض مرورگر ---
+        function escapeHtmlForToast(text) {
+            return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        function showToast(message, type) {
+            const text = String(message);
+            if (!type) {
+                if (text.indexOf('✅') === 0) type = 'success';
+                else if (text.indexOf('❌') === 0 || text.indexOf('⛔') === 0) type = 'error';
+                else if (text.indexOf('⚠️') === 0) type = 'warning';
+                else type = 'info';
+            }
+            const container = document.getElementById('toastContainer');
+            if (!container) { window.alert(text); return; }
+            const el = document.createElement('div');
+            el.className = 'toast-item ' + type;
+            el.innerHTML = '<button class="toast-close" onclick="this.parentElement.remove()">✕</button>' + escapeHtmlForToast(text);
+            container.appendChild(el);
+            const duration = Math.min(14000, Math.max(4500, text.length * 65));
+            setTimeout(() => { if (el.parentElement) el.remove(); }, duration);
+        }
+
+        // --- تاییدیه سفارشی (Promise-based) به‌جای confirm() پیش‌فرض مرورگر ---
+        function showConfirm(message) {
+            return new Promise((resolve) => {
+                const overlay = document.getElementById('confirmOverlay');
+                const msgEl = document.getElementById('confirmMessage');
+                const okBtn = document.getElementById('confirmOkBtn');
+                const cancelBtn = document.getElementById('confirmCancelBtn');
+                if (!overlay || !msgEl || !okBtn || !cancelBtn) { resolve(window.confirm(message)); return; }
+
+                msgEl.innerText = message;
+                overlay.classList.add('active');
+
+                function cleanup(result) {
+                    overlay.classList.remove('active');
+                    okBtn.removeEventListener('click', onOk);
+                    cancelBtn.removeEventListener('click', onCancel);
+                    resolve(result);
+                }
+                function onOk() { cleanup(true); }
+                function onCancel() { cleanup(false); }
+
+                okBtn.addEventListener('click', onOk);
+                cancelBtn.addEventListener('click', onCancel);
+            });
+        }
         let currentRole = "";
         let currentUserLabel = "";
         let editingProductId = null;
@@ -1310,15 +1470,34 @@
                 return;
             }
 
-            const { data: user, error } = await _supabase
-                .from('users')
-                .select('*')
-                .eq('username', username)
-                .eq('password', password)
-                .maybeSingle();
+            let user = null;
 
-            if (error) {
-                errBox.innerText = '❌ خطا در برقراری ارتباط: ' + error.message;
+            // روش امن: بررسی نام‌کاربری/رمز از طریق تابع دیتابیس login_user
+            // که رمز عبور را به‌صورت هش‌شده (pgcrypto) مقایسه می‌کند و هرگز رمز خام
+            // یا هش رمز به مرورگر برنمی‌گردد.
+            const { data: secureResult, error: secureError } = await _supabase.rpc('login_user', {
+                p_username: username,
+                p_password: password
+            });
+
+            if (!secureError && secureResult && secureResult.length > 0) {
+                user = secureResult[0];
+            } else if (secureError && secureError.message && (secureError.message.includes('does not exist') || secureError.message.includes('login_user'))) {
+                // اگر هنوز فایل SQL امنیتی (fix_security_login.sql) در Supabase اجرا نشده،
+                // موقتاً با روش قدیمی وارد می‌شویم تا ورود کاربران قطع نشود.
+                // توصیه اکید: هرچه سریع‌تر آن فایل را اجرا کنید تا امنیت واقعی برقرار شود.
+                console.warn('تابع امن login_user یافت نشد؛ در حال استفاده موقت از روش قدیمی ورود.');
+                const { data: legacyUser, error: legacyErr } = await _supabase
+                    .from('users')
+                    .select('*')
+                    .eq('username', username)
+                    .eq('password', password)
+                    .maybeSingle();
+                if (!legacyErr && legacyUser) {
+                    user = legacyUser;
+                }
+            } else if (secureError) {
+                errBox.innerText = '❌ خطا در برقراری ارتباط: ' + secureError.message;
                 errBox.style.display = 'block';
                 return;
             }
@@ -1679,7 +1858,7 @@
             const now = new Date();
 
             if (!title || !body) {
-                return alert('لطفاً عنوان و متن پیام را وارد کنید.');
+                return showToast('لطفاً عنوان و متن پیام را وارد کنید.');
             }
 
             const { error } = await _supabase.from('messages').insert([{
@@ -1691,11 +1870,11 @@
             }]);
 
             if (!error) {
-                alert('✅ پیام شما با موفقیت برای مدیر ارسال شد.');
+                showToast('✅ پیام شما با موفقیت برای مدیر ارسال شد.');
                 document.getElementById('msgTitle').value = '';
                 document.getElementById('msgBody').value = '';
             } else {
-                alert('خطا در ارسال پیام: ' + error.message);
+                showToast('خطا در ارسال پیام: ' + error.message);
             }
         }
 
@@ -1707,7 +1886,7 @@
             const now = new Date();
 
             if (!title || !body) {
-                return alert('لطفاً عنوان و متن پیام را وارد کنید.');
+                return showToast('لطفاً عنوان و متن پیام را وارد کنید.');
             }
 
             const { error } = await _supabase.from('messages').insert([{
@@ -1720,11 +1899,11 @@
 
             if (!error) {
                 const targetLabel = (target === 'all') ? 'هر دو فروشنده' : target;
-                alert('✅ پیام برای ' + targetLabel + ' ارسال شد.');
+                showToast('✅ پیام برای ' + targetLabel + ' ارسال شد.');
                 document.getElementById('staffMsgTitle').value = '';
                 document.getElementById('staffMsgBody').value = '';
             } else {
-                alert('❌ خطا در ارسال پیام: ' + error.message + '\n\nاگر این خطا تکرار شد، مطمئن شوید ستون recipient در جدول messages داخل Supabase ساخته شده است.');
+                showToast('❌ خطا در ارسال پیام: ' + error.message + '\n\nاگر این خطا تکرار شد، مطمئن شوید ستون recipient در جدول messages داخل Supabase ساخته شده است.');
             }
         }
 
@@ -1789,9 +1968,9 @@
             }]);
 
             if (!error) {
-                alert('✅ تنظیمات شیفت‌ها با موفقیت ذخیره شد و برای همه کاربران فعال است.');
+                showToast('✅ تنظیمات شیفت‌ها با موفقیت ذخیره شد و برای همه کاربران فعال است.');
             } else {
-                alert('❌ خطا در ذخیره تنظیمات: ' + error.message + '\n\nمطمئن شوید جدول shift_settings در Supabase ساخته شده و ستون reminder_minutes را دارد.');
+                showToast('❌ خطا در ذخیره تنظیمات: ' + error.message + '\n\nمطمئن شوید جدول shift_settings در Supabase ساخته شده و ستون reminder_minutes را دارد.');
             }
         }
 
@@ -1966,14 +2145,14 @@
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    selectedPhotoDataUrl = e.target.result;
+                selectedPhotoDataUrl = e.target.result;
                     const img = document.getElementById('photoPreview');
                     img.src = selectedPhotoDataUrl;
                     img.style.display = 'block';
                 };
                 reader.onerror = function() {
                     selectedPhotoDataUrl = null;
-                    alert('❌ خطا در خواندن عکس انتخاب‌شده. لطفاً دوباره عکس بگیرید یا فایل دیگری انتخاب کنید.');
+                    showToast('❌ خطا در خواندن عکس انتخاب‌شده. لطفاً دوباره عکس بگیرید یا فایل دیگری انتخاب کنید.');
                 };
                 reader.readAsDataURL(file);
             } else {
@@ -1989,7 +2168,7 @@
             const submitBtn = document.querySelector('#attendanceTab .submit-btn');
 
             if (type !== 'leave' && !selectedPhotoDataUrl && !selectedLocationText) {
-                alert('⛔ خطا: جهت ثبت ورود و خروج ارسال عکس یا موقعیت مکانی **الزامی** می‌باشد!');
+                showToast('⛔ خطا: جهت ثبت ورود و خروج ارسال عکس یا موقعیت مکانی **الزامی** می‌باشد!');
                 return;
             }
 
@@ -2057,11 +2236,11 @@
                     photoUrl = publicUrlData ? publicUrlData.publicUrl : null;
                 } catch (uploadErr) {
                     if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'ثبت در سیستم حضور و غیاب'; }
-                    alert(`❌ آپلود عکس با مشکل مواجه شد و ثبت انجام نشد.\n\n📶 دلیل احتمالی: اینترنت شما (وای‌فای یا موبایل‌دیتا) در همین لحظه ضعیف یا قطع است.\n\nلطفاً:\n۱) آنتن یا وای‌فای خودتان را چک کنید و اگر می‌شود به یک سیگنال قوی‌تر وصل شوید\n۲) دوباره روی دکمه «ثبت در سیستم حضور و غیاب» بزنید\n۳) اگر باز هم درست نشد، می‌توانید به‌جای عکس از گزینه «📍 موقعیت مکانی» استفاده کنید که حجم کمتری دارد\n\n(جزئیات فنی: ${uploadErr.message})`);
-                    const wantsNotify = confirm('آیا می‌خواهید همین الان یک پیام برای مدیر ارسال شود که در ثبت حضور/غیاب با مشکل اینترنت مواجه شده‌اید تا مدیر در جریان باشد؟');
+                    showToast(`❌ آپلود عکس با مشکل مواجه شد و ثبت انجام نشد.\n\n📶 دلیل احتمالی: اینترنت شما (وای‌فای یا موبایل‌دیتا) در همین لحظه ضعیف یا قطع است.\n\nلطفاً:\n۱) آنتن یا وای‌فای خودتان را چک کنید و اگر می‌شود به یک سیگنال قوی‌تر وصل شوید\n۲) دوباره روی دکمه «ثبت در سیستم حضور و غیاب» بزنید\n۳) اگر باز هم درست نشد، می‌توانید به‌جای عکس از گزینه «📍 موقعیت مکانی» استفاده کنید که حجم کمتری دارد\n\n(جزئیات فنی: ${uploadErr.message})`);
+                    const wantsNotify = await showConfirm('آیا می‌خواهید همین الان یک پیام برای مدیر ارسال شود که در ثبت حضور/غیاب با مشکل اینترنت مواجه شده‌اید تا مدیر در جریان باشد؟');
                     if (wantsNotify) {
                         await notifyAdminAboutAttendanceIssue('خطا در آپلود عکس (احتمالاً به دلیل اینترنت ضعیف): ' + uploadErr.message);
-                        alert('✅ پیام برای مدیر ارسال شد.');
+                        showToast('✅ پیام برای مدیر ارسال شد.');
                     }
                     return;
                 }
@@ -2126,7 +2305,7 @@
                     }
                 }
 
-                alert(successMsg);
+                showToast(successMsg);
 
                 document.getElementById('attNote').value = '';
                 document.getElementById('attPhoto').value = '';
@@ -2139,11 +2318,11 @@
                 locStatus.innerText = '';
                 checkAttendanceReminders();
             } else {
-                alert(`❌ ثبت حضور و غیاب ذخیره نشد.\n\n📶 دلیل احتمالی: قطعی یا ضعف اینترنت شما در این لحظه بوده است.\n\nلطفاً چند ثانیه صبر کنید و دوباره روی دکمه «ثبت در سیستم حضور و غیاب» بزنید. اگر چند بار امتحان کردید و باز هم ثبت نشد، می‌توانید به مدیر اطلاع دهید.\n\n(جزئیات فنی: ${error.message})`);
-                const wantsNotify = confirm('آیا می‌خواهید همین الان یک پیام برای مدیر ارسال شود که در ثبت حضور/غیاب مشکل داشته‌اید؟');
+                showToast(`❌ ثبت حضور و غیاب ذخیره نشد.\n\n📶 دلیل احتمالی: قطعی یا ضعف اینترنت شما در این لحظه بوده است.\n\nلطفاً چند ثانیه صبر کنید و دوباره روی دکمه «ثبت در سیستم حضور و غیاب» بزنید. اگر چند بار امتحان کردید و باز هم ثبت نشد، می‌توانید به مدیر اطلاع دهید.\n\n(جزئیات فنی: ${error.message})`);
+                const wantsNotify = await showConfirm('آیا می‌خواهید همین الان یک پیام برای مدیر ارسال شود که در ثبت حضور/غیاب مشکل داشته‌اید؟');
                 if (wantsNotify) {
                     await notifyAdminAboutAttendanceIssue('خطا در ذخیره رکورد حضور و غیاب: ' + error.message);
-                    alert('✅ پیام برای مدیر ارسال شد.');
+                    showToast('✅ پیام برای مدیر ارسال شد.');
                 }
             }
         }
@@ -2457,7 +2636,7 @@
                 : 0;
 
             if (!code || !name || isNaN(stock)) {
-                alert('لطفاً کد کالا، نام محصول و موجودی انبار را وارد کنید');
+                showToast('لطفاً کد کالا، نام محصول و موجودی انبار را وارد کنید');
                 return;
             }
 
@@ -2469,9 +2648,9 @@
                 const { error } = await _supabase.from('products').update(updateData).eq('id', editingProductId);
 
                 if (error) {
-                    alert(buildProductSaveErrorMessage(error, code));
+                    showToast(buildProductSaveErrorMessage(error, code));
                 } else {
-                    alert('✅ کالا با موفقیت به‌روزرسانی شد');
+                    showToast('✅ کالا با موفقیت به‌روزرسانی شد');
                     cancelEdit();
                     switchTab('inventory');
                     loadInventory();
@@ -2483,9 +2662,9 @@
                 }]);
 
                 if (error) {
-                    alert(buildProductSaveErrorMessage(error, code));
+                    showToast(buildProductSaveErrorMessage(error, code));
                 } else {
-                    alert('✅ کالای جدید با موفقیت ذخیره شد');
+                    showToast('✅ کالای جدید با موفقیت ذخیره شد');
                     clearProductForm();
                     loadProductDatalist();
                 }
@@ -2572,14 +2751,14 @@
         }
 
         async function deleteProduct(id, name) {
-            const sure = confirm('آیا از حذف کالای «' + name + '» مطمئن هستید؟ این عملیات قابل بازگشت نیست.');
+            const sure = await showConfirm('آیا از حذف کالای «' + name + '» مطمئن هستید؟ این عملیات قابل بازگشت نیست.');
             if (!sure) return;
 
             const { error } = await _supabase.from('products').delete().eq('id', id);
             if (error) {
-                alert('❌ خطا در حذف: ' + error.message);
+                showToast('❌ خطا در حذف: ' + error.message);
             } else {
-                alert('✅ کالا حذف شد');
+                showToast('✅ کالا حذف شد');
                 loadInventory();
                 loadProductDatalist();
             }
@@ -2635,24 +2814,24 @@
 
             if (isLateEntry) {
                 if (editing.id) {
-                    alert('⛔ ثبت با تاخیر فقط برای فاکتور جدید ممکن است، نه در حالت ویرایش. ابتدا روی «لغو ویرایش» بزنید.');
+                    showToast('⛔ ثبت با تاخیر فقط برای فاکتور جدید ممکن است، نه در حالت ویرایش. ابتدا روی «لغو ویرایش» بزنید.');
                     return;
                 }
                 lateDateVal = document.getElementById(ids.lateDate).value;
                 lateShiftVal = document.getElementById(ids.lateShift).value;
                 if (!lateDateVal) {
-                    alert('لطفاً تاریخ واقعی این فروش را انتخاب کنید.');
+                    showToast('لطفاً تاریخ واقعی این فروش را انتخاب کنید.');
                     return;
                 }
                 const todayISO = getTehranISODate(new Date());
                 if (lateDateVal > todayISO) {
-                    alert('⛔ تاریخ انتخاب‌شده نمی‌تواند در آینده باشد.');
+                    showToast('⛔ تاریخ انتخاب‌شده نمی‌تواند در آینده باشد.');
                     return;
                 }
             }
 
             if (!inputVal || isNaN(qty) || qty <= 0) {
-                alert('لطفاً نام کالا و وزن معتبر را وارد کنید');
+                showToast('لطفاً نام کالا و وزن معتبر را وارد کنید');
                 return;
             }
 
@@ -2672,12 +2851,12 @@
             }
 
             if (!product) {
-                alert('❌ کالایی با این اسم در انبار یافت نشد!');
+                showToast('❌ کالایی با این اسم در انبار یافت نشد!');
                 return;
             }
 
             if (type === 'sausage' && product.category !== 'sausage') {
-                alert('⚠️ این کالا در «تعریف کالا» به‌عنوان سوسیس و کالباس ثبت نشده است. لطفاً از تب فروش مناسب استفاده کنید یا نوع کالا را در بخش «تعریف کالا» اصلاح کنید.');
+                showToast('⚠️ این کالا در «تعریف کالا» به‌عنوان سوسیس و کالباس ثبت نشده است. لطفاً از تب فروش مناسب استفاده کنید یا نوع کالا را در بخش «تعریف کالا» اصلاح کنید.');
                 return;
             }
 
@@ -2685,12 +2864,12 @@
 
             if (editing.id) {
                 if (product.code !== editing.productCode) {
-                    alert('⚠️ در حالت ویرایش امکان تغییر نام کالا وجود ندارد. ابتدا روی «لغو ویرایش» بزنید و یک فاکتور جدید ثبت کنید.');
+                    showToast('⚠️ در حالت ویرایش امکان تغییر نام کالا وجود ندارد. ابتدا روی «لغو ویرایش» بزنید و یک فاکتور جدید ثبت کنید.');
                     return;
                 }
 
                 if (editing.editCount >= MAX_SALE_EDITS) {
-                    alert(`⛔ این فاکتور قبلاً ${MAX_SALE_EDITS} بار ویرایش شده و دیگر قابل ویرایش نیست. در صورت نیاز آن را حذف کنید.`);
+                    showToast(`⛔ این فاکتور قبلاً ${MAX_SALE_EDITS} بار ویرایش شده و دیگر قابل ویرایش نیست. در صورت نیاز آن را حذف کنید.`);
                     cancelSaleEdit(type);
                     loadRecentSales(type);
                     return;
@@ -2698,13 +2877,13 @@
 
                 const ownerSale = cachedSalesList[type].find(s => String(s.id) === String(editing.id));
                 if (!ownerSale || ownerSale.seller_name !== currentUserLabel) {
-                    alert('⛔ شما فقط می‌توانید فاکتورهای ثبت‌شده توسط خودتان را ویرایش کنید.');
+                    showToast('⛔ شما فقط می‌توانید فاکتورهای ثبت‌شده توسط خودتان را ویرایش کنید.');
                     cancelSaleEdit(type);
                     loadRecentSales(type);
                     return;
                 }
                 if (getTehranISODate(new Date(ownerSale.created_at)) !== getTehranISODate(new Date())) {
-                    alert('⛔ فقط فاکتورهای ثبت‌شده در همین امروز قابل ویرایش هستند.');
+                    showToast('⛔ فقط فاکتورهای ثبت‌شده در همین امروز قابل ویرایش هستند.');
                     cancelSaleEdit(type);
                     loadRecentSales(type);
                     return;
@@ -2714,15 +2893,14 @@
                 const currentBooth = product.booth_stock || 0;
 
                 if (diff < 0 && currentBooth < Math.abs(diff)) {
-                    alert('⚠️ توجه: موجودی ظرف غرفه برای افزایش این مقدار کافی نیست؛ موجودی غرفه به صفر می‌رسد و ظرف نیاز به شارژ مجدد دارد.');
+                    showToast('⚠️ توجه: موجودی ظرف غرفه برای افزایش این مقدار کافی نیست؛ موجودی غرفه به صفر می‌رسد و ظرف نیاز به شارژ مجدد دارد.');
                 }
 
-                const newBoothStock = Math.max(0, Number((currentBooth + diff).toFixed(3)));
                 const newEditCount = editing.editCount + 1;
 
-                const { error: prodErr } = await _supabase.from('products').update({ booth_stock: newBoothStock }).eq('id', product.id);
+                const { data: newBoothStock, error: prodErr } = await _supabase.rpc('adjust_booth_stock', { p_product_id: product.id, p_delta: diff });
                 if (prodErr) {
-                    alert('❌ خطا در به‌روزرسانی موجودی غرفه: ' + prodErr.message);
+                    showToast('❌ خطا در به‌روزرسانی موجودی غرفه: ' + prodErr.message + '\n\nمطمئن شوید تابع adjust_booth_stock در Supabase ساخته شده است.');
                     return;
                 }
 
@@ -2731,11 +2909,11 @@
                     .eq('id', editing.id);
 
                 if (saleErr) {
-                    alert('❌ خطا در به‌روزرسانی فاکتور: ' + saleErr.message);
+                    showToast('❌ خطا در به‌روزرسانی فاکتور: ' + saleErr.message);
                     return;
                 }
 
-                alert(`✅ فاکتور ${typeLabel} «${product.name}» به‌روزرسانی شد (ویرایش ${newEditCount} از ${MAX_SALE_EDITS}).\n💰 مبلغ جدید فاکتور: ${calculatedPrice.toLocaleString('fa-IR')} تومان\n🧊 موجودی جدید ظرف غرفه: ${newBoothStock} کیلوگرم`);
+                showToast(`✅ فاکتور ${typeLabel} «${product.name}» به‌روزرسانی شد (ویرایش ${newEditCount} از ${MAX_SALE_EDITS}).\n💰 مبلغ جدید فاکتور: ${calculatedPrice.toLocaleString('fa-IR')} تومان\n🧊 موجودی جدید ظرف غرفه: ${newBoothStock} کیلوگرم`);
 
                 cancelSaleEdit(type);
                 loadRecentSales(type);
@@ -2746,12 +2924,14 @@
 
             let currentBooth = product.booth_stock || 0;
             if (currentBooth < qty) {
-                alert('⚠️ موجودی ظرف غرفه کمتر از مقدار فروش است! موجودی غرفه کسر گردید اما ظرف نیاز به شارژ دارد.');
+                showToast('⚠️ موجودی ظرف غرفه کمتر از مقدار فروش است! موجودی غرفه کسر گردید اما ظرف نیاز به شارژ دارد.');
             }
 
-            const newBoothStock = Math.max(0, Number((currentBooth - qty).toFixed(3)));
-
-            await _supabase.from('products').update({ booth_stock: newBoothStock }).eq('id', product.id);
+            const { data: newBoothStock, error: boothAdjustErr } = await _supabase.rpc('adjust_booth_stock', { p_product_id: product.id, p_delta: -qty });
+            if (boothAdjustErr) {
+                showToast('❌ خطا در ثبت فروش: ' + boothAdjustErr.message + '\n\nمطمئن شوید تابع adjust_booth_stock در Supabase ساخته شده است.');
+                return;
+            }
 
             const now = isLateEntry ? new Date(`${lateDateVal}T12:00:00+03:30`) : new Date();
             const fullTimeText = getTehranFullDateTimeString(now);
@@ -2769,9 +2949,9 @@
 
             if (isLateEntry) {
                 const shiftLabelText = (lateShiftVal === 'morning') ? 'شیفت صبح' : 'شیفت شب';
-                alert(`✅ فروش ${typeLabel} «${product.name}» با تاریخ ${lateDateVal} برای ${shiftLabelText} ثبت شد (ثبت با تاخیر).\n💰 مبلغ کل فاکتور: ${calculatedPrice.toLocaleString('fa-IR')} تومان\n🧊 موجودی جدید ظرف غرفه: ${newBoothStock} کیلوگرم`);
+                showToast(`✅ فروش ${typeLabel} «${product.name}» با تاریخ ${lateDateVal} برای ${shiftLabelText} ثبت شد (ثبت با تاخیر).\n💰 مبلغ کل فاکتور: ${calculatedPrice.toLocaleString('fa-IR')} تومان\n🧊 موجودی جدید ظرف غرفه: ${newBoothStock} کیلوگرم`);
             } else {
-                alert(`✅ فروش ${typeLabel} «${product.name}» در ساعت ${getTehranTimeString(now)} ثبت شد.\n💰 مبلغ کل فاکتور: ${calculatedPrice.toLocaleString('fa-IR')} تومان\n🧊 موجودی جدید ظرف غرفه: ${newBoothStock} کیلوگرم\n⏱️ زمان دقیق: ${fullTimeText}`);
+                showToast(`✅ فروش ${typeLabel} «${product.name}» در ساعت ${getTehranTimeString(now)} ثبت شد.\n💰 مبلغ کل فاکتور: ${calculatedPrice.toLocaleString('fa-IR')} تومان\n🧊 موجودی جدید ظرف غرفه: ${newBoothStock} کیلوگرم\n⏱️ زمان دقیق: ${fullTimeText}`);
             }
 
             document.getElementById(ids.name).value = '';
@@ -2895,18 +3075,18 @@
             if (!sale) return;
 
             if (sale.seller_name !== currentUserLabel) {
-                alert('⛔ شما فقط می‌توانید فاکتورهای ثبت‌شده توسط خودتان را ویرایش کنید.');
+                showToast('⛔ شما فقط می‌توانید فاکتورهای ثبت‌شده توسط خودتان را ویرایش کنید.');
                 return;
             }
 
             if (getTehranISODate(new Date(sale.created_at)) !== getTehranISODate(new Date())) {
-                alert('⛔ فقط فاکتورهای ثبت‌شده در همین امروز قابل ویرایش هستند.');
+                showToast('⛔ فقط فاکتورهای ثبت‌شده در همین امروز قابل ویرایش هستند.');
                 return;
             }
 
             const currentEditCount = sale.edit_count || 0;
             if (currentEditCount >= MAX_SALE_EDITS) {
-                alert(`⛔ این فاکتور قبلاً ${MAX_SALE_EDITS} بار ویرایش شده و دیگر قابل ویرایش نیست. در صورت نیاز می‌توانید آن را حذف کنید.`);
+                showToast(`⛔ این فاکتور قبلاً ${MAX_SALE_EDITS} بار ویرایش شده و دیگر قابل ویرایش نیست. در صورت نیاز می‌توانید آن را حذف کنید.`);
                 return;
             }
 
@@ -2947,25 +3127,24 @@
             if (!sale) return;
 
             if (sale.seller_name !== currentUserLabel) {
-                alert('⛔ شما فقط می‌توانید فاکتورهای ثبت‌شده توسط خودتان را حذف کنید.');
+                showToast('⛔ شما فقط می‌توانید فاکتورهای ثبت‌شده توسط خودتان را حذف کنید.');
                 return;
             }
 
             if (getTehranISODate(new Date(sale.created_at)) !== getTehranISODate(new Date())) {
-                alert('⛔ فقط فاکتورهای ثبت‌شده در همین امروز قابل حذف هستند.');
+                showToast('⛔ فقط فاکتورهای ثبت‌شده در همین امروز قابل حذف هستند.');
                 return;
             }
 
-            const sure = confirm('آیا از حذف این فاکتور فروش مطمئن هستید؟ کل مقدار فروخته‌شده به موجودی ظرف غرفه بازگردانده می‌شود.');
+            const sure = await showConfirm('آیا از حذف این فاکتور فروش مطمئن هستید؟ کل مقدار فروخته‌شده به موجودی ظرف غرفه بازگردانده می‌شود.');
             if (!sure) return;
 
             const { data: product } = await _supabase.from('products').select('*').eq('code', sale.product_code).maybeSingle();
 
             if (product) {
-                const newBoothStock = Number(((product.booth_stock || 0) + Number(sale.quantity)).toFixed(3));
-                const { error: prodErr } = await _supabase.from('products').update({ booth_stock: newBoothStock }).eq('id', product.id);
+                const { error: prodErr } = await _supabase.rpc('adjust_booth_stock', { p_product_id: product.id, p_delta: Number(sale.quantity) });
                 if (prodErr) {
-                    alert('❌ خطا در بازگرداندن موجودی به غرفه: ' + prodErr.message);
+                    showToast('❌ خطا در بازگرداندن موجودی به غرفه: ' + prodErr.message + '\n\nمطمئن شوید تابع adjust_booth_stock در Supabase ساخته شده است.');
                     return;
                 }
             }
@@ -2973,14 +3152,14 @@
             const { error } = await _supabase.from('sales').delete().eq('id', saleId);
 
             if (!error) {
-                alert('✅ فاکتور حذف شد و مقدار آن به موجودی ظرف غرفه بازگشت.');
+                showToast('✅ فاکتور حذف شد و مقدار آن به موجودی ظرف غرفه بازگشت.');
                 if (String(editingSale[type].id) === String(saleId)) {
                     cancelSaleEdit(type);
                 }
                 loadRecentSales(type);
                 loadProductDatalist();
             } else {
-                alert('❌ خطا در حذف فاکتور: ' + error.message);
+                showToast('❌ خطا در حذف فاکتور: ' + error.message);
             }
         }
 
@@ -2995,14 +3174,14 @@
 
         async function updateContainerCapacity(productId, newCap) {
             const val = parseFloat(newCap);
-            if (isNaN(val) || val <= 0) return alert('لطفاً یک عدد معتبر برای ظرفیت وارد کنید');
+            if (isNaN(val) || val <= 0) return showToast('لطفاً یک عدد معتبر برای ظرفیت وارد کنید');
 
             const { error } = await _supabase.from('products').update({ container_capacity: val }).eq('id', productId);
             if (!error) {
-                alert('✅ ظرفیت ظرف با موفقیت تغییر یافت.');
+                showToast('✅ ظرفیت ظرف با موفقیت تغییر یافت.');
                 loadBoothInventory();
             } else {
-                alert('خطا در تغییر ظرفیت: ' + error.message);
+                showToast('خطا در تغییر ظرفیت: ' + error.message);
             }
         }
 
@@ -3014,23 +3193,23 @@
 
             const { error } = await _supabase.from('products').update({ booth_stock: netStock }).eq('id', productId);
             if (!error) {
-                alert(`✅ موجودی خالص ظرف غرفه به مقدار ${netStock} کیلوگرم به‌روزرسانی شد.`);
+                showToast(`✅ موجودی خالص ظرف غرفه به مقدار ${netStock} کیلوگرم به‌روزرسانی شد.`);
                 loadBoothInventory();
             } else {
-                alert('خطا در به‌روزرسانی موجودی ظرف: ' + error.message);
+                showToast('خطا در به‌روزرسانی موجودی ظرف: ' + error.message);
             }
         }
 
         async function updateBoothMinStock(productId, val) {
             const num = parseFloat(val);
-            if (isNaN(num) || num < 0) return alert('لطفاً یک عدد معتبر برای حداقل موجودی غرفه وارد کنید');
+            if (isNaN(num) || num < 0) return showToast('لطفاً یک عدد معتبر برای حداقل موجودی غرفه وارد کنید');
 
             const { error } = await _supabase.from('products').update({ booth_min_stock: num }).eq('id', productId);
             if (!error) {
-                alert('✅ حداقل موجودی هشدار غرفه ذخیره شد. برای کالاهای کم‌فروش، وقتی موجودی غرفه به این مقدار برسد و انبار اصلی هم خالی باشد، به مدیر هشدار خرید داده می‌شود.');
+                showToast('✅ حداقل موجودی هشدار غرفه ذخیره شد. برای کالاهای کم‌فروش، وقتی موجودی غرفه به این مقدار برسد و انبار اصلی هم خالی باشد، به مدیر هشدار خرید داده می‌شود.');
                 loadBoothInventory();
             } else {
-                alert('خطا: ' + error.message);
+                showToast('خطا: ' + error.message);
             }
         }
 
@@ -3040,33 +3219,35 @@
 
             const capacity = product.container_capacity || 7.0;
             const currentBooth = product.booth_stock || 0;
-            const currentMain = product.stock || 0;
-
             const neededAmount = Number((capacity - currentBooth).toFixed(3));
 
             if (neededAmount <= 0) {
-                return alert('ظرف غرفه در حال حاضر کامل پر است و نیازی به شارژ ندارد!');
+                return showToast('ظرف غرفه در حال حاضر کامل پر است و نیازی به شارژ ندارد!');
             }
 
-            if (currentMain < neededAmount) {
-                return alert(`⚠️ موجودی انبار اصلی کافی نیست!\nنیاز به شارژ: ${neededAmount} کیلوگرم\nموجودی انبار اصلی: ${currentMain} کیلوگرم`);
+            const { data, error } = await _supabase.rpc('transfer_main_to_booth', { p_product_id: productId, p_requested_amount: neededAmount });
+
+            if (error) {
+                showToast('❌ خطا در به‌روزرسانی موجودی: ' + error.message + '\n\nمطمئن شوید تابع transfer_main_to_booth در Supabase ساخته شده است.');
+                return;
             }
 
-            const newMainStock = Number((currentMain - neededAmount).toFixed(3));
-            const newBoothStock = capacity;
+            const result = Array.isArray(data) ? data[0] : data;
+            const actualMoved = result ? Number(result.actual_moved) : 0;
 
-            const { error } = await _supabase.from('products').update({
-                stock: newMainStock,
-                booth_stock: newBoothStock
-            }).eq('id', productId);
-
-            if (!error) {
-                alert(`✅ ظرف «${product.name}» پر شد.\n📦 دقیقاً مقدار ${neededAmount} کیلوگرم از انبار اصلی کسر گردید.`);
+            if (actualMoved <= 0) {
+                showToast(`⚠️ موجودی انبار اصلی کافی نیست!\nنیاز به شارژ: ${neededAmount} کیلوگرم\nموجودی انبار اصلی فعلی: ${(result ? result.new_main_stock : 0)} کیلوگرم`);
                 loadBoothInventory();
-                if (currentRole === 'admin') checkLowStockAlertNoWeight();
-            } else {
-                alert('خطا در به‌روزرسانی موجودی: ' + error.message);
+                return;
             }
+
+            let msg = `✅ ظرف «${product.name}» پر شد.\n📦 دقیقاً مقدار ${actualMoved.toLocaleString('fa-IR')} کیلوگرم از انبار اصلی کسر گردید.`;
+            if (actualMoved < neededAmount - 0.0001) {
+                msg += `\n⚠️ توجه: موجودی انبار اصلی کافی نبود، فقط همین مقدار موجود بود که منتقل شد و ظرف کامل پر نشد.`;
+            }
+            showToast(msg);
+            loadBoothInventory();
+            if (currentRole === 'admin') checkLowStockAlertNoWeight();
         }
 
         async function applyChecklistFill(productId) {
@@ -3075,46 +3256,36 @@
             const amt = parseFloat(amtInput.value);
 
             if (isNaN(amt) || amt <= 0) {
-                return alert('لطفاً مقدار واقعی‌ای که پر کردید را به‌صورت عدد معتبر وارد کنید');
+                return showToast('لطفاً مقدار واقعی‌ای که پر کردید را به‌صورت عدد معتبر وارد کنید');
             }
 
             const { data: product } = await _supabase.from('products').select('*').eq('id', productId).single();
             if (!product) return;
 
-            const capacity = product.container_capacity || 7.0;
-            const currentBooth = product.booth_stock || 0;
-            const currentMain = product.stock || 0;
+            const { data, error } = await _supabase.rpc('transfer_main_to_booth', { p_product_id: productId, p_requested_amount: amt });
 
-            if (amt > currentMain) {
-                return alert(`⚠️ موجودی انبار اصلی برای «${product.name}» فقط ${currentMain} کیلوگرم است؛ مقدار وارد شده بیشتر از موجودی انبار است.`);
+            if (error) {
+                showToast('❌ خطا در ثبت شارژ: ' + error.message + '\n\nمطمئن شوید تابع transfer_main_to_booth در Supabase ساخته شده است.');
+                return;
             }
 
-            const newBoothStockRaw = currentBooth + amt;
-            const newBoothStock = Math.min(capacity, Number(newBoothStockRaw.toFixed(3)));
-            const actuallyUsed = Number((newBoothStock - currentBooth).toFixed(3));
+            const result = Array.isArray(data) ? data[0] : data;
+            const actualMoved = result ? Number(result.actual_moved) : 0;
+            const newBoothStock = result ? Number(result.new_booth_stock) : (product.booth_stock || 0);
 
-            if (actuallyUsed <= 0) {
-                return alert('ظرف غرفه از قبل پر بوده؛ نیازی به شارژ نیست.');
-            }
-
-            const newMainStock = Number((currentMain - actuallyUsed).toFixed(3));
-
-            const { error } = await _supabase.from('products').update({
-                stock: newMainStock,
-                booth_stock: newBoothStock
-            }).eq('id', productId);
-
-            if (!error) {
-                let msg = `✅ مقدار ${actuallyUsed.toLocaleString('fa-IR')} کیلو به ظرف «${product.name}» اضافه شد.\n🧊 موجودی جدید غرفه: ${newBoothStock.toLocaleString('fa-IR')} کیلو`;
-                if (newBoothStockRaw > capacity + 0.0001) {
-                    msg += `\n⚠️ توجه: مقدار وارد شده بیشتر از ظرفیت خالی ظرف بود، فقط تا سقف ظرفیت ثبت شد.`;
-                }
-                alert(msg);
+            if (actualMoved <= 0) {
+                showToast('این مقدار قابل شارژ نبود (یا ظرف از قبل پر بوده، یا موجودی انبار اصلی کافی نیست).');
                 loadBoothInventory();
-                if (currentRole === 'admin') checkLowStockAlertNoWeight();
-            } else {
-                alert('❌ خطا در ثبت شارژ: ' + error.message);
+                return;
             }
+
+            let msg = `✅ مقدار ${actualMoved.toLocaleString('fa-IR')} کیلو به ظرف «${product.name}» اضافه شد.\n🧊 موجودی جدید غرفه: ${newBoothStock.toLocaleString('fa-IR')} کیلو`;
+            if (actualMoved < amt - 0.0001) {
+                msg += `\n⚠️ توجه: کل مقدار وارد شده قابل انتقال نبود (یا ظرفیت ظرف پر شد، یا انبار اصلی کافی نبود)، فقط همین مقدار ثبت شد.`;
+            }
+            showToast(msg);
+            loadBoothInventory();
+            if (currentRole === 'admin') checkLowStockAlertNoWeight();
         }
 
         function renderMorningChecklist(products) {
@@ -3207,11 +3378,11 @@
             if (!pendingMorningConfirmItems || pendingMorningConfirmItems.length === 0) return;
 
             if (!isSure) {
-                alert('باشه، مشکلی نیست 🙂\nلطفاً همین الان به تب «📦 موجودی انبار» و «🧊 وضعیت یخچال غرفه» برو و مطمئن شو که عدد موجودی انبار اصلی و موجودی غرفه این کالاها را درست و دقیق ثبت کرده‌ای. بعد از اصلاح، دوباره سر بزن تا این پیام بررسی شود.');
+                showToast('باشه، مشکلی نیست 🙂\nلطفاً همین الان به تب «📦 موجودی انبار» و «🧊 وضعیت یخچال غرفه» برو و مطمئن شو که عدد موجودی انبار اصلی و موجودی غرفه این کالاها را درست و دقیق ثبت کرده‌ای. بعد از اصلاح، دوباره سر بزن تا این پیام بررسی شود.');
                 return;
             }
 
-            const sure = confirm('با تایید این گزینه، بلافاصله به مدیر پیام داده می‌شود که این کالاها واقعاً در انبار اصلی و غرفه هردو تمام شده‌اند. مطمئنی؟');
+            const sure = await showConfirm('با تایید این گزینه، بلافاصله به مدیر پیام داده می‌شود که این کالاها واقعاً در انبار اصلی و غرفه هردو تمام شده‌اند. مطمئنی؟');
             if (!sure) return;
 
             const ids = pendingMorningConfirmItems.map(i => i.id);
@@ -3219,7 +3390,7 @@
 
             const { error } = await _supabase.from('products').update({ stock_confirmed_empty: true }).in('id', ids);
             if (error) {
-                alert('❌ خطا در ثبت تایید: ' + error.message + '\n\nمطمئن شوید ستون stock_confirmed_empty در جدول products ساخته شده است.');
+                showToast('❌ خطا در ثبت تایید: ' + error.message + '\n\nمطمئن شوید ستون stock_confirmed_empty در جدول products ساخته شده است.');
                 return;
             }
 
@@ -3232,7 +3403,7 @@
                 created_at: now.toISOString()
             }]);
 
-            alert('✅ به مدیر اطلاع داده شد.');
+            showToast('✅ به مدیر اطلاع داده شد.');
             loadBoothInventory();
             if (currentRole === 'admin') checkLowStockAlertNoWeight();
         }
@@ -3431,13 +3602,13 @@
             const note = document.getElementById('poNote').value.trim();
 
             if (!nameVal || isNaN(qty) || qty <= 0) {
-                return alert('لطفاً نام کالا و مقدار سفارش را وارد کنید');
+                return showToast('لطفاً نام کالا و مقدار سفارش را وارد کنید');
             }
 
             if (cachedProductsList.length === 0) await loadProductDatalist();
             const product = cachedProductsList.find(p => p.name === nameVal || p.code === nameVal);
             if (!product) {
-                return alert('❌ این کالا در انبار تعریف نشده است؛ ابتدا آن را از بخش «تعریف کالا» اضافه کنید.');
+                return showToast('❌ این کالا در انبار تعریف نشده است؛ ابتدا آن را از بخش «تعریف کالا» اضافه کنید.');
             }
 
             if (editingPurchaseOrderId) {
@@ -3450,11 +3621,11 @@
                 }).eq('id', editingPurchaseOrderId);
 
                 if (!error) {
-                    alert('✅ سفارش با موفقیت ویرایش شد.');
+                    showToast('✅ سفارش با موفقیت ویرایش شد.');
                     cancelPoEdit();
                     loadPurchaseOrders();
                 } else {
-                    alert('❌ خطا در ویرایش سفارش: ' + error.message);
+                    showToast('❌ خطا در ویرایش سفارش: ' + error.message);
                 }
                 return;
             }
@@ -3471,14 +3642,14 @@
             }]);
 
             if (!error) {
-                alert('✅ سفارش با موفقیت ثبت شد و فروشنده صبح می‌تواند آن را ببیند.');
+                showToast('✅ سفارش با موفقیت ثبت شد و فروشنده صبح می‌تواند آن را ببیند.');
                 document.getElementById('poProductName').value = '';
                 document.getElementById('poQty').value = '';
                 document.getElementById('poEtaDays').value = '';
                 document.getElementById('poNote').value = '';
                 loadPurchaseOrders();
             } else {
-                alert('❌ خطا در ثبت سفارش: ' + error.message + '\n\nمطمئن شوید جدول purchase_orders در Supabase تمام ستون‌های لازم را دارد (به‌خصوص eta_days و ordered_at). فایل fix_supabase.sql را اجرا کنید.');
+                showToast('❌ خطا در ثبت سفارش: ' + error.message + '\n\nمطمئن شوید جدول purchase_orders در Supabase تمام ستون‌های لازم را دارد (به‌خصوص eta_days و ordered_at). فایل fix_supabase.sql را اجرا کنید.');
             }
         }
 
@@ -3513,10 +3684,10 @@
             const actualQty = qtyInput ? parseFloat(qtyInput.value) : null;
 
             if (isNaN(actualQty) || actualQty === null || actualQty <= 0) {
-                return alert('لطفاً مقدار واقعی تحویل‌گرفته‌شده را به‌صورت عدد معتبر وارد کنید.');
+                return showToast('لطفاً مقدار واقعی تحویل‌گرفته‌شده را به‌صورت عدد معتبر وارد کنید.');
             }
 
-            const sure = confirm(`آیا تایید می‌کنید که مقدار ${actualQty} کیلو/عدد دریافت شده و به موجودی انبار اصلی اضافه شود؟`);
+            const sure = await showConfirm(`آیا تایید می‌کنید که مقدار ${actualQty} کیلو/عدد دریافت شده و به موجودی انبار اصلی اضافه شود؟`);
             if (!sure) return;
 
             const { data: order } = await _supabase.from('purchase_orders').select('*').eq('id', orderId).maybeSingle();
@@ -3526,8 +3697,12 @@
             const now = new Date();
 
             if (product) {
-                const newStock = Number(((product.stock || 0) + actualQty).toFixed(3));
-                await _supabase.from('products').update({ stock: newStock, low_stock_alert_since: null, stock_confirmed_empty: false }).eq('id', product.id);
+                const { error: stockErr } = await _supabase.rpc('adjust_main_stock', { p_product_id: product.id, p_delta: actualQty });
+                if (stockErr) {
+                    showToast('❌ خطا در افزودن موجودی انبار: ' + stockErr.message + '\n\nمطمئن شوید تابع adjust_main_stock در Supabase ساخته شده است.');
+                    return;
+                }
+                await _supabase.from('products').update({ low_stock_alert_since: null, stock_confirmed_empty: false }).eq('id', product.id);
             }
 
             const { error } = await _supabase.from('purchase_orders').update({
@@ -3538,12 +3713,12 @@
             }).eq('id', orderId);
 
             if (!error) {
-                alert('✅ سفارش دریافت شد و مقدار ' + actualQty.toLocaleString('fa-IR') + ' به موجودی انبار اصلی اضافه گردید.');
+                showToast('✅ سفارش دریافت شد و مقدار ' + actualQty.toLocaleString('fa-IR') + ' به موجودی انبار اصلی اضافه گردید.');
                 loadPurchaseOrders();
                 loadProductDatalist();
                 if (currentRole === 'admin') checkLowStockAlertNoWeight();
             } else {
-                alert('❌ خطا: ' + error.message + '\n\nمطمئن شوید ستون‌های received_qty و received_by در جدول purchase_orders موجود است.');
+                showToast('❌ خطا: ' + error.message + '\n\nمطمئن شوید ستون‌های received_qty و received_by در جدول purchase_orders موجود است.');
             }
         }
 
@@ -3997,7 +4172,7 @@
                 };
                 reader.onerror = function() {
                     selectedPiPhotoDataUrl = null;
-                    alert('❌ خطا در خواندن عکس انتخاب‌شده.');
+                    showToast('❌ خطا در خواندن عکس انتخاب‌شده.');
                 };
                 reader.readAsDataURL(file);
             } else {
@@ -4025,7 +4200,7 @@
                 const qty = parseFloat(qtyEl.value);
                 const priceRial = parseFloat(priceEl.value);
                 if (!name || isNaN(qty) || qty <= 0 || isNaN(priceRial) || priceRial <= 0) {
-                    return alert(`لطفاً اطلاعات قلم ${(i + 1).toLocaleString('fa-IR')} را کامل و معتبر وارد کنید.`);
+                    return showToast(`لطفاً اطلاعات قلم ${(i + 1).toLocaleString('fa-IR')} را کامل و معتبر وارد کنید.`);
                 }
                 const priceToman = Math.round(priceRial / 10);
                 const lineTotal = Math.round(qty * priceToman);
@@ -4033,8 +4208,8 @@
                 items.push({ product_name: name, quantity: qty, unit_price: priceToman, line_total: lineTotal });
             }
 
-            if (items.length === 0) return alert('لطفاً حداقل یک قلم کالا وارد کنید.');
-            if (paymentType === 'card' && !cardType) return alert('لطفاً نوع کارت پرداختی را وارد کنید.');
+            if (items.length === 0) return showToast('لطفاً حداقل یک قلم کالا وارد کنید.');
+            if (paymentType === 'card' && !cardType) return showToast('لطفاً نوع کارت پرداختی را وارد کنید.');
 
             const totalAmount = Math.round(subtotal * (1 - discountPercent / 100));
 
@@ -4049,7 +4224,7 @@
                     const { data: publicUrlData } = _supabase.storage.from(PI_BUCKET).getPublicUrl(fileName);
                     photoUrl = publicUrlData ? publicUrlData.publicUrl : null;
                 } catch (uploadErr) {
-                    alert('❌ خطا در آپلود عکس فاکتور: ' + uploadErr.message + '\n\nمطمئن شوید باکت "purchase-invoice-photos" در Supabase Storage ساخته شده و عمومی (Public) است.');
+                    showToast('❌ خطا در آپلود عکس فاکتور: ' + uploadErr.message + '\n\nمطمئن شوید باکت "purchase-invoice-photos" در Supabase Storage ساخته شده و عمومی (Public) است.');
                     if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'ثبت فاکتور خرید'; }
                     return;
                 }
@@ -4077,7 +4252,7 @@
             if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'ثبت فاکتور خرید'; }
 
             if (invErr || !invoiceData) {
-                alert('❌ خطا در ثبت فاکتور: ' + (invErr ? invErr.message : 'خطای نامشخص') + '\n\nمطمئن شوید جدول purchase_invoices ستون‌های invoice_number, invoice_date, discount_percent, subtotal_amount, total_amount, payment_type, card_type, photo_url, note, created_at را دارد.');
+                showToast('❌ خطا در ثبت فاکتور: ' + (invErr ? invErr.message : 'خطای نامشخص') + '\n\nمطمئن شوید جدول purchase_invoices ستون‌های invoice_number, invoice_date, discount_percent, subtotal_amount, total_amount, payment_type, card_type, photo_url, note, created_at را دارد.');
                 return;
             }
 
@@ -4085,10 +4260,10 @@
             const { error: itemsErr } = await _supabase.from('purchase_invoice_items').insert(itemsToInsert);
 
             if (itemsErr) {
-                alert('⚠️ فاکتور ثبت شد اما در ثبت اقلام خطا رخ داد: ' + itemsErr.message + '\n\nمطمئن شوید جدول purchase_invoice_items با ستون‌های invoice_id, product_name, quantity, unit_price, line_total ساخته شده است.');
+                showToast('⚠️ فاکتور ثبت شد اما در ثبت اقلام خطا رخ داد: ' + itemsErr.message + '\n\nمطمئن شوید جدول purchase_invoice_items با ستون‌های invoice_id, product_name, quantity, unit_price, line_total ساخته شده است.');
             } else {
                 const paymentLabel = paymentType === 'cash' ? 'نقدی (همان روز)' : ('کارتی - ' + cardType);
-                alert(`✅ فاکتور خرید شماره ${invoiceNumber.toLocaleString('fa-IR')} با موفقیت ثبت شد.\n📅 تاریخ: ${dateVal}\n💰 مبلغ کل: ${totalAmount.toLocaleString('fa-IR')} تومان (تخفیف ${discountPercent}%)\n💳 نوع پرداخت: ${paymentLabel}`);
+                showToast(`✅ فاکتور خرید شماره ${invoiceNumber.toLocaleString('fa-IR')} با موفقیت ثبت شد.\n📅 تاریخ: ${dateVal}\n💰 مبلغ کل: ${totalAmount.toLocaleString('fa-IR')} تومان (تخفیف ${discountPercent}%)\n💳 نوع پرداخت: ${paymentLabel}`);
             }
 
             document.getElementById('piItemCount').value = 1;
@@ -4164,14 +4339,14 @@
         }
 
         async function deletePurchaseInvoice(id) {
-            const sure = confirm('آیا از حذف این فاکتور خرید مطمئن هستید؟ همه اقلام آن نیز حذف می‌شود.');
+            const sure = await showConfirm('آیا از حذف این فاکتور خرید مطمئن هستید؟ همه اقلام آن نیز حذف می‌شود.');
             if (!sure) return;
             await _supabase.from('purchase_invoice_items').delete().eq('invoice_id', id);
             const { error } = await _supabase.from('purchase_invoices').delete().eq('id', id);
             if (!error) {
                 loadPurchaseInvoices();
             } else {
-                alert('❌ خطا در حذف: ' + error.message);
+                showToast('❌ خطا در حذف: ' + error.message);
             }
         }
 
@@ -4233,7 +4408,7 @@
                 };
                 reader.onerror = function() {
                     selectedTakeoutPhotoDataUrl = null;
-                    alert('❌ خطا در خواندن عکس انتخاب‌شده. لطفاً دوباره تلاش کنید.');
+                    showToast('❌ خطا در خواندن عکس انتخاب‌شده. لطفاً دوباره تلاش کنید.');
                 };
                 reader.readAsDataURL(file);
             } else {
@@ -4273,11 +4448,11 @@
             const submitBtn = document.querySelector('#personalTakeoutTab .submit-btn');
 
             if (!itemName || isNaN(weight) || weight <= 0) {
-                return alert('لطفاً نام کالا و وزن معتبر را وارد کنید.');
+                return showToast('لطفاً نام کالا و وزن معتبر را وارد کنید.');
             }
 
             if (!selectedTakeoutPhotoDataUrl) {
-                return alert('⛔ عکس بارکد کالای وزن‌شده الزامی است. لطفاً ابتدا عکس را آپلود کنید.');
+                return showToast('⛔ عکس بارکد کالای وزن‌شده الزامی است. لطفاً ابتدا عکس را آپلود کنید.');
             }
 
             if (cachedProductsList.length === 0) {
@@ -4287,7 +4462,7 @@
 
             const product = cachedProductsList.find(p => p.name === itemName || p.code === itemName);
             if (!product) {
-                return alert('❌ کالایی با این اسم در انبار یافت نشد! لطفاً از لیست پیشنهادی انتخاب کنید.');
+                return showToast('❌ کالایی با این اسم در انبار یافت نشد! لطفاً از لیست پیشنهادی انتخاب کنید.');
             }
 
             const originalPrice = Math.round(weight * (product.sell_price || 0));
@@ -4313,7 +4488,7 @@
 
                 photoUrl = publicUrlData ? publicUrlData.publicUrl : null;
             } catch (uploadErr) {
-                alert('❌ خطا در آپلود عکس بارکد: ' + uploadErr.message + '\n\nمطمئن شوید باکت "takeout-photos" در Supabase Storage ساخته شده و عمومی (Public) است.');
+                showToast('❌ خطا در آپلود عکس بارکد: ' + uploadErr.message + '\n\nمطمئن شوید باکت "takeout-photos" در Supabase Storage ساخته شده و عمومی (Public) است.');
                 if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = '✅ تایید برداشت'; }
                 return;
             }
@@ -4334,7 +4509,7 @@
             if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = '✅ تایید برداشت'; }
 
             if (!error) {
-                alert(`✅ برداشت شما ثبت شد.\n💰 مبلغ قابل کسر (با ۱۰٪ تخفیف): ${discountedPrice.toLocaleString('fa-IR')} تومان\nاین مبلغ برای مدیر قابل مشاهده است و از حقوقتان کسر خواهد شد.`);
+                showToast(`✅ برداشت شما ثبت شد.\n💰 مبلغ قابل کسر (با ۱۰٪ تخفیف): ${discountedPrice.toLocaleString('fa-IR')} تومان\nاین مبلغ برای مدیر قابل مشاهده است و از حقوقتان کسر خواهد شد.`);
                 document.getElementById('ptItemName').value = '';
                 document.getElementById('ptWeight').value = '';
                 document.getElementById('ptNote').value = '';
@@ -4344,7 +4519,7 @@
                 document.getElementById('ptCalcDisplay').innerText = 'مبلغ قابل کسر (با ۱۰٪ تخفیف): ۰ تومان';
                 loadMyTakeouts();
             } else {
-                alert('❌ خطا در ثبت برداشت: ' + error.message + '\n\nمطمئن شوید جدول personal_takeouts در Supabase ستون photo_url را دارد.');
+                showToast('❌ خطا در ثبت برداشت: ' + error.message + '\n\nمطمئن شوید جدول personal_takeouts در Supabase ستون photo_url را دارد.');
             }
         }
 
@@ -4458,7 +4633,7 @@
             const note = document.getElementById('salaryNote').value.trim();
 
             if (isNaN(amount) || amount <= 0) {
-                return alert('لطفاً مبلغ معتبری وارد کنید.');
+                return showToast('لطفاً مبلغ معتبری وارد کنید.');
             }
 
             const now = new Date();
@@ -4470,12 +4645,12 @@
             }]);
 
             if (!error) {
-                alert('✅ واریز حقوق ثبت شد.');
+                showToast('✅ واریز حقوق ثبت شد.');
                 document.getElementById('salaryAmount').value = '';
                 document.getElementById('salaryNote').value = '';
                 loadSalaryTab();
             } else {
-                alert('❌ خطا در ثبت واریز حقوق: ' + error.message + '\n\nمطمئن شوید جدول salary_payments در Supabase با ستون‌های seller_name, amount, note, paid_at ساخته شده است.');
+                showToast('❌ خطا در ثبت واریز حقوق: ' + error.message + '\n\nمطمئن شوید جدول salary_payments در Supabase با ستون‌های seller_name, amount, note, paid_at ساخته شده است.');
             }
         }
 
