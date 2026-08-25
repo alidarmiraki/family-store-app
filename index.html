@@ -6,6 +6,7 @@
     <title>v35 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <style>
         body {
             background: #0f172a;
@@ -517,6 +518,33 @@
             background: #334155;
             color: #e2e8f0;
         }
+        #scannerOverlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 10001;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        #scannerOverlay.active { display: flex; }
+        .scanner-box {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 16px;
+            max-width: 420px;
+            width: 100%;
+            text-align: right;
+        }
+        #scannerReaderBox {
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+            background: #000;
+            min-height: 200px;
+        }
     </style>
 </head>
 <body>
@@ -533,6 +561,17 @@
         </div>
     </div>
 
+    <!-- اورلی اسکن بارکد با دوربین -->
+    <div id="scannerOverlay">
+        <div class="scanner-box">
+            <h3 style="color:#38bdf8; margin:0 0 10px 0; font-size:14px;">📷 اسکن بارکد کالا</h3>
+            <div class="hint" style="margin-top:0;">دوربین را روی بارکد روی لیبل کالا بگیرید تا خودکار شناسایی و ثبت شود.</div>
+            <div id="scannerReaderBox"></div>
+            <div id="scannerStatusText" class="hint">در حال باز کردن دوربین...</div>
+            <button class="cancel-edit-btn" style="display:block;" onclick="closeBarcodeScanner()">بستن</button>
+        </div>
+    </div>
+
 
     <!-- ساعت زنده و تاریخ شمسی -->
     <div class="header-clock" id="liveClock">در حال دریافت زمان دقیق ایران...</div>
@@ -546,6 +585,57 @@
         <input type="password" id="accessPin" placeholder="رمز عبور خود را وارد کنید">
         <div class="error-msg" id="loginError">❌ نام کاربری یا رمز عبور اشتباه است!</div>
         <button class="submit-btn" onclick="checkLogin()">ورود</button>
+        <button class="range-toggle-btn" onclick="showRegistrationScreen('new')">🆕 ثبت‌نام نیروی جدید (فروشنده صبح/شب)</button>
+    </div>
+
+    <!-- صفحه ثبت‌نام و امضای قرارداد همکاری (برای نیروی جدید یا تکمیل توسط نیروی قبلی) -->
+    <div id="registrationScreen" class="login-box" style="display:none; text-align:right;">
+        <h2 id="registrationScreenTitle" style="text-align:center;">🆕 ثبت‌نام و امضای قرارداد همکاری</h2>
+        <div id="contractDeadlineBanner" style="display:none;" class="reminder-banner"></div>
+
+        <div id="regNewFields">
+            <label>این ثبت‌نام برای کدام شیفت است؟</label>
+            <select id="regShift" onchange="updateContractPreview()">
+                <option value="morning">🌅 شیفت صبح</option>
+                <option value="evening">🌙 شیفت شب</option>
+            </select>
+            <label>نام کاربری دلخواه:</label>
+            <input type="text" id="regUsername" dir="auto" placeholder="مثلاً ali.ahmadi">
+            <label>رمز عبور دلخواه:</label>
+            <input type="password" id="regPassword" placeholder="رمز عبور">
+            <label>تکرار رمز عبور:</label>
+            <input type="password" id="regPasswordConfirm" placeholder="رمز عبور را دوباره وارد کنید">
+        </div>
+
+        <label>نام و نام خانوادگی کامل:</label>
+        <input type="text" id="regFullName" dir="auto" placeholder="مثلاً علی احمدی" oninput="updateContractPreview()">
+        <label>کد ملی:</label>
+        <input type="text" id="regNationalId" dir="auto" placeholder="کد ملی ۱۰ رقمی" oninput="updateContractPreview()">
+        <label>شماره موبایل:</label>
+        <input type="text" id="regPhone" dir="auto" placeholder="۰۹xxxxxxxxx">
+
+        <div class="tare-box" style="margin-top:14px; max-height:260px; overflow-y:auto;">
+            <label style="margin-top:0; color:#38bdf8;">📄 متن قرارداد همکاری (لطفاً کامل مطالعه کنید):</label>
+            <div id="contractPreviewText" class="hint" style="white-space:pre-line; font-size:12px; line-height:2;"></div>
+        </div>
+
+        <label style="display:flex; align-items:center; gap:6px; margin-top:10px;">
+            <input type="checkbox" id="regAcceptContract" style="width:auto;"> متن قرارداد بالا را به‌طور کامل مطالعه کردم و می‌پذیرم.
+        </label>
+
+        <label>📸 عکس کارت ملی (رو یا هردو طرف در یک عکس) - <span style="color:#ef4444; font-weight:bold;">الزامی*</span>:</label>
+        <input type="file" id="regNationalIdPhoto" accept="image/*" onchange="previewRegNationalIdPhoto(event)">
+        <img id="regNationalIdPhotoPreview" class="photo-preview">
+
+        <label>✍️ امضای دیجیتال شما (با انگشت یا موس امضا کنید) - <span style="color:#ef4444; font-weight:bold;">الزامی*</span>:</label>
+        <div style="background:#fff; border-radius:10px; overflow:hidden;">
+            <canvas id="signatureCanvas" style="width:100%; height:150px; display:block; cursor:crosshair; touch-action:none;"></canvas>
+        </div>
+        <button type="button" class="cancel-edit-btn" style="display:block;" onclick="clearSignature()">پاک کردن امضا</button>
+
+        <div class="error-msg" id="registrationError"></div>
+        <button class="submit-btn" id="registrationSubmitBtn" onclick="submitRegistration()">✅ تایید، امضا و ثبت</button>
+        <button class="cancel-edit-btn" style="display:block;" id="regBackToLoginBtn" onclick="showLoginScreen()">بازگشت به صفحه ورود</button>
     </div>
 
     <!-- نوار کاربر لاگین‌شده -->
@@ -559,7 +649,7 @@
 
     <!-- تب‌های بالای صفحه -->
     <div class="tabs" id="tabContainer">
-        <button class="tab-btn" id="btnSale" onclick="switchTab('sale'); loadProductDatalist(); loadRecentSales('instore');">🍶 ثبت فروش لبنیات</button>
+        <button class="tab-btn" id="btnSale" onclick="switchTab('sale'); loadProductDatalist(); loadRecentSales('instore');">🧀 ثبت فروش لبنیات</button>
         <button class="tab-btn" id="btnSaleEkala" onclick="switchTab('saleEkala'); loadProductDatalist(); loadRecentSales('ekala');">🛒 ثبت فروش اکالا</button>
         <button class="tab-btn" id="btnSaleSausage" onclick="switchTab('saleSausage'); loadProductDatalist(); loadRecentSales('sausage');">🌭 ثبت فروش سوسیس و کالباس</button>
         <button class="tab-btn" id="btnAttendance" onclick="switchTab('attendance');">⏰ حضور و غیاب</button>
@@ -573,19 +663,26 @@
         <button class="tab-btn" id="btnReport" onclick="switchTab('report'); loadSalesReport();">📊 گزارش فروش</button>
         <button class="tab-btn" id="btnWorkReport" onclick="switchTab('workReport'); loadWorkReport();">🗓️ کارکرد پرسنل</button>
         <button class="tab-btn" id="btnShiftSettings" onclick="switchTab('shiftSettings'); loadShiftSettings();">⚙️ تنظیمات شیفت‌ها</button>
+        <button class="tab-btn" id="btnContractAdmin" onclick="switchTab('contractAdmin'); loadContractAdminTab();">📄 قرارداد پرسنل</button>
         <button class="tab-btn" id="btnPurchaseInvoices" onclick="switchTab('purchaseInvoices'); loadPurchaseInvoices();">🧾 فاکتور خرید (مدیر)</button>
         <button class="tab-btn" id="btnTakeoutAdmin" onclick="switchTab('takeoutAdmin'); loadTakeoutAdminSummary();">🧺 برداشت‌های حساب‌نشده</button>
         <button class="tab-btn" id="btnSalary" onclick="switchTab('salary'); loadSalaryTab();">💰 واریز حقوق</button>
         <button class="tab-btn" id="btnPersonalTakeout" onclick="switchTab('personalTakeout'); loadMyTakeouts();">🛒 برداشت شخصی</button>
     </div>
 
-    <!-- فرم ثبت فروش حضوری -->
+    <!-- فرم ثبت فروش لبنیات و ترشیجات (حضوری) -->
     <div id="saleTab" class="card">
-        <h2 id="saleFormTitle">🛍️ ثبت فروش حضوری روزانه</h2>
+        <h2 id="saleFormTitle">🧀 ثبت فروش لبنیات روزانه</h2>
         <label>انتخاب یا تایپ نام کالا:</label>
-        <input type="text" id="sName" dir="auto" list="productDatalist" placeholder="نام کالا را انتخاب یا تایپ کنید (لیست بر اساس الفبا مرتب است)" onchange="calculateSalePriceAuto('instore')">
+        <div style="display:flex; gap:6px; align-items:flex-start;">
+            <input type="text" id="sName" dir="auto" list="dairyDatalist" placeholder="نام کالا را انتخاب یا تایپ کنید (لیست بر اساس الفبا مرتب است)" onchange="calculateSalePriceAuto('instore')" style="flex:1;">
+            <button type="button" class="row-btn fill-btn" style="white-space:nowrap; margin-top:5px; padding:12px 10px;" onclick="openBarcodeScanner('instore')">📷 اسکن بارکد</button>
+        </div>
         <datalist id="productDatalist"></datalist>
+        <datalist id="dairyDatalist"></datalist>
         <datalist id="sausageDatalist"></datalist>
+        <div class="hint">این تب فقط برای فروش کالاهای لبنیات و ترشیجات است؛ سوسیس و کالباس در تب مخصوص خودش ثبت می‌شود.</div>
+
 
         <label>واحد وزن:</label>
         <div class="unit-toggle">
@@ -650,7 +747,10 @@
         <h2 id="saleEkalaFormTitle">🛒 ثبت فروش اکالا</h2>
         <div class="hint">وقتی سفارشی از طریق اکالا می‌آید و شما کالا را وزن و آماده تحویل به پیک/مشتری می‌کنید، همین‌جا ثبت کنید. این کاملاً از فروش حضوری جدا نگهداری می‌شود.</div>
         <label>انتخاب یا تایپ نام کالا:</label>
-        <input type="text" id="seName" dir="auto" list="productDatalist" placeholder="نام کالا را انتخاب یا تایپ کنید" onchange="calculateSalePriceAuto('ekala')">
+        <div style="display:flex; gap:6px; align-items:flex-start;">
+            <input type="text" id="seName" dir="auto" list="productDatalist" placeholder="نام کالا را انتخاب یا تایپ کنید" onchange="calculateSalePriceAuto('ekala')" style="flex:1;">
+            <button type="button" class="row-btn fill-btn" style="white-space:nowrap; margin-top:5px; padding:12px 10px;" onclick="openBarcodeScanner('ekala')">📷 اسکن بارکد</button>
+        </div>
 
         <label>واحد وزن:</label>
         <div class="unit-toggle">
@@ -714,7 +814,10 @@
         <h2 id="saleSausageFormTitle">🌭 ثبت فروش سوسیس و کالباس</h2>
         <div class="hint">این تب مخصوص فروش کالاهایی است که در «تعریف کالا» با نوع «سوسیس و کالباس» ثبت شده‌اند. لیست پیشنهادی این کادر فقط همین کالاها را نشان می‌دهد. این کاملاً از فروش حضوری و اکالای لبنیات/ترشیجات جدا نگهداری می‌شود.</div>
         <label>انتخاب یا تایپ نام کالا:</label>
-        <input type="text" id="ssName" dir="auto" list="sausageDatalist" placeholder="نام کالا را انتخاب یا تایپ کنید" onchange="calculateSalePriceAuto('sausage')">
+        <div style="display:flex; gap:6px; align-items:flex-start;">
+            <input type="text" id="ssName" dir="auto" list="sausageDatalist" placeholder="نام کالا را انتخاب یا تایپ کنید" onchange="calculateSalePriceAuto('sausage')" style="flex:1;">
+            <button type="button" class="row-btn fill-btn" style="white-space:nowrap; margin-top:5px; padding:12px 10px;" onclick="openBarcodeScanner('sausage')">📷 اسکن بارکد</button>
+        </div>
 
         <label>واحد وزن:</label>
         <div class="unit-toggle">
@@ -894,8 +997,14 @@
             <h3 id="poFormTitle" style="color:#38bdf8; font-size:14px;">➕ ثبت سفارش جدید</h3>
             <label>انتخاب یا تایپ نام کالا:</label>
             <input type="text" id="poProductName" dir="auto" list="productDatalist" placeholder="نام کالا را انتخاب یا تایپ کنید">
-            <label>مقدار سفارش (کیلوگرم یا تعداد):</label>
+            <label>واحد سفارش:</label>
+            <div class="unit-toggle">
+                <label><input type="radio" name="poUnit" value="kg" checked onchange="togglePoUnit()"> کیلوگرم</label>
+                <label><input type="radio" name="poUnit" value="count" onchange="togglePoUnit()"> تعداد (عدد/کارتن/بسته)</label>
+            </div>
+            <label id="poQtyLabel">مقدار سفارش (کیلوگرم):</label>
             <input type="number" id="poQty" step="0.001" placeholder="مثلاً 20">
+            <div class="hint">دقیقاً مشخص کن این سفارش به کیلوگرم است یا به تعداد؛ وقتی سفارش دریافت شد، همین مقدار به‌طور خودکار به موجودی انبار اصلی اضافه می‌شود.</div>
             <label>تخمین تعداد روز تا رسیدن سفارش (اختیاری):</label>
             <input type="number" id="poEtaDays" step="0.5" placeholder="مثلاً 3">
             <label>توضیحات سفارش (اختیاری):</label>
@@ -1083,6 +1192,13 @@
         <input type="number" id="reminderMinutes" value="10" placeholder="مثلاً 10 دقیقه">
 
         <button class="submit-btn" onclick="saveShiftSettings()">ذخیره تنظیمات شیفت‌ها</button>
+    </div>
+
+    <!-- تب مدیریت قرارداد و ثبت‌نام پرسنل (ویژه مدیر) -->
+    <div id="contractAdminTab" class="card">
+        <h2>📄 مدیریت قرارداد و ثبت‌نام پرسنل</h2>
+        <div class="hint">برای هر فروشنده‌ای که هنوز قرارداد را تکمیل و امضا نکرده، می‌توانید یک مهلت مشخص تعیین کنید. با این کار یک پیام یادآوری برای همان شیفت ارسال می‌شود و مهلت روی صفحه‌ی ثبت‌نام او هم نمایش داده خواهد شد. به محض اینکه فروشنده فرم را تکمیل و امضا کند، بلافاصله یک پیام به شما ارسال می‌شود.</div>
+        <div id="contractAdminList" style="margin-top:12px;">در حال بارگذاری...</div>
     </div>
 
     <!-- تب فاکتور خرید مدیر و گزارش سود -->
@@ -1283,6 +1399,112 @@
         }
         let currentRole = "";
         let currentUserLabel = "";
+
+        // --- بارکدخوان با دوربین (تشخیص خودکار کالا + وزن مثل صندوق فروشگاهی) ---
+        // فرمت بارکد لیبل ترازوهای فروشگاه: ۷ رقم اول = کد کالا، ۵ رقم بعدی = وزن به گرم، رقم آخر = چک‌دیجیت
+        let html5QrcodeScannerInstance = null;
+        let barcodeScanTargetType = null;
+
+        function openBarcodeScanner(type) {
+            barcodeScanTargetType = type;
+            const overlay = document.getElementById('scannerOverlay');
+            const statusText = document.getElementById('scannerStatusText');
+            overlay.classList.add('active');
+            statusText.innerText = 'در حال باز کردن دوربین...';
+
+            if (typeof Html5Qrcode === 'undefined') {
+                statusText.innerText = '❌ کتابخانه بارکدخوان بارگذاری نشد (نیاز به اینترنت دارد). لطفاً کالا را دستی وارد کنید.';
+                return;
+            }
+
+            try {
+                html5QrcodeScannerInstance = new Html5Qrcode('scannerReaderBox');
+                const scanConfig = {
+                    fps: 10,
+                    qrbox: { width: 280, height: 150 }
+                };
+                if (typeof Html5QrcodeSupportedFormats !== 'undefined') {
+                    scanConfig.formatsToSupport = [
+                        Html5QrcodeSupportedFormats.EAN_13,
+                        Html5QrcodeSupportedFormats.EAN_8,
+                        Html5QrcodeSupportedFormats.CODE_128,
+                        Html5QrcodeSupportedFormats.UPC_A,
+                        Html5QrcodeSupportedFormats.CODE_39
+                    ];
+                }
+                html5QrcodeScannerInstance.start(
+                    { facingMode: 'environment' },
+                    scanConfig,
+                    (decodedText) => { onBarcodeScanned(decodedText); },
+                    () => { /* هر فریمی که بارکد پیدا نشود، نادیده گرفته می‌شود */ }
+                ).then(() => {
+                    statusText.innerText = 'دوربین آماده است — بارکد را داخل کادر بگیرید...';
+                }).catch((err) => {
+                    statusText.innerText = '❌ دسترسی به دوربین ممکن نشد.\nلطفاً اجازه دسترسی دوربین را در تنظیمات مرورگر/تلگرام برای این صفحه فعال کنید، یا کالا را دستی وارد کنید.\n\n(جزئیات: ' + err + ')';
+                });
+            } catch (e) {
+                statusText.innerText = '❌ خطا در راه‌اندازی بارکدخوان: ' + e.message;
+            }
+        }
+
+        function closeBarcodeScanner() {
+            const overlay = document.getElementById('scannerOverlay');
+            overlay.classList.remove('active');
+            if (html5QrcodeScannerInstance) {
+                const instance = html5QrcodeScannerInstance;
+                html5QrcodeScannerInstance = null;
+                instance.stop().then(() => {
+                    instance.clear();
+                }).catch(() => { /* دوربین از قبل بسته بوده، اشکالی ندارد */ });
+            }
+        }
+
+        async function onBarcodeScanned(decodedText) {
+            const digits = String(decodedText).replace(/\D/g, '');
+            let productCode = digits;
+            let weightGrams = null;
+
+            if (digits.length === 13) {
+                // فرمت بارکد ترازو: ۷ رقم کد کالا + ۵ رقم وزن به گرم + ۱ رقم چک‌دیجیت
+                productCode = digits.substring(0, 7);
+                weightGrams = parseInt(digits.substring(7, 12), 10);
+            }
+
+            if (cachedProductsList.length === 0) {
+                await loadProductDatalist();
+            }
+            const product = cachedProductsList.find(p => p.code === productCode);
+
+            if (!product) {
+                const statusText = document.getElementById('scannerStatusText');
+                if (statusText) statusText.innerText = `⚠️ کالایی با کد ${productCode} در انبار یافت نشد. دوباره امتحان کنید یا کالا را دستی وارد کنید.`;
+                return;
+            }
+
+            closeBarcodeScanner();
+
+            const type = barcodeScanTargetType;
+            if (!type) return;
+            const ids = SALE_FORM_IDS[type];
+
+            if (type === 'sausage' && product.category !== 'sausage') {
+                showToast('⚠️ این کالا به‌عنوان سوسیس و کالباس تعریف نشده؛ از تب مناسب فروش استفاده کنید.');
+                return;
+            }
+
+            document.getElementById(ids.name).value = product.name;
+
+            if (weightGrams !== null && weightGrams > 0) {
+                const gramRadio = document.querySelector(`input[name="${ids.qtyUnitName}"][value="gram"]`);
+                if (gramRadio) gramRadio.checked = true;
+                onSaleUnitChange(type);
+                document.getElementById(ids.qty).value = weightGrams;
+            }
+
+            calculateSalePriceAuto(type);
+            showToast(`✅ کالا شناسایی شد: ${product.name}${weightGrams ? ' (' + weightGrams.toLocaleString('fa-IR') + ' گرم)' : ''}\nمقدار و قیمت را بررسی کنید و سپس فاکتور را ثبت کنید.`);
+        }
+
         let editingProductId = null;
         let uploadedPhotoBase64 = "";
         let selectedPhotoDataUrl = null;
@@ -1347,6 +1569,16 @@
 
         let selectedPiPhotoDataUrl = null;
         const PI_BUCKET = "purchase-invoice-photos";
+
+        // --- سیستم ثبت‌نام نیروی جدید + تکمیل قرارداد نیروهای قبلی ---
+        let registrationMode = 'new'; // 'new' یا 'complete'
+        let pendingCompleteUser = null; // اطلاعات کاربری که باید فرم تکمیل قرارداد را پر کند
+        let selectedRegNationalIdPhotoDataUrl = null;
+        let signatureCtx = null;
+        let isDrawingSignature = false;
+        let signatureHasContent = false;
+        const NATIONAL_ID_BUCKET = "national-id-photos";
+        const SIGNATURE_BUCKET = "signatures";
 
         function compressDataUrl(dataUrl, maxWidth = 1000, quality = 0.6) {
             return new Promise((resolve, reject) => {
@@ -1458,6 +1690,438 @@
             admin: "مدیر"
         };
 
+        // --- مدیریت نمایش صفحه ورود / ثبت‌نام ---
+        function showLoginScreen() {
+            document.getElementById('registrationScreen').style.display = 'none';
+            document.getElementById('loginScreen').style.display = 'block';
+        }
+
+        function showRegistrationScreen(mode, prefillUser) {
+            registrationMode = mode;
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('registrationScreen').style.display = 'block';
+
+            const newFieldsBox = document.getElementById('regNewFields');
+            const title = document.getElementById('registrationScreenTitle');
+            const backBtn = document.getElementById('regBackToLoginBtn');
+            const submitBtn = document.getElementById('registrationSubmitBtn');
+
+            document.getElementById('regFullName').value = (prefillUser && prefillUser.full_name) ? prefillUser.full_name : '';
+            document.getElementById('regNationalId').value = '';
+            document.getElementById('regPhone').value = '';
+            document.getElementById('regAcceptContract').checked = false;
+            document.getElementById('regNationalIdPhoto').value = '';
+            document.getElementById('regNationalIdPhotoPreview').style.display = 'none';
+            selectedRegNationalIdPhotoDataUrl = null;
+            document.getElementById('registrationError').style.display = 'none';
+
+            if (mode === 'new') {
+                newFieldsBox.style.display = 'block';
+                title.innerText = '🆕 ثبت‌نام نیروی جدید و امضای قرارداد همکاری';
+                backBtn.style.display = 'block';
+                submitBtn.innerText = '✅ ثبت‌نام و امضای قرارداد';
+                document.getElementById('regUsername').value = '';
+                document.getElementById('regPassword').value = '';
+                document.getElementById('regPasswordConfirm').value = '';
+                document.getElementById('contractDeadlineBanner').style.display = 'none';
+            } else {
+                newFieldsBox.style.display = 'none';
+                title.innerText = '📄 تکمیل اطلاعات و امضای قرارداد همکاری';
+                backBtn.style.display = 'none';
+                submitBtn.innerText = '✅ تایید و امضای قرارداد';
+
+                const deadlineBanner = document.getElementById('contractDeadlineBanner');
+                if (prefillUser && prefillUser.contract_deadline) {
+                    const deadlineDate = new Date(prefillUser.contract_deadline);
+                    const isOverdue = deadlineDate < new Date();
+                    deadlineBanner.innerText = (isOverdue ? '⛔ مهلت تکمیل این قرارداد گذشته! لطفاً همین الان تکمیل کنید: ' : '⏳ مهلت تکمیل این قرارداد: ') + getTehranFullDateTimeString(deadlineDate);
+                    deadlineBanner.style.display = 'block';
+                } else {
+                    deadlineBanner.style.display = 'none';
+                }
+            }
+
+            setTimeout(() => { initSignaturePad(); updateContractPreview(); }, 60);
+        }
+
+        // --- متن قرارداد همکاری (پویا، بر اساس نام و شیفت فروشنده) ---
+        function buildContractText(fullName, shiftKey, nationalId) {
+            const todayFa = getTehranDateString(new Date());
+            const shiftText = (shiftKey === 'evening') ? 'شیفت شب' : 'شیفت صبح';
+            const nameDisplay = fullName || '[نام و نام خانوادگی]';
+            const idDisplay = nationalId ? (' به کد ملی ' + nationalId) : '';
+
+            return `این توافق‌نامه همکاری بین «مدیریت فروشگاه فامیلی (بخش لبنیات، ترشیجات و سوسیس/کالباس) - شعبه بیرجند» و «${nameDisplay}»${idDisplay} در تاریخ ${todayFa} منعقد می‌گردد:
+
+۱) نیروی مذکور مسئول ${shiftText} است و طبق برنامه اعلام‌شده توسط مدیریت، به‌صورت یک‌روزدرمیان در همین شیفت مشغول به کار خواهد بود.
+۲) در طول ساعات این شیفت، کلیه‌ی وجوه نقد، موجودی انبار اصلی و موجودی غرفه در اختیار و مسئولیت مستقیم همین نیرو قرار دارد.
+۳) در صورت هرگونه کسری صندوق یا اشتباه در ثبت فروش/موجودی که منجر به ضرر مالی شود، مبلغ خطا از حقوق همان دوره کسر خواهد شد.
+۴) در صورت تکرار کسری یا اشتباه، علاوه بر کسر مبلغ خطا، جریمه نقدی نیز اعمال می‌شود.
+۵) حقوق پایه ثابت ماهانه: ۵,۰۰۰,۰۰۰ تومان.
+۶) در صورتی که فروش هفتگی این نیرو نسبت به هفته قبل حداقل ۳۰٪ افزایش داشته باشد، حقوق همان هفته به میزان ۳۰٪ افزایش می‌یابد. این محاسبه هر هفته به‌طور جداگانه انجام می‌شود و مجموع آن در پایان ماه به‌صورت یکجا واریز می‌گردد.
+۷) با احتساب پورسانت فروش بالا، حقوق دریافتی می‌تواند به ۷ الی ۸ میلیون تومان و در فروش بسیار بالا تا سقف ۱۰ میلیون تومان برسد.
+۸) این قرارداد با تکمیل مشخصات، تایید متن بالا، آپلود عکس کارت ملی و امضای دیجیتال زیر توسط نیروی مذکور، از تاریخ فوق برای طرفین لازم‌الاجراست.`;
+        }
+
+        function updateContractPreview() {
+            const fullName = document.getElementById('regFullName').value.trim();
+            const nationalId = document.getElementById('regNationalId').value.trim();
+            let shift = 'morning';
+            if (registrationMode === 'new') {
+                const shiftEl = document.getElementById('regShift');
+                if (shiftEl) shift = shiftEl.value;
+            } else if (pendingCompleteUser) {
+                shift = (pendingCompleteUser.role === 'evening_seller') ? 'evening' : 'morning';
+            }
+            const box = document.getElementById('contractPreviewText');
+            if (box) box.innerText = buildContractText(fullName, shift, nationalId);
+        }
+
+        // --- کادر امضای دیجیتال (Signature Pad) با ماوس یا لمس ---
+        function initSignaturePad() {
+            const canvas = document.getElementById('signatureCanvas');
+            if (!canvas) return;
+
+            const ratio = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            const displayWidth = rect.width || 300;
+            canvas.width = displayWidth * ratio;
+            canvas.height = 150 * ratio;
+
+            signatureCtx = canvas.getContext('2d');
+            signatureCtx.scale(ratio, ratio);
+            signatureCtx.lineWidth = 2.2;
+            signatureCtx.lineCap = 'round';
+            signatureCtx.strokeStyle = '#0f172a';
+            signatureHasContent = false;
+
+            function getPos(e) {
+                const r = canvas.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                return { x: clientX - r.left, y: clientY - r.top };
+            }
+
+            function start(e) {
+                isDrawingSignature = true;
+                signatureHasContent = true;
+                const p = getPos(e);
+                signatureCtx.beginPath();
+                signatureCtx.moveTo(p.x, p.y);
+                if (e.cancelable) e.preventDefault();
+            }
+            function move(e) {
+                if (!isDrawingSignature) return;
+                const p = getPos(e);
+                signatureCtx.lineTo(p.x, p.y);
+                signatureCtx.stroke();
+                if (e.cancelable) e.preventDefault();
+            }
+            function end() { isDrawingSignature = false; }
+
+            canvas.onmousedown = start;
+            canvas.onmousemove = move;
+            canvas.onmouseup = end;
+            canvas.onmouseleave = end;
+            canvas.ontouchstart = start;
+            canvas.ontouchmove = move;
+            canvas.ontouchend = end;
+        }
+
+        function clearSignature() {
+            const canvas = document.getElementById('signatureCanvas');
+            if (!canvas || !signatureCtx) return;
+            signatureCtx.clearRect(0, 0, canvas.width, canvas.height);
+            signatureHasContent = false;
+        }
+
+        function getSignatureDataUrl() {
+            const canvas = document.getElementById('signatureCanvas');
+            if (!canvas || !signatureHasContent) return null;
+            return canvas.toDataURL('image/png');
+        }
+
+        function previewRegNationalIdPhoto(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    selectedRegNationalIdPhotoDataUrl = e.target.result;
+                    const img = document.getElementById('regNationalIdPhotoPreview');
+                    img.src = selectedRegNationalIdPhotoDataUrl;
+                    img.style.display = 'block';
+                };
+                reader.onerror = function() {
+                    selectedRegNationalIdPhotoDataUrl = null;
+                    showToast('❌ خطا در خواندن عکس انتخاب‌شده. لطفاً دوباره تلاش کنید.');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                selectedRegNationalIdPhotoDataUrl = null;
+            }
+        }
+
+        async function notifyAdminAboutNewRegistration(fullName, nationalId, phone, role, idPhotoUrl, signatureUrl, isExisting) {
+            try {
+                const now = new Date();
+                const roleLabelText = (role === 'evening_seller') ? 'فروشنده شب' : 'فروشنده صبح';
+                await _supabase.from('messages').insert([{
+                    sender: 'سیستم ثبت‌نام',
+                    recipient: 'admin',
+                    title: isExisting ? `📄 تکمیل قرارداد همکاری: ${fullName}` : `🆕 ثبت‌نام نیروی جدید: ${fullName}`,
+                    body: `${isExisting ? 'یک نیروی قبلی، فرم اطلاعات و قرارداد خود را تکمیل کرد.' : 'یک نیروی جدید ثبت‌نام کرد و قرارداد را امضا کرد.'}\n\n👤 نام و نام خانوادگی: ${fullName}\n🪪 کد ملی: ${nationalId}\n📱 شماره موبایل: ${phone}\n🕐 شیفت: ${roleLabelText}\n\n📸 عکس کارت ملی: ${idPhotoUrl || 'آپلود نشد'}\n✍️ لینک تصویر امضا: ${signatureUrl || 'ثبت نشد'}`,
+                    created_at: now.toISOString()
+                }]);
+            } catch (e) {
+                console.warn('خطا در اطلاع‌رسانی ثبت‌نام به مدیر', e);
+            }
+        }
+
+        async function submitRegistration() {
+            const errBox = document.getElementById('registrationError');
+            errBox.style.display = 'none';
+
+            const fullName = document.getElementById('regFullName').value.trim();
+            const nationalId = document.getElementById('regNationalId').value.trim();
+            const phone = document.getElementById('regPhone').value.trim();
+            const acceptedContract = document.getElementById('regAcceptContract').checked;
+            const submitBtn = document.getElementById('registrationSubmitBtn');
+
+            if (!fullName || !nationalId || !phone) {
+                errBox.innerText = '❌ لطفاً نام و نام خانوادگی، کد ملی و شماره موبایل را کامل وارد کنید.';
+                errBox.style.display = 'block';
+                return;
+            }
+            if (!acceptedContract) {
+                errBox.innerText = '❌ برای ادامه باید متن قرارداد را مطالعه و تایید کنید.';
+                errBox.style.display = 'block';
+                return;
+            }
+            if (!selectedRegNationalIdPhotoDataUrl) {
+                errBox.innerText = '❌ آپلود عکس کارت ملی الزامی است.';
+                errBox.style.display = 'block';
+                return;
+            }
+            const signatureDataUrl = getSignatureDataUrl();
+            if (!signatureDataUrl) {
+                errBox.innerText = '❌ لطفاً در کادر امضا، امضای خود را ثبت کنید.';
+                errBox.style.display = 'block';
+                return;
+            }
+
+            let username = null, password = null, shift = 'morning';
+
+            if (registrationMode === 'new') {
+                username = document.getElementById('regUsername').value.trim();
+                password = document.getElementById('regPassword').value;
+                const passwordConfirm = document.getElementById('regPasswordConfirm').value;
+                shift = document.getElementById('regShift').value;
+
+                if (!username || !password) {
+                    errBox.innerText = '❌ لطفاً نام کاربری و رمز عبور دلخواه را وارد کنید.';
+                    errBox.style.display = 'block';
+                    return;
+                }
+                if (password.length < 4) {
+                    errBox.innerText = '❌ رمز عبور باید حداقل ۴ کاراکتر باشد.';
+                    errBox.style.display = 'block';
+                    return;
+                }
+                if (password !== passwordConfirm) {
+                    errBox.innerText = '❌ رمز عبور و تکرار آن یکسان نیستند.';
+                    errBox.style.display = 'block';
+                    return;
+                }
+            } else {
+                if (!pendingCompleteUser) {
+                    errBox.innerText = '❌ خطای داخلی: اطلاعات کاربر یافت نشد. لطفاً دوباره وارد شوید.';
+                    errBox.style.display = 'block';
+                    return;
+                }
+                shift = (pendingCompleteUser.role === 'evening_seller') ? 'evening' : 'morning';
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerText = '⏳ در حال آپلود مدارک...';
+
+            let nationalIdPhotoUrl = null;
+            let signatureUrl = null;
+            const safeNamePart = (username || (pendingCompleteUser ? pendingCompleteUser.username : 'user')).replace(/[^a-zA-Z0-9_-]+/g, '_');
+
+            try {
+                const idBlob = await compressDataUrl(selectedRegNationalIdPhotoDataUrl);
+                const idFileName = `${safeNamePart}_${Date.now()}.jpg`;
+                const { error: idUploadErr } = await _supabase.storage.from(NATIONAL_ID_BUCKET).upload(idFileName, idBlob, { contentType: 'image/jpeg', upsert: true });
+                if (idUploadErr) throw idUploadErr;
+                const { data: idUrlData } = _supabase.storage.from(NATIONAL_ID_BUCKET).getPublicUrl(idFileName);
+                nationalIdPhotoUrl = idUrlData ? idUrlData.publicUrl : null;
+
+                const sigBlob = await compressDataUrl(signatureDataUrl, 600, 0.9);
+                const sigFileName = `${safeNamePart}_${Date.now()}_sign.jpg`;
+                const { error: sigUploadErr } = await _supabase.storage.from(SIGNATURE_BUCKET).upload(sigFileName, sigBlob, { contentType: 'image/jpeg', upsert: true });
+                if (sigUploadErr) throw sigUploadErr;
+                const { data: sigUrlData } = _supabase.storage.from(SIGNATURE_BUCKET).getPublicUrl(sigFileName);
+                signatureUrl = sigUrlData ? sigUrlData.publicUrl : null;
+            } catch (uploadErr) {
+                submitBtn.disabled = false;
+                submitBtn.innerText = registrationMode === 'new' ? '✅ ثبت‌نام و امضای قرارداد' : '✅ تایید و امضای قرارداد';
+                errBox.innerText = '❌ خطا در آپلود مدارک: ' + uploadErr.message + '\n\nمطمئن شوید باکت‌های "national-id-photos" و "signatures" در Supabase Storage ساخته شده و عمومی هستند. اگر نتتان ضعیف است دوباره تلاش کنید.';
+                errBox.style.display = 'block';
+                return;
+            }
+
+            submitBtn.innerText = '⏳ در حال ثبت...';
+
+            if (registrationMode === 'new') {
+                const roleValue = (shift === 'evening') ? 'evening_seller' : 'morning_seller';
+                const { error: regErr } = await _supabase.rpc('register_user', {
+                    p_username: username,
+                    p_password: password,
+                    p_role: roleValue,
+                    p_full_name: fullName,
+                    p_national_id: nationalId,
+                    p_phone: phone,
+                    p_signature_url: signatureUrl,
+                    p_national_id_photo_url: nationalIdPhotoUrl
+                });
+
+                submitBtn.disabled = false;
+                submitBtn.innerText = '✅ ثبت‌نام و امضای قرارداد';
+
+                if (regErr) {
+                    let msg = regErr.message || 'خطای نامشخص';
+                    if (msg.includes('duplicate key') || msg.includes('users_username_key')) {
+                        msg = 'این نام کاربری قبلاً استفاده شده؛ لطفاً نام کاربری دیگری انتخاب کنید.';
+                    } else if (msg.includes('does not exist') || msg.includes('register_user')) {
+                        msg = 'تابع امن register_user هنوز در Supabase ساخته نشده. لطفاً فایل SQL مربوط به ثبت‌نام را اجرا کنید.';
+                    }
+                    errBox.innerText = '❌ خطا در ثبت‌نام: ' + msg;
+                    errBox.style.display = 'block';
+                    return;
+                }
+
+                await notifyAdminAboutNewRegistration(fullName, nationalId, phone, roleValue, nationalIdPhotoUrl, signatureUrl, false);
+                showToast('✅ ثبت‌نام شما با موفقیت انجام شد!\nحالا می‌توانید با همین نام کاربری و رمز عبور وارد شوید.');
+                document.getElementById('accessUser').value = username;
+                document.getElementById('accessPin').value = '';
+                showLoginScreen();
+            } else {
+                const { error: compErr } = await _supabase.rpc('complete_user_registration', {
+                    p_username: pendingCompleteUser.username,
+                    p_full_name: fullName,
+                    p_national_id: nationalId,
+                    p_phone: phone,
+                    p_signature_url: signatureUrl,
+                    p_national_id_photo_url: nationalIdPhotoUrl
+                });
+
+                submitBtn.disabled = false;
+                submitBtn.innerText = '✅ تایید و امضای قرارداد';
+
+                if (compErr) {
+                    let msg = compErr.message || 'خطای نامشخص';
+                    if (msg.includes('does not exist') || msg.includes('complete_user_registration')) {
+                        msg = 'تابع امن complete_user_registration هنوز در Supabase ساخته نشده. لطفاً فایل SQL مربوط به ثبت‌نام را اجرا کنید.';
+                    }
+                    errBox.innerText = '❌ خطا در ثبت اطلاعات: ' + msg;
+                    errBox.style.display = 'block';
+                    return;
+                }
+
+                await notifyAdminAboutNewRegistration(fullName, nationalId, phone, pendingCompleteUser.role, nationalIdPhotoUrl, signatureUrl, true);
+                showToast('✅ اطلاعات و قرارداد شما با موفقیت ثبت شد.');
+
+                document.getElementById('registrationScreen').style.display = 'none';
+                const userToProceed = { ...pendingCompleteUser, full_name: fullName, registration_completed: true };
+                pendingCompleteUser = null;
+                proceedToDashboardAfterLogin(userToProceed);
+            }
+        }
+
+        // --- مدیریت قرارداد پرسنل توسط مدیر: تعیین مهلت و پیگیری وضعیت ---
+        async function loadContractAdminTab() {
+            const box = document.getElementById('contractAdminList');
+            box.innerHTML = 'در حال بارگذاری...';
+
+            const { data: sellers, error } = await _supabase.rpc('admin_list_sellers');
+
+            if (error) {
+                box.innerHTML = `<p style="color:#ef4444;">❌ خطا در دریافت لیست پرسنل: ${error.message}<br><span style="font-size:10px; color:#94a3b8;">مطمئن شوید تابع admin_list_sellers در Supabase ساخته شده است (فایل SQL ثبت‌نام را اجرا کنید).</span></p>`;
+                return;
+            }
+
+            if (!sellers || sellers.length === 0) {
+                box.innerHTML = '<p style="color:#94a3b8;">هنوز هیچ فروشنده‌ای در سیستم ثبت نشده است.</p>';
+                return;
+            }
+
+            const now = new Date();
+
+            box.innerHTML = sellers.map(s => {
+                const roleLabel = (s.role === 'evening_seller') ? 'فروشنده شب' : 'فروشنده صبح';
+                const isDone = !!s.registration_completed;
+                let deadlineHtml = '';
+
+                if (isDone) {
+                    deadlineHtml = `<span style="color:#34d399; font-weight:bold;">✅ قرارداد تکمیل و امضا شده است</span>`;
+                } else if (s.contract_deadline) {
+                    const deadlineDate = new Date(s.contract_deadline);
+                    const isOverdue = deadlineDate < now;
+                    deadlineHtml = `<span style="color:${isOverdue ? '#ef4444' : '#fbbf24'}; font-weight:bold;">${isOverdue ? '⛔ مهلت گذشته! هنوز تکمیل نکرده — مهلت: ' : '⏳ در انتظار تکمیل — مهلت تا: '}${getTehranFullDateTimeString(deadlineDate)}</span>`;
+                } else {
+                    deadlineHtml = `<span style="color:#94a3b8;">⏳ هنوز قرارداد تکمیل نشده و مهلتی هم تعیین نشده</span>`;
+                }
+
+                const actionHtml = isDone ? '' : `
+                    <div style="display:flex; gap:6px; align-items:center; margin-top:8px;">
+                        <input type="date" id="contractDeadlineInput_${s.username}" style="flex:1; margin-top:0;">
+                        <button class="row-btn confirm-btn" style="white-space:nowrap;" onclick="sendContractDeadline('${s.username}', '${s.role}')">📨 ارسال قرارداد با این مهلت</button>
+                    </div>`;
+
+                return `
+                    <div class="report-card">
+                        <h3>👤 ${s.full_name || s.username} <span style="font-size:11px; color:#94a3b8;">(${roleLabel} - ${s.username})</span></h3>
+                        <p>${deadlineHtml}</p>
+                        ${actionHtml}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function sendContractDeadline(username, role) {
+            const dateInput = document.getElementById(`contractDeadlineInput_${username}`);
+            const dateVal = dateInput ? dateInput.value : '';
+
+            if (!dateVal) {
+                return showToast('لطفاً یک تاریخ برای مهلت انتخاب کنید.');
+            }
+
+            const deadlineIso = new Date(`${dateVal}T23:59:00+03:30`).toISOString();
+
+            const { error } = await _supabase.rpc('admin_set_contract_deadline', {
+                p_username: username,
+                p_deadline: deadlineIso
+            });
+
+            if (error) {
+                showToast('❌ خطا در ارسال قرارداد: ' + error.message + '\n\nمطمئن شوید تابع admin_set_contract_deadline در Supabase ساخته شده است.');
+                return;
+            }
+
+            const roleLabel = (role === 'evening_seller') ? 'فروشنده شب' : 'فروشنده صبح';
+            const now = new Date();
+            await _supabase.from('messages').insert([{
+                sender: currentUserLabel || 'مدیر',
+                recipient: roleLabel,
+                title: '📄 یادآوری تکمیل و امضای قرارداد همکاری',
+                body: `لطفاً هرچه سریع‌تر وارد سیستم شوید و فرم اطلاعات و قرارداد همکاری خود را تکمیل و امضا کنید.\nمهلت تکمیل: تا ${getTehranDateString(new Date(deadlineIso))}\n\nدر صورت عدم تکمیل تا این تاریخ، لطفاً موضوع را با مدیریت هماهنگ کنید.`,
+                created_at: now.toISOString()
+            }]);
+
+            showToast(`✅ قرارداد برای ${roleLabel} ارسال شد و مهلت تا ${getTehranDateString(new Date(deadlineIso))} تعیین گردید.`);
+            loadContractAdminTab();
+        }
+
         async function checkLogin() {
             const username = document.getElementById('accessUser').value.trim();
             const password = document.getElementById('accessPin').value;
@@ -1508,6 +2172,19 @@
                 return;
             }
 
+            const needsRegistration = (user.role === 'morning_seller' || user.role === 'evening_seller') && !user.registration_completed;
+
+            if (needsRegistration) {
+                pendingCompleteUser = user;
+                document.getElementById('loginScreen').style.display = 'none';
+                showRegistrationScreen('complete', user);
+                return;
+            }
+
+            proceedToDashboardAfterLogin(user);
+        }
+
+        function proceedToDashboardAfterLogin(user) {
             currentRole = user.role;
             currentUserLabel = (roleLabels[user.role] || user.role) + ' - ' + (user.full_name || user.username);
             alertDismissedThisSession = false;
@@ -1520,7 +2197,7 @@
             document.getElementById('buyPriceField').style.display = (currentRole === 'admin') ? 'block' : 'none';
 
             if (currentRole === 'admin') {
-                setupView(['btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnInbox', 'btnStaffMessage', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnShiftSettings', 'btnPurchaseInvoices', 'btnTakeoutAdmin', 'btnSalary'], 'saleTab');
+                setupView(['btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnInbox', 'btnStaffMessage', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnShiftSettings', 'btnContractAdmin', 'btnPurchaseInvoices', 'btnTakeoutAdmin', 'btnSalary'], 'saleTab');
                 document.getElementById('salaryAdminForm').style.display = 'block';
                 checkLowStockAlertNoWeight();
             } else if (currentRole === 'morning_seller') {
@@ -2145,7 +2822,7 @@
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                selectedPhotoDataUrl = e.target.result;
+                    selectedPhotoDataUrl = e.target.result;
                     const img = document.getElementById('photoPreview');
                     img.src = selectedPhotoDataUrl;
                     img.style.display = 'block';
@@ -2581,6 +3258,16 @@
                     const opt = document.createElement('option');
                     opt.value = p.name;
                     sausageDatalist.appendChild(opt);
+                });
+            }
+
+            const dairyDatalist = document.getElementById('dairyDatalist');
+            if (dairyDatalist) {
+                dairyDatalist.innerHTML = '';
+                cachedProductsList.filter(p => p.category !== 'sausage').forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.name;
+                    dairyDatalist.appendChild(opt);
                 });
             }
         }
@@ -3585,7 +4272,7 @@
 
             return `
                 <div class="report-card">
-                    <h3>📦 ${o.product_name} — ${Number(o.quantity).toLocaleString('fa-IR')} کیلو/عدد (سفارش‌داده‌شده)</h3>
+                    <h3>📦 ${o.product_name} — ${Number(o.quantity).toLocaleString('fa-IR')} ${o.unit === 'count' ? 'عدد' : 'کیلوگرم'} (سفارش‌داده‌شده)</h3>
                     <p style="font-size:11px; color:#94a3b8;">تاریخ ثبت سفارش: ${orderedDate}</p>
                     ${o.note ? `<p>📝 ${o.note}</p>` : ''}
                     ${statusHtml}
@@ -3594,9 +4281,25 @@
             `;
         }
 
+        function togglePoUnit() {
+            const unit = document.querySelector('input[name="poUnit"]:checked').value;
+            const label = document.getElementById('poQtyLabel');
+            const qtyInput = document.getElementById('poQty');
+            if (unit === 'count') {
+                label.innerText = 'مقدار سفارش (تعداد):';
+                qtyInput.step = '1';
+                qtyInput.placeholder = 'مثلاً 10 عدد';
+            } else {
+                label.innerText = 'مقدار سفارش (کیلوگرم):';
+                qtyInput.step = '0.001';
+                qtyInput.placeholder = 'مثلاً 20';
+            }
+        }
+
         async function submitPurchaseOrder() {
             const nameVal = document.getElementById('poProductName').value.trim();
             const qty = parseFloat(document.getElementById('poQty').value);
+            const unit = document.querySelector('input[name="poUnit"]:checked').value;
             const etaDaysRaw = document.getElementById('poEtaDays').value;
             const etaDays = etaDaysRaw ? parseFloat(etaDaysRaw) : null;
             const note = document.getElementById('poNote').value.trim();
@@ -3616,6 +4319,7 @@
                     product_code: product.code,
                     product_name: product.name,
                     quantity: qty,
+                    unit: unit,
                     eta_days: etaDays,
                     note: note
                 }).eq('id', editingPurchaseOrderId);
@@ -3635,6 +4339,7 @@
                 product_code: product.code,
                 product_name: product.name,
                 quantity: qty,
+                unit: unit,
                 eta_days: etaDays,
                 note: note,
                 status: 'pending',
@@ -3647,9 +4352,11 @@
                 document.getElementById('poQty').value = '';
                 document.getElementById('poEtaDays').value = '';
                 document.getElementById('poNote').value = '';
+                document.querySelector('input[name="poUnit"][value="kg"]').checked = true;
+                togglePoUnit();
                 loadPurchaseOrders();
             } else {
-                showToast('❌ خطا در ثبت سفارش: ' + error.message + '\n\nمطمئن شوید جدول purchase_orders در Supabase تمام ستون‌های لازم را دارد (به‌خصوص eta_days و ordered_at). فایل fix_supabase.sql را اجرا کنید.');
+                showToast('❌ خطا در ثبت سفارش: ' + error.message + '\n\nمطمئن شوید جدول purchase_orders در Supabase تمام ستون‌های لازم را دارد (به‌خصوص eta_days، ordered_at و unit). فایل SQL مربوطه را اجرا کنید.');
             }
         }
 
@@ -3659,6 +4366,9 @@
                 editingPurchaseOrderId = order.id;
                 document.getElementById('poProductName').value = order.product_name;
                 document.getElementById('poQty').value = order.quantity;
+                const unitVal = order.unit === 'count' ? 'count' : 'kg';
+                document.querySelector(`input[name="poUnit"][value="${unitVal}"]`).checked = true;
+                togglePoUnit();
                 document.getElementById('poEtaDays').value = (order.eta_days !== null && order.eta_days !== undefined) ? order.eta_days : '';
                 document.getElementById('poNote').value = order.note || '';
                 document.getElementById('poFormTitle').innerText = '✏️ ویرایش سفارش: ' + order.product_name;
@@ -3674,6 +4384,8 @@
             document.getElementById('poQty').value = '';
             document.getElementById('poEtaDays').value = '';
             document.getElementById('poNote').value = '';
+            document.querySelector('input[name="poUnit"][value="kg"]').checked = true;
+            togglePoUnit();
             document.getElementById('poFormTitle').innerText = '➕ ثبت سفارش جدید';
             document.getElementById('poSubmitBtn').innerText = 'ثبت سفارش جدید';
             document.getElementById('cancelPoEditBtn').style.display = 'none';
