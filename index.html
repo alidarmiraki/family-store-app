@@ -1197,6 +1197,14 @@
     <!-- تب مدیریت قرارداد و ثبت‌نام پرسنل (ویژه مدیر) -->
     <div id="contractAdminTab" class="card">
         <h2>📄 مدیریت قرارداد و ثبت‌نام پرسنل</h2>
+
+        <div class="report-card">
+            <h3>✏️ ویرایش متن قرارداد</h3>
+            <div class="hint">این متن برای هر کسی که ثبت‌نام کند یا قرارداد را تکمیل کند نمایش داده می‌شود. می‌توانید از این جای‌گذارها استفاده کنید تا خودکار برای هرکس پر شود: <b>{{نام}}</b> (نام و نام خانوادگی)، <b>{{کدملی}}</b> (کد ملی، اگر وارد شده باشد)، <b>{{شیفت}}</b> (شیفت صبح یا شب همان فرد)، <b>{{تاریخ}}</b> (تاریخ امروز).</div>
+            <textarea id="contractTemplateEditor" style="height:280px; font-size:12px; line-height:2;" dir="auto"></textarea>
+            <button class="submit-btn" onclick="saveContractTemplate()">💾 ذخیره متن قرارداد</button>
+        </div>
+
         <div class="hint">برای هر فروشنده‌ای که هنوز قرارداد را تکمیل و امضا نکرده، می‌توانید یک مهلت مشخص تعیین کنید. با این کار یک پیام یادآوری برای همان شیفت ارسال می‌شود و مهلت روی صفحه‌ی ثبت‌نام او هم نمایش داده خواهد شد. به محض اینکه فروشنده فرم را تکمیل و امضا کند، بلافاصله یک پیام به شما ارسال می‌شود.</div>
         <div id="contractAdminList" style="margin-top:12px;">در حال بارگذاری...</div>
     </div>
@@ -1696,7 +1704,7 @@
             document.getElementById('loginScreen').style.display = 'block';
         }
 
-        function showRegistrationScreen(mode, prefillUser) {
+        async function showRegistrationScreen(mode, prefillUser) {
             registrationMode = mode;
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('registrationScreen').style.display = 'block';
@@ -1741,19 +1749,16 @@
                 }
             }
 
-            setTimeout(() => { initSignaturePad(); updateContractPreview(); }, 60);
+            await getContractTemplate(true);
+            setTimeout(() => { initSignaturePad(); }, 60);
+            updateContractPreview();
         }
 
-        // --- متن قرارداد همکاری (پویا، بر اساس نام و شیفت فروشنده) ---
-        function buildContractText(fullName, shiftKey, nationalId) {
-            const todayFa = getTehranDateString(new Date());
-            const shiftText = (shiftKey === 'evening') ? 'شیفت شب' : 'شیفت صبح';
-            const nameDisplay = fullName || '[نام و نام خانوادگی]';
-            const idDisplay = nationalId ? (' به کد ملی ' + nationalId) : '';
+        // --- متن قرارداد همکاری: مدیر می‌تواند این متن را از تب «قرارداد پرسنل» ویرایش کند ---
+        // جای‌گذارهای قابل استفاده در متن: {{نام}} , {{کدملی}} , {{شیفت}} , {{تاریخ}}
+        const DEFAULT_CONTRACT_TEMPLATE = `این توافق‌نامه همکاری بین «مدیریت فروشگاه فامیلی (بخش لبنیات، ترشیجات و سوسیس/کالباس) - شعبه بیرجند» و «{{نام}}»{{کدملی}} در تاریخ {{تاریخ}} منعقد می‌گردد:
 
-            return `این توافق‌نامه همکاری بین «مدیریت فروشگاه فامیلی (بخش لبنیات، ترشیجات و سوسیس/کالباس) - شعبه بیرجند» و «${nameDisplay}»${idDisplay} در تاریخ ${todayFa} منعقد می‌گردد:
-
-۱) نیروی مذکور مسئول ${shiftText} است و طبق برنامه اعلام‌شده توسط مدیریت، به‌صورت یک‌روزدرمیان در همین شیفت مشغول به کار خواهد بود.
+۱) نیروی مذکور مسئول {{شیفت}} است و طبق برنامه اعلام‌شده توسط مدیریت، به‌صورت یک‌روزدرمیان در همین شیفت مشغول به کار خواهد بود.
 ۲) در طول ساعات این شیفت، کلیه‌ی وجوه نقد، موجودی انبار اصلی و موجودی غرفه در اختیار و مسئولیت مستقیم همین نیرو قرار دارد.
 ۳) در صورت هرگونه کسری صندوق یا اشتباه در ثبت فروش/موجودی که منجر به ضرر مالی شود، مبلغ خطا از حقوق همان دوره کسر خواهد شد.
 ۴) در صورت تکرار کسری یا اشتباه، علاوه بر کسر مبلغ خطا، جریمه نقدی نیز اعمال می‌شود.
@@ -1761,9 +1766,35 @@
 ۶) در صورتی که فروش هفتگی این نیرو نسبت به هفته قبل حداقل ۳۰٪ افزایش داشته باشد، حقوق همان هفته به میزان ۳۰٪ افزایش می‌یابد. این محاسبه هر هفته به‌طور جداگانه انجام می‌شود و مجموع آن در پایان ماه به‌صورت یکجا واریز می‌گردد.
 ۷) با احتساب پورسانت فروش بالا، حقوق دریافتی می‌تواند به ۷ الی ۸ میلیون تومان و در فروش بسیار بالا تا سقف ۱۰ میلیون تومان برسد.
 ۸) این قرارداد با تکمیل مشخصات، تایید متن بالا، آپلود عکس کارت ملی و امضای دیجیتال زیر توسط نیروی مذکور، از تاریخ فوق برای طرفین لازم‌الاجراست.`;
+
+        let cachedContractTemplate = null;
+
+        async function getContractTemplate(forceRefresh) {
+            if (cachedContractTemplate && !forceRefresh) return cachedContractTemplate;
+            try {
+                const { data, error } = await _supabase.from('contract_settings').select('*').eq('id', 1).maybeSingle();
+                cachedContractTemplate = (!error && data && data.contract_body) ? data.contract_body : DEFAULT_CONTRACT_TEMPLATE;
+            } catch (e) {
+                cachedContractTemplate = DEFAULT_CONTRACT_TEMPLATE;
+            }
+            return cachedContractTemplate;
         }
 
-        function updateContractPreview() {
+        async function buildContractText(fullName, shiftKey, nationalId) {
+            const template = await getContractTemplate();
+            const todayFa = getTehranDateString(new Date());
+            const shiftText = (shiftKey === 'evening') ? 'شیفت شب' : 'شیفت صبح';
+            const nameDisplay = fullName || '[نام و نام خانوادگی]';
+            const idDisplay = nationalId ? (' به کد ملی ' + nationalId) : '';
+
+            return template
+                .split('{{نام}}').join(nameDisplay)
+                .split('{{کدملی}}').join(idDisplay)
+                .split('{{شیفت}}').join(shiftText)
+                .split('{{تاریخ}}').join(todayFa);
+        }
+
+        async function updateContractPreview() {
             const fullName = document.getElementById('regFullName').value.trim();
             const nationalId = document.getElementById('regNationalId').value.trim();
             let shift = 'morning';
@@ -1774,7 +1805,7 @@
                 shift = (pendingCompleteUser.role === 'evening_seller') ? 'evening' : 'morning';
             }
             const box = document.getElementById('contractPreviewText');
-            if (box) box.innerText = buildContractText(fullName, shift, nationalId);
+            if (box) box.innerText = await buildContractText(fullName, shift, nationalId);
         }
 
         // --- کادر امضای دیجیتال (Signature Pad) با ماوس یا لمس ---
@@ -2043,6 +2074,10 @@
             const box = document.getElementById('contractAdminList');
             box.innerHTML = 'در حال بارگذاری...';
 
+            const template = await getContractTemplate(true);
+            const editor = document.getElementById('contractTemplateEditor');
+            if (editor) editor.value = template;
+
             const { data: sellers, error } = await _supabase.rpc('admin_list_sellers');
 
             if (error) {
@@ -2086,6 +2121,23 @@
                     </div>
                 `;
             }).join('');
+        }
+
+        async function saveContractTemplate() {
+            const text = document.getElementById('contractTemplateEditor').value;
+            if (!text.trim()) {
+                return showToast('⚠️ متن قرارداد نمی‌تواند خالی باشد.');
+            }
+
+            const { error } = await _supabase.from('contract_settings').upsert([{ id: 1, contract_body: text }]);
+
+            if (error) {
+                showToast('❌ خطا در ذخیره متن قرارداد: ' + error.message + '\n\nمطمئن شوید جدول contract_settings در Supabase ساخته شده است.');
+                return;
+            }
+
+            cachedContractTemplate = text;
+            showToast('✅ متن قرارداد ذخیره شد. از این به بعد همین متن برای هرکسی که ثبت‌نام کند یا قرارداد را تکمیل کند ارسال می‌شود.');
         }
 
         async function sendContractDeadline(username, role) {
@@ -2191,7 +2243,9 @@
             reminderDismissedThisSession = false;
 
             const badge = document.getElementById('userBadge');
-            badge.innerHTML = '👤 ' + currentUserLabel + ' <button class="logout-btn" onclick="logout()">خروج</button>';
+            const displayName = user.full_name || user.username;
+            const roleLabelText = roleLabels[user.role] || user.role;
+            badge.innerHTML = '👤 <b>' + displayName + '</b> <span style="color:#94a3b8; font-size:11px;">(' + roleLabelText + ')</span> <button class="logout-btn" onclick="logout()">خروج</button>';
             badge.style.display = 'block';
 
             document.getElementById('buyPriceField').style.display = (currentRole === 'admin') ? 'block' : 'none';
