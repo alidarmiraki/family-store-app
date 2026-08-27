@@ -707,6 +707,7 @@
                 <select id="sLateShift">
                     <option value="morning">🌅 شیفت صبح</option>
                     <option value="evening">🌙 شیفت شب</option>
+                    <option value="admin" class="lateShiftAdminOption" style="display:none;">👑 مدیر</option>
                 </select>
                 <div class="hint">با انتخاب این گزینه، فاکتور با تاریخ و شیفت انتخاب‌شده در گزارش‌ها ثبت می‌شود، نه امروز.</div>
             </div>
@@ -774,6 +775,7 @@
                 <select id="seLateShift">
                     <option value="morning">🌅 شیفت صبح</option>
                     <option value="evening">🌙 شیفت شب</option>
+                    <option value="admin" class="lateShiftAdminOption" style="display:none;">👑 مدیر</option>
                 </select>
                 <div class="hint">با انتخاب این گزینه، فاکتور با تاریخ و شیفت انتخاب‌شده در گزارش‌ها ثبت می‌شود، نه امروز.</div>
             </div>
@@ -841,6 +843,7 @@
                 <select id="ssLateShift">
                     <option value="morning">🌅 شیفت صبح</option>
                     <option value="evening">🌙 شیفت شب</option>
+                    <option value="admin" class="lateShiftAdminOption" style="display:none;">👑 مدیر</option>
                 </select>
                 <div class="hint">با انتخاب این گزینه، فاکتور با تاریخ و شیفت انتخاب‌شده در گزارش‌ها ثبت می‌شود، نه امروز.</div>
             </div>
@@ -1512,38 +1515,51 @@
                     () => { /* هر فریمی که بارکد پیدا نشود، نادیده گرفته می‌شود */ }
                 );
 
-                // اگر قبلاً یک‌بار دوربین انتخاب و ذخیره شده، مستقیم همان را باز کن (سریع‌تر، بدون جست‌وجوی دوباره دوربین‌ها)
+                const onReady = () => { statusText.innerText = 'دوربین آماده است — بارکد را داخل کادر بگیرید...'; };
+                const onFail = (err) => {
+                    statusText.innerText = '❌ دسترسی به دوربین ممکن نشد.\nلطفاً اجازه دسترسی دوربین را در تنظیمات مرورگر/تلگرام برای این صفحه فعال کنید، یا کالا را دستی وارد کنید.\n\n(جزئیات: ' + err + ')';
+                };
+
+                // اگر قبلاً یک‌بار دوربین انتخاب و ذخیره شده، مستقیم همان را باز کن
+                // (فقط یک درخواست دسترسی، بدون جست‌وجوی دوباره دوربین‌ها — سریع‌تر و بدون سوال تکراری)
                 let savedCameraId = null;
                 try { savedCameraId = localStorage.getItem(BARCODE_CAMERA_STORAGE_KEY); } catch (e) { savedCameraId = null; }
-                const initialTarget = savedCameraId ? savedCameraId : { facingMode: 'environment' };
 
-                startScanning(initialTarget).then(() => {
-                    statusText.innerText = 'دوربین آماده است — بارکد را داخل کادر بگیرید...';
-
-                    // اگر با facingMode شروع شد (نه با id ذخیره‌شده)، حالا id دوربین عقب را پیدا و برای دفعه بعد ذخیره کن
-                    if (!savedCameraId && typeof Html5Qrcode.getCameras === 'function') {
-                        Html5Qrcode.getCameras().then((cams) => {
-                            if (cams && cams.length > 0) {
-                                const backCam = cams.find(c => /back|rear|environment/i.test(c.label || '')) || cams[cams.length - 1];
-                                if (backCam && backCam.id) {
-                                    try { localStorage.setItem(BARCODE_CAMERA_STORAGE_KEY, backCam.id); } catch (e) { /* اشکالی ندارد */ }
-                                }
-                            }
-                        }).catch(() => { /* اشکالی ندارد، دفعه بعد دوباره facingMode امتحان می‌شود */ });
-                    }
-                }).catch((err) => {
-                    if (savedCameraId) {
-                        // دوربین ذخیره‌شده دیگر معتبر نیست (مثلاً گوشی/مرورگر عوض شده)؛ دوباره با روش عمومی امتحان کن
+                if (savedCameraId) {
+                    startScanning(savedCameraId).then(onReady).catch(() => {
+                        // دوربین ذخیره‌شده دیگر معتبر نیست؛ دوباره از صفر با facingMode امتحان کن
                         try { localStorage.removeItem(BARCODE_CAMERA_STORAGE_KEY); } catch (e) { /* اشکالی ندارد */ }
-                        startScanning({ facingMode: 'environment' }).then(() => {
-                            statusText.innerText = 'دوربین آماده است — بارکد را داخل کادر بگیرید...';
-                        }).catch((err2) => {
-                            statusText.innerText = '❌ دسترسی به دوربین ممکن نشد.\nلطفاً اجازه دسترسی دوربین را در تنظیمات مرورگر/تلگرام برای این صفحه فعال کنید، یا کالا را دستی وارد کنید.\n\n(جزئیات: ' + err2 + ')';
-                        });
-                    } else {
-                        statusText.innerText = '❌ دسترسی به دوربین ممکن نشد.\nلطفاً اجازه دسترسی دوربین را در تنظیمات مرورگر/تلگرام برای این صفحه فعال کنید، یا کالا را دستی وارد کنید.\n\n(جزئیات: ' + err + ')';
-                    }
-                });
+                        startScanning({ facingMode: 'environment' }).then(onReady).catch(onFail);
+                    });
+                    return;
+                }
+
+                // اولین بار: فقط یک‌بار لیست دوربین‌ها را بگیر (همین یک درخواست دسترسی کافی است)
+                // و مستقیم با همان id دوربین عقب شروع کن — بدون یک درخواست دسترسی جداگانه دیگر
+                if (typeof Html5Qrcode.getCameras === 'function') {
+                    Html5Qrcode.getCameras().then((cams) => {
+                        let target = { facingMode: 'environment' };
+                        let chosenId = null;
+                        if (cams && cams.length > 0) {
+                            const backCam = cams.find(c => /back|rear|environment/i.test(c.label || '')) || cams[cams.length - 1];
+                            if (backCam && backCam.id) {
+                                target = backCam.id;
+                                chosenId = backCam.id;
+                            }
+                        }
+                        startScanning(target).then(() => {
+                            onReady();
+                            if (chosenId) {
+                                try { localStorage.setItem(BARCODE_CAMERA_STORAGE_KEY, chosenId); } catch (e) { /* اشکالی ندارد */ }
+                            }
+                        }).catch(onFail);
+                    }).catch(() => {
+                        // اگر لیست دوربین‌ها هم گیر نیاورد، مستقیم با facingMode امتحان کن
+                        startScanning({ facingMode: 'environment' }).then(onReady).catch(onFail);
+                    });
+                } else {
+                    startScanning({ facingMode: 'environment' }).then(onReady).catch(onFail);
+                }
             } catch (e) {
                 statusText.innerText = '❌ خطا در راه‌اندازی بارکدخوان: ' + e.message;
             }
@@ -2066,7 +2082,12 @@
                 shift = document.getElementById('regShift').value;
 
                 if (!username || !password) {
-                            errBox.innerText = '❌ رمز عبور باید حداقل ۴ کاراکتر باشد.';
+                    errBox.innerText = '❌ لطفاً نام کاربری و رمز عبور دلخواه را وارد کنید.';
+                    errBox.style.display = 'block';
+                    return;
+                }
+                if (password.length < 4) {
+                    errBox.innerText = '❌ رمز عبور باید حداقل ۴ کاراکتر باشد.';
                     errBox.style.display = 'block';
                     return;
                 }
@@ -3813,6 +3834,19 @@
                     const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
                     dateInput.value = getTehranISODate(yesterday);
                 }
+
+                // فقط مدیر می‌تواند فاکتور تاخیری را به نام «مدیر» ثبت کند
+                const shiftSelect = document.getElementById(ids.lateShift);
+                const adminOption = shiftSelect ? shiftSelect.querySelector('.lateShiftAdminOption') : null;
+                if (adminOption) {
+                    if (currentRole === 'admin') {
+                        adminOption.style.display = '';
+                        shiftSelect.value = 'admin';
+                    } else {
+                        adminOption.style.display = 'none';
+                        if (shiftSelect.value === 'admin') shiftSelect.value = 'morning';
+                    }
+                }
             }
         }
 
@@ -3833,6 +3867,7 @@
         function getSaleShiftKey(s) {
             if (s.shift_label === 'morning') return 'morning';
             if (s.shift_label === 'evening') return 'evening';
+            if (s.shift_label === 'admin') return 'admin';
             if (s.seller_name && s.seller_name.indexOf('فروشنده صبح') === 0) return 'morning';
             if (s.seller_name && s.seller_name.indexOf('فروشنده شب') === 0) return 'evening';
             if (s.seller_name && s.seller_name.indexOf('مدیر') === 0) return 'admin';
@@ -3986,7 +4021,7 @@
             }]);
 
             if (isLateEntry) {
-                const shiftLabelText = (lateShiftVal === 'morning') ? 'شیفت صبح' : 'شیفت شب';
+                const shiftLabelText = (lateShiftVal === 'morning') ? 'شیفت صبح' : (lateShiftVal === 'evening') ? 'شیفت شب' : 'مدیر';
                 showToast(`✅ فروش ${typeLabel} «${product.name}» با تاریخ ${lateDateVal} برای ${shiftLabelText} ثبت شد (ثبت با تاخیر).\n💰 مبلغ کل فاکتور: ${calculatedPrice.toLocaleString('fa-IR')} تومان\n🧊 موجودی جدید ظرف غرفه: ${newBoothStock} کیلوگرم`);
             } else {
                 showToast(`✅ فروش ${typeLabel} «${product.name}» در ساعت ${getTehranTimeString(now)} ثبت شد.\n💰 مبلغ کل فاکتور: ${calculatedPrice.toLocaleString('fa-IR')} تومان\n🧊 موجودی جدید ظرف غرفه: ${newBoothStock} کیلوگرم\n⏱️ زمان دقیق: ${fullTimeText}`);
