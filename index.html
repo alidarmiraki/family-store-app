@@ -1379,9 +1379,41 @@
             console.warn('Telegram WebApp در دسترس نیست یا مقداردهی نشد؛ برنامه در حالت مرورگر عادی ادامه می‌یابد.', e);
         }
 
+        // ساعت زنده باید همیشه کار کند، حتی اگر اتصال به سرور/کتابخانه‌های بیرونی
+        // (مثل Supabase) به هر دلیلی (نت ضعیف، فیلترشکن) با مشکل مواجه شود؛
+        // به همین دلیل قبل از هر کد دیگری راه‌اندازی می‌شود.
+        function updateClock() {
+            const el = document.getElementById('liveClock');
+            if (!el) return;
+            try {
+                const now = new Date();
+                el.innerText = '🕒 ' + getTehranFullDateTimeString(now);
+            } catch (e) {
+                el.innerText = '🕒 ' + new Date().toLocaleString('fa-IR');
+            }
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // راه‌اندازی امن اتصال به Supabase — اگر کتابخانه Supabase به هر دلیلی
+        // (نت ضعیف، قطعی CDN، فیلترینگ) بارگذاری نشده باشد، به‌جای متوقف‌کردن
+        // کل صفحه، یک پیام واضح به کاربر نشان می‌دهیم.
         const SUPABASE_URL = "https://kinjpmvoyioaslpdzujg.supabase.co";
         const SUPABASE_KEY = "sb_publishable_k3wkzKalFmLFtfx8WZWr1g_fHKT-3Sl";
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        let _supabase = null;
+        try {
+            if (typeof supabase === 'undefined' || !supabase.createClient) {
+                throw new Error('کتابخانه Supabase بارگذاری نشد');
+            }
+            _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        } catch (e) {
+            console.error('خطا در اتصال به Supabase:', e);
+            const loginErr = document.getElementById('loginError');
+            if (loginErr) {
+                loginErr.innerText = '❌ اتصال به سرور برقرار نشد. لطفاً اینترنت خود را چک کنید (وای‌فای/موبایل‌دیتا یا فیلترشکن) و صفحه را رفرش (Reload) کنید.';
+                loginErr.style.display = 'block';
+            }
+        }
 
         let cachedProductsList = [];
 
@@ -1752,13 +1784,6 @@
             return h * 60 + m;
         }
 
-        function updateClock() {
-            const now = new Date();
-            document.getElementById('liveClock').innerText = '🕒 ' + getTehranFullDateTimeString(now);
-        }
-        setInterval(updateClock, 1000);
-        updateClock();
-
         // تبدیل هر URL موجود در یک متن به لینک قابل کلیک (مخصوصاً لینک موقعیت مکانی گوگل‌مپ)
         function linkify(text) {
             if (!text) return '';
@@ -1998,6 +2023,12 @@
             const errBox = document.getElementById('registrationError');
             errBox.style.display = 'none';
 
+            if (!_supabase) {
+                errBox.innerText = '❌ اتصال به سرور برقرار نیست. لطفاً اینترنت خود را چک کنید و صفحه را رفرش (Reload) کنید.';
+                errBox.style.display = 'block';
+                return;
+            }
+
             const fullName = document.getElementById('regFullName').value.trim();
             const nationalId = document.getElementById('regNationalId').value.trim();
             const phone = document.getElementById('regPhone').value.trim();
@@ -2035,12 +2066,7 @@
                 shift = document.getElementById('regShift').value;
 
                 if (!username || !password) {
-                    errBox.innerText = '❌ لطفاً نام کاربری و رمز عبور دلخواه را وارد کنید.';
-                    errBox.style.display = 'block';
-                    return;
-                }
-                if (password.length < 4) {
-                    errBox.innerText = '❌ رمز عبور باید حداقل ۴ کاراکتر باشد.';
+                            errBox.innerText = '❌ رمز عبور باید حداقل ۴ کاراکتر باشد.';
                     errBox.style.display = 'block';
                     return;
                 }
@@ -2054,43 +2080,6 @@
                     errBox.innerText = '❌ خطای داخلی: اطلاعات کاربر یافت نشد. لطفاً دوباره وارد شوید.';
                     errBox.style.display = 'block';
                     return;
-                }
-                shift = (pendingCompleteUser.role === 'evening_seller') ? 'evening' : 'morning';
-            }
-
-            submitBtn.disabled = true;
-            submitBtn.innerText = '⏳ در حال آپلود مدارک...';
-
-            let nationalIdPhotoUrl = null;
-            let signatureUrl = null;
-            const safeNamePart = (username || (pendingCompleteUser ? pendingCompleteUser.username : 'user')).replace(/[^a-zA-Z0-9_-]+/g, '_');
-
-            try {
-                const idBlob = await compressDataUrl(selectedRegNationalIdPhotoDataUrl);
-                const idFileName = `${safeNamePart}_${Date.now()}.jpg`;
-                const { error: idUploadErr } = await _supabase.storage.from(NATIONAL_ID_BUCKET).upload(idFileName, idBlob, { contentType: 'image/jpeg', upsert: true });
-                if (idUploadErr) throw idUploadErr;
-                const { data: idUrlData } = _supabase.storage.from(NATIONAL_ID_BUCKET).getPublicUrl(idFileName);
-                nationalIdPhotoUrl = idUrlData ? idUrlData.publicUrl : null;
-
-                const sigBlob = await compressDataUrl(signatureDataUrl, 600, 0.9);
-                const sigFileName = `${safeNamePart}_${Date.now()}_sign.jpg`;
-                const { error: sigUploadErr } = await _supabase.storage.from(SIGNATURE_BUCKET).upload(sigFileName, sigBlob, { contentType: 'image/jpeg', upsert: true });
-                if (sigUploadErr) throw sigUploadErr;
-                const { data: sigUrlData } = _supabase.storage.from(SIGNATURE_BUCKET).getPublicUrl(sigFileName);
-                signatureUrl = sigUrlData ? sigUrlData.publicUrl : null;
-            } catch (uploadErr) {
-                submitBtn.disabled = false;
-                submitBtn.innerText = registrationMode === 'new' ? '✅ ثبت‌نام و امضای قرارداد' : '✅ تایید و امضای قرارداد';
-                errBox.innerText = '❌ خطا در آپلود مدارک: ' + uploadErr.message + '\n\nمطمئن شوید باکت‌های "national-id-photos" و "signatures" در Supabase Storage ساخته شده و عمومی هستند. اگر نتتان ضعیف است دوباره تلاش کنید.';
-                errBox.style.display = 'block';
-                return;
-            }
-
-            submitBtn.innerText = '⏳ در حال ثبت...';
-
-            if (registrationMode === 'new') {
-                 return;
                 }
                 shift = (pendingCompleteUser.role === 'evening_seller') ? 'evening' : 'morning';
             }
@@ -2479,6 +2468,12 @@
             const password = document.getElementById('accessPin').value;
             const errBox = document.getElementById('loginError');
             errBox.style.display = 'none';
+
+            if (!_supabase) {
+                errBox.innerText = '❌ اتصال به سرور برقرار نیست. لطفاً اینترنت خود را چک کنید و صفحه را رفرش (Reload) کنید.';
+                errBox.style.display = 'block';
+                return;
+            }
 
             if (!username || !password) {
                 errBox.innerText = '❌ لطفاً نام کاربری و رمز عبور را وارد کنید';
@@ -5754,4 +5749,4 @@
         }
     </script>
 </body>
-</html>   
+</html>
