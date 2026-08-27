@@ -668,6 +668,7 @@
         <button class="tab-btn" id="btnTakeoutAdmin" onclick="switchTab('takeoutAdmin'); loadTakeoutAdminSummary();">🧺 برداشت‌های حساب‌نشده</button>
         <button class="tab-btn" id="btnSalary" onclick="switchTab('salary'); loadSalaryTab();">💰 واریز حقوق</button>
         <button class="tab-btn" id="btnPersonalTakeout" onclick="switchTab('personalTakeout'); loadMyTakeouts();">🛒 برداشت شخصی</button>
+        <button class="tab-btn" id="btnMyAccount" onclick="switchTab('myAccount'); prefillMyAccountTab();">⚙️ حساب کاربری من</button>
     </div>
 
     <!-- فرم ثبت فروش لبنیات و ترشیجات (حضوری) -->
@@ -1304,6 +1305,33 @@
         </div>
     </div>
 
+    <!-- تب حساب کاربری من: تغییر نام کاربری/رمز عبور و مشخصات شخصی (برای همه نقش‌ها از جمله مدیر) -->
+    <div id="myAccountTab" class="card">
+        <h2>⚙️ حساب کاربری من</h2>
+        <div class="hint">در این بخش می‌توانی نام و نام‌خانوادگی، شماره موبایل، نام کاربری یا رمز عبور خودت را تغییر بدهی. برای هر تغییری، اول باید رمز عبور فعلی‌ات را وارد کنی تا هویتت تایید شود.</div>
+
+        <label>نام و نام خانوادگی:</label>
+        <input type="text" id="myAccFullName" dir="auto" placeholder="نام و نام خانوادگی">
+        <label>شماره موبایل:</label>
+        <input type="text" id="myAccPhone" dir="auto" placeholder="۰۹xxxxxxxxx">
+
+        <div class="tare-box" style="margin-top:14px;">
+            <label style="margin-top:0; color:#38bdf8;">🔑 تغییر نام کاربری یا رمز عبور (اختیاری):</label>
+            <label>نام کاربری جدید (اگر می‌خواهی عوض شود):</label>
+            <input type="text" id="myAccNewUsername" dir="auto" placeholder="خالی = بدون تغییر">
+            <label>رمز عبور جدید (اگر می‌خواهی عوض شود):</label>
+            <input type="password" id="myAccNewPassword" placeholder="خالی = بدون تغییر">
+            <label>تکرار رمز عبور جدید:</label>
+            <input type="password" id="myAccNewPasswordConfirm" placeholder="رمز عبور جدید را دوباره وارد کن">
+        </div>
+
+        <label>رمز عبور فعلی <span style="color:#ef4444; font-weight:bold;">(الزامی برای تایید هویت)</span>:</label>
+        <input type="password" id="myAccCurrentPassword" placeholder="رمز عبور فعلی خودت را وارد کن">
+
+        <div class="error-msg" id="myAccError"></div>
+        <button class="submit-btn" id="myAccSubmitBtn" onclick="submitMyAccountChanges()">💾 ذخیره تغییرات</button>
+    </div>
+
     <!-- تب مدیریت برداشت‌های حساب‌نشده پرسنل (مدیر) -->
     <div id="takeoutAdminTab" class="card">
         <h2>🧺 برداشت‌های حساب‌نشده پرسنل</h2>
@@ -1407,14 +1435,18 @@
         }
         let currentRole = "";
         let currentUserLabel = "";
+        let currentSessionUser = null;
 
         // --- بارکدخوان با دوربین (تشخیص خودکار کالا + وزن مثل صندوق فروشگاهی) ---
         // فرمت بارکد لیبل ترازوهای فروشگاه: ۷ رقم اول = کد کالا، ۵ رقم بعدی = وزن به گرم، رقم آخر = چک‌دیجیت
         let html5QrcodeScannerInstance = null;
         let barcodeScanTargetType = null;
+        let barcodeScanProcessing = false;
+        const BARCODE_CAMERA_STORAGE_KEY = 'preferredBarcodeCameraId';
 
         function openBarcodeScanner(type) {
             barcodeScanTargetType = type;
+            barcodeScanProcessing = false;
             const overlay = document.getElementById('scannerOverlay');
             const statusText = document.getElementById('scannerStatusText');
             overlay.classList.add('active');
@@ -1440,15 +1472,45 @@
                         Html5QrcodeSupportedFormats.CODE_39
                     ];
                 }
-                html5QrcodeScannerInstance.start(
-                    { facingMode: 'environment' },
+
+                const startScanning = (target) => html5QrcodeScannerInstance.start(
+                    target,
                     scanConfig,
                     (decodedText) => { onBarcodeScanned(decodedText); },
                     () => { /* هر فریمی که بارکد پیدا نشود، نادیده گرفته می‌شود */ }
-                ).then(() => {
+                );
+
+                // اگر قبلاً یک‌بار دوربین انتخاب و ذخیره شده، مستقیم همان را باز کن (سریع‌تر، بدون جست‌وجوی دوباره دوربین‌ها)
+                let savedCameraId = null;
+                try { savedCameraId = localStorage.getItem(BARCODE_CAMERA_STORAGE_KEY); } catch (e) { savedCameraId = null; }
+                const initialTarget = savedCameraId ? savedCameraId : { facingMode: 'environment' };
+
+                startScanning(initialTarget).then(() => {
                     statusText.innerText = 'دوربین آماده است — بارکد را داخل کادر بگیرید...';
+
+                    // اگر با facingMode شروع شد (نه با id ذخیره‌شده)، حالا id دوربین عقب را پیدا و برای دفعه بعد ذخیره کن
+                    if (!savedCameraId && typeof Html5Qrcode.getCameras === 'function') {
+                        Html5Qrcode.getCameras().then((cams) => {
+                            if (cams && cams.length > 0) {
+                                const backCam = cams.find(c => /back|rear|environment/i.test(c.label || '')) || cams[cams.length - 1];
+                                if (backCam && backCam.id) {
+                                    try { localStorage.setItem(BARCODE_CAMERA_STORAGE_KEY, backCam.id); } catch (e) { /* اشکالی ندارد */ }
+                                }
+                            }
+                        }).catch(() => { /* اشکالی ندارد، دفعه بعد دوباره facingMode امتحان می‌شود */ });
+                    }
                 }).catch((err) => {
-                    statusText.innerText = '❌ دسترسی به دوربین ممکن نشد.\nلطفاً اجازه دسترسی دوربین را در تنظیمات مرورگر/تلگرام برای این صفحه فعال کنید، یا کالا را دستی وارد کنید.\n\n(جزئیات: ' + err + ')';
+                    if (savedCameraId) {
+                        // دوربین ذخیره‌شده دیگر معتبر نیست (مثلاً گوشی/مرورگر عوض شده)؛ دوباره با روش عمومی امتحان کن
+                        try { localStorage.removeItem(BARCODE_CAMERA_STORAGE_KEY); } catch (e) { /* اشکالی ندارد */ }
+                        startScanning({ facingMode: 'environment' }).then(() => {
+                            statusText.innerText = 'دوربین آماده است — بارکد را داخل کادر بگیرید...';
+                        }).catch((err2) => {
+                            statusText.innerText = '❌ دسترسی به دوربین ممکن نشد.\nلطفاً اجازه دسترسی دوربین را در تنظیمات مرورگر/تلگرام برای این صفحه فعال کنید، یا کالا را دستی وارد کنید.\n\n(جزئیات: ' + err2 + ')';
+                        });
+                    } else {
+                        statusText.innerText = '❌ دسترسی به دوربین ممکن نشد.\nلطفاً اجازه دسترسی دوربین را در تنظیمات مرورگر/تلگرام برای این صفحه فعال کنید، یا کالا را دستی وارد کنید.\n\n(جزئیات: ' + err + ')';
+                    }
                 });
             } catch (e) {
                 statusText.innerText = '❌ خطا در راه‌اندازی بارکدخوان: ' + e.message;
@@ -1468,6 +1530,10 @@
         }
 
         async function onBarcodeScanned(decodedText) {
+            // جلوگیری از پردازش تکراری وقتی چند فریم پشت‌سرهم همان بارکد را می‌خوانند
+            if (barcodeScanProcessing) return;
+            barcodeScanProcessing = true;
+
             const digits = String(decodedText).replace(/\D/g, '');
             let productCode = digits;
             let weightGrams = null;
@@ -1486,18 +1552,26 @@
             if (!product) {
                 const statusText = document.getElementById('scannerStatusText');
                 if (statusText) statusText.innerText = `⚠️ کالایی با کد ${productCode} در انبار یافت نشد. دوباره امتحان کنید یا کالا را دستی وارد کنید.`;
+                barcodeScanProcessing = false;
+                return;
+            }
+
+            const type = barcodeScanTargetType;
+            if (!type) { barcodeScanProcessing = false; return; }
+            const ids = SALE_FORM_IDS[type];
+
+            if (type === 'sausage' && product.category !== 'sausage') {
+                showToast('⚠️ این کالا به‌عنوان سوسیس و کالباس تعریف نشده؛ از تب مناسب فروش استفاده کنید.');
+                closeBarcodeScanner();
+                barcodeScanProcessing = false;
                 return;
             }
 
             closeBarcodeScanner();
 
-            const type = barcodeScanTargetType;
-            if (!type) return;
-            const ids = SALE_FORM_IDS[type];
-
-            if (type === 'sausage' && product.category !== 'sausage') {
-                showToast('⚠️ این کالا به‌عنوان سوسیس و کالباس تعریف نشده؛ از تب مناسب فروش استفاده کنید.');
-                return;
+            // اگر فرم در حالت ویرایش یک فاکتور قبلی بود، اسکن بارکد یعنی شروع یک فاکتور تازه
+            if (editingSale[type] && editingSale[type].id) {
+                cancelSaleEdit(type);
             }
 
             document.getElementById(ids.name).value = product.name;
@@ -1507,10 +1581,20 @@
                 if (gramRadio) gramRadio.checked = true;
                 onSaleUnitChange(type);
                 document.getElementById(ids.qty).value = weightGrams;
-            }
+                await calculateSalePriceAuto(type);
 
-            calculateSalePriceAuto(type);
-            showToast(`✅ کالا شناسایی شد: ${product.name}${weightGrams ? ' (' + weightGrams.toLocaleString('fa-IR') + ' گرم)' : ''}\nمقدار و قیمت را بررسی کنید و سپس فاکتور را ثبت کنید.`);
+                showToast(`✅ کالا شناسایی شد: ${product.name} (${weightGrams.toLocaleString('fa-IR')} گرم)\nدر حال ثبت خودکار فاکتور...`);
+
+                // کمی مکث تا مبلغ محاسبه‌شده روی صفحه دیده شود، سپس ثبت خودکار فاکتور مثل صندوق فروشگاهی
+                setTimeout(async () => {
+                    await submitSale(type);
+                    barcodeScanProcessing = false;
+                }, 450);
+            } else {
+                await calculateSalePriceAuto(type);
+                showToast(`✅ کالا شناسایی شد: ${product.name}\nاین بارکد وزن نداشت؛ لطفاً مقدار را دستی وارد کنید و فاکتور را ثبت کنید.`);
+                barcodeScanProcessing = false;
+            }
         }
 
         let editingProductId = null;
@@ -1780,8 +1864,8 @@
             return cachedContractTemplate;
         }
 
-        async function buildContractText(fullName, shiftKey, nationalId) {
-            const template = await getContractTemplate();
+        async function buildContractText(fullName, shiftKey, nationalId, customBody) {
+            const template = (customBody && customBody.trim()) ? customBody : await getContractTemplate();
             const todayFa = getTehranDateString(new Date());
             const shiftText = (shiftKey === 'evening') ? 'شیفت شب' : 'شیفت صبح';
             const nameDisplay = fullName || '[نام و نام خانوادگی]';
@@ -1798,14 +1882,16 @@
             const fullName = document.getElementById('regFullName').value.trim();
             const nationalId = document.getElementById('regNationalId').value.trim();
             let shift = 'morning';
+            let customBody = null;
             if (registrationMode === 'new') {
                 const shiftEl = document.getElementById('regShift');
                 if (shiftEl) shift = shiftEl.value;
             } else if (pendingCompleteUser) {
                 shift = (pendingCompleteUser.role === 'evening_seller') ? 'evening' : 'morning';
+                customBody = pendingCompleteUser.contract_body || null;
             }
             const box = document.getElementById('contractPreviewText');
-            if (box) box.innerText = await buildContractText(fullName, shift, nationalId);
+            if (box) box.innerText = await buildContractText(fullName, shift, nationalId, customBody);
         }
 
         // --- کادر امضای دیجیتال (Signature Pad) با ماوس یا لمس ---
@@ -2004,6 +2090,43 @@
             submitBtn.innerText = '⏳ در حال ثبت...';
 
             if (registrationMode === 'new') {
+                 return;
+                }
+                shift = (pendingCompleteUser.role === 'evening_seller') ? 'evening' : 'morning';
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerText = '⏳ در حال آپلود مدارک...';
+
+            let nationalIdPhotoUrl = null;
+            let signatureUrl = null;
+            const safeNamePart = (username || (pendingCompleteUser ? pendingCompleteUser.username : 'user')).replace(/[^a-zA-Z0-9_-]+/g, '_');
+
+            try {
+                const idBlob = await compressDataUrl(selectedRegNationalIdPhotoDataUrl);
+                const idFileName = `${safeNamePart}_${Date.now()}.jpg`;
+                const { error: idUploadErr } = await _supabase.storage.from(NATIONAL_ID_BUCKET).upload(idFileName, idBlob, { contentType: 'image/jpeg', upsert: true });
+                if (idUploadErr) throw idUploadErr;
+                const { data: idUrlData } = _supabase.storage.from(NATIONAL_ID_BUCKET).getPublicUrl(idFileName);
+                nationalIdPhotoUrl = idUrlData ? idUrlData.publicUrl : null;
+
+                const sigBlob = await compressDataUrl(signatureDataUrl, 600, 0.9);
+                const sigFileName = `${safeNamePart}_${Date.now()}_sign.jpg`;
+                const { error: sigUploadErr } = await _supabase.storage.from(SIGNATURE_BUCKET).upload(sigFileName, sigBlob, { contentType: 'image/jpeg', upsert: true });
+                if (sigUploadErr) throw sigUploadErr;
+                const { data: sigUrlData } = _supabase.storage.from(SIGNATURE_BUCKET).getPublicUrl(sigFileName);
+                signatureUrl = sigUrlData ? sigUrlData.publicUrl : null;
+            } catch (uploadErr) {
+                submitBtn.disabled = false;
+                submitBtn.innerText = registrationMode === 'new' ? '✅ ثبت‌نام و امضای قرارداد' : '✅ تایید و امضای قرارداد';
+                errBox.innerText = '❌ خطا در آپلود مدارک: ' + uploadErr.message + '\n\nمطمئن شوید باکت‌های "national-id-photos" و "signatures" در Supabase Storage ساخته شده و عمومی هستند. اگر نتتان ضعیف است دوباره تلاش کنید.';
+                errBox.style.display = 'block';
+                return;
+            }
+
+            submitBtn.innerText = '⏳ در حال ثبت...';
+
+            if (registrationMode === 'new') {
                 const roleValue = (shift === 'evening') ? 'evening_seller' : 'morning_seller';
                 const { error: regErr } = await _supabase.rpc('register_user', {
                     p_username: username,
@@ -2107,20 +2230,101 @@
                     deadlineHtml = `<span style="color:#94a3b8;">⏳ هنوز قرارداد تکمیل نشده و مهلتی هم تعیین نشده</span>`;
                 }
 
-                const actionHtml = isDone ? '' : `
+                const deadlineActionHtml = isDone ? '' : `
                     <div style="display:flex; gap:6px; align-items:center; margin-top:8px;">
                         <input type="date" id="contractDeadlineInput_${s.username}" style="flex:1; margin-top:0;">
                         <button class="row-btn confirm-btn" style="white-space:nowrap;" onclick="sendContractDeadline('${s.username}', '${s.role}')">📨 ارسال قرارداد با این مهلت</button>
                     </div>`;
 
+                const safeContractBody = (s.contract_body || '').replace(/</g, '&lt;');
+
                 return `
                     <div class="report-card">
                         <h3>👤 ${s.full_name || s.username} <span style="font-size:11px; color:#94a3b8;">(${roleLabel} - ${s.username})</span></h3>
                         <p>${deadlineHtml}</p>
-                        ${actionHtml}
+                        ${deadlineActionHtml}
+
+                        <button class="row-btn edit-btn" style="width:100%; margin-top:10px;" onclick="togglePersonBox('contractBox_${s.username}')">📄 متن قرارداد اختصاصی همین فرد</button>
+                        <div id="contractBox_${s.username}" style="display:none; margin-top:8px;">
+                            <div class="hint" style="margin-top:0;">اگر این کادر را خالی بگذاری و ذخیره کنی، برای این فرد همان متن پیش‌فرض عمومی استفاده می‌شود. اگر متنی اینجا بنویسی، فقط برای همین فرد همین متن ارسال می‌شود (جای‌گذارهای {{نام}}، {{کدملی}}، {{شیفت}}، {{تاریخ}} اینجا هم کار می‌کنند).</div>
+                            <textarea id="contractBodyInput_${s.username}" style="height:220px; font-size:12px; line-height:2;" dir="auto" placeholder="خالی = استفاده از متن پیش‌فرض عمومی">${safeContractBody}</textarea>
+                            <button class="row-btn confirm-btn" style="width:100%; margin-top:6px;" onclick="saveUserContract('${s.username}')">💾 ذخیره متن قرارداد برای همین فرد</button>
+                        </div>
+
+                        <button class="row-btn edit-btn" style="width:100%; margin-top:8px;" onclick="togglePersonBox('resetBox_${s.username}')">🔑 ریست رمز عبور این فرد</button>
+                        <div id="resetBox_${s.username}" style="display:none; margin-top:8px;">
+                            <div class="hint" style="margin-top:0;">یک رمز عبور موقت جدید بنویس و ذخیره کن؛ بعد شخصاً همین رمز را به این فرد اطلاع بده تا وارد شود (به‌خاطر امنیت، پیام داخل برنامه رمز جدید را نشان نمی‌دهد).</div>
+                            <input type="text" id="resetPasswordInput_${s.username}" placeholder="رمز عبور موقت جدید">
+                            <button class="row-btn delete-btn" style="width:100%; margin-top:6px;" onclick="resetSellerPassword('${s.username}', '${roleLabel}')">🔑 ثبت رمز عبور جدید</button>
+                        </div>
+
+                        ${!isDone ? `<button class="row-btn delete-btn" style="width:100%; margin-top:8px;" onclick="resetSellerRegistration('${s.username}', '${roleLabel}')">🔄 بازنشانی و لغو مهلت فعلی</button>` : ''}
                     </div>
                 `;
             }).join('');
+        }
+
+        function togglePersonBox(id) {
+            const box = document.getElementById(id);
+            if (!box) return;
+            box.style.display = (box.style.display === 'none' || !box.style.display) ? 'block' : 'none';
+        }
+
+        async function saveUserContract(username) {
+            const textEl = document.getElementById(`contractBodyInput_${username}`);
+            const text = textEl ? textEl.value : '';
+
+            const { error } = await _supabase.rpc('admin_set_user_contract', {
+                p_username: username,
+                p_contract_text: text
+            });
+
+            if (error) {
+                showToast('❌ خطا در ذخیره متن قرارداد اختصاصی: ' + error.message + '\n\nمطمئن شوید تابع admin_set_user_contract در Supabase ساخته شده است.');
+                return;
+            }
+
+            showToast(text.trim() ? '✅ متن قرارداد اختصاصی برای این فرد ذخیره شد.' : '✅ متن اختصاصی حذف شد؛ از این به بعد متن پیش‌فرض عمومی برای این فرد استفاده می‌شود.');
+        }
+
+        async function resetSellerPassword(username, roleLabel) {
+            const passInput = document.getElementById(`resetPasswordInput_${username}`);
+            const newPassword = passInput ? passInput.value : '';
+
+            if (!newPassword || newPassword.length < 4) {
+                return showToast('⚠️ رمز عبور موقت باید حداقل ۴ کاراکتر باشد.');
+            }
+
+            const sure = await showConfirm(`آیا مطمئنی می‌خواهی رمز عبور «${username}» را با رمز جدید جایگزین کنی؟ بعد از این کار حتماً باید رمز جدید را شخصاً به او اطلاع دهی.`);
+            if (!sure) return;
+
+            const { error } = await _supabase.rpc('admin_reset_seller_password', {
+                p_username: username,
+                p_new_password: newPassword
+            });
+
+            if (error) {
+                showToast('❌ خطا در ریست رمز عبور: ' + error.message + '\n\nمطمئن شوید تابع admin_reset_seller_password در Supabase ساخته شده است.');
+                return;
+            }
+
+            if (passInput) passInput.value = '';
+            showToast(`✅ رمز عبور «${username}» با موفقیت تغییر کرد. حتماً همین الان رمز جدید را شخصاً به ${roleLabel} اطلاع بده.`);
+        }
+
+        async function resetSellerRegistration(username, roleLabel) {
+            const sure = await showConfirm(`با این کار وضعیت تکمیل قرارداد «${username}» به حالت «تکمیل‌نشده» برمی‌گردد و او دفعه بعد که وارد شود، دوباره باید فرم و قرارداد را از نو تکمیل و امضا کند. مطمئنی؟`);
+            if (!sure) return;
+
+            const { error } = await _supabase.rpc('admin_reset_seller_registration', { p_username: username });
+
+            if (error) {
+                showToast('❌ خطا در بازنشانی: ' + error.message + '\n\nمطمئن شوید تابع admin_reset_seller_registration در Supabase ساخته شده است.');
+                return;
+            }
+
+            showToast(`✅ وضعیت ثبت‌نام «${username}» بازنشانی شد. دفعه بعد که ${roleLabel} وارد شود، فرم قرارداد را دوباره خواهد دید.`);
+            loadContractAdminTab();
         }
 
         async function saveContractTemplate() {
@@ -2172,6 +2376,102 @@
 
             showToast(`✅ قرارداد برای ${roleLabel} ارسال شد و مهلت تا ${getTehranDateString(new Date(deadlineIso))} تعیین گردید.`);
             loadContractAdminTab();
+        }
+
+        // --- تغییر مشخصات، نام کاربری و رمز عبور خود کاربر (هر نقشی، شامل مدیر) ---
+        function prefillMyAccountTab() {
+            document.getElementById('myAccFullName').value = '';
+            document.getElementById('myAccPhone').value = '';
+            document.getElementById('myAccNewUsername').value = '';
+            document.getElementById('myAccNewPassword').value = '';
+            document.getElementById('myAccNewPasswordConfirm').value = '';
+            document.getElementById('myAccCurrentPassword').value = '';
+            document.getElementById('myAccError').style.display = 'none';
+
+            if (currentSessionUser) {
+                document.getElementById('myAccFullName').value = currentSessionUser.full_name || '';
+                document.getElementById('myAccPhone').value = currentSessionUser.phone_number || '';
+            }
+        }
+
+        async function submitMyAccountChanges() {
+            const errBox = document.getElementById('myAccError');
+            errBox.style.display = 'none';
+
+            const fullName = document.getElementById('myAccFullName').value.trim();
+            const phone = document.getElementById('myAccPhone').value.trim();
+            const newUsername = document.getElementById('myAccNewUsername').value.trim();
+            const newPassword = document.getElementById('myAccNewPassword').value;
+            const newPasswordConfirm = document.getElementById('myAccNewPasswordConfirm').value;
+            const currentPassword = document.getElementById('myAccCurrentPassword').value;
+            const submitBtn = document.getElementById('myAccSubmitBtn');
+
+            if (!currentPassword) {
+                errBox.innerText = '❌ برای هر تغییری باید رمز عبور فعلی‌ات را وارد کنی.';
+                errBox.style.display = 'block';
+                return;
+            }
+            if (newPassword && newPassword.length < 4) {
+                errBox.innerText = '❌ رمز عبور جدید باید حداقل ۴ کاراکتر باشد.';
+                errBox.style.display = 'block';
+                return;
+            }
+            if (newPassword && newPassword !== newPasswordConfirm) {
+                errBox.innerText = '❌ رمز عبور جدید و تکرار آن یکسان نیستند.';
+                errBox.style.display = 'block';
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerText = '⏳ در حال ذخیره...';
+
+            const { data, error } = await _supabase.rpc('change_own_account', {
+                p_current_username: currentSessionUser.username,
+                p_current_password: currentPassword,
+                p_new_username: newUsername || null,
+                p_new_password: newPassword || null,
+                p_full_name: fullName || null,
+                p_phone: phone || null
+            });
+
+            submitBtn.disabled = false;
+            submitBtn.innerText = '💾 ذخیره تغییرات';
+
+            if (error) {
+                let msg = error.message || 'خطای نامشخص';
+                if (msg.includes('رمز عبور فعلی')) {
+                    msg = 'رمز عبور فعلی که وارد کردی درست نیست.';
+                } else if (msg.includes('duplicate key') || msg.includes('users_username_key')) {
+                    msg = 'این نام کاربری قبلاً توسط شخص دیگری استفاده شده؛ نام دیگری انتخاب کن.';
+                } else if (msg.includes('does not exist') || msg.includes('change_own_account')) {
+                    msg = 'تابع امن change_own_account هنوز در Supabase ساخته نشده. لطفاً فایل SQL مربوطه را اجرا کنید.';
+                }
+                errBox.innerText = '❌ ' + msg;
+                errBox.style.display = 'block';
+                return;
+            }
+
+            const updatedUser = (Array.isArray(data) ? data[0] : data) || {};
+            const usernameChanged = newUsername && newUsername !== currentSessionUser.username;
+
+            currentSessionUser = { ...currentSessionUser, username: updatedUser.username || currentSessionUser.username, full_name: updatedUser.full_name || fullName, phone_number: phone };
+            currentUserLabel = (roleLabels[currentSessionUser.role] || currentSessionUser.role) + ' - ' + (currentSessionUser.full_name || currentSessionUser.username);
+
+            const badge = document.getElementById('userBadge');
+            const displayName = currentSessionUser.full_name || currentSessionUser.username;
+            const roleLabelText = roleLabels[currentSessionUser.role] || currentSessionUser.role;
+            badge.innerHTML = '👤 <b>' + displayName + '</b> <span style="color:#94a3b8; font-size:11px;">(' + roleLabelText + ')</span> <button class="logout-btn" onclick="logout()">خروج</button>';
+
+            document.getElementById('myAccCurrentPassword').value = '';
+            document.getElementById('myAccNewPassword').value = '';
+            document.getElementById('myAccNewPasswordConfirm').value = '';
+            document.getElementById('myAccNewUsername').value = '';
+
+            if (usernameChanged || newPassword) {
+                showToast(`✅ تغییرات ذخیره شد.${usernameChanged ? '\nنام کاربری جدید: ' + updatedUser.username : ''}${newPassword ? '\nرمز عبور جدید هم ثبت شد؛ حتماً آن را جایی یادداشت کن.' : ''}`);
+            } else {
+                showToast('✅ مشخصات با موفقیت ذخیره شد.');
+            }
         }
 
         async function checkLogin() {
@@ -2239,6 +2539,7 @@
         function proceedToDashboardAfterLogin(user) {
             currentRole = user.role;
             currentUserLabel = (roleLabels[user.role] || user.role) + ' - ' + (user.full_name || user.username);
+            currentSessionUser = user;
             alertDismissedThisSession = false;
             reminderDismissedThisSession = false;
 
@@ -2251,14 +2552,14 @@
             document.getElementById('buyPriceField').style.display = (currentRole === 'admin') ? 'block' : 'none';
 
             if (currentRole === 'admin') {
-                setupView(['btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnInbox', 'btnStaffMessage', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnShiftSettings', 'btnContractAdmin', 'btnPurchaseInvoices', 'btnTakeoutAdmin', 'btnSalary'], 'saleTab');
+                setupView(['btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnInbox', 'btnStaffMessage', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnShiftSettings', 'btnContractAdmin', 'btnPurchaseInvoices', 'btnTakeoutAdmin', 'btnSalary', 'btnMyAccount'], 'saleTab');
                 document.getElementById('salaryAdminForm').style.display = 'block';
                 checkLowStockAlertNoWeight();
             } else if (currentRole === 'morning_seller') {
-                setupView(['btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnPersonalTakeout', 'btnSalary'], 'saleTab');
+                setupView(['btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnPersonalTakeout', 'btnSalary', 'btnMyAccount'], 'saleTab');
                 document.getElementById('salaryAdminForm').style.display = 'none';
             } else {
-                setupView(['btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnReport', 'btnPersonalTakeout', 'btnSalary'], 'saleTab');
+                setupView(['btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnReport', 'btnPersonalTakeout', 'btnSalary', 'btnMyAccount'], 'saleTab');
                 document.getElementById('salaryAdminForm').style.display = 'none';
             }
 
@@ -2277,6 +2578,7 @@
         function logout() {
             currentRole = "";
             currentUserLabel = "";
+            currentSessionUser = null;
             editingProductId = null;
             alertDismissedThisSession = false;
             reminderDismissedThisSession = false;
@@ -5452,4 +5754,4 @@
         }
     </script>
 </body>
-</html>
+</html>   
