@@ -529,6 +529,17 @@
             padding: 16px;
         }
         #scannerOverlay.active { display: flex; }
+        #adminEditSaleOverlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 10001;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        #adminEditSaleOverlay.active { display: flex; }
         .scanner-box {
             background: #1e293b;
             border: 1px solid #334155;
@@ -569,6 +580,19 @@
             <div id="scannerReaderBox"></div>
             <div id="scannerStatusText" class="hint">در حال باز کردن دوربین...</div>
             <button class="cancel-edit-btn" style="display:block;" onclick="closeBarcodeScanner()">بستن</button>
+        </div>
+    </div>
+
+    <!-- اورلی ویرایش فاکتور فروش توسط مدیر (هر کالا، هر روز، هر کاربر) -->
+    <div id="adminEditSaleOverlay">
+        <div class="scanner-box">
+            <h3 style="color:#38bdf8; margin:0 0 10px 0; font-size:14px;">🛠 ویرایش فاکتور فروش (مدیر)</h3>
+            <p id="adminEditSaleInfo" class="hint" style="margin-top:0;"></p>
+            <label>مقدار جدید (کیلوگرم):</label>
+            <input type="number" id="adminEditSaleQty" step="0.001">
+            <div id="adminEditSaleCalc" class="price-display">مبلغ جدید: ۰ تومان</div>
+            <button class="submit-btn" onclick="adminSaveEditedSale()">💾 ذخیره ویرایش</button>
+            <button class="cancel-edit-btn" style="display:block;" onclick="closeAdminEditSale()">انصراف</button>
         </div>
     </div>
 
@@ -2228,9 +2252,12 @@
             box.innerHTML = sellers.map(s => {
                 const roleLabel = (s.role === 'evening_seller') ? 'فروشنده شب' : 'فروشنده صبح';
                 const isDone = !!s.registration_completed;
+                const isTerminated = !!s.is_terminated;
                 let deadlineHtml = '';
 
-                if (isDone) {
+                if (isTerminated) {
+                    deadlineHtml = `<span style="color:#ef4444; font-weight:bold;">🚫 این فرد دیگر همکاری نمی‌کند (اخراج شده) — حساب کاربری‌اش غیرفعال شده و اطلاعات هویتی‌اش پاک شده، ولی گزارش‌های فروش/حضورش سالم باقی مانده است.</span>`;
+                } else if (isDone) {
                     deadlineHtml = `<span style="color:#34d399; font-weight:bold;">✅ قرارداد تکمیل و امضا شده است</span>`;
                 } else if (s.contract_deadline) {
                     const deadlineDate = new Date(s.contract_deadline);
@@ -2238,6 +2265,15 @@
                     deadlineHtml = `<span style="color:${isOverdue ? '#ef4444' : '#fbbf24'}; font-weight:bold;">${isOverdue ? '⛔ مهلت گذشته! هنوز تکمیل نکرده — مهلت: ' : '⏳ در انتظار تکمیل — مهلت تا: '}${getTehranFullDateTimeString(deadlineDate)}</span>`;
                 } else {
                     deadlineHtml = `<span style="color:#94a3b8;">⏳ هنوز قرارداد تکمیل نشده و مهلتی هم تعیین نشده</span>`;
+                }
+
+                if (isTerminated) {
+                    return `
+                        <div class="report-card" style="opacity:0.75;">
+                            <h3>👤 ${s.full_name || s.username} <span style="font-size:11px; color:#94a3b8;">(${roleLabel} - ${s.username})</span></h3>
+                            <p>${deadlineHtml}</p>
+                        </div>
+                    `;
                 }
 
                 const deadlineActionHtml = isDone ? '' : `
@@ -2269,6 +2305,8 @@
                         </div>
 
                         ${!isDone ? `<button class="row-btn delete-btn" style="width:100%; margin-top:8px;" onclick="resetSellerRegistration('${s.username}', '${roleLabel}')">🔄 بازنشانی و لغو مهلت فعلی</button>` : ''}
+
+                        <button class="row-btn delete-btn" style="width:100%; margin-top:8px; background:#7f1d1d;" onclick="terminateSeller('${s.username}', '${roleLabel}')">🚫 اخراج این فروشنده (پایان همکاری)</button>
                     </div>
                 `;
             }).join('');
@@ -2334,6 +2372,27 @@
             }
 
             showToast(`✅ وضعیت ثبت‌نام «${username}» بازنشانی شد. دفعه بعد که ${roleLabel} وارد شود، فرم قرارداد را دوباره خواهد دید.`);
+            loadContractAdminTab();
+        }
+
+        // --- پایان همکاری (اخراج) یک فروشنده: حساب کاربری قفل می‌شود و اطلاعات هویتی پاک می‌شود،
+        // ولی چون گزارش‌های فروش/حضور فقط نام او را به‌صورت متن ذخیره کرده‌اند (نه یک ارجاع مستقیم)،
+        // همه‌ی گزارش‌های قبلی‌اش دقیقاً سرجایشان باقی می‌مانند. ---
+        async function terminateSeller(username, roleLabel) {
+            const step1 = await showConfirm(`⚠️ آیا مطمئنی می‌خواهی همکاری با «${username}» (${roleLabel}) را پایان بدهی؟\n\nبا این کار:\n- دیگر نمی‌تواند وارد سیستم شود\n- عکس کارت ملی، امضا و کد ملی‌اش پاک می‌شود\n- ولی همه‌ی فاکتورهای فروش و گزارش‌های حضور قبلی او دست‌نخورده باقی می‌مانند`);
+            if (!step1) return;
+
+            const step2 = await showConfirm(`این عملیات قابل بازگشت نیست. برای تایید نهایی دوباره تایید کن که واقعاً می‌خواهی «${username}» اخراج شود.`);
+            if (!step2) return;
+
+            const { error } = await _supabase.rpc('admin_terminate_seller', { p_username: username });
+
+            if (error) {
+                showToast('❌ خطا در ثبت پایان همکاری: ' + error.message + '\n\nمطمئن شوید تابع admin_terminate_seller در Supabase ساخته شده است.');
+                return;
+            }
+
+            showToast(`✅ همکاری با «${username}» پایان یافت. حساب کاربری‌اش دیگر قابل ورود نیست؛ گزارش‌های فروش و حضور او سالم باقی مانده است.`);
             loadContractAdminTab();
         }
 
@@ -5123,7 +5182,7 @@
 
             const { data: sales, error } = await _supabase
                 .from('sales')
-                .select('product_code, quantity, sell_price, created_at, seller_name, sale_type, shift_label')
+                .select('id, product_code, quantity, sell_price, created_at, seller_name, sale_type, shift_label, edit_count')
                 .order('created_at', { ascending: false });
 
             if (error) {
@@ -5171,15 +5230,23 @@
                 </tr>
             `).join('');
 
+            const isAdminViewer = (currentRole === 'admin');
             const invoiceRows = filtered.map(s => {
                 const fullTimeStr = getTehranFullDateTimeString(new Date(s.created_at));
                 const pname = nameMap[s.product_code] || s.product_code;
+                const actionsCell = isAdminViewer
+                    ? `<td>
+                        <button class="row-btn edit-btn" onclick="adminEditSalePrompt('${s.id}', '${key}')">ویرایش</button>
+                        <button class="row-btn delete-btn" onclick="adminDeleteSaleFromReport('${s.id}', '${key}')">حذف</button>
+                       </td>`
+                    : '';
                 return `<tr>
                     <td>${fullTimeStr}</td>
                     <td>${pname}</td>
                     <td>${saleTypeTag(s.sale_type)}</td>
                     <td>${Number(s.quantity).toLocaleString('fa-IR', { maximumFractionDigits: 3 })} کیلو</td>
                     <td>${Number(s.sell_price).toLocaleString('fa-IR')} تومان</td>
+                    ${actionsCell}
                 </tr>`;
             }).join('');
 
@@ -5199,11 +5266,118 @@
                     <tbody>${productRows}</tbody>
                 </table>
                 <h4 style="color:#38bdf8; margin-top:12px; margin-bottom:6px;">🧾 ریز فاکتورها:</h4>
+                ${isAdminViewer ? '<div class="hint" style="margin-top:0;">به‌عنوان مدیر می‌توانید هر فاکتور این لیست را (مربوط به هر کاربر و هر روزی) ویرایش یا حذف کنید — مثلاً اگر مقداری اشتباه ثبت شده باشد.</div>' : ''}
                 <table>
-                    <thead><tr><th>زمان ثبت</th><th>کالا</th><th>نوع</th><th>مقدار</th><th>مبلغ</th></tr></thead>
+                    <thead><tr><th>زمان ثبت</th><th>کالا</th><th>نوع</th><th>مقدار</th><th>مبلغ</th>${isAdminViewer ? '<th>عملیات</th>' : ''}</tr></thead>
                     <tbody>${invoiceRows}</tbody>
                 </table>
             `;
+        }
+
+        // --- ویرایش/حذف هر فاکتور فروش توسط مدیر، بدون محدودیت مالکیت/تاریخ/تعداد دفعات ---
+        let adminEditingSaleId = null;
+        let adminEditingSaleKey = null;
+        let adminEditingSaleProductCode = null;
+        let adminEditingSaleOldQty = 0;
+        let adminEditingSaleUnitPrice = 0;
+
+        async function adminEditSalePrompt(saleId, key) {
+            const { data: sale, error } = await _supabase.from('sales').select('*').eq('id', saleId).maybeSingle();
+            if (error || !sale) {
+                showToast('❌ فاکتور یافت نشد: ' + (error ? error.message : ''));
+                return;
+            }
+
+            const { data: product } = await _supabase.from('products').select('*').eq('code', sale.product_code).maybeSingle();
+            const productName = product ? product.name : sale.product_code;
+            const unitPrice = product ? (product.sell_price || 0) : (Number(sale.sell_price) / (Number(sale.quantity) || 1));
+
+            adminEditingSaleId = saleId;
+            adminEditingSaleKey = key;
+            adminEditingSaleProductCode = sale.product_code;
+            adminEditingSaleOldQty = Number(sale.quantity);
+            adminEditingSaleUnitPrice = unitPrice;
+
+            document.getElementById('adminEditSaleInfo').innerText = `کالا: ${productName}\nثبت‌شده توسط: ${sale.seller_name}\nتاریخ: ${getTehranFullDateTimeString(new Date(sale.created_at))}\nمقدار فعلی: ${Number(sale.quantity).toLocaleString('fa-IR')} کیلو`;
+            document.getElementById('adminEditSaleQty').value = sale.quantity;
+            document.getElementById('adminEditSaleCalc').innerText = `مبلغ جدید: ${Number(sale.sell_price).toLocaleString('fa-IR')} تومان`;
+            document.getElementById('adminEditSaleQty').oninput = function() {
+                const qty = parseFloat(this.value) || 0;
+                const newPrice = Math.round(qty * adminEditingSaleUnitPrice);
+                document.getElementById('adminEditSaleCalc').innerText = `مبلغ جدید: ${newPrice.toLocaleString('fa-IR')} تومان (نرخ واحد: ${adminEditingSaleUnitPrice.toLocaleString('fa-IR')} تومان/کیلو)`;
+            };
+
+            document.getElementById('adminEditSaleOverlay').classList.add('active');
+        }
+
+        function closeAdminEditSale() {
+            document.getElementById('adminEditSaleOverlay').classList.remove('active');
+            adminEditingSaleId = null;
+        }
+
+        async function adminSaveEditedSale() {
+            if (!adminEditingSaleId) return;
+
+            const newQty = parseFloat(document.getElementById('adminEditSaleQty').value);
+            if (isNaN(newQty) || newQty <= 0) {
+                showToast('⚠️ لطفاً مقدار معتبری وارد کنید.');
+                return;
+            }
+
+            const newPrice = Math.round(newQty * adminEditingSaleUnitPrice);
+            const diff = Number((adminEditingSaleOldQty - newQty).toFixed(3));
+
+            const { data: product } = await _supabase.from('products').select('*').eq('code', adminEditingSaleProductCode).maybeSingle();
+            if (product) {
+                const { error: adjustErr } = await _supabase.rpc('adjust_booth_stock', { p_product_id: product.id, p_delta: diff });
+                if (adjustErr) {
+                    showToast('❌ خطا در به‌روزرسانی موجودی غرفه: ' + adjustErr.message);
+                    return;
+                }
+            }
+
+            const { error: saleErr } = await _supabase.from('sales')
+                .update({ quantity: newQty, sell_price: newPrice })
+                .eq('id', adminEditingSaleId);
+
+            if (saleErr) {
+                showToast('❌ خطا در ویرایش فاکتور: ' + saleErr.message);
+                return;
+            }
+
+            showToast(`✅ فاکتور ویرایش شد.\nمقدار جدید: ${newQty.toLocaleString('fa-IR')} کیلو\nمبلغ جدید: ${newPrice.toLocaleString('fa-IR')} تومان`);
+            const key = adminEditingSaleKey;
+            closeAdminEditSale();
+            loadDetailReportV23(key);
+        }
+
+        async function adminDeleteSaleFromReport(saleId, key) {
+            const sure = await showConfirm('آیا از حذف این فاکتور فروش مطمئن هستید؟ مقدار آن به موجودی ظرف غرفه بازگردانده می‌شود. این عملیات مخصوص مدیر است و روی هر فاکتوری (هر تاریخ، هر کاربر) قابل انجام است.');
+            if (!sure) return;
+
+            const { data: sale, error: fetchErr } = await _supabase.from('sales').select('*').eq('id', saleId).maybeSingle();
+            if (fetchErr || !sale) {
+                showToast('❌ فاکتور یافت نشد.');
+                return;
+            }
+
+            const { data: product } = await _supabase.from('products').select('*').eq('code', sale.product_code).maybeSingle();
+            if (product) {
+                const { error: adjustErr } = await _supabase.rpc('adjust_booth_stock', { p_product_id: product.id, p_delta: Number(sale.quantity) });
+                if (adjustErr) {
+                    showToast('❌ خطا در بازگرداندن موجودی به غرفه: ' + adjustErr.message);
+                    return;
+                }
+            }
+
+            const { error: delErr } = await _supabase.from('sales').delete().eq('id', saleId);
+            if (delErr) {
+                showToast('❌ خطا در حذف فاکتور: ' + delErr.message);
+                return;
+            }
+
+            showToast('✅ فاکتور حذف شد و مقدار آن به موجودی غرفه بازگشت.');
+            loadDetailReportV23(key);
         }
 
         // ================== فاکتور خرید مدیر (چند قلمی) و گزارش سود ==================
