@@ -2073,7 +2073,22 @@
             signatureHasContent = false;
         }
 
+        function getSignatureDataUrl() {
+            const canvas = document.getElementById('signatureCanvas');
+            if (!canvas || !signatureHasContent) return null;
+            return canvas.toDataURL('image/png');
+        }
 
+        function previewRegNationalIdPhoto(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    selectedRegNationalIdPhotoDataUrl = e.target.result;
+                    const img = document.getElementById('regNationalIdPhotoPreview');
+                    img.src = selectedRegNationalIdPhotoDataUrl;
+                    img.style.display = 'block';
+                };
                 reader.onerror = function() {
                     selectedRegNationalIdPhotoDataUrl = null;
                     showToast('❌ خطا در خواندن عکس انتخاب‌شده. لطفاً دوباره تلاش کنید.');
