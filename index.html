@@ -688,6 +688,7 @@
         <button class="tab-btn" id="btnWorkReport" onclick="switchTab('workReport'); loadWorkReport();">🗓️ کارکرد پرسنل</button>
         <button class="tab-btn" id="btnShiftSettings" onclick="switchTab('shiftSettings'); loadShiftSettings();">⚙️ تنظیمات شیفت‌ها</button>
         <button class="tab-btn" id="btnContractAdmin" onclick="switchTab('contractAdmin'); loadContractAdminTab();">📄 قرارداد پرسنل</button>
+        <button class="tab-btn" id="btnGrowthReport" onclick="switchTab('growthReport');">📈 رشد و افت فروش</button>
         <button class="tab-btn" id="btnPurchaseInvoices" onclick="switchTab('purchaseInvoices'); loadPurchaseInvoices();">🧾 فاکتور خرید (مدیر)</button>
         <button class="tab-btn" id="btnTakeoutAdmin" onclick="switchTab('takeoutAdmin'); loadTakeoutAdminSummary();">🧺 برداشت‌های حساب‌نشده</button>
         <button class="tab-btn" id="btnSalary" onclick="switchTab('salary'); loadSalaryTab();">💰 واریز حقوق</button>
@@ -1235,6 +1236,41 @@
 
         <div class="hint">برای هر فروشنده‌ای که هنوز قرارداد را تکمیل و امضا نکرده، می‌توانید یک مهلت مشخص تعیین کنید. با این کار یک پیام یادآوری برای همان شیفت ارسال می‌شود و مهلت روی صفحه‌ی ثبت‌نام او هم نمایش داده خواهد شد. به محض اینکه فروشنده فرم را تکمیل و امضا کند، بلافاصله یک پیام به شما ارسال می‌شود.</div>
         <div id="contractAdminList" style="margin-top:12px;">در حال بارگذاری...</div>
+    </div>
+
+    <!-- تب گزارش رشد/افت فروش (فقط مدیر) -->
+    <div id="growthReportTab" class="card">
+        <h2>📈 گزارش رشد یا افت فروش</h2>
+        <div class="hint">دو بازه زمانی را با هم مقایسه کن تا ببینی فروش هر فروشنده چند درصد از نظر مبلغ و چند درصد از نظر وزن رشد یا افت داشته، و دقیقاً کدام کالاها باعثش شدن.</div>
+
+        <label>مربوط به چه کسی؟</label>
+        <select id="growthSellerSelect">
+            <option value="all">👥 همه (مجموع کل غرفه)</option>
+            <option value="morning">🌅 فروشنده صبح</option>
+            <option value="evening">🌙 فروشنده شب</option>
+            <option value="admin">👑 مدیر</option>
+        </select>
+
+        <div class="tare-box" style="margin-top:14px;">
+            <label style="margin-top:0; color:#38bdf8;">📅 بازه فعلی (بازه‌ای که می‌خواهی بررسی کنی):</label>
+            <div class="grid-2">
+                <div><label>از تاریخ:</label><input type="date" id="growthCurStart"></div>
+                <div><label>تا تاریخ:</label><input type="date" id="growthCurEnd"></div>
+            </div>
+        </div>
+
+        <div class="tare-box" style="margin-top:10px;">
+            <label style="margin-top:0; color:#38bdf8;">📅 بازه مقایسه (مثلاً هفته یا ماه قبل):</label>
+            <div class="grid-2">
+                <div><label>از تاریخ:</label><input type="date" id="growthPrevStart"></div>
+                <div><label>تا تاریخ:</label><input type="date" id="growthPrevEnd"></div>
+            </div>
+            <button class="range-toggle-btn" onclick="suggestPreviousGrowthRange()">⏪ پر کردن خودکار با یک بازه هم‌طول درست قبل از بازه فعلی</button>
+        </div>
+
+        <button class="submit-btn" onclick="loadGrowthReport()">🔍 مقایسه و نمایش گزارش</button>
+
+        <div id="growthReportResult" style="margin-top:14px;"></div>
     </div>
 
     <!-- تب فاکتور خرید مدیر و گزارش سود -->
@@ -2059,7 +2095,7 @@
             }
         }
 
-        async function submitRegistration() {
+                async function submitRegistration() {
             const errBox = document.getElementById('registrationError');
             errBox.style.display = 'none';
 
@@ -2627,7 +2663,7 @@
             document.getElementById('buyPriceField').style.display = (currentRole === 'admin') ? 'block' : 'none';
 
             if (currentRole === 'admin') {
-                setupView(['btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnInbox', 'btnStaffMessage', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnShiftSettings', 'btnContractAdmin', 'btnPurchaseInvoices', 'btnTakeoutAdmin', 'btnSalary', 'btnMyAccount'], 'saleTab');
+                setupView(['btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnInbox', 'btnStaffMessage', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnShiftSettings', 'btnContractAdmin', 'btnGrowthReport', 'btnPurchaseInvoices', 'btnTakeoutAdmin', 'btnSalary', 'btnMyAccount'], 'saleTab');
                 document.getElementById('salaryAdminForm').style.display = 'block';
                 checkLowStockAlertNoWeight();
             } else if (currentRole === 'morning_seller') {
@@ -5378,6 +5414,178 @@
 
             showToast('✅ فاکتور حذف شد و مقدار آن به موجودی غرفه بازگشت.');
             loadDetailReportV23(key);
+        }
+
+        // ================== گزارش رشد/افت فروش (فقط مدیر) ==================
+        function suggestPreviousGrowthRange() {
+            const curStart = document.getElementById('growthCurStart').value;
+            const curEnd = document.getElementById('growthCurEnd').value;
+            if (!curStart || !curEnd) {
+                showToast('⚠️ اول بازه فعلی را انتخاب کن، بعد این دکمه را بزن.');
+                return;
+            }
+            if (curStart > curEnd) {
+                showToast('⚠️ تاریخ شروع بازه فعلی نمی‌تواند بعد از تاریخ پایانش باشد.');
+                return;
+            }
+
+            const startDate = new Date(curStart + 'T12:00:00+03:30');
+            const endDate = new Date(curEnd + 'T12:00:00+03:30');
+            const diffDays = Math.round((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+
+            const prevEndDate = new Date(startDate.getTime() - 24 * 60 * 60 * 1000);
+            const prevStartDate = new Date(prevEndDate.getTime() - (diffDays - 1) * 24 * 60 * 60 * 1000);
+
+            document.getElementById('growthPrevStart').value = getTehranISODate(prevStartDate);
+            document.getElementById('growthPrevEnd').value = getTehranISODate(prevEndDate);
+        }
+
+        function formatPctChange(pct) {
+            if (!Number.isFinite(pct)) return '—';
+            const rounded = Math.round(pct * 10) / 10;
+            if (rounded > 0.05) return `📈 +${rounded.toLocaleString('fa-IR')}٪`;
+            if (rounded < -0.05) return `📉 ${rounded.toLocaleString('fa-IR')}٪`;
+            return `➖ بدون تغییر`;
+        }
+
+        function pctChangeColor(pct) {
+            if (!Number.isFinite(pct) || Math.abs(pct) < 0.05) return '#94a3b8';
+            return pct > 0 ? '#34d399' : '#ef4444';
+        }
+
+        async function loadGrowthReport() {
+            const resultBox = document.getElementById('growthReportResult');
+            const sellerKey = document.getElementById('growthSellerSelect').value;
+            const curStart = document.getElementById('growthCurStart').value;
+            const curEnd = document.getElementById('growthCurEnd').value;
+            const prevStart = document.getElementById('growthPrevStart').value;
+            const prevEnd = document.getElementById('growthPrevEnd').value;
+
+            if (!curStart || !curEnd || !prevStart || !prevEnd) {
+                resultBox.innerHTML = '<p style="color:#ef4444;">لطفاً هر چهار تاریخ (بازه فعلی و بازه مقایسه) را مشخص کنید.</p>';
+                return;
+            }
+            if (curStart > curEnd || prevStart > prevEnd) {
+                resultBox.innerHTML = '<p style="color:#ef4444;">تاریخ شروع هر بازه نمی‌تواند بعد از تاریخ پایان همان بازه باشد.</p>';
+                return;
+            }
+
+            resultBox.innerHTML = 'در حال محاسبه...';
+
+            const { data: sales, error } = await _supabase
+                .from('sales')
+                .select('product_code, quantity, sell_price, created_at, seller_name, sale_type, shift_label');
+
+            if (error) {
+                resultBox.innerHTML = '❌ خطا در دریافت اطلاعات فروش: ' + error.message;
+                return;
+            }
+
+            const inRange = (s, start, end) => {
+                if (sellerKey !== 'all' && getSaleShiftKey(s) !== sellerKey) return false;
+                const iso = getTehranISODate(new Date(s.created_at));
+                return iso >= start && iso <= end;
+            };
+
+            const curSales = (sales || []).filter(s => inRange(s, curStart, curEnd));
+            const prevSales = (sales || []).filter(s => inRange(s, prevStart, prevEnd));
+
+            const sum = (list, field) => list.reduce((acc, s) => acc + (Number(s[field]) || 0), 0);
+            const curRevenue = sum(curSales, 'sell_price');
+            const prevRevenue = sum(prevSales, 'sell_price');
+            const curWeight = sum(curSales, 'quantity');
+            const prevWeight = sum(prevSales, 'quantity');
+
+            const revenuePct = prevRevenue > 0 ? ((curRevenue - prevRevenue) / prevRevenue * 100) : (curRevenue > 0 ? 100 : 0);
+            const weightPct = prevWeight > 0 ? ((curWeight - prevWeight) / prevWeight * 100) : (curWeight > 0 ? 100 : 0);
+
+            if (curSales.length === 0 && prevSales.length === 0) {
+                resultBox.innerHTML = '<p style="color:#fbbf24;">در هیچ‌کدام از این دو بازه فروشی برای این انتخاب ثبت نشده است.</p>';
+                return;
+            }
+
+            // جمع‌بندی بر اساس کالا در هر دو بازه
+            const productMap = {};
+            curSales.forEach(s => {
+                if (!productMap[s.product_code]) productMap[s.product_code] = { curQty: 0, curRevenue: 0, prevQty: 0, prevRevenue: 0 };
+                productMap[s.product_code].curQty += Number(s.quantity) || 0;
+                productMap[s.product_code].curRevenue += Number(s.sell_price) || 0;
+            });
+            prevSales.forEach(s => {
+                if (!productMap[s.product_code]) productMap[s.product_code] = { curQty: 0, curRevenue: 0, prevQty: 0, prevRevenue: 0 };
+                productMap[s.product_code].prevQty += Number(s.quantity) || 0;
+                productMap[s.product_code].prevRevenue += Number(s.sell_price) || 0;
+            });
+
+            const codes = Object.keys(productMap);
+            const nameMap = {};
+            if (codes.length > 0) {
+                const { data: productsData } = await _supabase.from('products').select('code, name').in('code', codes);
+                (productsData || []).forEach(p => { nameMap[p.code] = p.name; });
+            }
+
+            const productRows = Object.entries(productMap).map(([code, v]) => {
+                const qtyPct = v.prevQty > 0 ? ((v.curQty - v.prevQty) / v.prevQty * 100) : (v.curQty > 0 ? 100 : 0);
+                const revPct = v.prevRevenue > 0 ? ((v.curRevenue - v.prevRevenue) / v.prevRevenue * 100) : (v.curRevenue > 0 ? 100 : 0);
+                let status = 'unchanged';
+                if (v.prevQty === 0 && v.curQty > 0) status = 'new';
+                else if (v.prevQty > 0 && v.curQty === 0) status = 'stopped';
+                else if (revPct > 0.05) status = 'up';
+                else if (revPct < -0.05) status = 'down';
+                return { code, name: nameMap[code] || code, ...v, qtyPct, revPct, status };
+            });
+
+            const grownItems = productRows.filter(p => p.status === 'up' || p.status === 'new').sort((a, b) => b.revPct - a.revPct);
+            const droppedItems = productRows.filter(p => p.status === 'down' || p.status === 'stopped').sort((a, b) => a.revPct - b.revPct);
+            const unchangedItems = productRows.filter(p => p.status === 'unchanged');
+
+            const buildProductRow = (p) => {
+                let statusTag = '';
+                if (p.status === 'new') statusTag = '<span style="color:#34d399; font-size:10px;">(کالای جدید در این بازه)</span>';
+                if (p.status === 'stopped') statusTag = '<span style="color:#ef4444; font-size:10px;">(دیگر فروخته نشده)</span>';
+                return `
+                    <div class="summary-mini" style="align-items:flex-start; flex-direction:column; gap:4px;">
+                        <span style="font-weight:bold;">${p.name} ${statusTag}</span>
+                        <span style="font-size:11px; color:#cbd5e1;">وزن: ${p.prevQty.toLocaleString('fa-IR', {maximumFractionDigits:3})} ← ${p.curQty.toLocaleString('fa-IR', {maximumFractionDigits:3})} کیلو (${formatPctChange(p.qtyPct)})</span>
+                        <span style="font-size:11px; color:${pctChangeColor(p.revPct)}; font-weight:bold;">مبلغ: ${p.prevRevenue.toLocaleString('fa-IR')} ← ${p.curRevenue.toLocaleString('fa-IR')} تومان (${formatPctChange(p.revPct)})</span>
+                    </div>
+                `;
+            };
+
+            const sellerLabelMap = { all: 'همه (کل غرفه)', morning: 'فروشنده صبح', evening: 'فروشنده شب', admin: 'مدیر' };
+
+            let html = `
+                <div class="report-card">
+                    <h3>📊 خلاصه کلی — ${sellerLabelMap[sellerKey]}</h3>
+                    <p>بازه مقایسه (${prevStart} تا ${prevEnd}): <b>${prevRevenue.toLocaleString('fa-IR')} تومان</b> — <b>${prevWeight.toLocaleString('fa-IR', {maximumFractionDigits:3})} کیلو</b></p>
+                    <p>بازه فعلی (${curStart} تا ${curEnd}): <b>${curRevenue.toLocaleString('fa-IR')} تومان</b> — <b>${curWeight.toLocaleString('fa-IR', {maximumFractionDigits:3})} کیلو</b></p>
+                    <p style="font-size:15px; font-weight:bold;">تغییر مبلغ فروش: <span style="color:${pctChangeColor(revenuePct)};">${formatPctChange(revenuePct)}</span></p>
+                    <p style="font-size:15px; font-weight:bold;">تغییر وزن فروش: <span style="color:${pctChangeColor(weightPct)};">${formatPctChange(weightPct)}</span></p>
+                </div>
+            `;
+
+            if (droppedItems.length > 0) {
+                html += `<div class="report-card" style="border-color:rgba(239,68,68,0.4); background:rgba(239,68,68,0.06);">
+                    <h3 style="color:#fca5a5;">📉 کالاهایی که فروششان افت کرده (${droppedItems.length.toLocaleString('fa-IR')} مورد)</h3>
+                    ${droppedItems.map(buildProductRow).join('')}
+                </div>`;
+            }
+
+            if (grownItems.length > 0) {
+                html += `<div class="report-card" style="border-color:rgba(16,185,129,0.4); background:rgba(16,185,129,0.06);">
+                    <h3 style="color:#34d399;">📈 کالاهایی که فروششان رشد کرده (${grownItems.length.toLocaleString('fa-IR')} مورد)</h3>
+                    ${grownItems.map(buildProductRow).join('')}
+                </div>`;
+            }
+
+            if (unchangedItems.length > 0) {
+                html += `<div class="report-card">
+                    <h3 style="color:#94a3b8;">➖ کالاهای بدون تغییر محسوس (${unchangedItems.length.toLocaleString('fa-IR')} مورد)</h3>
+                    ${unchangedItems.map(buildProductRow).join('')}
+                </div>`;
+            }
+
+            resultBox.innerHTML = html;
         }
 
         // ================== فاکتور خرید مدیر (چند قلمی) و گزارش سود ==================
