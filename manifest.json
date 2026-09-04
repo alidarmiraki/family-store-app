@@ -2,7 +2,7 @@
   "name": "لبنیات و ترشیجات فله فامیلی",
   "short_name": "فامیلی فروشگاه",
   "description": "سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فروشگاه فامیلی - شعبه بیرجند",
-  "start_url": "./سیستم-غرفه-v36.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
