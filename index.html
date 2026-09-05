@@ -683,7 +683,7 @@
         <button class="tab-btn" id="btnSaleSausage" onclick="switchTab('saleSausage'); loadProductDatalist(); loadRecentSales('sausage');">🌭 ثبت فروش سوسیس و کالباس</button>
         <button class="tab-btn" id="btnAttendance" onclick="switchTab('attendance');">⏰ حضور و غیاب</button>
         <button class="tab-btn" id="btnMessage" onclick="switchTab('message');">📩 ارسال پیام به مدیر</button>
-        <button class="tab-btn" id="btnStaffMessage" onclick="switchTab('staffMessage');">📤 پیام به پرسنل</button>
+        <button class="tab-btn" id="btnStaffMessage" onclick="switchTab('staffMessage'); loadStaffMessageTargets();">📤 پیام به پرسنل</button>
         <button class="tab-btn" id="btnInbox" onclick="switchTab('inbox'); loadInbox();">📥 صندوقچه پیام‌ها</button>
         <button class="tab-btn" id="btnBooth" onclick="switchTab('booth'); loadBoothInventory();">🧊 وضعیت یخچال غرفه</button>
         <button class="tab-btn" id="btnPurchaseOrders" onclick="switchTab('purchaseOrders'); loadPurchaseOrders();">🧾 سفارشات خرید</button>
@@ -975,13 +975,11 @@
     <!-- فرم ارسال پیام مدیر به پرسنل (جدا جدا) -->
     <div id="staffMessageTab" class="card">
         <h2>📤 ارسال پیام به پرسنل</h2>
-        <div class="hint">می‌توانید پیام را فقط برای یکی از فروشنده‌ها بفرستید یا برای هر دو (همه) ارسال کنید. این پیام فقط در صندوقچهٔ پیام‌های همان فروشنده(ها) نمایش داده می‌شود.</div>
+        <div class="hint">می‌توانید پیام را فقط برای یک نفر مشخص بفرستید یا برای همه پرسنل. چون ممکن است چند نفر همزمان یک شیفت را داشته باشند (مثلاً یک فروشنده اصلی و یک حساب آزمایشی)، پیام‌های اختصاصی فقط دقیقاً برای همان یک نفر انتخاب‌شده در صندوقچه‌اش نمایش داده می‌شود، نه بقیه‌ی افرادی که شیفت مشابه دارند.</div>
 
         <label>گیرنده پیام:</label>
         <select id="staffMsgTarget">
-            <option value="فروشنده صبح">🌅 فقط فروشنده صبح</option>
-            <option value="فروشنده شب">🌙 فقط فروشنده شب</option>
-            <option value="all">👥 هر دو فروشنده (همه)</option>
+            <option value="all">👥 همه پرسنل</option>
         </select>
 
         <label>عنوان پیام:</label>
@@ -1543,17 +1541,88 @@
         setInterval(updateClock, 1000);
         updateClock();
 
+        // =========================================================================
+        // پروکسی خودکار برای عبور از فیلترینگ احتمالی
+        // -------------------------------------------------------------------------
+        // اگر آدرس اصلی Supabase (kinjpmvoyioaslpdzujg.supabase.co) در ایران فیلتر
+        // شود، برنامه به‌صورت خودکار و بی‌صدا آدرس‌های پروکسی زیر را هم امتحان
+        // می‌کند و اولین آدرسی که جواب بدهد را برای همه‌ی درخواست‌های بعدی نگه
+        // می‌دارد. هر پروکسی یک Cloudflare Worker است که فقط بدون هیچ تغییری
+        // درخواست را به همین پروژه Supabase منتقل می‌کند (نه یک سرور واسط دیگر).
+        //
+        // برای فعال کردن این قابلیت باید خودت (رایگان) چند Cloudflare Worker
+        // بسازی؛ راهنمای کامل و کد آماده‌ی Worker در فایل proxy-worker.js است.
+        // بعد از دیپلوی کردن هرکدام، فقط آدرسشان را داخل آرایه‌ی PROXY_ENDPOINTS
+        // زیر اضافه کن (آدرس اصلی خودش را دست نزن، همیشه باید اول لیست بماند).
+        // =========================================================================
+        const SUPABASE_REAL_URL = "https://kinjpmvoyioaslpdzujg.supabase.co";
+        const PROXY_ENDPOINTS = [
+            SUPABASE_REAL_URL, // همیشه اول همین آدرس مستقیم امتحان می‌شود
+            // نمونه، بعد از دیپلوی Worker خودت این‌ها را جایگزین/اضافه کن:
+            // "https://shop-proxy-1.YOUR-SUBDOMAIN.workers.dev",
+            // "https://shop-proxy-2.YOUR-SUBDOMAIN.workers.dev",
+        ];
+
+        let activeBaseUrl = PROXY_ENDPOINTS[0];
+
+        // این تابع جایگزین fetch پیش‌فرض می‌شود و به Supabase client داده می‌شود.
+        // اول آدرس فعال فعلی را امتحان می‌کند؛ اگر آن آدرس (مثلاً به‌خاطر فیلترینگ)
+        // جواب نداد، به‌ترتیب بقیه‌ی پروکسی‌های لیست را امتحان می‌کند و اولین
+        // پروکسی که کار کرد را برای درخواست‌های بعدی «فعال» نگه می‌دارد، بدون
+        // اینکه لازم باشد کاربر صفحه را رفرش کند یا خودش کاری انجام دهد.
+        async function proxiedFetch(input, init) {
+            const originalUrl = (typeof input === 'string') ? input : input.url;
+            if (originalUrl.indexOf(SUPABASE_REAL_URL) !== 0) {
+                return fetch(input, init); // درخواستی که اصلاً مربوط به Supabase نیست
+            }
+            const path = originalUrl.slice(SUPABASE_REAL_URL.length);
+
+            try {
+                return await fetch(activeBaseUrl + path, init);
+            } catch (firstErr) {
+                for (const candidate of PROXY_ENDPOINTS) {
+                    if (candidate === activeBaseUrl) continue;
+                    try {
+                        const res = await fetch(candidate + path, init);
+                        activeBaseUrl = candidate;
+                        console.warn('📡 اتصال مستقیم برقرار نشد؛ سوییچ خودکار به پروکسی:', candidate);
+                        return res;
+                    } catch (e) { /* برو سراغ پروکسی بعدی */ }
+                }
+                throw firstErr; // هیچ‌کدام از آدرس‌ها جواب ندادند
+            }
+        }
+
+        // پوشش دادن اتصال Realtime (که با WebSocket کار می‌کند، نه fetch)، تا اگر
+        // پروکسی فعال شد، کانال زنده‌ی پیام‌ها و موجودی هم از همان پروکسی رد شود.
+        (function setupWebSocketProxy() {
+            const NativeWebSocket = window.WebSocket;
+            const realHost = SUPABASE_REAL_URL.replace(/^https?:\/\//, '');
+            window.WebSocket = function (url, protocols) {
+                let finalUrl = url;
+                if (typeof url === 'string' && activeBaseUrl !== SUPABASE_REAL_URL && url.indexOf(realHost) !== -1) {
+                    const proxyHost = activeBaseUrl.replace(/^https?:\/\//, '');
+                    const proxyScheme = activeBaseUrl.indexOf('https://') === 0 ? 'wss://' : 'ws://';
+                    finalUrl = url.replace(/^wss?:\/\/[^/]+/, proxyScheme + proxyHost);
+                }
+                return protocols ? new NativeWebSocket(finalUrl, protocols) : new NativeWebSocket(finalUrl);
+            };
+            window.WebSocket.prototype = NativeWebSocket.prototype;
+        })();
+
         // راه‌اندازی امن اتصال به Supabase — اگر کتابخانه Supabase به هر دلیلی
         // (نت ضعیف، قطعی CDN، فیلترینگ) بارگذاری نشده باشد، به‌جای متوقف‌کردن
         // کل صفحه، یک پیام واضح به کاربر نشان می‌دهیم.
-        const SUPABASE_URL = "https://kinjpmvoyioaslpdzujg.supabase.co";
+        const SUPABASE_URL = SUPABASE_REAL_URL;
         const SUPABASE_KEY = "sb_publishable_k3wkzKalFmLFtfx8WZWr1g_fHKT-3Sl";
         let _supabase = null;
         try {
             if (typeof supabase === 'undefined' || !supabase.createClient) {
                 throw new Error('کتابخانه Supabase بارگذاری نشد');
             }
-            _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+                global: { fetch: proxiedFetch }
+            });
         } catch (e) {
             console.error('خطا در اتصال به Supabase:', e);
             const loginErr = document.getElementById('loginError');
@@ -2653,13 +2722,13 @@
             const now = new Date();
             await _supabase.from('messages').insert([{
                 sender: currentUserLabel || 'مدیر',
-                recipient: roleLabel,
+                recipient: username, // فقط برای همین یک نفر، نه کل شیفت (ممکن است چند نفر شیفت مشابه داشته باشند)
                 title: '📄 یادآوری تکمیل و امضای قرارداد همکاری',
                 body: `لطفاً هرچه سریع‌تر وارد سیستم شوید و فرم اطلاعات و قرارداد همکاری خود را تکمیل و امضا کنید.\nمهلت تکمیل: تا ${getTehranDateString(new Date(deadlineIso))}\n\nدر صورت عدم تکمیل تا این تاریخ، لطفاً موضوع را با مدیریت هماهنگ کنید.`,
                 created_at: now.toISOString()
             }]);
 
-            showToast(`✅ قرارداد برای ${roleLabel} ارسال شد و مهلت تا ${getTehranDateString(new Date(deadlineIso))} تعیین گردید.`);
+            showToast(`✅ قرارداد فقط برای «${username}» (${roleLabel}) ارسال شد و مهلت تا ${getTehranDateString(new Date(deadlineIso))} تعیین گردید.`);
             loadContractAdminTab();
         }
 
@@ -2894,8 +2963,13 @@
                         const msg = payload.new;
                         if (!msg) return;
                         const myLabel = roleLabels[currentRole];
+                        const myUsername = currentSessionUser ? currentSessionUser.username : null;
                         const isForMe = (currentRole === 'admin' && msg.recipient === 'admin')
-                            || (currentRole !== 'admin' && (msg.recipient === myLabel || msg.recipient === 'all'));
+                            || (currentRole !== 'admin' && (
+                                msg.recipient === 'all'
+                                || msg.recipient === myLabel // سازگاری با پیام‌های قدیمی که با لیبل شیفت ارسال شده بودند
+                                || (myUsername && msg.recipient === myUsername)
+                            ));
                         if (!isForMe) return;
                         if (msg.sender === currentUserLabel) return; // پیام خودمان را دوباره به خودمان اطلاع نده
                         showToast(`📩 پیام جدید از ${msg.sender}:\n${msg.title}`);
@@ -3084,6 +3158,9 @@
         // --- نمودار روند فروش ۱۴ روز اخیر (با Chart.js) ---
         let dashboardChartInstance = null;
 
+        // نمودار روند فروش ۱۴ روز اخیر، دقیقاً به‌تفکیک ۳ گروه واقعی (صبح / شب / مدیر)
+        // بر اساس همان منطق getSaleShiftKey که برای گزارش‌گیری استفاده می‌شود، تا اعداد نمودار
+        // با اعداد گزارش‌ها همیشه یکسان و دقیق باشند.
         function renderSalesTrendChart(canvasId, allSales) {
             const canvas = document.getElementById(canvasId);
             if (!canvas || typeof Chart === 'undefined') return;
@@ -3094,18 +3171,21 @@
                 const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
                 const iso = getTehranISODate(d);
                 days.push(iso);
-                totalsByDay[iso] = 0;
+                totalsByDay[iso] = { morning: 0, evening: 0, admin: 0 };
             }
 
             (allSales || []).forEach(s => {
                 const iso = getTehranISODate(new Date(s.created_at));
-                if (totalsByDay.hasOwnProperty(iso)) {
-                    totalsByDay[iso] += Number(s.sell_price) || 0;
-                }
+                if (!totalsByDay.hasOwnProperty(iso)) return;
+                const key = getSaleShiftKey(s);
+                if (!key) return;
+                totalsByDay[iso][key] += Number(s.sell_price) || 0;
             });
 
             const labels = days.map(iso => iso.slice(5)); // ماه-روز
-            const values = days.map(iso => totalsByDay[iso]);
+            const morningValues = days.map(iso => totalsByDay[iso].morning);
+            const eveningValues = days.map(iso => totalsByDay[iso].evening);
+            const adminValues = days.map(iso => totalsByDay[iso].admin);
 
             if (dashboardChartInstance) {
                 dashboardChartInstance.destroy();
@@ -3116,19 +3196,20 @@
                 type: 'bar',
                 data: {
                     labels: labels,
-                    datasets: [{
-                        label: 'فروش روزانه (تومان)',
-                        data: values,
-                        backgroundColor: 'rgba(56, 189, 248, 0.6)',
-                        borderRadius: 4
-                    }]
+                    datasets: [
+                        { label: '🌅 فروشنده صبح', data: morningValues, backgroundColor: 'rgba(56, 189, 248, 0.75)', borderRadius: 4 },
+                        { label: '🌙 فروشنده شب', data: eveningValues, backgroundColor: 'rgba(167, 139, 250, 0.75)', borderRadius: 4 },
+                        { label: '👑 مدیر', data: adminValues, backgroundColor: 'rgba(52, 211, 153, 0.75)', borderRadius: 4 }
+                    ]
                 },
                 options: {
                     responsive: true,
-                    plugins: { legend: { display: false } },
+                    plugins: {
+                        legend: { display: true, labels: { color: '#94a3b8', font: { size: 10 }, boxWidth: 12 } }
+                    },
                     scales: {
-                        x: { ticks: { color: '#94a3b8', font: { size: 9 } }, grid: { display: false } },
-                        y: { ticks: { color: '#94a3b8', font: { size: 9 } }, grid: { color: 'rgba(148,163,184,0.1)' } }
+                        x: { stacked: true, ticks: { color: '#94a3b8', font: { size: 9 } }, grid: { display: false } },
+                        y: { stacked: true, ticks: { color: '#94a3b8', font: { size: 9 } }, grid: { color: 'rgba(148,163,184,0.1)' } }
                     }
                 }
             });
@@ -3152,6 +3233,24 @@
             const todayRevenue = todaySales.reduce((sum, s) => sum + (Number(s.sell_price) || 0), 0);
             const todayCount = todaySales.length;
 
+            // تفکیک دقیق فروش امروز به‌ازای هر فروشنده به‌طور جداگانه (نه فقط شیفت)، چون ممکن است
+            // چند نفر مختلف یک شیفت را داشته باشند و باید دقیقاً معلوم باشد مجموع فروش مال کدام فرد است
+            const perPersonToday = {};
+            todaySales.forEach(s => {
+                const name = s.seller_name || 'نامشخص';
+                if (!perPersonToday[name]) perPersonToday[name] = { sum: 0, count: 0 };
+                perPersonToday[name].sum += Number(s.sell_price) || 0;
+                perPersonToday[name].count += 1;
+            });
+            const perPersonRows = Object.entries(perPersonToday)
+                .sort((a, b) => b[1].sum - a[1].sum)
+                .map(([name, v]) => `
+                    <div class="summary-mini">
+                        <span>👤 ${name}</span>
+                        <span style="color:#38bdf8; font-weight:bold;">${v.sum.toLocaleString('fa-IR')} تومان <span style="color:#94a3b8; font-weight:normal; font-size:11px;">(${v.count.toLocaleString('fa-IR')} فاکتور)</span></span>
+                    </div>
+                `).join('');
+
             const todayAttendance = (attendanceRes.data || []).filter(a => getTehranISODate(new Date(a.created_at)) === todayISO);
             const morningEntered = todayAttendance.some(a => a.seller_name && a.seller_name.indexOf('فروشنده صبح') === 0 && a.type === 'entry');
             const morningOnLeave = todayAttendance.some(a => a.seller_name && a.seller_name.indexOf('فروشنده صبح') === 0 && a.type === 'leave');
@@ -3170,9 +3269,11 @@
 
             box.innerHTML = `
                 <div class="report-card">
-                    <h3>💰 فروش امروز</h3>
+                    <h3>💰 فروش امروز (مجموع کل)</h3>
                     <p style="font-size:18px; font-weight:bold; color:#38bdf8;">${todayRevenue.toLocaleString('fa-IR')} تومان</p>
                     <p style="font-size:12px; color:#94a3b8;">${todayCount.toLocaleString('fa-IR')} فاکتور ثبت شده</p>
+                    <h4 style="color:#cbd5e1; margin-top:12px; margin-bottom:6px; font-size:13px;">👥 تفکیک دقیق به‌ازای هر فروشنده:</h4>
+                    ${perPersonRows || '<p style="color:#94a3b8; font-size:12px;">هنوز امروز فروشی ثبت نشده است.</p>'}
                 </div>
                 <div class="report-card">
                     <h3>⏰ وضعیت حضور امروز</h3>
@@ -3510,9 +3611,41 @@
             }
         }
 
-        // --- ارسال پیام مدیر به یکی از فروشنده‌ها یا هر دو ---
+        // --- بارگذاری لیست گیرنده‌های ممکن برای پیام مدیر به پرسنل (هر فرد به‌طور جداگانه، نه فقط بر اساس شیفت) ---
+        // این تابع لازم است چون ممکن است چند نفر (مثلاً یک فروشنده اصلی و یک حساب آزمایشی) هم‌زمان یک شیفت را داشته باشند
+        // و پیام باید فقط دقیقاً به همان یک نفر انتخاب‌شده برسد، نه به بقیه‌ی افرادی که شیفت مشابه دارند.
+        async function loadStaffMessageTargets() {
+            const select = document.getElementById('staffMsgTarget');
+            if (!select) return;
+
+            const previousValue = select.value;
+            select.innerHTML = '<option value="all">👥 همه پرسنل</option>';
+
+            const { data: sellers, error } = await _supabase.rpc('admin_list_sellers');
+            if (error || !sellers) return; // اگر خطا داد، همان گزینه‌ی «همه پرسنل» کافی است
+
+            sellers
+                .filter(s => !s.is_terminated)
+                .forEach(s => {
+                    const roleLabel = (s.role === 'evening_seller') ? 'فروشنده شب' : 'فروشنده صبح';
+                    const trialTag = s.trial_expires_at ? ' 🧪 آزمایشی' : '';
+                    const opt = document.createElement('option');
+                    opt.value = s.username;
+                    opt.textContent = `👤 ${s.full_name || s.username} (${roleLabel}${trialTag})`;
+                    select.appendChild(opt);
+                });
+
+            // اگر قبلاً گزینه‌ای انتخاب شده بود و هنوز در لیست هست، همان را نگه دار
+            if (previousValue && Array.from(select.options).some(o => o.value === previousValue)) {
+                select.value = previousValue;
+            }
+        }
+
+        // --- ارسال پیام مدیر به یک فرد مشخص یا همه پرسنل ---
         async function sendMessageToStaff() {
-            const target = document.getElementById('staffMsgTarget').value;
+            const targetSelect = document.getElementById('staffMsgTarget');
+            const target = targetSelect.value; // مقدار: username دقیق آن فرد یا 'all'
+            const targetLabel = (target === 'all') ? 'همه پرسنل' : (targetSelect.options[targetSelect.selectedIndex]?.textContent || target);
             const title = document.getElementById('staffMsgTitle').value.trim();
             const body = document.getElementById('staffMsgBody').value.trim();
             const now = new Date();
@@ -3523,14 +3656,13 @@
 
             const { error } = await _supabase.from('messages').insert([{
                 sender: currentUserLabel,
-                recipient: target,
+                recipient: target, // 'all' یا username دقیق همان یک نفر (نه لیبل شیفت)
                 title: title,
                 body: body,
                 created_at: now.toISOString()
             }]);
 
             if (!error) {
-                const targetLabel = (target === 'all') ? 'هر دو فروشنده' : target;
                 showToast('✅ پیام برای ' + targetLabel + ' ارسال شد.');
                 document.getElementById('staffMsgTitle').value = '';
                 document.getElementById('staffMsgBody').value = '';
@@ -3549,8 +3681,14 @@
             if (currentRole === 'admin') {
                 query = query.eq('recipient', 'admin');
             } else {
-                const myLabel = roleLabels[currentRole];
-                query = query.or(`recipient.eq.${myLabel},recipient.eq.all`);
+                // فیلتر دقیق بر اساس username همین فرد (نه لیبل شیفت)، تا وقتی چند نفر یک شیفت را دارند
+                // پیام‌های اختصاصی فقط به همان یک نفر برسد. برای سازگاری با پیام‌های قدیمی‌تر که با
+                // لیبل شیفت (مثلاً «فروشنده صبح») ارسال شده بودند، آن حالت هم به‌عنوان fallback چک می‌شود.
+                const myUsername = currentSessionUser ? currentSessionUser.username : null;
+                const myRoleLabel = roleLabels[currentRole];
+                const orParts = ['recipient.eq.all', `recipient.eq.${myRoleLabel}`];
+                if (myUsername) orParts.push(`recipient.eq.${myUsername}`);
+                query = query.or(orParts.join(','));
             }
 
             const { data: msgs, error } = await query;
@@ -3569,7 +3707,7 @@
                 const timeStr = getTehranFullDateTimeString(new Date(m.created_at));
                 const recipientTag = (currentRole === 'admin')
                     ? ''
-                    : `<span class="msg-recipient-tag">${m.recipient === 'all' ? 'برای همه پرسنل' : 'برای شما'}</span>`;
+                    : `<span class="msg-recipient-tag">${m.recipient === 'all' ? 'برای همه پرسنل' : 'برای شما به‌طور اختصاصی'}</span>`;
                 return `
                     <div class="msg-card">
                         <h3>📩 ${m.title}</h3>
@@ -5683,8 +5821,10 @@
             if (currentRole === 'morning_seller' || currentRole === 'evening_seller') {
                 const targetRolePrefix = (currentRole === 'morning_seller') ? 'فروشنده صبح' : 'فروشنده شب';
 
+                // فقط دقیقاً فروش‌های خود همین فرد، نه هر کسی که شیفت مشابه دارد (مثلاً یک فروشنده قبلی
+                // یا حساب آزمایشی دیگری که همین شیفت را داشته). تطبیق دقیق روی برچسب کامل خودش انجام می‌شود.
                 const todayMySales = (sales || []).filter(s => {
-                    if (!s.seller_name || s.seller_name.indexOf(targetRolePrefix) !== 0) return false;
+                    if (!s.seller_name || s.seller_name !== currentUserLabel) return false;
                     const itemISODate = getTehranISODate(new Date(s.created_at));
                     return itemISODate === todayISOTehran;
                 });
@@ -5700,7 +5840,7 @@
                 if (todayMySales.length === 0) {
                     content.innerHTML = `
                         <div class="report-card">
-                            <h3>📊 گزارش فروش امروز شما (${targetRolePrefix})</h3>
+                            <h3>📊 گزارش فروش امروز شما (${currentUserLabel})</h3>
                             <p style="color:#fbbf24;">امروز (${getTehranDateString(now)}) هنوز هیچ فروشی برای شما ثبت نشده است.</p>
                         </div>`;
                     return;
@@ -5725,7 +5865,7 @@
 
                 content.innerHTML = `
                     <div class="report-card">
-                        <h3>🌅 گزارش فروش امروز شما (${targetRolePrefix}) - ${getTehranDateString(now)}</h3>
+                        <h3>🌅 گزارش فروش امروز شما (${currentUserLabel}) - ${getTehranDateString(now)}</h3>
                         <p style="font-size:15px; color:#38bdf8; font-weight:bold;">مجموع فروش امروز: ${totalSum.toLocaleString('fa-IR')} تومان (${todayMySales.length} فاکتور)</p>
                         <p style="font-size:11px; color:#94a3b8;">🛍️ حضوری: ${instoreSum.toLocaleString('fa-IR')} تومان (${instoreSales.length}) &nbsp;|&nbsp; 🛒 اکالا: ${ekalaSum.toLocaleString('fa-IR')} تومان (${ekalaSales.length}) &nbsp;|&nbsp; 🌭 سوسیس: ${sausageSum.toLocaleString('fa-IR')} تومان (${sausageSales.length})</p>
                         <h4 style="color:#cbd5e1; margin-top:12px; margin-bottom:6px;">📋 ریز فاکتورهای امروز با ثبت زمان لحظه‌ای:</h4>
@@ -5803,7 +5943,110 @@
                 content.innerHTML =
                     renderRoleCard('morning', '🌅 فروشنده صبح') +
                     renderRoleCard('evening', '🌙 فروشنده شب') +
-                    renderRoleCard('admin', '👑 مدیر غرفه');
+                    renderRoleCard('admin', '👑 مدیر غرفه') +
+                    `<div class="report-card">
+                        <h3>🗄️ آرشیو کامل فروش (خروجی Excel/CSV)</h3>
+                        <div class="hint" style="margin-top:0;">تمام فاکتورهای فروش از اولین روز تا امروز را در چند فایل ۱۰روزه دانلود می‌کند تا حجم هر فایل سبک بماند. این کار فقط اطلاعات را می‌خواند؛ هیچ فاکتوری از سرور پاک نمی‌شود و همه‌چیز همیشه در سیستم باقی می‌ماند.</div>
+                        <button class="submit-btn" id="exportFullArchiveBtn" onclick="exportFullSalesArchive()">📦 دانلود آرشیو کامل فروش (۱۰روزه)</button>
+                    </div>`;
+            }
+        }
+
+        // --- خروجی کامل آرشیو فروش، تکه‌تکه‌شده در بازه‌های ۱۰روزه، بدون حذف هیچ داده‌ای از سرور ---
+        async function exportFullSalesArchive() {
+            const btn = document.getElementById('exportFullArchiveBtn');
+            if (btn) { btn.disabled = true; btn.textContent = '⏳ در حال آماده‌سازی آرشیو...'; }
+            showToast('⏳ در حال دریافت کامل تاریخچه فروش از سرور (فقط خواندن، چیزی پاک نمی‌شود)...');
+
+            try {
+                // دریافت صفحه‌به‌صفحه‌ی همه‌ی فروش‌ها تا محدودیت پیش‌فرض ردیف‌های Supabase مشکلی ایجاد نکند
+                let allSales = [];
+                let from = 0;
+                const pageSize = 1000;
+                while (true) {
+                    const { data, error } = await _supabase
+                        .from('sales')
+                        .select('product_code, quantity, sell_price, created_at, seller_name, sale_type')
+                        .order('created_at', { ascending: true })
+                        .range(from, from + pageSize - 1);
+
+                    if (error) {
+                        showToast('❌ خطا در دریافت آرشیو فروش: ' + error.message);
+                        return;
+                    }
+                    if (!data || data.length === 0) break;
+                    allSales = allSales.concat(data);
+                    if (data.length < pageSize) break;
+                    from += pageSize;
+                }
+
+                if (allSales.length === 0) {
+                    showToast('هیچ فروشی برای خروجی گرفتن ثبت نشده است.');
+                    return;
+                }
+
+                // نام‌گذاری کالاها برای خوانا شدن فایل خروجی
+                const codes = [...new Set(allSales.map(s => s.product_code))];
+                const { data: productsData } = await _supabase.from('products').select('code, name').in('code', codes);
+                const nameMap = {};
+                (productsData || []).forEach(p => { nameMap[p.code] = p.name; });
+
+                // تقسیم به بازه‌های ۱۰روزه از تاریخ اولین فروش ثبت‌شده تا همین امروز
+                const firstDate = new Date(allSales[0].created_at);
+                let chunkStart = new Date(firstDate.getFullYear(), firstDate.getMonth(), firstDate.getDate());
+                const chunkMs = 10 * 24 * 60 * 60 * 1000;
+                const now = new Date();
+                let chunkCount = 0;
+
+                while (chunkStart <= now) {
+                    const chunkEnd = new Date(chunkStart.getTime() + chunkMs);
+                    const chunkSales = allSales.filter(s => {
+                        const t = new Date(s.created_at).getTime();
+                        return t >= chunkStart.getTime() && t < chunkEnd.getTime();
+                    });
+
+                    if (chunkSales.length > 0) {
+                        const header = ['تاریخ و ساعت', 'فروشنده', 'کد کالا', 'نام کالا', 'نوع فروش', 'مقدار (کیلو)', 'مبلغ فروش (تومان)'];
+                        const lines = [header.map(h => '"' + h + '"').join(',')];
+                        chunkSales.forEach(s => {
+                            const row = [
+                                getTehranFullDateTimeString(new Date(s.created_at)),
+                                s.seller_name || '',
+                                s.product_code || '',
+                                nameMap[s.product_code] || s.product_code || '',
+                                saleTypeTag(s.sale_type),
+                                Number(s.quantity || 0),
+                                Number(s.sell_price || 0)
+                            ];
+                            lines.push(row.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(','));
+                        });
+
+                        const csvContent = '\uFEFF' + lines.join('\r\n');
+                        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        const chunkEndInclusive = new Date(chunkEnd.getTime() - 1);
+                        a.href = url;
+                        a.download = `آرشیو-فروش_${getTehranISODate(chunkStart)}_تا_${getTehranISODate(chunkEndInclusive)}.csv`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                        chunkCount++;
+                        // کمی مکث بین دانلودها تا مرورگر جلوی دانلودهای پی‌درپی را نگیرد
+                        await new Promise(r => setTimeout(r, 400));
+                    }
+
+                    chunkStart = chunkEnd;
+                }
+
+                if (chunkCount === 0) {
+                    showToast('هیچ فایلی برای دانلود ساخته نشد.');
+                } else {
+                    showToast(`✅ آرشیو کامل فروش در ${chunkCount.toLocaleString('fa-IR')} فایل ۱۰روزه دانلود شد. هیچ داده‌ای از سرور پاک نشده و همه‌چیز همچنان دست‌نخورده در سیستم باقی است.`);
+                }
+            } finally {
+                if (btn) { btn.disabled = false; btn.textContent = '📦 دانلود آرشیو کامل فروش (۱۰روزه)'; }
             }
         }
 
@@ -5936,6 +6179,33 @@
                 </tr>
             `).join('');
 
+            // تفکیک دقیق بر اساس نام هر فرد (نه فقط شیفت)، تا اگر چند نفر مختلف در طول زمان همین شیفت
+            // را داشته‌اند (مثلاً یک فروشنده قبلی و یک فروشنده جدید دائمی)، کارکرد هرکدام جداگانه معلوم باشد
+            // و روی هم مخلوط نشود.
+            const personTotals = {};
+            filtered.forEach(s => {
+                const pname = s.seller_name || 'نامشخص';
+                if (!personTotals[pname]) personTotals[pname] = { count: 0, total: 0 };
+                personTotals[pname].count += 1;
+                personTotals[pname].total += Number(s.sell_price) || 0;
+            });
+            const personEntries = Object.entries(personTotals).sort((a, b) => b[1].total - a[1].total);
+            const personRows = personEntries.map(([pname, v]) => `
+                <tr>
+                    <td>${pname}</td>
+                    <td>${v.count.toLocaleString('fa-IR')}</td>
+                    <td>${v.total.toLocaleString('fa-IR')} تومان</td>
+                </tr>
+            `).join('');
+            const personBreakdownHtml = (personEntries.length > 1) ? `
+                <h4 style="color:#38bdf8; margin-top:12px; margin-bottom:6px;">👥 تفکیک دقیق بر اساس نام هر فرد (نه فقط شیفت):</h4>
+                <div class="hint" style="margin-top:0;">چون بیش از یک نام در این بازه برای همین شیفت ثبت شده (مثلاً جایگزینی فروشنده)، کارکرد هرکدام جداگانه اینجا نشان داده می‌شود تا با هم قاطی نشوند.</div>
+                <table>
+                    <thead><tr><th>نام فروشنده</th><th>تعداد فاکتور</th><th>مجموع فروش</th></tr></thead>
+                    <tbody>${personRows}</tbody>
+                </table>
+            ` : '';
+
             const isAdminViewer = (currentRole === 'admin');
             const invoiceRows = filtered.map(s => {
                 const fullTimeStr = getTehranFullDateTimeString(new Date(s.created_at));
@@ -5972,6 +6242,7 @@
                     <tbody>${productRows}</tbody>
                 </table>
                 <button class="row-btn edit-btn" style="width:100%; margin-top:6px;" onclick="exportTableToCSV('detailProductSummaryTable_${key}', 'جمع‌بندی-کالا-${key}-${startDateStr}-تا-${endDateStr}.csv')">📥 خروجی Excel (جمع‌بندی کالا)</button>
+                ${personBreakdownHtml}
                 <h4 style="color:#38bdf8; margin-top:12px; margin-bottom:6px;">🧾 ریز فاکتورها:</h4>
                 ${isAdminViewer ? '<div class="hint" style="margin-top:0;">به‌عنوان مدیر می‌توانید هر فاکتور این لیست را (مربوط به هر کاربر و هر روزی) ویرایش یا حذف کنید — مثلاً اگر مقداری اشتباه ثبت شده باشد.</div>' : ''}
                 <table id="detailInvoiceTable_${key}">
