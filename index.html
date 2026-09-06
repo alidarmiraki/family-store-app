@@ -27,11 +27,11 @@
     <!-- فونت فارسی وزیرمتن: خوانایی و ظاهر مدرن‌تر نسبت به تاهوما پیش‌فرض -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css">
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- تلگرام، اسکنر بارکد، نمودار و اکسل دیگر اینجا لود نمی‌شوند (تا صفحه اصلی سریع‌تر بالا بیاید
+         و اگر یکی از این آدرس‌ها فیلتر بود، کل صفحه گیر نکند). فقط Supabase (که برای ورود لازم است)
+         همینجا با سیستم پشتیبان (fallback) چند-CDN لود می‌شود؛ بقیه فقط وقتی همان قابلیت لازم شد
+         به‌صورت خودکار لود می‌شوند — کد کامل این منطق در ابتدای اسکریپت اصلی است. -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="window.__supabasePrimaryFailed = true;"></script>
     <style>
         * { -webkit-tap-highlight-color: transparent; }
         :root {
@@ -93,6 +93,22 @@
         }
         .theme-toggle-btn:active { transform: scale(0.9) rotate(15deg); }
 
+        .connection-banner {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 9997;
+            background: linear-gradient(90deg, #dc2626, #b91c1c);
+            color: #fff;
+            text-align: center;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 9px;
+            transform: translateY(-100%);
+            transition: transform 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .connection-banner.show { transform: translateY(0); }
+
         /* ================== صفحه لودینگ اولیه (Splash) ================== */
         #appSplash {
             position: fixed;
@@ -106,46 +122,93 @@
             background-image:
                 radial-gradient(circle at 20% 15%, rgba(56, 189, 248, 0.18), transparent 45%),
                 radial-gradient(circle at 85% 80%, rgba(16, 185, 129, 0.15), transparent 45%);
-            transition: opacity 0.5s ease, visibility 0.5s ease;
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+            overflow: hidden;
         }
         #appSplash.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        /* ذرات نورانی شناور در پس‌زمینه، برای عمق بیشتر */
+        .splash-particle {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(56,189,248,0.5), transparent 70%);
+            animation: splashFloat 6s ease-in-out infinite;
+            pointer-events: none;
+        }
+        @keyframes splashFloat {
+            0%, 100% { transform: translateY(0) translateX(0); opacity: 0.4; }
+            50% { transform: translateY(-26px) translateX(10px); opacity: 0.9; }
+        }
         .splash-logo-wrap {
-            width: 84px;
-            height: 84px;
-            border-radius: 24px;
+            width: 92px;
+            height: 92px;
+            border-radius: 26px;
             background: linear-gradient(135deg, #0284c7, #10b981);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 40px;
-            box-shadow: 0 10px 30px rgba(2, 132, 199, 0.35);
-            animation: splashPulse 1.7s ease-in-out infinite;
+            font-size: 44px;
+            box-shadow: 0 10px 34px rgba(2, 132, 199, 0.4);
+            animation: splashPulse 1.7s ease-in-out infinite, splashEntrance 0.6s cubic-bezier(.34,1.56,.64,1);
+            position: relative;
+            z-index: 2;
         }
         @keyframes splashPulse {
             0%, 100% { transform: scale(1) rotate(0deg); }
             50% { transform: scale(1.08) rotate(-3deg); }
         }
+        @keyframes splashEntrance {
+            from { transform: scale(0.4) rotate(-25deg); opacity: 0; }
+            to { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
         .splash-ring {
-            width: 46px;
-            height: 46px;
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
             border: 4px solid var(--border-color);
             border-top-color: var(--accent);
-            margin-top: 22px;
+            border-left-color: rgba(16, 185, 129, 0.6);
+            margin-top: 24px;
             animation: splashSpin 0.85s linear infinite;
         }
         @keyframes splashSpin { to { transform: rotate(360deg); } }
         .splash-title {
-            margin-top: 18px;
+            margin-top: 20px;
             font-weight: bold;
             color: var(--text-primary);
-            font-size: 16px;
+            font-size: 17px;
             letter-spacing: 0.5px;
+            opacity: 0;
+            animation: splashTextIn 0.5s ease 0.25s forwards;
         }
         .splash-sub {
-            margin-top: 6px;
-            font-size: 11px;
+            margin-top: 8px;
+            font-size: 11.5px;
             color: var(--text-secondary);
+            min-height: 16px;
+            opacity: 0;
+            animation: splashTextIn 0.5s ease 0.4s forwards;
+            transition: opacity 0.25s ease;
+        }
+        @keyframes splashTextIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .splash-progress-track {
+            width: 160px;
+            height: 4px;
+            border-radius: 4px;
+            background: var(--bg-input);
+            margin-top: 18px;
+            overflow: hidden;
+            opacity: 0;
+            animation: splashTextIn 0.5s ease 0.5s forwards;
+        }
+        .splash-progress-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #0284c7, #10b981);
+            transition: width 0.4s ease;
         }
         .header-clock {
             text-align: center;
@@ -710,19 +773,43 @@
         #adminEditSaleOverlay.active { display: flex; }
         .scanner-box {
             background: #1e293b;
-            border: 1px solid #334155;
+            border: 2px solid #334155;
             border-radius: 16px;
             padding: 16px;
             max-width: 420px;
             width: 100%;
             text-align: right;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .scanner-box.scan-flash {
+            border-color: #10b981;
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.35), 0 0 24px rgba(16, 185, 129, 0.5);
         }
         #scannerReaderBox {
+            position: relative;
             border-radius: 10px;
             overflow: hidden;
             margin-top: 10px;
             background: #000;
             min-height: 200px;
+        }
+        /* خط لیزری اسکن، بالا-پایین می‌رود تا حس یه اسکنر واقعی صندوق فروشگاهی رو بده */
+        #scannerReaderBox::after {
+            content: '';
+            position: absolute;
+            left: 6%;
+            right: 6%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #22d3ee, #10b981, #22d3ee, transparent);
+            box-shadow: 0 0 8px 2px rgba(34, 211, 238, 0.7);
+            animation: scanLaserMove 1.6s ease-in-out infinite;
+            z-index: 5;
+            pointer-events: none;
+        }
+        @keyframes scanLaserMove {
+            0% { top: 8%; opacity: 0.2; }
+            50% { top: 88%; opacity: 1; }
+            100% { top: 8%; opacity: 0.2; }
         }
     </style>
 </head>
@@ -730,14 +817,22 @@
 
     <!-- صفحه لودینگ اولیه: تا لود شدن کامل فونت/کتابخانه‌ها نمایش داده می‌شود و بعد با فید نرم محو می‌شود -->
     <div id="appSplash">
+        <div class="splash-particle" style="width:60px; height:60px; top:15%; left:12%; animation-delay:0s;"></div>
+        <div class="splash-particle" style="width:40px; height:40px; top:70%; left:20%; animation-delay:1.2s;"></div>
+        <div class="splash-particle" style="width:50px; height:50px; top:25%; left:80%; animation-delay:2s;"></div>
+        <div class="splash-particle" style="width:34px; height:34px; top:75%; left:78%; animation-delay:0.6s;"></div>
         <div class="splash-logo-wrap">🧀</div>
         <div class="splash-ring"></div>
         <div class="splash-title">غرفه فامیلی — دره میرکی</div>
-        <div class="splash-sub">در حال آماده‌سازی سیستم...</div>
+        <div class="splash-sub" id="splashSubText">در حال آماده‌سازی سیستم...</div>
+        <div class="splash-progress-track"><div class="splash-progress-fill" id="splashProgressFill"></div></div>
     </div>
 
     <!-- دکمه تعویض حالت روشن/تاریک -->
     <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="تغییر حالت روشن/تاریک">🌙</button>
+
+    <!-- بنر قطعی اینترنت: فقط وقتی گوشی واقعاً آفلاین است نشان داده می‌شود -->
+    <div id="connectionBanner" class="connection-banner">🔌 اتصال اینترنت قطع شده — به‌محض وصل شدن، خودکار ادامه می‌دهد</div>
 
     <!-- سیستم اعلان (Toast) و تاییدیه سفارشی، جایگزین alert()/confirm() پیش‌فرض مرورگر -->
     <div id="toastContainer"></div>
@@ -1097,10 +1192,11 @@
     <!-- فرم حضور و غیاب -->
     <div id="attendanceTab" class="card">
         <h2>⏰ ثبت ورود، خروج و مرخصی</h2>
-        <div class="hint">⚠️ ثبت عکس یا موقعیت مکانی لحظه‌ای برای ورود و خروج **اجباری** است. برای ورود/خروج، تایید اثر انگشت همان گوشی هم لازم است. سیستم تاخیرها و زودتر‌رفتن‌ها را اتوماتیک بررسی می‌کند.</div>
+        <div class="hint">⚠️ ثبت عکس یا موقعیت مکانی لحظه‌ای برای ورود و خروج **اجباری** است. برای ورود/خروج، تایید بیومتریک همان گوشی هم لازم است — گوشی خودش تشخیص می‌دهد از اثر انگشت استفاده کند یا تشخیص چهره (هرکدام که روی گوشی فعال باشد، خودکار همان استفاده می‌شود). سیستم تاخیرها و زودتر‌رفتن‌ها را اتوماتیک بررسی می‌کند.</div>
 
-        <div id="fingerprintStatusBox" class="hint" style="background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.3); border-radius:8px; padding:8px;">⏳ در حال بررسی وضعیت اثر انگشت...</div>
-        <button type="button" class="row-btn edit-btn" style="width:100%; margin-bottom:10px;" onclick="registerFingerprint()">👆 ثبت / بررسی اثر انگشت روی این گوشی</button>
+        <div id="fingerprintStatusBox" class="hint" style="background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.3); border-radius:8px; padding:8px;">⏳ در حال بررسی وضعیت بیومتریک...</div>
+        <button type="button" class="row-btn edit-btn" style="width:100%; margin-bottom:10px;" onclick="registerFingerprint()">👆 / 🙂 ثبت بیومتریک این گوشی (اثر انگشت یا تشخیص چهره)</button>
+        <div class="hint" style="margin-top:-6px; margin-bottom:10px;">این دکمه با هر دو کار می‌کند: روی گوشی‌هایی که سنسور اثر انگشت دارند از همان استفاده می‌شود، روی گوشی‌هایی که Face ID/تشخیص چهره دارند از همان — نیازی به انتخاب دستی نیست، گوشی خودش تصمیم می‌گیرد.</div>
 
         <label>نوع ثبت:</label>
         <select id="attType" onchange="toggleAttendanceFields()">
@@ -1703,19 +1799,58 @@
         }
         updateThemeToggleIcon();
 
+        // ================== بنر آفلاین/آنلاین ==================
+        function updateConnectionBanner() {
+            const el = document.getElementById('connectionBanner');
+            if (!el) return;
+            el.classList.toggle('show', !navigator.onLine);
+        }
+        window.addEventListener('online', () => { updateConnectionBanner(); showToast('✅ اتصال اینترنت دوباره برقرار شد'); });
+        window.addEventListener('offline', () => { updateConnectionBanner(); showToast('⚠️ اتصال اینترنت قطع شد — به‌محض وصل شدن دوباره تلاش کنید'); });
+        updateConnectionBanner();
+
         // ================== صفحه لودینگ اولیه (Splash) ==================
-        // حداقل ۶۰۰ میلی‌ثانیه نگه داشته می‌شود (تا چشمک نزند)، و همین‌که صفحه کامل لود شد با فید محو می‌شود
+        // حداقل ۲.۲ ثانیه نگه داشته می‌شود (حس یه لودینگ واقعی و باکیفیت، نه چشمک سریع)،
+        // و همین‌که صفحه کامل لود شد با فید محو می‌شود. در این مدت، پیام‌ها و نوار پیشرفت
+        // به‌ترتیب عوض می‌شوند تا حس کنی واقعاً داره چیزی آماده میشه.
         (function () {
             const splashShownAt = Date.now();
-            const MIN_SPLASH_MS = 600;
+            const MIN_SPLASH_MS = 2200;
+            const MAX_SPLASH_MS = 6000; // اگه نت خیلی کند بود، حداکثر همین‌قدر صبر کن و بعد به‌هرحال نشون بده
+            const subTexts = [
+                'در حال آماده‌سازی سیستم...',
+                'اتصال به سرور فروشگاه...',
+                'همگام‌سازی اطلاعات موجودی...',
+                'تقریباً آماده‌ست...'
+            ];
+            let stepIndex = 0;
+            const subEl = document.getElementById('splashSubText');
+            const fillEl = document.getElementById('splashProgressFill');
+            if (fillEl) fillEl.style.width = '18%';
+            const textTimer = setInterval(() => {
+                stepIndex = Math.min(stepIndex + 1, subTexts.length - 1);
+                if (subEl) {
+                    subEl.style.opacity = '0';
+                    setTimeout(() => {
+                        subEl.innerText = subTexts[stepIndex];
+                        subEl.style.opacity = '1';
+                    }, 200);
+                }
+                if (fillEl) fillEl.style.width = Math.min(18 + stepIndex * 26, 96) + '%';
+            }, 550);
+
             function hideSplash() {
                 const el = document.getElementById('appSplash');
                 if (!el) return;
+                clearInterval(textTimer);
                 const elapsed = Date.now() - splashShownAt;
                 const wait = Math.max(0, MIN_SPLASH_MS - elapsed);
                 setTimeout(() => {
-                    el.classList.add('hidden');
-                    setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 600);
+                    if (fillEl) fillEl.style.width = '100%';
+                    setTimeout(() => {
+                        el.classList.add('hidden');
+                        setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 650);
+                    }, 180);
                 }, wait);
             }
             if (document.readyState === 'complete') {
@@ -1723,8 +1858,8 @@
             } else {
                 window.addEventListener('load', hideSplash);
                 // در صورتی که یک کتابخانه بیرونی (مثلاً به دلیل فیلترشکن/اینترنت ضعیف) هیچ‌وقت لود نشود،
-                // حداکثر بعد از ۴ ثانیه به‌هرحال صفحه را نشان بده تا کاربر پشت صفحه سفید/لودینگ گیر نکند
-                setTimeout(hideSplash, 4000);
+                // حداکثر بعد از ۶ ثانیه به‌هرحال صفحه را نشان بده تا کاربر پشت صفحه سفید/لودینگ گیر نکند
+                setTimeout(hideSplash, MAX_SPLASH_MS);
             }
         })();
 
@@ -1782,9 +1917,9 @@
         const SUPABASE_REAL_URL = "https://kinjpmvoyioaslpdzujg.supabase.co";
         const PROXY_ENDPOINTS = [
             SUPABASE_REAL_URL, // همیشه اول همین آدرس مستقیم امتحان می‌شود
-            // نمونه، بعد از دیپلوی Worker خودت این‌ها را جایگزین/اضافه کن:
-            // "https://shop-proxy-1.YOUR-SUBDOMAIN.workers.dev",
-            // "https://shop-proxy-2.YOUR-SUBDOMAIN.workers.dev",
+            "https://shop-proxy-1.adarmiraki.workers.dev", // پروکسی Cloudflare Worker (برای وقتی آدرس اصلی فیلتر باشد)
+            // اگه یه پروکسی دوم هم ساختی (برای اطمینان بیشتر)، آدرسش رو همینجا اضافه کن:
+            // "https://shop-proxy-2.adarmiraki.workers.dev",
         ];
 
         let activeBaseUrl = PROXY_ENDPOINTS[0];
@@ -1794,6 +1929,16 @@
         // جواب نداد، به‌ترتیب بقیه‌ی پروکسی‌های لیست را امتحان می‌کند و اولین
         // پروکسی که کار کرد را برای درخواست‌های بعدی «فعال» نگه می‌دارد، بدون
         // اینکه لازم باشد کاربر صفحه را رفرش کند یا خودش کاری انجام دهد.
+        // نکته مهم: وقتی یک آدرس فیلتر (نه قطع) باشد، معمولاً به‌جای خطای فوری، فقط
+        // بی‌صدا معطل می‌ماند (Timeout طولانی)؛ برای همین به هر تلاش یک سقف زمانی
+        // ۵ ثانیه‌ای می‌دهیم تا اگر آدرس فیلتر بود، خیلی زود (نه بعد از ۳۰-۶۰ ثانیه)
+        // سراغ پروکسی بعدی برود.
+        function fetchWithTimeout(url, init, timeoutMs) {
+            const controller = new AbortController();
+            const combinedInit = Object.assign({}, init, { signal: controller.signal });
+            const timeoutId = setTimeout(() => controller.abort(), timeoutMs || 5000);
+            return fetch(url, combinedInit).finally(() => clearTimeout(timeoutId));
+        }
         async function proxiedFetch(input, init) {
             const originalUrl = (typeof input === 'string') ? input : input.url;
             if (originalUrl.indexOf(SUPABASE_REAL_URL) !== 0) {
@@ -1802,12 +1947,12 @@
             const path = originalUrl.slice(SUPABASE_REAL_URL.length);
 
             try {
-                return await fetch(activeBaseUrl + path, init);
+                return await fetchWithTimeout(activeBaseUrl + path, init, 5000);
             } catch (firstErr) {
                 for (const candidate of PROXY_ENDPOINTS) {
                     if (candidate === activeBaseUrl) continue;
                     try {
-                        const res = await fetch(candidate + path, init);
+                        const res = await fetchWithTimeout(candidate + path, init, 7000);
                         activeBaseUrl = candidate;
                         console.warn('📡 اتصال مستقیم برقرار نشد؛ سوییچ خودکار به پروکسی:', candidate);
                         return res;
@@ -1834,27 +1979,91 @@
             window.WebSocket.prototype = NativeWebSocket.prototype;
         })();
 
+        // =========================================================================
+        // بارگذاری هوشمند کتابخانه‌های بیرونی: هر کتابخانه از چند CDN مختلف امتحان می‌شود
+        // (اگر یکی فیلتر/قطع بود، خودکار سراغ بعدی می‌رود) و کتابخانه‌های سنگین/غیرضروری
+        // (اسکنر بارکد، نمودار، اکسل) فقط وقتی همان قابلیت واقعاً استفاده شود لود می‌شوند —
+        // نه در همان اول باز شدن صفحه. این یعنی حتی اگر یکی از CDNها در دسترس نباشد،
+        // بقیه‌ی برنامه (ورود، ثبت فروش، حضور و غیاب) کاملاً کار می‌کند.
+        // =========================================================================
+        function loadScriptOnce(src, timeoutMs) {
+            return new Promise((resolve) => {
+                let settled = false;
+                const finish = (ok) => { if (settled) return; settled = true; resolve(ok); };
+                const tag = document.createElement('script');
+                tag.src = src;
+                tag.async = true;
+                tag.onload = () => finish(true);
+                tag.onerror = () => finish(false);
+                document.head.appendChild(tag);
+                setTimeout(() => finish(false), timeoutMs || 7000);
+            });
+        }
+        const _libLoadPromises = {};
+        function ensureLibraryLoaded(key, checkFn, urls, timeoutMs) {
+            if (checkFn()) return Promise.resolve(true);
+            if (_libLoadPromises[key]) return _libLoadPromises[key];
+            _libLoadPromises[key] = (async () => {
+                for (const url of urls) {
+                    const ok = await loadScriptOnce(url, timeoutMs);
+                    if (ok && checkFn()) return true;
+                }
+                return false;
+            })();
+            return _libLoadPromises[key];
+        }
+        // بارگذاری اختیاری و بدون‌مانع تلگرام (فقط برای زمانی که برنامه داخل خود اپ تلگرام باز شود؛
+        // اگر لود نشود، برنامه در مرورگر عادی کاملاً و بدون هیچ محدودیتی کار می‌کند)
+        loadScriptOnce('https://telegram.org/js/telegram-web-app.js', 3000);
+
+        function ensureBarcodeScannerLoaded() {
+            return ensureLibraryLoaded('html5qrcode', () => typeof Html5Qrcode !== 'undefined', [
+                'https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js',
+                'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js'
+            ], 8000);
+        }
+        function ensureChartLibLoaded() {
+            return ensureLibraryLoaded('chartjs', () => typeof Chart !== 'undefined', [
+                'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
+                'https://unpkg.com/chart.js@4.4.0/dist/chart.umd.min.js'
+            ], 8000);
+        }
+        function ensureExcelLibLoaded() {
+            return ensureLibraryLoaded('xlsx', () => typeof XLSX !== 'undefined', [
+                'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
+                'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js'
+            ], 8000);
+        }
+
         // راه‌اندازی امن اتصال به Supabase — اگر کتابخانه Supabase به هر دلیلی
         // (نت ضعیف، قطعی CDN، فیلترینگ) بارگذاری نشده باشد، به‌جای متوقف‌کردن
         // کل صفحه، یک پیام واضح به کاربر نشان می‌دهیم.
         const SUPABASE_URL = SUPABASE_REAL_URL;
         const SUPABASE_KEY = "sb_publishable_k3wkzKalFmLFtfx8WZWr1g_fHKT-3Sl";
         let _supabase = null;
-        try {
-            if (typeof supabase === 'undefined' || !supabase.createClient) {
-                throw new Error('کتابخانه Supabase بارگذاری نشد');
+        (async function initSupabaseClient() {
+            try {
+                // اول: آیا نسخه اصلی (jsDelivr) در تگ <head> با موفقیت لود شد؟
+                let ready = (typeof supabase !== 'undefined' && supabase.createClient);
+                if (!ready) {
+                    // نشد؟ (مثلاً jsDelivr فیلتر بود) — یک CDN جایگزین را امتحان کن
+                    console.warn('📡 Supabase از jsDelivr لود نشد؛ تلاش برای CDN جایگزین (unpkg)...');
+                    await loadScriptOnce('https://unpkg.com/@supabase/supabase-js@2', 8000);
+                    ready = (typeof supabase !== 'undefined' && supabase.createClient);
+                }
+                if (!ready) throw new Error('کتابخانه Supabase از هیچ منبعی بارگذاری نشد');
+                _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+                    global: { fetch: proxiedFetch }
+                });
+            } catch (e) {
+                console.error('خطا در اتصال به Supabase:', e);
+                const loginErr = document.getElementById('loginError');
+                if (loginErr) {
+                    loginErr.innerText = '❌ اتصال به سرور برقرار نشد. لطفاً اینترنت خود را چک کنید (وای‌فای/موبایل‌دیتا یا فیلترشکن) و صفحه را رفرش (Reload) کنید.';
+                    loginErr.style.display = 'block';
+                }
             }
-            _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-                global: { fetch: proxiedFetch }
-            });
-        } catch (e) {
-            console.error('خطا در اتصال به Supabase:', e);
-            const loginErr = document.getElementById('loginError');
-            if (loginErr) {
-                loginErr.innerText = '❌ اتصال به سرور برقرار نشد. لطفاً اینترنت خود را چک کنید (وای‌فای/موبایل‌دیتا یا فیلترشکن) و صفحه را رفرش (Reload) کنید.';
-                loginErr.style.display = 'block';
-            }
-        }
+        })();
 
         let cachedProductsList = [];
 
@@ -1966,19 +2175,25 @@
             }
         }, true);
 
-        function openBarcodeScanner(type) {
+        async function openBarcodeScanner(type) {
             barcodeScanTargetType = type;
             barcodeScanProcessing = false;
             const overlay = document.getElementById('scannerOverlay');
             const statusText = document.getElementById('scannerStatusText');
             overlay.classList.add('active');
             statusText.innerText = 'در حال باز کردن دوربین...';
+            const scannerBoxElOpen = document.querySelector('#scannerOverlay .scanner-box');
+            if (scannerBoxElOpen) scannerBoxElOpen.classList.remove('scan-flash');
             // باز کردن AudioContext همین‌جا (روی تپ کاربر) تا بوق اسکن روی آیفون/سافاری هم بدون تاخیر پخش شود
             getAudioCtx();
 
             if (typeof Html5Qrcode === 'undefined') {
-                statusText.innerText = '❌ کتابخانه بارکدخوان بارگذاری نشد (نیاز به اینترنت دارد). لطفاً کالا را دستی وارد کنید.';
-                return;
+                statusText.innerText = '⏳ در حال آماده‌سازی اسکنر...';
+                const loaded = await ensureBarcodeScannerLoaded();
+                if (!loaded || typeof Html5Qrcode === 'undefined') {
+                    statusText.innerText = '❌ کتابخانه بارکدخوان بارگذاری نشد (نیاز به اینترنت دارد). لطفاً کالا را دستی وارد کنید.';
+                    return;
+                }
             }
 
             try {
@@ -2114,6 +2329,8 @@
         function closeBarcodeScanner() {
             const overlay = document.getElementById('scannerOverlay');
             overlay.classList.remove('active');
+            const scannerBoxEl = document.querySelector('#scannerOverlay .scanner-box');
+            if (scannerBoxEl) scannerBoxEl.classList.remove('scan-flash');
             const torchBtn = document.getElementById('scannerTorchBtn');
             if (torchBtn) { torchBtn.style.display = 'none'; torchBtn.dataset.torchOn = 'false'; torchBtn.innerText = '🔦 روشن کردن فلاش (نور کم)'; }
             if (html5QrcodeScannerInstance) {
@@ -2133,6 +2350,9 @@
             // فوراً همون لحظه‌ی شناسایی، بوق + ویبره بزن (دقیقاً مثل اسکنر صندوق فروشگاهی) — قبل از هر پردازشی
             playScanBeepSound();
             vibrateShort();
+            // فلاش سبز فوری دور کادر اسکنر، دقیقاً لحظه‌ی گیر افتادن بارکد (حس تایید بصری آنی)
+            const scannerBoxEl = document.querySelector('#scannerOverlay .scanner-box');
+            if (scannerBoxEl) scannerBoxEl.classList.add('scan-flash');
 
             const digits = String(decodedText).replace(/\D/g, '');
             let productCode = digits;
@@ -3499,9 +3719,13 @@
         // نمودار روند فروش ۱۴ روز اخیر، دقیقاً به‌تفکیک ۳ گروه واقعی (صبح / شب / مدیر)
         // بر اساس همان منطق getSaleShiftKey که برای گزارش‌گیری استفاده می‌شود، تا اعداد نمودار
         // با اعداد گزارش‌ها همیشه یکسان و دقیق باشند.
-        function renderSalesTrendChart(canvasId, allSales) {
+        async function renderSalesTrendChart(canvasId, allSales) {
             const canvas = document.getElementById(canvasId);
-            if (!canvas || typeof Chart === 'undefined') return;
+            if (!canvas) return;
+            if (typeof Chart === 'undefined') {
+                const ok = await ensureChartLibLoaded();
+                if (!ok || typeof Chart === 'undefined') return;
+            }
 
             const days = [];
             const totalsByDay = {};
@@ -4127,13 +4351,24 @@
             try {
                 const s = await getTelegramSettings();
                 if (!s.enabled || !s.botToken || !s.chatId) return;
-                await fetch(`https://api.telegram.org/bot${s.botToken}/sendMessage`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chat_id: s.chatId, text: text })
-                });
+                // این درخواست به سرور تلگرام (api.telegram.org) می‌رود که ممکن است بدون فیلترشکن
+                // در دسترس نباشد؛ با AbortController یک سقف زمانی ۶ ثانیه‌ای می‌گذاریم تا در صورت
+                // قطع/فیلتر بودن، به‌جای معطل ماندن طولانی (که می‌تواند بقیه‌ی برنامه را کند کند)،
+                // به‌سرعت شکست بخورد و بی‌صدا رد شود — کارکرد اصلی برنامه هیچ وابستگی به این ندارد.
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 6000);
+                try {
+                    await fetch(`https://api.telegram.org/bot${s.botToken}/sendMessage`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ chat_id: s.chatId, text: text }),
+                        signal: controller.signal
+                    });
+                } finally {
+                    clearTimeout(timeoutId);
+                }
             } catch (e) {
-                console.warn('خطا در ارسال پیام تلگرام (بدون اشکال برای کارکرد اصلی برنامه)', e);
+                console.warn('خطا در ارسال پیام تلگرام (بدون اشکال برای کارکرد اصلی برنامه) — احتمالاً بدون فیلترشکن قابل دسترس نیست', e);
             }
         }
 
@@ -6736,8 +6971,12 @@
 
             try {
                 if (typeof XLSX === 'undefined') {
-                    showToast('❌ کتابخانه اکسل بارگذاری نشد. اتصال اینترنت را بررسی کنید و دوباره تلاش کنید.');
-                    return;
+                    showToast('⏳ در حال بارگذاری کتابخانه اکسل...');
+                    const ok = await ensureExcelLibLoaded();
+                    if (!ok || typeof XLSX === 'undefined') {
+                        showToast('❌ کتابخانه اکسل بارگذاری نشد. اتصال اینترنت را بررسی کنید و دوباره تلاش کنید.');
+                        return;
+                    }
                 }
 
                 const now = new Date();
@@ -7443,6 +7682,7 @@
 
             // --- رسم نمودار مقایسه‌ای ستونی (مبلغ و وزن) برای درک بصری سریع‌تر ---
             try {
+                if (typeof Chart === 'undefined') await ensureChartLibLoaded();
                 if (growthChartInstance) { growthChartInstance.destroy(); growthChartInstance = null; }
                 const ctx = document.getElementById('growthChartCanvas');
                 if (ctx && typeof Chart !== 'undefined') {
