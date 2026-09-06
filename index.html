@@ -582,9 +582,10 @@
     <div id="scannerOverlay">
         <div class="scanner-box">
             <h3 style="color:#38bdf8; margin:0 0 10px 0; font-size:14px;">📷 اسکن بارکد کالا</h3>
-            <div class="hint" style="margin-top:0;">دوربین را روی بارکد روی لیبل کالا بگیرید تا خودکار شناسایی و ثبت شود.</div>
+            <div class="hint" style="margin-top:0;">دوربین را نزدیک بارکد روی لیبل بگیرید و کمی ثابت نگه دارید تا خودکار شناسایی و ثبت شود.</div>
             <div id="scannerReaderBox"></div>
             <div id="scannerStatusText" class="hint">در حال باز کردن دوربین...</div>
+            <button class="row-btn edit-btn" id="scannerTorchBtn" style="display:none;" onclick="toggleScannerTorch()">🔦 روشن کردن فلاش (نور کم)</button>
             <button class="cancel-edit-btn" style="display:block;" onclick="closeBarcodeScanner()">بستن</button>
         </div>
     </div>
@@ -682,7 +683,7 @@
         <button class="tab-btn" id="btnSale" onclick="switchTab('sale'); loadProductDatalist(); loadRecentSales('instore');">🧀 ثبت فروش لبنیات</button>
         <button class="tab-btn" id="btnSaleEkala" onclick="switchTab('saleEkala'); loadProductDatalist(); loadRecentSales('ekala');">🛒 ثبت فروش اکالا</button>
         <button class="tab-btn" id="btnSaleSausage" onclick="switchTab('saleSausage'); loadProductDatalist(); loadRecentSales('sausage');">🌭 ثبت فروش سوسیس و کالباس</button>
-        <button class="tab-btn" id="btnAttendance" onclick="switchTab('attendance');">⏰ حضور و غیاب</button>
+        <button class="tab-btn" id="btnAttendance" onclick="switchTab('attendance'); loadFingerprintStatus();">⏰ حضور و غیاب</button>
         <button class="tab-btn" id="btnMessage" onclick="switchTab('message');">📩 ارسال پیام به مدیر</button>
         <button class="tab-btn" id="btnStaffMessage" onclick="switchTab('staffMessage'); loadStaffMessageTargets();">📤 پیام به پرسنل</button>
         <button class="tab-btn" id="btnInbox" onclick="switchTab('inbox'); loadInbox();">📥 صندوقچه پیام‌ها</button>
@@ -923,7 +924,10 @@
     <!-- فرم حضور و غیاب -->
     <div id="attendanceTab" class="card">
         <h2>⏰ ثبت ورود، خروج و مرخصی</h2>
-        <div class="hint">⚠️ ثبت عکس یا موقعیت مکانی لحظه‌ای برای ورود و خروج **اجباری** است. سیستم تاخیرها و زودتر‌رفتن‌ها را اتوماتیک بررسی می‌کند.</div>
+        <div class="hint">⚠️ ثبت عکس یا موقعیت مکانی لحظه‌ای برای ورود و خروج **اجباری** است. برای ورود/خروج، تایید اثر انگشت همان گوشی هم لازم است. سیستم تاخیرها و زودتر‌رفتن‌ها را اتوماتیک بررسی می‌کند.</div>
+
+        <div id="fingerprintStatusBox" class="hint" style="background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.3); border-radius:8px; padding:8px;">⏳ در حال بررسی وضعیت اثر انگشت...</div>
+        <button type="button" class="row-btn edit-btn" style="width:100%; margin-bottom:10px;" onclick="registerFingerprint()">👆 ثبت / بررسی اثر انگشت روی این گوشی</button>
 
         <label>نوع ثبت:</label>
         <select id="attType" onchange="toggleAttendanceFields()">
@@ -1235,6 +1239,11 @@
         <input type="number" id="reminderMinutes" value="10" placeholder="مثلاً 10 دقیقه">
 
         <button class="submit-btn" onclick="saveShiftSettings()">ذخیره تنظیمات شیفت‌ها</button>
+
+        <h3 style="color:#38bdf8; margin-top:22px;">👆 مدیریت اثر انگشت و گوشی پرسنل</h3>
+        <div class="hint" style="margin-top:0;">هر پرسنل فقط روی یک گوشی (همان گوشی که اول ثبت اثر انگشت کرده) می‌تواند ورود/خروج بزند. اگر گوشی کسی خراب شد یا عوض شد، از همین‌جا ثبت قبلی‌اش را ریست کنید تا بتواند روی گوشی جدید دوباره ثبت کند.</div>
+        <button class="row-btn edit-btn" style="width:100%; margin-top:6px;" onclick="loadStaffDevicesAdmin()">🔄 بارگذاری فهرست اثر انگشت‌های ثبت‌شده</button>
+        <div id="staffDevicesList" style="margin-top:10px;"></div>
     </div>
 
     <!-- تب اتصال تلگرام (ویژه مدیر) -->
@@ -1708,10 +1717,26 @@
             }
 
             try {
-                html5QrcodeScannerInstance = new Html5Qrcode('scannerReaderBox');
+                html5QrcodeScannerInstance = new Html5Qrcode('scannerReaderBox', { verbose: false });
+                // --- تنظیمات قوی‌تر برای اسکن سریع‌تر و دقیق‌تر بارکد روی لیبل ---
+                // fps بالاتر: فریم‌های بیشتری در ثانیه بررسی می‌شود => شناسایی سریع‌تر
+                // qrbox پویا و پهن‌تر: چون بارکدها معمولاً کشیده و افقی هستند، کادر بزرگ‌تر شانس گیر افتادن بارکد را در همان لحظه اول بالا می‌برد
+                // useBarCodeDetectorIfSupported: در مرورگرهایی که از آن پشتیبانی می‌کنند (اکثر گوشی‌های اندروید/کروم) از موتور شناسایی سخت‌افزاری خود گوشی استفاده می‌کند که چند برابر سریع‌تر از موتور نرم‌افزاری معمولی است
                 const scanConfig = {
-                    fps: 10,
-                    qrbox: { width: 280, height: 150 }
+                    fps: 25,
+                    qrbox: (viewfinderWidth, viewfinderHeight) => {
+                        const w = Math.floor(Math.min(viewfinderWidth * 0.92, 420));
+                        const h = Math.floor(Math.min(viewfinderHeight * 0.5, 180));
+                        return { width: Math.max(w, 200), height: Math.max(h, 100) };
+                    },
+                    aspectRatio: 1.777,
+                    disableFlip: true,
+                    experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+                    videoConstraints: {
+                        facingMode: 'environment',
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    }
                 };
                 if (typeof Html5QrcodeSupportedFormats !== 'undefined') {
                     scanConfig.formatsToSupport = [
@@ -1730,7 +1755,10 @@
                     () => { /* هر فریمی که بارکد پیدا نشود، نادیده گرفته می‌شود */ }
                 );
 
-                const onReady = () => { statusText.innerText = 'دوربین آماده است — بارکد را داخل کادر بگیرید...'; };
+                const onReady = () => {
+                    statusText.innerText = '✅ دوربین آماده است — بارکد را نزدیک و ثابت داخل کادر بگیرید...';
+                    setupScannerTorchButton();
+                };
                 const onFail = (err) => {
                     statusText.innerText = '❌ دسترسی به دوربین ممکن نشد.\nلطفاً اجازه دسترسی دوربین را در تنظیمات مرورگر/تلگرام برای این صفحه فعال کنید، یا کالا را دستی وارد کنید.\n\n(جزئیات: ' + err + ')';
                 };
@@ -1780,9 +1808,41 @@
             }
         }
 
+        function setupScannerTorchButton() {
+            const torchBtn = document.getElementById('scannerTorchBtn');
+            if (!torchBtn || !html5QrcodeScannerInstance) { if (torchBtn) torchBtn.style.display = 'none'; return; }
+            try {
+                const capabilities = (typeof html5QrcodeScannerInstance.getRunningTrackCapabilities === 'function')
+                    ? html5QrcodeScannerInstance.getRunningTrackCapabilities() : null;
+                if (capabilities && capabilities.torch) {
+                    torchBtn.style.display = 'block';
+                    torchBtn.dataset.torchOn = 'false';
+                } else {
+                    torchBtn.style.display = 'none';
+                }
+            } catch (e) {
+                torchBtn.style.display = 'none';
+            }
+        }
+
+        async function toggleScannerTorch() {
+            const torchBtn = document.getElementById('scannerTorchBtn');
+            if (!torchBtn || !html5QrcodeScannerInstance) return;
+            const isOn = torchBtn.dataset.torchOn === 'true';
+            try {
+                await html5QrcodeScannerInstance.applyVideoConstraints({ advanced: [{ torch: !isOn }] });
+                torchBtn.dataset.torchOn = (!isOn).toString();
+                torchBtn.innerText = !isOn ? '🔦 خاموش کردن فلاش' : '🔦 روشن کردن فلاش (نور کم)';
+            } catch (e) {
+                showToast('⚠️ این دوربین از فلاش پشتیبانی نمی‌کند.');
+            }
+        }
+
         function closeBarcodeScanner() {
             const overlay = document.getElementById('scannerOverlay');
             overlay.classList.remove('active');
+            const torchBtn = document.getElementById('scannerTorchBtn');
+            if (torchBtn) { torchBtn.style.display = 'none'; torchBtn.dataset.torchOn = 'false'; torchBtn.innerText = '🔦 روشن کردن فلاش (نور کم)'; }
             if (html5QrcodeScannerInstance) {
                 const instance = html5QrcodeScannerInstance;
                 html5QrcodeScannerInstance = null;
@@ -3930,75 +3990,97 @@
             panel.innerHTML = '';
         }
 
+        // --- دریافت سریع موقعیت مکانی: یک فیکس تقریبی و فوری (اغلب کش‌شده و زیر ۲ ثانیه) نشان داده می‌شود
+        // و هم‌زمان در پس‌زمینه، تلگرام و GPS دقیق مرورگر هم موازی تلاش می‌کنند؛ هرکدام زودتر برسد همان ثبت می‌شود
+        // و اگر فیکس دقیق بعداً برسد، خودکار جایگزین نسخه‌ی تقریبی می‌شود ---
         function captureAttendanceLocation() {
             const statusEl = document.getElementById('locationStatus');
             statusEl.style.display = 'block';
             statusEl.style.color = '#38bdf8';
-            statusEl.innerText = '⏳ در حال دریافت موقعیت مکانی... (اجازه دسترسی را در صورت درخواست تایید کنید)';
+            statusEl.innerText = '⏳ در حال دریافت سریع موقعیت مکانی...';
 
-            if (tg && tg.LocationManager) {
-                try {
-                    tg.LocationManager.init(() => {
-                        if (!tg.LocationManager.isLocationAvailable) {
-                            statusEl.style.color = '#fbbf24';
-                            statusEl.innerText = '⚠️ موقعیت مکانی از طریق تلگرام در دسترس نیست، در حال تلاش با مرورگر...';
-                            tryBrowserGeolocation(statusEl);
-                            return;
-                        }
-                        tg.LocationManager.getLocation((locationData) => {
-                            if (!locationData) {
-                                statusEl.style.color = '#fbbf24';
-                                statusEl.innerText = '⚠️ دسترسی به موقعیت مکانی رد شد یا دریافت نشد، در حال تلاش با مرورگر...';
-                                tryBrowserGeolocation(statusEl);
-                                return;
-                            }
-                            const lat = Number(locationData.latitude).toFixed(6);
-                            const lng = Number(locationData.longitude).toFixed(6);
-                            selectedLocationText = `📍 موقعیت مکانی ثبت: https://maps.google.com/?q=${lat},${lng}`;
-                            statusEl.style.color = '#34d399';
-                            statusEl.innerText = '✅ موقعیت مکانی از طریق تلگرام دریافت شد و به‌جای عکس در توضیحات ثبت می‌شود.';
-                        });
-                    });
-                } catch (e) {
-                    tryBrowserGeolocation(statusEl);
-                }
-            } else {
-                tryBrowserGeolocation(statusEl);
-            }
-        }
+            let resolved = false;
+            const finishSuccess = (lat, lng, sourceLabel) => {
+                resolved = true;
+                selectedLocationText = `📍 موقعیت مکانی ثبت: https://maps.google.com/?q=${lat},${lng}`;
+                statusEl.style.color = '#34d399';
+                statusEl.innerText = `✅ موقعیت مکانی ${sourceLabel} دریافت شد و به‌جای عکس در توضیحات ثبت می‌شود.`;
+            };
 
-        function tryBrowserGeolocation(statusEl) {
-            if (!navigator.geolocation) {
-                selectedLocationText = null;
-                statusEl.style.color = '#ef4444';
-                statusEl.innerText = '❌ مرورگر/برنامه شما از موقعیت مکانی پشتیبانی نمی‌کند. لطفاً به‌جای آن از گزینه آپلود عکس استفاده کنید.';
-                return;
-            }
-            try {
+            // تلاش فوری: اگر گوشی موقعیت اخیری (تا ۶۰ ثانیه قبل) کش کرده باشد، بلافاصله همان برمی‌گردد — خیلی سریع‌تر از گرفتن فیکس تازه
+            if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (pos) => {
+                        if (resolved) return;
                         const lat = pos.coords.latitude.toFixed(6);
                         const lng = pos.coords.longitude.toFixed(6);
-                        selectedLocationText = `📍 موقعیت مکانی ثبت: https://maps.google.com/?q=${lat},${lng}`;
-                        statusEl.style.color = '#34d399';
-                        statusEl.innerText = '✅ موقعیت مکانی دریافت شد و به‌جای عکس در توضیحات ثبت می‌شود.';
+                        finishSuccess(lat, lng, 'اولیه (سریع)');
+                        // در پس‌زمینه یک فیکس دقیق‌تر هم می‌گیریم و اگر قبل از ثبت نهایی رسید جایگزین می‌کنیم
+                        navigator.geolocation.getCurrentPosition(
+                            (accuratePos) => {
+                                const aLat = accuratePos.coords.latitude.toFixed(6);
+                                const aLng = accuratePos.coords.longitude.toFixed(6);
+                                selectedLocationText = `📍 موقعیت مکانی ثبت: https://maps.google.com/?q=${aLat},${aLng}`;
+                                if (statusEl) statusEl.innerText = '✅ موقعیت مکانی دقیق‌تر دریافت و به‌روزرسانی شد.';
+                            },
+                            () => { /* فیکس دقیق‌تر نرسید، همان فیکس اولیه سریع کافی است */ },
+                            { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+                        );
                     },
-                    (err) => {
-                        selectedLocationText = null;
-                        statusEl.style.color = '#ef4444';
-                        let extra = '';
-                        if (err.code === 1) extra = ' — دسترسی موقعیت مکانی رد شده است؛ آن را در تنظیمات مرورگر یا تلگرام برای این صفحه فعال کنید.';
-                        else if (err.code === 2) extra = ' — موقعیت مکانی در دسترس نیست (GPS یا اینترنت دستگاه را بررسی کنید).';
-                        else if (err.code === 3) extra = ' — زمان دریافت موقعیت مکانی به پایان رسید، دوباره تلاش کنید.';
-                        statusEl.innerText = '❌ خطا در دریافت موقعیت مکانی' + extra + ' در صورت تکرار خطا، لطفاً از گزینه آپلود عکس استفاده کنید.';
-                    },
-                    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+                    () => { /* فیکس سریع نشد؛ صبر می‌کنیم تا تلاش موازی زیر تمام شود */ },
+                    { enableHighAccuracy: false, timeout: 4000, maximumAge: 60000 }
                 );
-            } catch (e) {
-                selectedLocationText = null;
-                statusEl.style.color = '#ef4444';
-                statusEl.innerText = '❌ دسترسی به موقعیت مکانی توسط تنظیمات امنیتی این صفحه مسدود شده است. لطفاً از گزینه آپلود عکس استفاده کنید.';
             }
+
+            // تلاش موازی دقیق: هم تلگرام هم GPS مرورگر هم‌زمان تلاش می‌کنند، هرکدام زودتر جواب داد همان استفاده می‌شود
+            const tasks = [];
+
+            if (tg && tg.LocationManager) {
+                tasks.push(new Promise((resolve) => {
+                    try {
+                        tg.LocationManager.init(() => {
+                            if (!tg.LocationManager.isLocationAvailable) { resolve(null); return; }
+                            tg.LocationManager.getLocation((locationData) => {
+                                if (!locationData) { resolve(null); return; }
+                                resolve({ lat: Number(locationData.latitude).toFixed(6), lng: Number(locationData.longitude).toFixed(6), label: 'از طریق تلگرام' });
+                            });
+                        });
+                    } catch (e) { resolve(null); }
+                }));
+            }
+
+            if (navigator.geolocation) {
+                tasks.push(new Promise((resolve) => {
+                    try {
+                        navigator.geolocation.getCurrentPosition(
+                            (pos) => resolve({ lat: pos.coords.latitude.toFixed(6), lng: pos.coords.longitude.toFixed(6), label: 'دقیق (GPS)' }),
+                            () => resolve(null),
+                            { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
+                        );
+                    } catch (e) { resolve(null); }
+                }));
+            }
+
+            if (tasks.length === 0) {
+                setTimeout(() => {
+                    if (!resolved) {
+                        statusEl.style.color = '#ef4444';
+                        statusEl.innerText = '❌ مرورگر/برنامه شما از موقعیت مکانی پشتیبانی نمی‌کند. لطفاً به‌جای آن از گزینه آپلود عکس استفاده کنید.';
+                    }
+                }, 100);
+                return;
+            }
+
+            Promise.all(tasks).then((results) => {
+                if (resolved) return; // فیکس سریع اولیه یا یکی از این‌ها زودتر رسیده و کار تمام شده
+                const found = results.find(r => r);
+                if (found) {
+                    finishSuccess(found.lat, found.lng, found.label);
+                } else {
+                    statusEl.style.color = '#ef4444';
+                    statusEl.innerText = '❌ خطا در دریافت موقعیت مکانی — دسترسی مکان را در تنظیمات مرورگر/تلگرام برای این صفحه فعال کنید یا GPS/اینترنت دستگاه را بررسی کنید. در صورت تکرار خطا، از گزینه آپلود عکس استفاده کنید.';
+                }
+            });
         }
 
         function previewAttPhoto(event) {
@@ -4019,6 +4101,271 @@
             } else {
                 selectedPhotoDataUrl = null;
             }
+        }
+
+        // ================== سیستم اثر انگشت (WebAuthn) و شناسایی گوشی ==================
+        // توضیح صادقانه‌ی فنی: مرورگرها هیچ‌وقت تصویر خام اثر انگشت را در اختیار وب‌سایت‌ها
+        // نمی‌گذارند (به دلایل حریم خصوصی/امنیت) و راهی برای «اسکن مستقیم اثر انگشت» از طریق
+        // یک صفحه‌ی وب معمولی وجود ندارد. راه استاندارد و امن جایگزین، WebAuthn است: از سنسور
+        // اثر انگشت/فیس خودِ گوشی استفاده می‌کند، یک کلید رمزنگاری‌شده و غیرقابل‌کپی داخل سخت‌افزار
+        // همان گوشی می‌سازد، و هر بار که کاربر باید ورود/خروج بزند، دوباره اثر انگشتش را روی
+        // همان گوشی تایید می‌کند. این کلید هیچ‌وقت از گوشی خارج نمی‌شود، پس عملاً «مثل خود سیستم
+        // ورود و خروج اثر انگشت» عمل می‌کند: بدون همان انگشت روی همان گوشی، تایید انجام نمی‌شود.
+        const FINGERPRINT_DEVICE_UUID_KEY = 'boothDeviceUuid';
+
+        function getOrCreateDeviceUuid() {
+            try {
+                let id = localStorage.getItem(FINGERPRINT_DEVICE_UUID_KEY);
+                if (!id) {
+                    id = (crypto.randomUUID ? crypto.randomUUID() : ('dev-' + Date.now() + '-' + Math.random().toString(36).slice(2)));
+                    localStorage.setItem(FINGERPRINT_DEVICE_UUID_KEY, id);
+                }
+                return id;
+            } catch (e) {
+                return 'unknown-device';
+            }
+        }
+
+        function getDeviceLabel() {
+            try {
+                const ua = navigator.userAgent || '';
+                let os = 'ناشناخته';
+                if (/android/i.test(ua)) os = 'اندروید';
+                else if (/iphone|ipad|ipod/i.test(ua)) os = 'آیفون/آیپد';
+                else if (/windows/i.test(ua)) os = 'ویندوز';
+                else if (/mac os/i.test(ua)) os = 'مک';
+                let browser = 'مرورگر ناشناخته';
+                if (/telegram/i.test(ua) || (tg && tg.platform)) browser = 'تلگرام';
+                else if (/chrome/i.test(ua)) browser = 'کروم';
+                else if (/safari/i.test(ua)) browser = 'سافاری';
+                else if (/firefox/i.test(ua)) browser = 'فایرفاکس';
+                return `${os} - ${browser}`;
+            } catch (e) {
+                return 'دستگاه نامشخص';
+            }
+        }
+
+        function arrayBufferToBase64(buf) {
+            const bytes = new Uint8Array(buf);
+            let binary = '';
+            for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+            return btoa(binary);
+        }
+
+        function base64ToArrayBuffer(b64) {
+            const binary = atob(b64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            return bytes.buffer;
+        }
+
+        async function loadFingerprintStatus() {
+            const box = document.getElementById('fingerprintStatusBox');
+            if (!box || !currentSessionUser) return;
+            box.innerText = '⏳ در حال بررسی وضعیت اثر انگشت...';
+            try {
+                const { data, error } = await _supabase.from('staff_devices').select('device_label, registered_at, device_uuid').eq('username', currentSessionUser.username).maybeSingle();
+                if (error) {
+                    box.innerText = '⚠️ بررسی وضعیت اثر انگشت ممکن نشد (احتمالاً جدول staff_devices هنوز در Supabase ساخته نشده).';
+                    return;
+                }
+                if (!data) {
+                    box.innerHTML = '⚠️ هنوز اثر انگشتی برای این حساب ثبت نشده. برای ثبت ورود/خروج، اول روی دکمه «👆 ثبت / بررسی اثر انگشت روی این گوشی» بزنید.';
+                    return;
+                }
+                const sameDevice = data.device_uuid === getOrCreateDeviceUuid();
+                if (sameDevice) {
+                    box.innerHTML = `✅ اثر انگشت شما روی همین گوشی (${data.device_label || ''}) از تاریخ ${getTehranDateString(new Date(data.registered_at))} ثبت است.`;
+                } else {
+                    box.innerHTML = `⛔ اثر انگشت این حساب روی گوشی <b>دیگری</b> (${data.device_label || ''}) ثبت شده، نه این گوشی. برای ورود/خروج از همین گوشی، از مدیر بخواهید ثبت قبلی را ریست کند.`;
+                }
+            } catch (e) {
+                box.innerText = '⚠️ خطا در بررسی وضعیت اثر انگشت.';
+            }
+        }
+
+        async function registerFingerprint() {
+            if (!currentSessionUser) { showToast('⚠️ ابتدا وارد حساب کاربری خود شوید.'); return; }
+            if (!window.PublicKeyCredential || !navigator.credentials) {
+                showToast('❌ این دستگاه یا مرورگر از تایید اثر انگشت/فیس (WebAuthn) پشتیبانی نمی‌کند. لطفاً از مرورگر Chrome به‌روز یا برنامه رسمی تلگرام استفاده کنید.');
+                return;
+            }
+
+            const { data: existing, error: existingErr } = await _supabase.from('staff_devices').select('device_label, registered_at, device_uuid').eq('username', currentSessionUser.username).maybeSingle();
+            if (existingErr) {
+                showToast('❌ خطا در بررسی ثبت قبلی: ' + existingErr.message + '\n\nمطمئن شوید جدول staff_devices در Supabase ساخته شده است.');
+                return;
+            }
+            if (existing) {
+                if (existing.device_uuid === getOrCreateDeviceUuid()) {
+                    showToast('✅ اثر انگشت شما از قبل روی همین گوشی ثبت است؛ نیازی به ثبت دوباره نیست.');
+                } else {
+                    showToast(`⚠️ شما قبلاً اثر انگشت خود را روی یک گوشی دیگر (${existing.device_label || ''}) ثبت کرده‌اید.\n\nاگر گوشی خود را عوض کرده‌اید، از مدیر بخواهید ثبت قبلی را از بخش «مدیریت اثر انگشت پرسنل» ریست کند تا بتوانید دوباره ثبت کنید.`);
+                }
+                loadFingerprintStatus();
+                return;
+            }
+
+            try {
+                const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+                if (!available) {
+                    showToast('⚠️ روی این گوشی سنسور اثر انگشت/فیس فعالی شناسایی نشد. مطمئن شوید در تنظیمات گوشی حداقل یک اثر انگشت یا فیس ثبت کرده‌اید و دوباره تلاش کنید.');
+                    return;
+                }
+            } catch (e) { /* بعضی مرورگرهای قدیمی این متد را ندارند؛ ادامه می‌دهیم */ }
+
+            try {
+                const challenge = crypto.getRandomValues(new Uint8Array(32));
+                const userIdBytes = new TextEncoder().encode(currentSessionUser.username);
+
+                const credential = await navigator.credentials.create({
+                    publicKey: {
+                        challenge,
+                        rp: { name: 'سیستم مدیریت غرفه فامیلی (دره میرکی)' },
+                        user: { id: userIdBytes, name: currentSessionUser.username, displayName: currentUserLabel || currentSessionUser.username },
+                        pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+                        authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'discouraged' },
+                        timeout: 60000,
+                        attestation: 'none'
+                    }
+                });
+
+                if (!credential) { showToast('⛔ ثبت اثر انگشت لغو شد.'); return; }
+
+                const credentialId = arrayBufferToBase64(credential.rawId);
+                let publicKeyB64 = null;
+                try {
+                    const pkBuf = credential.response.getPublicKey ? credential.response.getPublicKey() : null;
+                    if (pkBuf) publicKeyB64 = arrayBufferToBase64(pkBuf);
+                } catch (e) { /* بدون اشکال، فقط credentialId کافی است */ }
+
+                const deviceUuid = getOrCreateDeviceUuid();
+                const deviceLabel = getDeviceLabel();
+
+                const { error } = await _supabase.from('staff_devices').insert([{
+                    username: currentSessionUser.username,
+                    seller_name: currentUserLabel,
+                    credential_id: credentialId,
+                    public_key: publicKeyB64,
+                    device_uuid: deviceUuid,
+                    device_label: deviceLabel,
+                    registered_at: new Date().toISOString(),
+                    last_used_at: new Date().toISOString()
+                }]);
+
+                if (error) {
+                    showToast('❌ خطا در ذخیره اثر انگشت: ' + error.message + '\n\nمطمئن شوید جدول staff_devices در Supabase ساخته شده است.');
+                    return;
+                }
+
+                showToast('✅ اثر انگشت شما با موفقیت روی همین گوشی ثبت شد. از این به بعد برای ثبت ورود/خروج باید دقیقاً همین اثر انگشت را روی همین گوشی تایید کنید.');
+                loadFingerprintStatus();
+            } catch (e) {
+                showToast('⛔ ثبت اثر انگشت لغو شد یا با خطا مواجه شد.\n\n(جزئیات: ' + (e.message || e) + ')');
+            }
+        }
+
+        // بررسی و تایید اثر انگشت قبل از ثبت ورود/خروج. خروجی: true = تایید شد و می‌توان ادامه داد، false = متوقف شود
+        async function verifyFingerprintForAttendance() {
+            if (!currentSessionUser) return false;
+
+            const { data: deviceRow, error } = await _supabase.from('staff_devices').select('*').eq('username', currentSessionUser.username).maybeSingle();
+            if (error) {
+                showToast('⚠️ خطا در بررسی اثر انگشت ثبت‌شده: ' + error.message + '\n\nمطمئن شوید جدول staff_devices در Supabase ساخته شده است.');
+                return false;
+            }
+
+            if (!deviceRow) {
+                const wantsRegister = await showConfirm('برای ثبت ورود/خروج، اول باید یک‌بار اثر انگشت خود را روی همین گوشی ثبت کنید. همین الان ثبت شود؟');
+                if (wantsRegister) await registerFingerprint();
+                showToast('لطفاً بعد از ثبت موفق اثر انگشت، دوباره روی دکمه «ثبت در سیستم حضور و غیاب» بزنید.');
+                return false;
+            }
+
+            if (!window.PublicKeyCredential || !navigator.credentials) {
+                showToast('⚠️ این دستگاه از تایید اثر انگشت پشتیبانی نمی‌کند؛ ثبت بدون تایید اثر انگشت انجام شد (لطفاً از مدیر بخواهید این مورد را بررسی کند).');
+                return true;
+            }
+
+            try {
+                const challenge = crypto.getRandomValues(new Uint8Array(32));
+                const assertion = await navigator.credentials.get({
+                    publicKey: {
+                        challenge,
+                        allowCredentials: [{ id: base64ToArrayBuffer(deviceRow.credential_id), type: 'public-key' }],
+                        userVerification: 'required',
+                        timeout: 60000
+                    }
+                });
+
+                if (!assertion) { showToast('⛔ تایید اثر انگشت انجام نشد؛ ثبت حضور و غیاب لغو شد.'); return false; }
+
+                // بررسی این‌که همین گوشی، همان گوشی ثبت اولیه است (نه گوشی دیگری از همین حساب)
+                const deviceUuid = getOrCreateDeviceUuid();
+                if (deviceRow.device_uuid && deviceRow.device_uuid !== deviceUuid) {
+                    await notifyAdminAboutDeviceMismatch(deviceRow);
+                    showToast('⛔ این حساب قبلاً روی گوشی دیگری ثبت اثر انگشت شده و این گوشی با آن تطابق ندارد. این موضوع برای مدیر گزارش شد. اگر واقعاً گوشی خود را عوض کرده‌اید، از مدیر بخواهید ثبت قبلی را ریست کند.');
+                    return false;
+                }
+
+                _supabase.from('staff_devices').update({ last_used_at: new Date().toISOString() }).eq('username', currentSessionUser.username).then(() => {});
+                return true;
+            } catch (e) {
+                showToast('⛔ تایید اثر انگشت انجام نشد یا لغو شد؛ ثبت حضور و غیاب انجام نگرفت.\n\n(جزئیات: ' + (e.message || e) + ')');
+                return false;
+            }
+        }
+
+        async function notifyAdminAboutDeviceMismatch(deviceRow) {
+            try {
+                const now = new Date();
+                await _supabase.from('messages').insert([{
+                    sender: 'سیستم خودکار تشخیص گوشی',
+                    recipient: 'admin',
+                    title: `🚨 هشدار: تلاش برای ورود/خروج از گوشی دیگر — ${currentUserLabel}`,
+                    body: `کاربر ${currentUserLabel} تلاش کرد از یک گوشی متفاوت با گوشی ثبت‌شده‌ی اولیه (${deviceRow.device_label || 'نامشخص'}، ثبت‌شده در ${getTehranDateString(new Date(deviceRow.registered_at))}) وارد سیستم حضور و غیاب شود.\nگوشی جدید تلاش‌کننده: ${getDeviceLabel()}\nزمان: ${getTehranFullDateTimeString(now)}\n\nاگر این کاربر واقعاً گوشی خود را عوض کرده، از بخش «مدیریت اثر انگشت پرسنل» ثبت قبلی‌اش را ریست کنید تا بتواند دوباره ثبت کند.`,
+                    created_at: now.toISOString()
+                }]);
+                sendTelegramNotification(`🚨 هشدار گوشی متفاوت: ${currentUserLabel} از یک گوشی غیر از گوشی ثبت‌شده تلاش کرد وارد شود.`);
+            } catch (e) {
+                console.warn('خطا در ارسال هشدار تشخیص گوشی', e);
+            }
+        }
+
+        // --- مدیریت اثر انگشت/گوشی پرسنل (ویژه مدیر) ---
+        async function loadStaffDevicesAdmin() {
+            const box = document.getElementById('staffDevicesList');
+            if (!box) return;
+            box.innerHTML = 'در حال بارگذاری...';
+            const { data, error } = await _supabase.from('staff_devices').select('*').order('registered_at', { ascending: false });
+            if (error) {
+                box.innerHTML = `<p style="color:#ef4444;">❌ خطا در دریافت فهرست: ${error.message}<br>مطمئن شوید جدول staff_devices در Supabase ساخته شده است.</p>`;
+                return;
+            }
+            if (!data || data.length === 0) {
+                box.innerHTML = '<p style="color:#94a3b8;">هنوز هیچ پرسنلی اثر انگشت ثبت نکرده است.</p>';
+                return;
+            }
+            box.innerHTML = data.map(d => `
+                <div class="summary-mini" style="align-items:flex-start; flex-direction:column; gap:4px;">
+                    <span style="font-weight:bold;">👤 ${d.seller_name || d.username}</span>
+                    <span style="font-size:11px; color:#94a3b8;">📱 گوشی: ${d.device_label || 'نامشخص'}</span>
+                    <span style="font-size:10px; color:#64748b;">ثبت‌شده: ${getTehranFullDateTimeString(new Date(d.registered_at))}${d.last_used_at ? ' | آخرین استفاده: ' + getTehranFullDateTimeString(new Date(d.last_used_at)) : ''}</span>
+                    <button class="row-btn delete-btn" style="width:100%; margin-top:4px;" onclick="resetStaffDevice('${d.username}')">🔁 ریست ثبت اثر انگشت (اجازه ثبت روی گوشی جدید)</button>
+                </div>
+            `).join('');
+        }
+
+        async function resetStaffDevice(username) {
+            const sure = await showConfirm(`آیا مطمئنید می‌خواهید ثبت اثر انگشت کاربر «${username}» ریست شود؟ او باید دوباره روی گوشی جدید ثبت کند.`);
+            if (!sure) return;
+            const { error } = await _supabase.from('staff_devices').delete().eq('username', username);
+            if (error) {
+                showToast('❌ خطا در ریست کردن: ' + error.message);
+                return;
+            }
+            showToast('✅ ثبت اثر انگشت این کاربر ریست شد؛ او می‌تواند دوباره روی گوشی جدید ثبت کند.');
+            loadStaffDevicesAdmin();
         }
 
         // --- شمارش تعداد دفعاتی که این کاربر در همین ماه دیر آمده یا زود رفته ---
@@ -4053,6 +4400,15 @@
             if (type !== 'leave' && !selectedPhotoDataUrl && !selectedLocationText) {
                 showToast('⛔ خطا: جهت ثبت ورود و خروج ارسال عکس یا موقعیت مکانی **الزامی** می‌باشد!');
                 return;
+            }
+
+            if (type === 'entry' || type === 'exit') {
+                if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = '👆 در حال تایید اثر انگشت...'; }
+                const fpOk = await verifyFingerprintForAttendance();
+                if (!fpOk) {
+                    if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'ثبت در سیستم حضور و غیاب'; }
+                    return;
+                }
             }
 
             let overtimeHours = val;
@@ -6644,6 +7000,15 @@
             const revenuePct = prevRevenue > 0 ? ((curRevenue - prevRevenue) / prevRevenue * 100) : (curRevenue > 0 ? 100 : 0);
             const weightPct = prevWeight > 0 ? ((curWeight - prevWeight) / prevWeight * 100) : (curWeight > 0 ? 100 : 0);
 
+            // --- طول واقعی هر بازه به روز، برای مقایسه‌ی منصفانه‌ی میانگین روزانه ---
+            // (چون اگر بازه فعلی ۳ روز باشد و بازه مقایسه ۱۰ روز، مقایسه‌ی مجموع خام گمراه‌کننده است)
+            const dayCount = (start, end) => Math.round((new Date(end + 'T12:00:00+03:30') - new Date(start + 'T12:00:00+03:30')) / (1000 * 60 * 60 * 24)) + 1;
+            const curDays = dayCount(curStart, curEnd);
+            const prevDays = dayCount(prevStart, prevEnd);
+            const curDailyAvg = curRevenue / curDays;
+            const prevDailyAvg = prevRevenue / prevDays;
+            const dailyAvgPct = prevDailyAvg > 0 ? ((curDailyAvg - prevDailyAvg) / prevDailyAvg * 100) : (curDailyAvg > 0 ? 100 : 0);
+
             if (curSales.length === 0 && prevSales.length === 0) {
                 resultBox.innerHTML = '<p style="color:#fbbf24;">در هیچ‌کدام از این دو بازه فروشی برای این انتخاب ثبت نشده است.</p>';
                 return;
@@ -6669,6 +7034,10 @@
                 (productsData || []).forEach(p => { nameMap[p.code] = p.name; });
             }
 
+            // آستانه‌ی «حجم کم»: اگر مجموع مبلغ کالا در هر دو بازه زیر این عدد باشد، درصد تغییرش می‌تواند گمراه‌کننده باشد
+            // (مثلاً از ۱ فاکتور به ۲ فاکتور رسیدن یعنی ۱۰۰٪ رشد، ولی عملاً عدد بزرگی نیست)
+            const LOW_VOLUME_THRESHOLD = 150000;
+
             const productRows = Object.entries(productMap).map(([code, v]) => {
                 const qtyPct = v.prevQty > 0 ? ((v.curQty - v.prevQty) / v.prevQty * 100) : (v.curQty > 0 ? 100 : 0);
                 const revPct = v.prevRevenue > 0 ? ((v.curRevenue - v.prevRevenue) / v.prevRevenue * 100) : (v.curRevenue > 0 ? 100 : 0);
@@ -6677,22 +7046,38 @@
                 else if (v.prevQty > 0 && v.curQty === 0) status = 'stopped';
                 else if (revPct > 0.05) status = 'up';
                 else if (revPct < -0.05) status = 'down';
-                return { code, name: nameMap[code] || code, ...v, qtyPct, revPct, status };
+                const lowVolume = (v.prevRevenue + v.curRevenue) < LOW_VOLUME_THRESHOLD;
+                return { code, name: nameMap[code] || code, ...v, qtyPct, revPct, status, lowVolume };
             });
 
-            const grownItems = productRows.filter(p => p.status === 'up' || p.status === 'new').sort((a, b) => b.revPct - a.revPct);
-            const droppedItems = productRows.filter(p => p.status === 'down' || p.status === 'stopped').sort((a, b) => a.revPct - b.revPct);
+            const grownItems = productRows.filter(p => p.status === 'up' || p.status === 'new').sort((a, b) => (b.curRevenue - b.prevRevenue) - (a.curRevenue - a.prevRevenue));
+            const droppedItems = productRows.filter(p => p.status === 'down' || p.status === 'stopped').sort((a, b) => (a.curRevenue - a.prevRevenue) - (b.curRevenue - b.prevRevenue));
             const unchangedItems = productRows.filter(p => p.status === 'unchanged');
+
+            // بیشترین محرک رشد و افت، بر اساس اختلاف مبلغ واقعی (تومان)، نه فقط درصد — این «واقعی‌تر» است
+            // چون مثلاً ۱۰۰٪ رشد روی ۵۰۰۰ تومان کم‌اهمیت‌تر از ۲۰٪ رشد روی ۵ میلیون تومان است
+            const topGrower = grownItems.filter(p => !p.lowVolume).sort((a, b) => (b.curRevenue - b.prevRevenue) - (a.curRevenue - a.prevRevenue))[0] || grownItems[0];
+            const topDropper = droppedItems.filter(p => !p.lowVolume).sort((a, b) => (a.curRevenue - a.prevRevenue) - (b.curRevenue - b.prevRevenue))[0] || droppedItems[0];
+
+            const maxBarValue = Math.max(...productRows.map(p => Math.max(p.curRevenue, p.prevRevenue)), 1);
 
             const buildProductRow = (p) => {
                 let statusTag = '';
                 if (p.status === 'new') statusTag = '<span style="color:#34d399; font-size:10px;">(کالای جدید در این بازه)</span>';
                 if (p.status === 'stopped') statusTag = '<span style="color:#ef4444; font-size:10px;">(دیگر فروخته نشده)</span>';
+                if (p.lowVolume) statusTag += ' <span style="color:#64748b; font-size:9px;">⚪ حجم کم — درصد ممکن است گمراه‌کننده باشد</span>';
+                const curBarPct = Math.max(2, Math.round((p.curRevenue / maxBarValue) * 100));
+                const prevBarPct = Math.max(2, Math.round((p.prevRevenue / maxBarValue) * 100));
+                const barColor = p.status === 'down' || p.status === 'stopped' ? '#ef4444' : (p.status === 'up' || p.status === 'new' ? '#34d399' : '#94a3b8');
                 return `
-                    <div class="summary-mini" style="align-items:flex-start; flex-direction:column; gap:4px;">
+                    <div class="summary-mini" style="align-items:flex-start; flex-direction:column; gap:5px;">
                         <span style="font-weight:bold;">${p.name} ${statusTag}</span>
                         <span style="font-size:11px; color:#cbd5e1;">وزن: ${p.prevQty.toLocaleString('fa-IR', {maximumFractionDigits:3})} ← ${p.curQty.toLocaleString('fa-IR', {maximumFractionDigits:3})} کیلو (${formatPctChange(p.qtyPct)})</span>
                         <span style="font-size:11px; color:${pctChangeColor(p.revPct)}; font-weight:bold;">مبلغ: ${p.prevRevenue.toLocaleString('fa-IR')} ← ${p.curRevenue.toLocaleString('fa-IR')} تومان (${formatPctChange(p.revPct)})</span>
+                        <div style="width:100%; display:flex; flex-direction:column; gap:2px; margin-top:2px;">
+                            <div style="display:flex; align-items:center; gap:6px;"><span style="font-size:9px; color:#64748b; width:34px;">قبل</span><div style="flex:1; background:rgba(148,163,184,0.15); border-radius:4px; height:7px;"><div style="width:${prevBarPct}%; background:#64748b; height:100%; border-radius:4px;"></div></div></div>
+                            <div style="display:flex; align-items:center; gap:6px;"><span style="font-size:9px; color:#64748b; width:34px;">الان</span><div style="flex:1; background:rgba(148,163,184,0.15); border-radius:4px; height:7px;"><div style="width:${curBarPct}%; background:${barColor}; height:100%; border-radius:4px;"></div></div></div>
+                        </div>
                     </div>
                 `;
             };
@@ -6700,14 +7085,49 @@
             const sellerLabelMap = { all: 'همه (کل غرفه)', morning: 'فروشنده صبح', evening: 'فروشنده شب', admin: 'مدیر' };
 
             let html = `
-                <div class="report-card">
+                <div class="report-card" style="border-color:rgba(56,189,248,0.4); background:rgba(56,189,248,0.06);">
                     <h3>📊 خلاصه کلی — ${sellerLabelMap[sellerKey]}</h3>
-                    <p>بازه مقایسه (${prevStart} تا ${prevEnd}): <b>${prevRevenue.toLocaleString('fa-IR')} تومان</b> — <b>${prevWeight.toLocaleString('fa-IR', {maximumFractionDigits:3})} کیلو</b></p>
-                    <p>بازه فعلی (${curStart} تا ${curEnd}): <b>${curRevenue.toLocaleString('fa-IR')} تومان</b> — <b>${curWeight.toLocaleString('fa-IR', {maximumFractionDigits:3})} کیلو</b></p>
-                    <p style="font-size:15px; font-weight:bold;">تغییر مبلغ فروش: <span style="color:${pctChangeColor(revenuePct)};">${formatPctChange(revenuePct)}</span></p>
-                    <p style="font-size:15px; font-weight:bold;">تغییر وزن فروش: <span style="color:${pctChangeColor(weightPct)};">${formatPctChange(weightPct)}</span></p>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap; margin:8px 0;">
+                        <div style="flex:1; min-width:130px; background:rgba(15,23,42,0.6); border-radius:10px; padding:10px; text-align:center;">
+                            <div style="font-size:10px; color:#94a3b8;">بازه مقایسه (${prevDays.toLocaleString('fa-IR')} روز)</div>
+                            <div style="font-size:16px; font-weight:bold; margin-top:4px;">${prevRevenue.toLocaleString('fa-IR')} تومان</div>
+                            <div style="font-size:10px; color:#64748b;">${prevWeight.toLocaleString('fa-IR', {maximumFractionDigits:3})} کیلو</div>
+                        </div>
+                        <div style="flex:1; min-width:130px; background:rgba(15,23,42,0.6); border-radius:10px; padding:10px; text-align:center; border:1px solid ${pctChangeColor(revenuePct)};">
+                            <div style="font-size:10px; color:#94a3b8;">بازه فعلی (${curDays.toLocaleString('fa-IR')} روز)</div>
+                            <div style="font-size:16px; font-weight:bold; margin-top:4px; color:${pctChangeColor(revenuePct)};">${curRevenue.toLocaleString('fa-IR')} تومان</div>
+                            <div style="font-size:10px; color:#64748b;">${curWeight.toLocaleString('fa-IR', {maximumFractionDigits:3})} کیلو</div>
+                        </div>
+                    </div>
+                    <p style="font-size:17px; font-weight:bold; text-align:center; margin:10px 0 4px;">تغییر مبلغ فروش: <span style="color:${pctChangeColor(revenuePct)};">${formatPctChange(revenuePct)}</span></p>
+                    <p style="font-size:13px; text-align:center; color:${pctChangeColor(weightPct)};">تغییر وزن فروش: ${formatPctChange(weightPct)}</p>
+                    ${curDays !== prevDays ? `<p style="font-size:11px; text-align:center; color:#94a3b8; margin-top:8px;">⚖️ چون طول دو بازه یکی نیست، مقایسه‌ی «منصفانه‌تر» میانگین فروش روزانه است:<br>میانگین روزانه قبل: <b>${Math.round(prevDailyAvg).toLocaleString('fa-IR')} تومان/روز</b> ← میانگین روزانه الان: <b>${Math.round(curDailyAvg).toLocaleString('fa-IR')} تومان/روز</b> (<span style="color:${pctChangeColor(dailyAvgPct)};">${formatPctChange(dailyAvgPct)}</span>)</p>` : ''}
+                    <canvas id="growthChartCanvas" height="130" style="margin-top:14px;"></canvas>
                 </div>
             `;
+
+            if (topGrower || topDropper) {
+                html += `<div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:2px;">`;
+                if (topGrower) {
+                    const diff = topGrower.curRevenue - topGrower.prevRevenue;
+                    html += `<div class="report-card" style="flex:1; min-width:150px; border-color:rgba(16,185,129,0.5); background:rgba(16,185,129,0.1); text-align:center;">
+                        <div style="font-size:22px;">🚀</div>
+                        <div style="font-size:11px; color:#94a3b8;">بیشترین محرک رشد فروش</div>
+                        <div style="font-weight:bold; margin-top:4px;">${topGrower.name}</div>
+                        <div style="color:#34d399; font-weight:bold; font-size:13px; margin-top:2px;">+${diff.toLocaleString('fa-IR')} تومان</div>
+                    </div>`;
+                }
+                if (topDropper) {
+                    const diff = topDropper.curRevenue - topDropper.prevRevenue;
+                    html += `<div class="report-card" style="flex:1; min-width:150px; border-color:rgba(239,68,68,0.5); background:rgba(239,68,68,0.1); text-align:center;">
+                        <div style="font-size:22px;">⚠️</div>
+                        <div style="font-size:11px; color:#94a3b8;">بیشترین محرک افت فروش</div>
+                        <div style="font-weight:bold; margin-top:4px;">${topDropper.name}</div>
+                        <div style="color:#ef4444; font-weight:bold; font-size:13px; margin-top:2px;">${diff.toLocaleString('fa-IR')} تومان</div>
+                    </div>`;
+                }
+                html += `</div>`;
+            }
 
             if (droppedItems.length > 0) {
                 html += `<div class="report-card" style="border-color:rgba(239,68,68,0.4); background:rgba(239,68,68,0.06);">
@@ -6734,8 +7154,38 @@
 
             cachedGrowthReportRows = productRows;
             resultBox.innerHTML = html;
+
+            // --- رسم نمودار مقایسه‌ای ستونی (مبلغ و وزن) برای درک بصری سریع‌تر ---
+            try {
+                if (growthChartInstance) { growthChartInstance.destroy(); growthChartInstance = null; }
+                const ctx = document.getElementById('growthChartCanvas');
+                if (ctx && typeof Chart !== 'undefined') {
+                    growthChartInstance = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: ['بازه مقایسه', 'بازه فعلی'],
+                            datasets: [{
+                                label: 'مبلغ فروش (تومان)',
+                                data: [prevRevenue, curRevenue],
+                                backgroundColor: [pctChangeColor(0), pctChangeColor(revenuePct)],
+                                borderRadius: 6
+                            }]
+                        },
+                        options: {
+                            plugins: { legend: { display: false } },
+                            scales: {
+                                x: { ticks: { color: '#cbd5e1' }, grid: { display: false } },
+                                y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' } }
+                            }
+                        }
+                    });
+                }
+            } catch (chartErr) {
+                console.warn('خطا در رسم نمودار رشد/افت فروش (بدون اشکال برای عملکرد اصلی گزارش)', chartErr);
+            }
         }
 
+        let growthChartInstance = null;
         let cachedGrowthReportRows = [];
 
         function exportGrowthReportCSV() {
