@@ -2,6 +2,15 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
+    <!-- تشخیص فوری تم روشن/تاریک قبل از رندر صفحه، تا هیچ چشمک یا پرش رنگی دیده نشود -->
+    <script>
+        (function () {
+            try {
+                var saved = localStorage.getItem('boothThemeMode');
+                if (saved === 'light') document.documentElement.classList.add('light-theme');
+            } catch (e) {}
+        })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>v35 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
@@ -15,24 +24,134 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="غرفه فامیلی">
     <meta name="format-detection" content="telephone=no">
+    <!-- فونت فارسی وزیرمتن: خوانایی و ظاهر مدرن‌تر نسبت به تاهوما پیش‌فرض -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
+        * { -webkit-tap-highlight-color: transparent; }
+        :root {
+            --bg-primary: #0f172a;
+            --bg-card: rgba(30, 41, 59, 0.7);
+            --bg-card-solid: rgba(30, 41, 59, 0.9);
+            --bg-input: #1e293b;
+            --border-color: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-hint: #94a3b8;
+            --accent: #38bdf8;
+            --grad-glow-1: rgba(56, 189, 248, 0.10);
+            --grad-glow-2: rgba(16, 185, 129, 0.08);
+        }
+        html.light-theme {
+            --bg-primary: #eef2f7;
+            --bg-card: rgba(255, 255, 255, 0.85);
+            --bg-card-solid: rgba(255, 255, 255, 0.96);
+            --bg-input: #ffffff;
+            --border-color: #cbd5e1;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-hint: #64748b;
+            --accent: #0284c7;
+            --grad-glow-1: rgba(56, 189, 248, 0.16);
+            --grad-glow-2: rgba(16, 185, 129, 0.12);
+        }
         body {
-            background: #0f172a;
-            color: #f8fafc;
-            font-family: Tahoma, 'IRANSans', sans-serif;
+            background: var(--bg-primary);
+            background-image:
+                radial-gradient(circle at 15% 0%, var(--grad-glow-1), transparent 45%),
+                radial-gradient(circle at 100% 20%, var(--grad-glow-2), transparent 40%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            font-family: 'Vazirmatn', Tahoma, 'IRANSans', sans-serif;
             padding: 12px;
             margin: 0;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+        .theme-toggle-btn {
+            position: fixed;
+            top: 14px;
+            left: 14px;
+            z-index: 9998;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card-solid);
+            color: var(--text-primary);
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            transition: transform 0.2s ease;
+        }
+        .theme-toggle-btn:active { transform: scale(0.9) rotate(15deg); }
+
+        /* ================== صفحه لودینگ اولیه (Splash) ================== */
+        #appSplash {
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-primary);
+            background-image:
+                radial-gradient(circle at 20% 15%, rgba(56, 189, 248, 0.18), transparent 45%),
+                radial-gradient(circle at 85% 80%, rgba(16, 185, 129, 0.15), transparent 45%);
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+        #appSplash.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        .splash-logo-wrap {
+            width: 84px;
+            height: 84px;
+            border-radius: 24px;
+            background: linear-gradient(135deg, #0284c7, #10b981);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            box-shadow: 0 10px 30px rgba(2, 132, 199, 0.35);
+            animation: splashPulse 1.7s ease-in-out infinite;
+        }
+        @keyframes splashPulse {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.08) rotate(-3deg); }
+        }
+        .splash-ring {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            border: 4px solid var(--border-color);
+            border-top-color: var(--accent);
+            margin-top: 22px;
+            animation: splashSpin 0.85s linear infinite;
+        }
+        @keyframes splashSpin { to { transform: rotate(360deg); } }
+        .splash-title {
+            margin-top: 18px;
+            font-weight: bold;
+            color: var(--text-primary);
+            font-size: 16px;
+            letter-spacing: 0.5px;
+        }
+        .splash-sub {
+            margin-top: 6px;
+            font-size: 11px;
+            color: var(--text-secondary);
         }
         .header-clock {
             text-align: center;
             font-size: 13px;
-            color: #38bdf8;
-            background: rgba(30, 41, 59, 0.8);
+            color: var(--accent);
+            background: var(--bg-card-solid);
             padding: 10px;
             border-radius: 12px;
             margin-bottom: 12px;
@@ -41,8 +160,8 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
         .login-box {
-            background: rgba(30, 41, 59, 0.9);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: var(--bg-card-solid);
+            border: 1px solid var(--border-color);
             backdrop-filter: blur(10px);
             border-radius: 16px;
             padding: 20px;
@@ -58,40 +177,53 @@
         .tab-btn {
             flex: 1;
             padding: 10px 6px;
-            background: #1e293b;
-            color: #94a3b8;
-            border: 1px solid #334155;
+            background: var(--bg-input);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
             border-radius: 10px;
             font-weight: bold;
             font-size: 11px;
             cursor: pointer;
             display: none;
             white-space: nowrap;
+            transition: transform 0.15s ease, background 0.2s ease, box-shadow 0.2s ease;
         }
         .tab-btn.active {
             background: linear-gradient(90deg, #0284c7, #2563eb);
             color: #fff;
             border: none;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+            transform: translateY(-1px);
+        }
+        .tab-btn:active, button:active, .row-btn:active {
+            transform: scale(0.96);
         }
         .card {
-            background: rgba(30, 41, 59, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
             backdrop-filter: blur(10px);
             border-radius: 16px;
             padding: 16px;
             display: none;
         }
-        .card.active { display: block; }
-        h2 { color: #38bdf8; margin-top: 0; font-size: 16px; }
-        label { font-size: 12px; color: #cbd5e1; display: block; margin-top: 10px; text-align: right; }
+        .card.active {
+            display: block;
+            animation: cardFadeIn 0.28s ease;
+        }
+        @keyframes cardFadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        h2 { color: var(--accent); margin-top: 0; font-size: 16px; }
+        label { font-size: 12px; color: var(--text-secondary); display: block; margin-top: 10px; text-align: right; }
         input, select, textarea {
             width: 100%;
             padding: 12px;
             margin-top: 5px;
             border-radius: 10px;
-            border: 1px solid #334155;
-            background: #1e293b;
-            color: #fff;
+            border: 1px solid var(--border-color);
+            background: var(--bg-input);
+            color: var(--text-primary);
             box-sizing: border-box;
             font-size: 14px;
             font-family: inherit;
@@ -110,20 +242,20 @@
         }
         .hint {
             font-size: 11px;
-            color: #94a3b8;
+            color: var(--text-hint);
             margin-top: 4px;
             text-align: right;
             line-height: 1.5;
         }
         .user-badge {
             display: none;
-            background: rgba(30, 41, 59, 0.7);
-            border: 1px solid rgba(255,255,255,0.1);
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
             border-radius: 10px;
             padding: 8px 12px;
             margin-bottom: 12px;
             font-size: 12px;
-            color: #38bdf8;
+            color: var(--accent);
             text-align: center;
         }
         .logout-btn {
@@ -137,7 +269,7 @@
         }
         button.submit-btn {
             width: 100%;
-            padding: 12px;
+            padding: 13px;
             margin-top: 15px;
             border-radius: 10px;
             border: none;
@@ -146,6 +278,16 @@
             font-weight: bold;
             font-size: 14px;
             cursor: pointer;
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+            transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.2s ease;
+        }
+        button.submit-btn:active {
+            transform: scale(0.97);
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
+        }
+        button.submit-btn:disabled {
+            opacity: 0.6;
+            box-shadow: none;
         }
         button.cancel-edit-btn {
             width: 100%;
@@ -166,11 +308,11 @@
             font-size: 11px;
         }
         th, td {
-            border: 1px solid #334155;
+            border: 1px solid var(--border-color);
             padding: 8px 4px;
             text-align: center;
         }
-        th { background: #1e293b; color: #38bdf8; }
+        th { background: var(--bg-input); color: var(--accent); }
         .error-msg {
             color: #ef4444;
             font-size: 12px;
@@ -225,21 +367,23 @@
         .fill-btn { background: linear-gradient(90deg, #0284c7, #2563eb); color: #fff; font-weight: bold; }
         .confirm-btn { background: linear-gradient(90deg, #059669, #10b981); color: #fff; font-weight: bold; }
         .report-card, .msg-card {
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid #334155;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 14px;
             margin-bottom: 12px;
+            border-right: 3px solid rgba(56, 189, 248, 0.5);
+            transition: transform 0.15s ease, border-color 0.15s ease;
         }
         .report-card h3, .msg-card h3 {
             margin: 0 0 8px 0;
-            color: #38bdf8;
+            color: var(--accent);
             font-size: 14px;
         }
         .report-card p, .msg-card p {
             margin: 4px 0;
             font-size: 13px;
-            color: #e2e8f0;
+            color: var(--text-primary);
             text-align: right;
         }
         .msg-time {
@@ -583,6 +727,17 @@
     </style>
 </head>
 <body>
+
+    <!-- صفحه لودینگ اولیه: تا لود شدن کامل فونت/کتابخانه‌ها نمایش داده می‌شود و بعد با فید نرم محو می‌شود -->
+    <div id="appSplash">
+        <div class="splash-logo-wrap">🧀</div>
+        <div class="splash-ring"></div>
+        <div class="splash-title">غرفه فامیلی — دره میرکی</div>
+        <div class="splash-sub">در حال آماده‌سازی سیستم...</div>
+    </div>
+
+    <!-- دکمه تعویض حالت روشن/تاریک -->
+    <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="تغییر حالت روشن/تاریک">🌙</button>
 
     <!-- سیستم اعلان (Toast) و تاییدیه سفارشی، جایگزین alert()/confirm() پیش‌فرض مرورگر -->
     <div id="toastContainer"></div>
@@ -1532,6 +1687,47 @@
     <div class="build-tag">v36 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
 
     <script>
+        // ================== حالت روشن/تاریک ==================
+        function toggleTheme() {
+            const isLight = document.documentElement.classList.toggle('light-theme');
+            try { localStorage.setItem('boothThemeMode', isLight ? 'light' : 'dark'); } catch (e) {}
+            updateThemeToggleIcon();
+            const metaTheme = document.querySelector('meta[name="theme-color"]');
+            if (metaTheme) metaTheme.setAttribute('content', isLight ? '#eef2f7' : '#0f172a');
+            try { if (navigator.vibrate) navigator.vibrate(12); } catch (e) {}
+        }
+        function updateThemeToggleIcon() {
+            const btn = document.getElementById('themeToggleBtn');
+            if (!btn) return;
+            btn.innerText = document.documentElement.classList.contains('light-theme') ? '☀️' : '🌙';
+        }
+        updateThemeToggleIcon();
+
+        // ================== صفحه لودینگ اولیه (Splash) ==================
+        // حداقل ۶۰۰ میلی‌ثانیه نگه داشته می‌شود (تا چشمک نزند)، و همین‌که صفحه کامل لود شد با فید محو می‌شود
+        (function () {
+            const splashShownAt = Date.now();
+            const MIN_SPLASH_MS = 600;
+            function hideSplash() {
+                const el = document.getElementById('appSplash');
+                if (!el) return;
+                const elapsed = Date.now() - splashShownAt;
+                const wait = Math.max(0, MIN_SPLASH_MS - elapsed);
+                setTimeout(() => {
+                    el.classList.add('hidden');
+                    setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 600);
+                }, wait);
+            }
+            if (document.readyState === 'complete') {
+                hideSplash();
+            } else {
+                window.addEventListener('load', hideSplash);
+                // در صورتی که یک کتابخانه بیرونی (مثلاً به دلیل فیلترشکن/اینترنت ضعیف) هیچ‌وقت لود نشود،
+                // حداکثر بعد از ۴ ثانیه به‌هرحال صفحه را نشان بده تا کاربر پشت صفحه سفید/لودینگ گیر نکند
+                setTimeout(hideSplash, 4000);
+            }
+        })();
+
         // ثبت Service Worker برای قابلیت نصب روی صفحه اصلی گوشی (PWA)
         // اگر فایل sw.js کنار همین HTML آپلود نشده باشد، این فقط یک خطای بی‌اهمیت در کنسول می‌دهد
         if ('serviceWorker' in navigator) {
@@ -1761,6 +1957,14 @@
             playTone(880, 220, 520, 0.22);
             try { if (navigator.vibrate) navigator.vibrate([120, 80, 120, 80, 200]); } catch (e) {}
         }
+
+        // --- حس لمسی سبک (haptic) روی هر تپ روی دکمه‌ها — همون حسی که اپ‌های واقعی موبایل دارن ---
+        document.addEventListener('click', function (e) {
+            const target = e.target.closest('button, .tab-btn, .row-btn');
+            if (target && navigator.vibrate) {
+                try { navigator.vibrate(10); } catch (err) { /* بدون اشکال */ }
+            }
+        }, true);
 
         function openBarcodeScanner(type) {
             barcodeScanTargetType = type;
