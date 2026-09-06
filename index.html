@@ -12,6 +12,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         body {
             background: #0f172a;
@@ -4033,9 +4034,9 @@
                 const list = (data || []).filter(r => getTehranISODate(new Date(r.created_at)).startsWith(monthPrefix));
 
                 if (type === 'entry') {
-                    return list.filter(r => r.delay_minutes !== null && r.delay_minutes >= maxDelay).length;
+                    return list.filter(r => r.delay_minutes !== null && r.delay_minutes > maxDelay).length;
                 } else {
-                    return list.filter(r => r.exit_diff_minutes !== null && r.exit_diff_minutes <= -maxDelay).length;
+                    return list.filter(r => r.exit_diff_minutes !== null && r.exit_diff_minutes < -maxDelay).length;
                 }
             } catch (e) {
                 return 1;
@@ -4129,7 +4130,7 @@
                 if (submitBtn) { submitBtn.innerText = '⏳ در حال ثبت...'; }
             }
 
-            if (type === 'entry' && delayMinutes !== null && delayMinutes >= settings.maxDelay) {
+            if (type === 'entry' && delayMinutes !== null && delayMinutes > settings.maxDelay) {
                 const overBy = delayMinutes - settings.maxDelay;
                 await _supabase.from('messages').insert([{
                     sender: "سیستم خودکار تاخیر",
@@ -4140,7 +4141,7 @@
                 }]);
             }
 
-            if (type === 'exit' && exitDiffMinutes !== null && exitDiffMinutes <= -settings.maxDelay) {
+            if (type === 'exit' && exitDiffMinutes !== null && exitDiffMinutes < -settings.maxDelay) {
                 const earlyBy = Math.abs(exitDiffMinutes) - settings.maxDelay;
                 await _supabase.from('messages').insert([{
                     sender: "سیستم خودکار خروج زودهنگام",
@@ -4169,25 +4170,31 @@
 
                 if (type === 'entry' && delayMinutes !== null) {
                     successMsg += `\n🕗 ساعت مقرر شروع شیفت شما: ${targetStartTime}`;
-                    if (delayMinutes >= settings.maxDelay) {
+                    if (delayMinutes > settings.maxDelay) {
+                        const overBy2 = delayMinutes - settings.maxDelay;
                         const lateCount = await countRecentAttendanceIssues('entry', settings.maxDelay);
-                        successMsg += `\n\n⚠️ امروز شما ${delayMinutes} دقیقه تاخیر داشتید (حداکثر مجاز: ${settings.maxDelay} دقیقه).\nلطفاً دیگر تکرار نشود؛ این تاخیر برای مدیر گزارش شد.${lateCount > 1 ? `\n📊 این ${lateCount.toLocaleString('fa-IR')}اُمین باری است که این ماه دیر رسیده‌اید.` : ''}`;
+                        successMsg += `\n\n⛔ هشدار تاخیر: امروز شما دقیقاً ${delayMinutes} دقیقه تاخیر داشتید (${overBy2} دقیقه بیشتر از حد مجاز ${settings.maxDelay} دقیقه‌ای که مدیر تعیین کرده).\nلطفاً دیگر تکرار نشود؛ این تاخیر برای مدیر گزارش شد.${lateCount > 1 ? `\n📊 این ${lateCount.toLocaleString('fa-IR')}اُمین باری است که این ماه دیر رسیده‌اید.` : ''}`;
                     } else if (delayMinutes > 0) {
-                        successMsg += `\n\n🕐 امروز ${delayMinutes} دقیقه تاخیر داشتید، اما در محدوده مجاز (${settings.maxDelay} دقیقه) بود.`;
+                        successMsg += `\n\n🕐 امروز دقیقاً ${delayMinutes} دقیقه تاخیر داشتید، اما چون حد مجاز مدیر ${settings.maxDelay} دقیقه است، مشکلی ندارد و برای مدیر به‌عنوان تاخیر گزارش نشد.`;
+                    } else if (delayMinutes === 0) {
+                        successMsg += `\n\n🎉 تبریک! دقیقاً سر ساعت مقرر (${targetStartTime}) حاضر شدید. عالی بود!`;
                     } else {
-                        successMsg += `\n\n🎉 آفرین! سر وقت (یا زودتر) سر کار حاضر شدید. همینطور ادامه بدهید.`;
+                        successMsg += `\n\n🎉 تبریک! ${Math.abs(delayMinutes)} دقیقه زودتر از ساعت مقرر حاضر شدید. همینطور ادامه بدهید!`;
                     }
                 }
 
                 if (type === 'exit' && exitDiffMinutes !== null) {
                     successMsg += `\n🕗 ساعت مقرر پایان شیفت شما: ${targetEndTime}`;
-                    if (exitDiffMinutes <= -settings.maxDelay) {
+                    if (exitDiffMinutes < -settings.maxDelay) {
+                        const earlyBy2 = Math.abs(exitDiffMinutes) - settings.maxDelay;
                         const earlyCount = await countRecentAttendanceIssues('exit', settings.maxDelay);
-                        successMsg += `\n\n⚠️ شما ${Math.abs(exitDiffMinutes)} دقیقه زودتر از ساعت مقرر خارج شدید. لطفاً دیگر تکرار نشود؛ این موضوع برای مدیر گزارش شد.${earlyCount > 1 ? `\n📊 این ${earlyCount.toLocaleString('fa-IR')}اُمین باری است که این ماه زودتر رفته‌اید.` : ''}`;
+                        successMsg += `\n\n⛔ هشدار خروج زودهنگام: شما دقیقاً ${Math.abs(exitDiffMinutes)} دقیقه زودتر از ساعت مقرر خارج شدید (${earlyBy2} دقیقه بیشتر از حد مجاز ${settings.maxDelay} دقیقه‌ای که مدیر تعیین کرده). لطفاً دیگر تکرار نشود؛ این موضوع برای مدیر گزارش شد.${earlyCount > 1 ? `\n📊 این ${earlyCount.toLocaleString('fa-IR')}اُمین باری است که این ماه زودتر رفته‌اید.` : ''}`;
                     } else if (exitDiffMinutes < 0) {
-                        successMsg += `\n\n🕐 شما ${Math.abs(exitDiffMinutes)} دقیقه زودتر از ساعت مقرر خارج شدید، اما در محدوده مجاز بود.`;
+                        successMsg += `\n\n🕐 شما دقیقاً ${Math.abs(exitDiffMinutes)} دقیقه زودتر از ساعت مقرر خارج شدید، اما چون در محدوده مجاز (${settings.maxDelay} دقیقه) بود، برای مدیر گزارش نشد.`;
+                    } else if (exitDiffMinutes === 0) {
+                        successMsg += `\n\n🎉 تبریک! دقیقاً سر ساعت مقرر (${targetEndTime}) خروج ثبت شد. عالی بود!`;
                     } else {
-                        successMsg += `\n\n🎉 آفرین! خروج شما به‌موقع یا دیرتر از ساعت مقرر ثبت شد.`;
+                        successMsg += `\n\n🎉 تبریک! ${exitDiffMinutes} دقیقه دیرتر از ساعت مقرر ماندید، این به‌عنوان اضافه‌کاری ثبت شد.`;
                     }
                 }
 
@@ -4244,18 +4251,20 @@
                 const d = (r.delay_minutes === null || r.delay_minutes === undefined) ? null : Number(r.delay_minutes);
                 if (d === null) {
                     delayCell = '—';
-                } else if (d >= settings.maxDelay) {
+                } else if (d > settings.maxDelay) {
                     delayCell = `<span style="color:#ef4444; font-weight:bold;">${d} دقیقه تاخیر<br><span style="font-size:9px; color:#94a3b8;">(مجاز: ${settings.maxDelay} دقیقه)</span></span>`;
                 } else if (d > 0) {
                     delayCell = `<span style="color:#fbbf24;">${d} دقیقه<br><span style="font-size:9px; color:#94a3b8;">(در محدوده مجاز)</span></span>`;
+                } else if (d === 0) {
+                    delayCell = `<span style="color:#34d399;">دقیقاً به‌موقع ✅</span>`;
                 } else {
-                    delayCell = `<span style="color:#34d399;">به‌موقع ✅</span>`;
+                    delayCell = `<span style="color:#34d399;">${Math.abs(d)} دقیقه زودتر ✅</span>`;
                 }
             } else if (r.type === 'exit') {
                 const d = (r.exit_diff_minutes === null || r.exit_diff_minutes === undefined) ? null : Number(r.exit_diff_minutes);
                 if (d === null) {
                     delayCell = '—';
-                } else if (d <= -settings.maxDelay) {
+                } else if (d < -settings.maxDelay) {
                     delayCell = `<span style="color:#ef4444; font-weight:bold;">${Math.abs(d)} دقیقه زودتر رفته<br><span style="font-size:9px; color:#94a3b8;">(مجاز: ${settings.maxDelay} دقیقه)</span></span>`;
                 } else if (d < 0) {
                     delayCell = `<span style="color:#fbbf24;">${Math.abs(d)} دقیقه زودتر<br><span style="font-size:9px; color:#94a3b8;">(در محدوده مجاز)</span></span>`;
@@ -4296,14 +4305,14 @@
                 totalOvertime += (r.overtime_hours || 0);
                 if (r.type === 'entry' && r.delay_minutes !== null && r.delay_minutes !== undefined) {
                     const d = Number(r.delay_minutes);
-                    if (d >= settings.maxDelay) {
+                    if (d > settings.maxDelay) {
                         lateDaysCount++;
                         totalDelayMinutes += d;
                     }
                 }
                 if (r.type === 'exit' && r.exit_diff_minutes !== null && r.exit_diff_minutes !== undefined) {
                     const d = Number(r.exit_diff_minutes);
-                    if (d <= -settings.maxDelay) {
+                    if (d < -settings.maxDelay) {
                         earlyExitDaysCount++;
                         totalEarlyExitMinutes += Math.abs(d);
                     }
@@ -5880,9 +5889,9 @@
             if (currentRole === 'admin') {
                 const emptyTypeTotals = () => ({ sum: 0, count: 0 });
                 const totals = {
-                    morning: { today: 0, all: 0, todayCount: 0, allCount: 0, todayByType: { instore: emptyTypeTotals(), ekala: emptyTypeTotals(), sausage: emptyTypeTotals() }, allByType: { instore: emptyTypeTotals(), ekala: emptyTypeTotals(), sausage: emptyTypeTotals() } },
-                    evening: { today: 0, all: 0, todayCount: 0, allCount: 0, todayByType: { instore: emptyTypeTotals(), ekala: emptyTypeTotals(), sausage: emptyTypeTotals() }, allByType: { instore: emptyTypeTotals(), ekala: emptyTypeTotals(), sausage: emptyTypeTotals() } },
-                    admin: { today: 0, all: 0, todayCount: 0, allCount: 0, todayByType: { instore: emptyTypeTotals(), ekala: emptyTypeTotals(), sausage: emptyTypeTotals() }, allByType: { instore: emptyTypeTotals(), ekala: emptyTypeTotals(), sausage: emptyTypeTotals() } }
+                    morning: { today: 0, all: 0, todayCount: 0, allCount: 0, todayByType: { instore: emptyTypeTotals(), ekala: emptyTypeTotals(), sausage: emptyTypeTotals() }, allByType: { instore: emptyTypeTotals(), ekala: emptyTypeTotals(), sausage: emptyTypeTotals() }, sellersToday: {}, sellersAll: {} },
+                    evening: { today: 0, all: 0, todayCount: 0, allCount: 0, todayByType: { instore: emptyTypeTotals(), ekala: emptyTypeTotals(), sausage: emptyTypeTotals() }, allByType: { instore: emptyTypeTotals(), ekala: emptyTypeTotals(), sausage: emptyTypeTotals() }, sellersToday: {}, sellersAll: {} },
+                    admin: { today: 0, all: 0, todayCount: 0, allCount: 0, todayByType: { instore: emptyTypeTotals(), ekala: emptyTypeTotals(), sausage: emptyTypeTotals() }, allByType: { instore: emptyTypeTotals(), ekala: emptyTypeTotals(), sausage: emptyTypeTotals() }, sellersToday: {}, sellersAll: {} }
                 };
 
                 (sales || []).forEach(s => {
@@ -5891,10 +5900,14 @@
 
                     const price = Number(s.sell_price) || 0;
                     const saleType = (s.sale_type === 'ekala') ? 'ekala' : (s.sale_type === 'sausage' ? 'sausage' : 'instore');
+                    const personName = s.seller_name || 'نامشخص';
                     totals[key].all += price;
                     totals[key].allCount += 1;
                     totals[key].allByType[saleType].sum += price;
                     totals[key].allByType[saleType].count += 1;
+                    if (!totals[key].sellersAll[personName]) totals[key].sellersAll[personName] = { sum: 0, count: 0 };
+                    totals[key].sellersAll[personName].sum += price;
+                    totals[key].sellersAll[personName].count += 1;
 
                     if (s.created_at) {
                         const itemISODate = getTehranISODate(new Date(s.created_at));
@@ -5903,18 +5916,34 @@
                             totals[key].todayCount += 1;
                             totals[key].todayByType[saleType].sum += price;
                             totals[key].todayByType[saleType].count += 1;
+                            if (!totals[key].sellersToday[personName]) totals[key].sellersToday[personName] = { sum: 0, count: 0 };
+                            totals[key].sellersToday[personName].sum += price;
+                            totals[key].sellersToday[personName].count += 1;
                         }
                     }
                 });
+
+                const renderSellerBreakdown = (sellersObj, emptyText) => {
+                    const names = Object.keys(sellersObj);
+                    if (names.length === 0) return `<p style="font-size:11px; color:#64748b;">${emptyText}</p>`;
+                    names.sort((a, b) => sellersObj[b].sum - sellersObj[a].sum);
+                    return `<div style="margin-top:6px; padding:8px 10px; background:rgba(15,23,42,0.6); border-radius:8px;">
+                        ${names.map(n => `<p style="font-size:12px; margin:3px 0;">👤 <b>${n}</b>: ${sellersObj[n].sum.toLocaleString('fa-IR')} تومان (${sellersObj[n].count} فاکتور)</p>`).join('')}
+                    </div>`;
+                };
 
                 const renderRoleCard = (key, title) => `
                     <div class="report-card">
                         <h3>${title}</h3>
                         <p>فروش امروز: ${totals[key].today.toLocaleString('fa-IR')} تومان (${totals[key].todayCount} فاکتور)</p>
                         <p style="font-size:11px; color:#94a3b8;">🛍️ حضوری: ${totals[key].todayByType.instore.sum.toLocaleString('fa-IR')} تومان (${totals[key].todayByType.instore.count}) &nbsp;|&nbsp; 🛒 اکالا: ${totals[key].todayByType.ekala.sum.toLocaleString('fa-IR')} تومان (${totals[key].todayByType.ekala.count}) &nbsp;|&nbsp; 🌭 سوسیس: ${totals[key].todayByType.sausage.sum.toLocaleString('fa-IR')} تومان (${totals[key].todayByType.sausage.count})</p>
-                        <p>مجموع کل فروش: ${totals[key].all.toLocaleString('fa-IR')} تومان (${totals[key].allCount} فاکتور)</p>
+                        <p style="font-size:12px; color:#cbd5e1; margin-top:8px;">👥 فروش امروز به تفکیک اسم فروشنده:</p>
+                        ${renderSellerBreakdown(totals[key].sellersToday, 'امروز فروشی توسط کسی در این شیفت ثبت نشده.')}
+                        <p style="margin-top:10px;">مجموع کل فروش: ${totals[key].all.toLocaleString('fa-IR')} تومان (${totals[key].allCount} فاکتور)</p>
                         <p style="font-size:11px; color:#94a3b8;">🛍️ حضوری: ${totals[key].allByType.instore.sum.toLocaleString('fa-IR')} تومان (${totals[key].allByType.instore.count}) &nbsp;|&nbsp; 🛒 اکالا: ${totals[key].allByType.ekala.sum.toLocaleString('fa-IR')} تومان (${totals[key].allByType.ekala.count}) &nbsp;|&nbsp; 🌭 سوسیس: ${totals[key].allByType.sausage.sum.toLocaleString('fa-IR')} تومان (${totals[key].allByType.sausage.count})</p>
-                        <button class="row-btn edit-btn" onclick="toggleDetail('${key}')">📋 گزارش گیری پیشرفته (تقویم / بازه‌ای)</button>
+                        <p style="font-size:12px; color:#cbd5e1; margin-top:8px;">👥 مجموع کل فروش به تفکیک اسم فروشنده (تمام تاریخچه):</p>
+                        ${renderSellerBreakdown(totals[key].sellersAll, 'هیچ فروشی در این شیفت ثبت نشده.')}
+                        <button class="row-btn edit-btn" style="margin-top:10px;" onclick="toggleDetail('${key}')">📋 گزارش گیری پیشرفته (تقویم / بازه‌ای)</button>
 
                         <div id="detailPanel_${key}" style="display:none; margin-top:12px; background:rgba(15, 23, 42, 0.7); padding:10px; border-radius:10px;">
                             <div class="mode-selector">
@@ -5945,7 +5974,12 @@
                     renderRoleCard('evening', '🌙 فروشنده شب') +
                     renderRoleCard('admin', '👑 مدیر غرفه') +
                     `<div class="report-card">
-                        <h3>🗄️ آرشیو کامل فروش (خروجی Excel/CSV)</h3>
+                        <h3>📊 خروجی اکسل حرفه‌ای ۱۰ روز اخیر (فروش + حضور و غیاب + خلاصه)</h3>
+                        <div class="hint" style="margin-top:0;">یک فایل اکسل واقعی (.xlsx) با ۳ برگه می‌سازد: «خلاصه مدیریتی» (جمع‌بندی فروش و عملکرد هر فروشنده به‌تفکیک اسم)، «فروش ۱۰ روز اخیر» و «حضور و غیاب ۱۰ روز اخیر». این کار فقط اطلاعات را می‌خواند؛ هیچ داده‌ای از سرور پاک نمی‌شود و همیشه در سیستم باقی می‌ماند.</div>
+                        <button class="submit-btn" id="exportLast10ExcelBtn" onclick="exportLast10DaysExcel()">📊 دانلود اکسل کامل ۱۰ روز اخیر</button>
+                    </div>
+                    <div class="report-card">
+                        <h3>🗄️ آرشیو کامل فروش از ابتدا (خروجی CSV)</h3>
                         <div class="hint" style="margin-top:0;">تمام فاکتورهای فروش از اولین روز تا امروز را در چند فایل ۱۰روزه دانلود می‌کند تا حجم هر فایل سبک بماند. این کار فقط اطلاعات را می‌خواند؛ هیچ فاکتوری از سرور پاک نمی‌شود و همه‌چیز همیشه در سیستم باقی می‌ماند.</div>
                         <button class="submit-btn" id="exportFullArchiveBtn" onclick="exportFullSalesArchive()">📦 دانلود آرشیو کامل فروش (۱۰روزه)</button>
                     </div>`;
@@ -6047,6 +6081,174 @@
                 }
             } finally {
                 if (btn) { btn.disabled = false; btn.textContent = '📦 دانلود آرشیو کامل فروش (۱۰روزه)'; }
+            }
+        }
+
+        // --- خروجی اکسل واقعی (.xlsx) با خلاصه مدیریتی از ۱۰ روز اخیر فروش و حضور و غیاب ---
+        // این تابع فقط اطلاعات را می‌خواند و هیچ داده‌ای را از سرور پاک نمی‌کند؛
+        // همه‌ی فاکتورها و رکوردهای حضور و غیاب برای همیشه در Supabase باقی می‌مانند.
+        async function exportLast10DaysExcel() {
+            const btn = document.getElementById('exportLast10ExcelBtn');
+            if (btn) { btn.disabled = true; btn.textContent = '⏳ در حال ساخت فایل اکسل...'; }
+            showToast('⏳ در حال آماده‌سازی فایل اکسل ۱۰ روز اخیر (فروش و حضور و غیاب)...');
+
+            try {
+                if (typeof XLSX === 'undefined') {
+                    showToast('❌ کتابخانه اکسل بارگذاری نشد. اتصال اینترنت را بررسی کنید و دوباره تلاش کنید.');
+                    return;
+                }
+
+                const now = new Date();
+                const tenDaysAgo = new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000);
+                const fromISO = tenDaysAgo.toISOString();
+                const settings = await getShiftSettings();
+
+                const [salesRes, attendanceRes] = await Promise.all([
+                    _supabase.from('sales').select('product_code, quantity, sell_price, created_at, seller_name, sale_type').gte('created_at', fromISO).order('created_at', { ascending: true }),
+                    _supabase.from('attendance').select('seller_name, type, created_at, delay_minutes, exit_diff_minutes, overtime_hours, note').gte('created_at', fromISO).order('created_at', { ascending: true })
+                ]);
+
+                if (salesRes.error) { showToast('❌ خطا در دریافت فروش: ' + salesRes.error.message); return; }
+                if (attendanceRes.error) { showToast('❌ خطا در دریافت حضور و غیاب: ' + attendanceRes.error.message); return; }
+
+                const sales = salesRes.data || [];
+                const attendance = attendanceRes.data || [];
+
+                if (sales.length === 0 && attendance.length === 0) {
+                    showToast('در ۱۰ روز اخیر هیچ فروش یا حضور و غیابی ثبت نشده است.');
+                    return;
+                }
+
+                const codes = [...new Set(sales.map(s => s.product_code))];
+                let nameMap = {};
+                if (codes.length > 0) {
+                    const { data: productsData } = await _supabase.from('products').select('code, name').in('code', codes);
+                    (productsData || []).forEach(p => { nameMap[p.code] = p.name; });
+                }
+
+                // --- ردیف‌های شیت فروش ---
+                const salesRows = sales.map(s => ({
+                    'تاریخ و ساعت': getTehranFullDateTimeString(new Date(s.created_at)),
+                    'فروشنده': s.seller_name || 'نامشخص',
+                    'کالا': nameMap[s.product_code] || s.product_code || '',
+                    'نوع فروش': s.sale_type === 'ekala' ? 'اکالا' : (s.sale_type === 'sausage' ? 'سوسیس/کالباس' : 'حضوری'),
+                    'مقدار (کیلو)': Number(Number(s.quantity || 0).toFixed(3)),
+                    'مبلغ (تومان)': Number(s.sell_price || 0)
+                }));
+
+                // --- ردیف‌های شیت حضور و غیاب ---
+                const attRows = attendance.map(a => {
+                    let statusText = '-';
+                    if (a.type === 'entry' && a.delay_minutes !== null && a.delay_minutes !== undefined) {
+                        const d = Number(a.delay_minutes);
+                        statusText = d > settings.maxDelay ? `⛔ ${d} دقیقه تاخیر (بیش از حد مجاز)` :
+                            d > 0 ? `🕐 ${d} دقیقه تاخیر (در محدوده مجاز)` :
+                            d === 0 ? '🎉 دقیقاً به‌موقع' : `🎉 ${Math.abs(d)} دقیقه زودتر`;
+                    } else if (a.type === 'exit' && a.exit_diff_minutes !== null && a.exit_diff_minutes !== undefined) {
+                        const d = Number(a.exit_diff_minutes);
+                        statusText = d < -settings.maxDelay ? `⛔ ${Math.abs(d)} دقیقه زودتر رفته (بیش از حد مجاز)` :
+                            d < 0 ? `🕐 ${Math.abs(d)} دقیقه زودتر (در محدوده مجاز)` :
+                            d === 0 ? '🎉 دقیقاً به‌موقع' : `🎉 ${d} دقیقه دیرتر (اضافه‌کاری)`;
+                    } else if (a.type === 'leave') {
+                        statusText = '🏖️ مرخصی';
+                    }
+                    return {
+                        'تاریخ و ساعت': getTehranFullDateTimeString(new Date(a.created_at)),
+                        'فروشنده': a.seller_name || 'نامشخص',
+                        'نوع ثبت': a.type === 'entry' ? 'ورود' : (a.type === 'exit' ? 'خروج' : 'مرخصی'),
+                        'وضعیت دقیق': statusText,
+                        'اضافه‌کاری (ساعت)': Number(a.overtime_hours || 0),
+                        'توضیحات': a.note || ''
+                    };
+                });
+
+                // --- محاسبه خلاصه به‌تفکیک هر فروشنده ---
+                const perSellerSales = {};
+                sales.forEach(s => {
+                    const name = s.seller_name || 'نامشخص';
+                    if (!perSellerSales[name]) perSellerSales[name] = { sum: 0, count: 0, qty: 0 };
+                    perSellerSales[name].sum += Number(s.sell_price || 0);
+                    perSellerSales[name].count += 1;
+                    perSellerSales[name].qty += Number(s.quantity || 0);
+                });
+
+                const perSellerAttendance = {};
+                attendance.forEach(a => {
+                    const name = a.seller_name || 'نامشخص';
+                    if (!perSellerAttendance[name]) perSellerAttendance[name] = { lateCount: 0, lateTotalMin: 0, earlyExitCount: 0, earlyExitTotalMin: 0, overtimeHours: 0, leaveCount: 0, onTimeCount: 0 };
+                    const rec = perSellerAttendance[name];
+                    rec.overtimeHours += Number(a.overtime_hours || 0);
+                    if (a.type === 'leave') rec.leaveCount++;
+                    if (a.type === 'entry' && a.delay_minutes !== null && a.delay_minutes !== undefined) {
+                        const d = Number(a.delay_minutes);
+                        if (d > settings.maxDelay) { rec.lateCount++; rec.lateTotalMin += d; }
+                        else rec.onTimeCount++;
+                    }
+                    if (a.type === 'exit' && a.exit_diff_minutes !== null && a.exit_diff_minutes !== undefined) {
+                        const d = Number(a.exit_diff_minutes);
+                        if (d < -settings.maxDelay) { rec.earlyExitCount++; rec.earlyExitTotalMin += Math.abs(d); }
+                    }
+                });
+
+                const allSellerNames = [...new Set([...Object.keys(perSellerSales), ...Object.keys(perSellerAttendance)])];
+                const totalRevenue = sales.reduce((sum, s) => sum + Number(s.sell_price || 0), 0);
+
+                const sellerSummaryRows = allSellerNames.map(name => {
+                    const s = perSellerSales[name] || { sum: 0, count: 0, qty: 0 };
+                    const a = perSellerAttendance[name] || { lateCount: 0, lateTotalMin: 0, earlyExitCount: 0, earlyExitTotalMin: 0, overtimeHours: 0, leaveCount: 0, onTimeCount: 0 };
+                    return {
+                        'فروشنده': name,
+                        'مجموع فروش (تومان)': s.sum,
+                        'تعداد فاکتور': s.count,
+                        'مجموع مقدار فروخته‌شده (کیلو)': Number(s.qty.toFixed(3)),
+                        'ورود به‌موقع/زودتر': a.onTimeCount,
+                        'تاخیر بیش از حد مجاز': a.lateCount,
+                        'مجموع دقایق تاخیر': a.lateTotalMin,
+                        'خروج زودهنگام بیش از حد مجاز': a.earlyExitCount,
+                        'مجموع دقایق خروج زودهنگام': a.earlyExitTotalMin,
+                        'مجموع اضافه‌کاری (ساعت)': Number(a.overtimeHours.toFixed(2)),
+                        'تعداد مرخصی': a.leaveCount
+                    };
+                }).sort((a, b) => b['مجموع فروش (تومان)'] - a['مجموع فروش (تومان)']);
+
+                // --- ساخت Workbook با ۳ برگه ---
+                const wb = XLSX.utils.book_new();
+
+                const topAoa = [
+                    ['📊 خلاصه مدیریتی گزارش ۱۰ روز اخیر — سیستم مدیریت غرفه فامیلی (دره میرکی)'],
+                    [],
+                    ['📅 بازه گزارش:', `${getTehranISODate(tenDaysAgo)} تا ${getTehranISODate(now)}`],
+                    ['🧾 تعداد کل فاکتورهای فروش:', sales.length],
+                    ['💰 مجموع کل فروش (تومان):', totalRevenue],
+                    ['⏰ تعداد کل ثبت‌های حضور و غیاب:', attendance.length],
+                    ['⚙️ حداکثر تاخیر/زودرفتن مجاز طبق تنظیمات مدیر (دقیقه):', settings.maxDelay],
+                    [],
+                    ['👥 عملکرد هر فروشنده به‌تفکیک اسم، در همین ۱۰ روز:']
+                ];
+                const wsSummary = XLSX.utils.aoa_to_sheet(topAoa);
+                XLSX.utils.sheet_add_json(wsSummary, sellerSummaryRows, { origin: -1 });
+                wsSummary['!cols'] = [{ wch: 30 }, { wch: 20 }, { wch: 14 }, { wch: 24 }, { wch: 18 }, { wch: 20 }, { wch: 18 }, { wch: 26 }, { wch: 24 }, { wch: 20 }, { wch: 14 }];
+                wsSummary['!freeze'] = { xSplit: 0, ySplit: 0 };
+                XLSX.utils.book_append_sheet(wb, wsSummary, 'خلاصه مدیریتی');
+
+                const wsSales = XLSX.utils.json_to_sheet(salesRows);
+                wsSales['!cols'] = [{ wch: 20 }, { wch: 24 }, { wch: 26 }, { wch: 12 }, { wch: 14 }, { wch: 16 }];
+                if (wsSales['!ref']) { wsSales['!autofilter'] = { ref: wsSales['!ref'] }; wsSales['!freeze'] = { xSplit: 0, ySplit: 1 }; }
+                XLSX.utils.book_append_sheet(wb, wsSales, 'فروش ۱۰ روز اخیر');
+
+                const wsAtt = XLSX.utils.json_to_sheet(attRows);
+                wsAtt['!cols'] = [{ wch: 20 }, { wch: 24 }, { wch: 12 }, { wch: 36 }, { wch: 16 }, { wch: 30 }];
+                if (wsAtt['!ref']) { wsAtt['!autofilter'] = { ref: wsAtt['!ref'] }; wsAtt['!freeze'] = { xSplit: 0, ySplit: 1 }; }
+                XLSX.utils.book_append_sheet(wb, wsAtt, 'حضور و غیاب ۱۰ روز اخیر');
+
+                const fileName = `گزارش-اکسل-۱۰-روز-اخیر_${getTehranISODate(tenDaysAgo)}_تا_${getTehranISODate(now)}.xlsx`;
+                XLSX.writeFile(wb, fileName);
+
+                showToast('✅ فایل اکسل کامل ۱۰ روز اخیر (فروش + حضور و غیاب + خلاصه مدیریتی) دانلود شد.\n\n📌 هیچ داده‌ای از سرور پاک نشد؛ همه فاکتورها و رکوردهای حضور و غیاب برای همیشه در سیستم باقی می‌مانند.');
+            } catch (e) {
+                showToast('❌ خطا در ساخت فایل اکسل: ' + e.message);
+            } finally {
+                if (btn) { btn.disabled = false; btn.textContent = '📊 دانلود اکسل کامل ۱۰ روز اخیر'; }
             }
         }
 
