@@ -8,6 +8,13 @@
     <meta name="theme-color" content="#0f172a">
     <link rel="icon" href="icon-192.png">
     <link rel="apple-touch-icon" href="icon-192.png">
+    <!-- تنظیمات ویژه‌ی نصب PWA روی آیفون: باعث می‌شود بعد از «Add to Home Screen» برنامه
+         تمام‌صفحه (بدون نوار آدرس سافاری) و مثل یک اپ واقعی باز شود -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="غرفه فامیلی">
+    <meta name="format-detection" content="telephone=no">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -193,6 +200,17 @@
             margin-bottom: 10px;
             text-align: right;
             line-height: 1.9;
+        }
+        /* حالت هشدار شدید: وقتی تاخیر خیلی زیاد شده (بیشتر از حد مجاز مدیر) — قرمز و چشمک‌زن تا حتماً دیده شود */
+        .reminder-banner.escalated {
+            background: rgba(239, 68, 68, 0.2);
+            border: 2px solid #ef4444;
+            color: #fecaca;
+            animation: escalatedPulse 1.1s ease-in-out infinite;
+        }
+        @keyframes escalatedPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.55); }
+            50% { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
         }
         .row-btn {
             border: none;
@@ -1703,6 +1721,47 @@
         let barcodeScanProcessing = false;
         const BARCODE_CAMERA_STORAGE_KEY = 'preferredBarcodeCameraId';
 
+        // --- صدای بوق موفقیت اسکن بارکد (دقیقاً مثل صندوق فروشگاهی) و صدای هشدار تاخیر ---
+        // بدون فایل صوتی خارجی، مستقیم با Web Audio API ساخته می‌شود تا سریع و بدون تاخیر پخش شود
+        let _sharedAudioCtx = null;
+        function getAudioCtx() {
+            try {
+                if (!_sharedAudioCtx) {
+                    const AC = window.AudioContext || window.webkitAudioContext;
+                    _sharedAudioCtx = new AC();
+                }
+                if (_sharedAudioCtx.state === 'suspended') _sharedAudioCtx.resume();
+                return _sharedAudioCtx;
+            } catch (e) { return null; }
+        }
+        function playTone(freq, durationMs, delayMs, volume) {
+            const ctx = getAudioCtx();
+            if (!ctx) return;
+            try {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'square';
+                osc.frequency.value = freq;
+                gain.gain.value = (volume !== undefined ? volume : 0.18);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                const startAt = ctx.currentTime + ((delayMs || 0) / 1000);
+                osc.start(startAt);
+                osc.stop(startAt + (durationMs / 1000));
+            } catch (e) { /* بدون اشکال اگر پخش صدا ممکن نشد */ }
+        }
+        // بوق تک و کوتاه، دقیقاً مثل بوق اسکنر بارکد فروشگاه‌ها
+        function playScanBeepSound() { playTone(1600, 110, 0, 0.22); }
+        // ویبره‌ی کوتاه گوشی هم‌زمان با بوق (روی گوشی‌هایی که پشتیبانی می‌کنند)
+        function vibrateShort() { try { if (navigator.vibrate) navigator.vibrate(60); } catch (e) {} }
+        // صدای هشدار تاخیر زیاد: سه بوق پشت‌سرهم و بم‌تر، برای جلب توجه بیشتر
+        function playLateAlertSound() {
+            playTone(880, 160, 0, 0.2);
+            playTone(880, 160, 260, 0.2);
+            playTone(880, 220, 520, 0.22);
+            try { if (navigator.vibrate) navigator.vibrate([120, 80, 120, 80, 200]); } catch (e) {}
+        }
+
         function openBarcodeScanner(type) {
             barcodeScanTargetType = type;
             barcodeScanProcessing = false;
@@ -1710,6 +1769,8 @@
             const statusText = document.getElementById('scannerStatusText');
             overlay.classList.add('active');
             statusText.innerText = 'در حال باز کردن دوربین...';
+            // باز کردن AudioContext همین‌جا (روی تپ کاربر) تا بوق اسکن روی آیفون/سافاری هم بدون تاخیر پخش شود
+            getAudioCtx();
 
             if (typeof Html5Qrcode === 'undefined') {
                 statusText.innerText = '❌ کتابخانه بارکدخوان بارگذاری نشد (نیاز به اینترنت دارد). لطفاً کالا را دستی وارد کنید.';
@@ -1723,19 +1784,27 @@
                 // qrbox پویا و پهن‌تر: چون بارکدها معمولاً کشیده و افقی هستند، کادر بزرگ‌تر شانس گیر افتادن بارکد را در همان لحظه اول بالا می‌برد
                 // useBarCodeDetectorIfSupported: در مرورگرهایی که از آن پشتیبانی می‌کنند (اکثر گوشی‌های اندروید/کروم) از موتور شناسایی سخت‌افزاری خود گوشی استفاده می‌کند که چند برابر سریع‌تر از موتور نرم‌افزاری معمولی است
                 const scanConfig = {
-                    fps: 25,
+                    // fps بالاتر (۳۰ = حداکثر معقول برای اکثر دوربین‌های موبایل): هر فریم تازه بلافاصله بررسی می‌شود
+                    fps: 30,
+                    // کادر اسکن بزرگ‌تر و پهن‌تر: بارکدی که کمی دورتر گرفته شود و داخل کادر کوچک‌تر به نظر برسد
+                    // هم همچنان شناسایی می‌شود؛ کادر بزرگ یعنی شانس بیشتر برای گیر افتادن بارکد همان لحظه‌ی اول
                     qrbox: (viewfinderWidth, viewfinderHeight) => {
-                        const w = Math.floor(Math.min(viewfinderWidth * 0.92, 420));
-                        const h = Math.floor(Math.min(viewfinderHeight * 0.5, 180));
-                        return { width: Math.max(w, 200), height: Math.max(h, 100) };
+                        const w = Math.floor(Math.min(viewfinderWidth * 0.96, 480));
+                        const h = Math.floor(Math.min(viewfinderHeight * 0.62, 260));
+                        return { width: Math.max(w, 220), height: Math.max(h, 130) };
                     },
                     aspectRatio: 1.777,
                     disableFlip: true,
+                    // موتور شناسایی سخت‌افزاری خود گوشی (روی کروم/اندروید و سافاری‌های جدید) که چند برابر
+                    // سریع‌تر و قوی‌تر از موتور نرم‌افزاری است و بارکد را از فاصله بیشتر هم تشخیص می‌دهد
                     experimentalFeatures: { useBarCodeDetectorIfSupported: true },
                     videoConstraints: {
                         facingMode: 'environment',
-                        width: { ideal: 1920 },
-                        height: { ideal: 1080 }
+                        width: { ideal: 1920, min: 1280 },
+                        height: { ideal: 1080, min: 720 },
+                        // روی دوربین‌هایی که پشتیبانی کنند، فوکوس پیوسته باعث می‌شود وقتی بارکد را از فاصله
+                        // نزدیک می‌کنید یا دور می‌کنید، دوربین خودش سریع فوکوس کند و منتظر فوکوس دستی نمانید
+                        advanced: [{ focusMode: 'continuous' }]
                     }
                 };
                 if (typeof Html5QrcodeSupportedFormats !== 'undefined') {
@@ -1856,6 +1925,10 @@
             // جلوگیری از پردازش تکراری وقتی چند فریم پشت‌سرهم همان بارکد را می‌خوانند
             if (barcodeScanProcessing) return;
             barcodeScanProcessing = true;
+
+            // فوراً همون لحظه‌ی شناسایی، بوق + ویبره بزن (دقیقاً مثل اسکنر صندوق فروشگاهی) — قبل از هر پردازشی
+            playScanBeepSound();
+            vibrateShort();
 
             const digits = String(decodedText).replace(/\D/g, '');
             let productCode = digits;
@@ -3937,12 +4010,14 @@
             if (!panel) return;
 
             if (hasLeave) {
+                panel.classList.remove('escalated');
                 panel.style.display = 'none';
                 panel.innerHTML = '';
                 return;
             }
 
             if (!hasEntry && nowMinutes >= startMinutes && nowMinutes < (startMinutes + reminderAfter)) {
+                panel.classList.remove('escalated');
                 panel.innerHTML = `⏰ <b>وقتشه!</b> شیفت شما همین الان (ساعت ${shiftStart}) شروع شده. لطفاً <b>اول ورودتان را ثبت کنید</b>، بعد کار را شروع کنید:
                     <br>۱) روی تب «⏰ حضور و غیاب» بزنید
                     <br>۲) در «نوع ثبت»، گزینه «🟢 ثبت ورود به شیفت» را انتخاب کنید
@@ -3954,17 +4029,21 @@
 
             if (!hasEntry && nowMinutes >= (startMinutes + reminderAfter)) {
                 const lateBy = nowMinutes - startMinutes;
-                panel.innerHTML = `⛔ <b>هشدار تاخیر:</b> شیفت شما از ساعت ${shiftStart} شروع شده و شما حدود ${lateBy} دقیقه تاخیر دارید و هنوز ورودتان را ثبت نکرده‌اید! هرچه دیرتر ثبت کنید، تاخیر بیشتری برای مدیر گزارش می‌شود — همین الان این کار را انجام دهید:
+                const isEscalated = lateBy > settings.maxDelay; // یعنی از حد مجاز مدیر هم گذشته — هشدار شدیدتر لازم است
+                panel.classList.toggle('escalated', isEscalated);
+                panel.innerHTML = `${isEscalated ? '🚨 <b>هشدار جدی تاخیر!</b>' : '⛔ <b>هشدار تاخیر:</b>'} شیفت شما از ساعت ${shiftStart} شروع شده و شما حدود ${lateBy} دقیقه تاخیر دارید و هنوز ورودتان را ثبت نکرده‌اید!${isEscalated ? ` این مقدار از حداکثر تاخیر مجاز (${settings.maxDelay} دقیقه) هم گذشته و به مدیر گزارش خواهد شد.` : ''} هرچه دیرتر ثبت کنید، تاخیر بیشتری برای مدیر گزارش می‌شود — همین الان این کار را انجام دهید:
                     <br>۱) روی تب «⏰ حضور و غیاب» بزنید
                     <br>۲) در «نوع ثبت»، گزینه «🟢 ثبت ورود به شیفت» را انتخاب کنید
                     <br>۳) یک عکس از خودتان یا داخل غرفه بگیرید (اگر عکس نشد، از دکمه «📍 استفاده از موقعیت مکانی» استفاده کنید)
                     <br>۴) روی دکمه «ثبت در سیستم حضور و غیاب» بزنید
                     <button class="dismiss-alert-btn" onclick="dismissReminderBanner()">باشه، همین الان ثبت می‌کنم</button>`;
                 panel.style.display = 'block';
+                if (isEscalated) playLateAlertSound();
                 return;
             }
 
             if (hasEntry && !hasExit && nowMinutes >= endMinutes && nowMinutes < (endMinutes + reminderAfter)) {
+                panel.classList.remove('escalated');
                 panel.innerHTML = `⏰ <b>وقتشه!</b> ساعت پایان شیفت شما (${shiftEnd}) فرارسیده. لطفاً <b>اول خروجتان را ثبت کنید</b>، بعد غرفه را ترک کنید:
                     <br>۱) روی تب «⏰ حضور و غیاب» بزنید
                     <br>۲) در «نوع ثبت»، گزینه «🔴 ثبت خروج از شیفت» را انتخاب کنید
@@ -3976,16 +4055,19 @@
 
             if (hasEntry && !hasExit && nowMinutes >= (endMinutes + reminderAfter)) {
                 const lateBy = nowMinutes - endMinutes;
-                panel.innerHTML = `⏰ <b>یادآوری:</b> ساعت پایان شیفت شما (${shiftEnd}) گذشته (حدود ${lateBy} دقیقه) و هنوز خروجتان را ثبت نکرده‌اید! لطفاً همین الان:
+                const isEscalated = lateBy > settings.maxDelay;
+                panel.classList.toggle('escalated', isEscalated);
+                panel.innerHTML = `${isEscalated ? '🚨 <b>هشدار جدی!</b>' : '⏰ <b>یادآوری:</b>'} ساعت پایان شیفت شما (${shiftEnd}) گذشته (حدود ${lateBy} دقیقه) و هنوز خروجتان را ثبت نکرده‌اید!${isEscalated ? ` این مقدار از حد مجاز (${settings.maxDelay} دقیقه) هم گذشته و به مدیر گزارش خواهد شد.` : ''} لطفاً همین الان:
                     <br>۱) روی تب «⏰ حضور و غیاب» بزنید
                     <br>۲) در «نوع ثبت»، گزینه «🔴 ثبت خروج از شیفت» را انتخاب کنید
                     <br>۳) عکس یا موقعیت مکانی را ثبت کنید و روی دکمه «ثبت در سیستم حضور و غیاب» بزنید
                     <button class="dismiss-alert-btn" onclick="dismissReminderBanner()">باشه، الان می‌زنم</button>`;
                 panel.style.display = 'block';
-
+                if (isEscalated) playLateAlertSound();
                 return;
             }
 
+            panel.classList.remove('escalated');
             panel.style.display = 'none';
             panel.innerHTML = '';
         }
