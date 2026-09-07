@@ -1531,6 +1531,12 @@
 
         <button class="submit-btn" onclick="saveTelegramSettings()">💾 ذخیره تنظیمات</button>
         <button class="range-toggle-btn" onclick="testTelegramMessage()">🧪 ارسال پیام آزمایشی</button>
+
+        <div class="report-card" style="margin-top:16px;">
+            <h3>🔔 اعلان فوری روی گوشی (حتی وقتی برنامه بسته است)</h3>
+            <div class="hint" style="margin-top:0;">با فعال‌کردن این گزینه، هشدارهای مهم (تاخیر پرسنل، کمبود موجودی، مشکل حضور و غیاب) دقیقاً مثل اعلان تلگرام، روی همین گوشی و حتی وقتی مرورگر بسته است نمایش داده می‌شوند. باید یک‌بار روی همین گوشی که مدیر باهاش کار می‌کند فعال شود.</div>
+            <button class="row-btn edit-btn" style="width:100%;" onclick="subscribeToPushNotifications('admin')">🔔 فعال‌سازی اعلان فوری روی این گوشی</button>
+        </div>
     </div>
 
     <!-- تب دفتر بدهی مشتریان -->
@@ -1809,6 +1815,34 @@
         window.addEventListener('offline', () => { updateConnectionBanner(); showToast('⚠️ اتصال اینترنت قطع شد — به‌محض وصل شدن دوباره تلاش کنید'); });
         updateConnectionBanner();
 
+        // ================== خروج خودکار بعد از بی‌فعالیتی (امنیت) ==================
+        // اگه گوشی روی پیشخوان جا بمونه و کسی دیگه‌ای دستش بگیره، بعد از مدتی بی‌فعالیتی
+        // خودکار از حساب خارج می‌شود تا اطلاعات فروش/حضور و غیاب در معرض دید/دستکاری نباشد.
+        const IDLE_WARNING_MS = 14 * 60 * 1000; // ۱۴ دقیقه بی‌فعالیتی: هشدار
+        const IDLE_LOGOUT_MS = 15 * 60 * 1000;  // ۱۵ دقیقه بی‌فعالیتی: خروج خودکار
+        let idleWarningTimer = null;
+        let idleLogoutTimer = null;
+        let idleWarningShown = false;
+        function resetIdleTimers() {
+            if (!currentSessionUser) return; // اگه لاگین نیست، نیازی به این تایمرها نیست
+            clearTimeout(idleWarningTimer);
+            clearTimeout(idleLogoutTimer);
+            idleWarningShown = false;
+            idleWarningTimer = setTimeout(() => {
+                idleWarningShown = true;
+                showToast('⏳ به‌خاطر عدم فعالیت، تا ۱ دقیقه دیگر به‌صورت خودکار از حساب خارج می‌شوید. برای ادامه، فقط یک‌بار روی صفحه لمس کنید.');
+            }, IDLE_WARNING_MS);
+            idleLogoutTimer = setTimeout(() => {
+                if (currentSessionUser) {
+                    logout();
+                    showToast('🔒 به‌خاطر عدم فعالیت طولانی، به‌صورت خودکار از حساب خارج شدید. لطفاً دوباره وارد شوید.');
+                }
+            }, IDLE_LOGOUT_MS);
+        }
+        ['click', 'touchstart', 'keydown', 'scroll'].forEach(evt => {
+            document.addEventListener(evt, resetIdleTimers, { passive: true });
+        });
+
         // ================== صفحه لودینگ اولیه (Splash) ==================
         // حداقل ۲.۲ ثانیه نگه داشته می‌شود (حس یه لودینگ واقعی و باکیفیت، نه چشمک سریع)،
         // و همین‌که صفحه کامل لود شد با فید محو می‌شود. در این مدت، پیام‌ها و نوار پیشرفت
@@ -1978,6 +2012,86 @@
             };
             window.WebSocket.prototype = NativeWebSocket.prototype;
         })();
+
+        // =========================================================================
+        // اعلان فوری (Web Push) به مدیر — حتی وقتی مرورگر/برنامه کاملاً بسته باشد
+        // این اعلان‌ها از طریق یک Worker مجزا (push-notify-worker.js) فرستاده می‌شوند.
+        // بعد از دیپلوی کردن آن Worker، فقط آدرسش را همینجا جایگزین کن.
+        // PUSH_SECRET هم باید دقیقاً همان مقداری باشد که داخل خود Worker گذاشتی.
+        // =========================================================================
+        const PUSH_NOTIFY_WORKER_URL = "https://push-notify-1.adarmiraki.workers.dev";
+        const PUSH_SECRET = "familyshop-push-8842-change-me";
+        const VAPID_PUBLIC_KEY = "BNqjK9pgTYyTxnE3rn3H0vLyCwFFSCTbYnjxIEfZ_DrWBXidsw7GxrHNvFkoKbvQoRJ346WuQJ8QfJfXWAX7BBA";
+
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+            const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+            const rawData = atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+            for (let i = 0; i < rawData.length; i++) outputArray[i] = rawData.charCodeAt(i);
+            return outputArray;
+        }
+
+        // فعال‌سازی اعلان روی همین گوشی — باید با تپ مستقیم کاربر روی یک دکمه صدا زده شود
+        // (مرورگرها اجازه‌ی درخواست خودکار مجوز اعلان بدون تعامل کاربر را نمی‌دهند)
+        async function subscribeToPushNotifications(role) {
+            if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+                showToast('❌ این مرورگر/گوشی از اعلان فوری (Push) پشتیبانی نمی‌کند.');
+                return;
+            }
+            try {
+                const permission = await Notification.requestPermission();
+                if (permission !== 'granted') {
+                    showToast('⚠️ اجازه‌ی نمایش اعلان داده نشد. برای فعال کردن، به تنظیمات مرورگر/گوشی برو و اعلان این سایت را فعال کن.');
+                    return;
+                }
+                const reg = await navigator.serviceWorker.ready;
+                let sub = await reg.pushManager.getSubscription();
+                if (!sub) {
+                    sub = await reg.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+                    });
+                }
+                const subJson = sub.toJSON();
+                const { error } = await _supabase.from('push_subscriptions').upsert([{
+                    username: currentSessionUser ? currentSessionUser.username : null,
+                    role: role || currentRole,
+                    endpoint: subJson.endpoint,
+                    p256dh: subJson.keys.p256dh,
+                    auth: subJson.keys.auth
+                }], { onConflict: 'endpoint' });
+                if (error) {
+                    showToast('❌ خطا در ذخیره اشتراک اعلان: ' + error.message + '\n\nمطمئن شوید جدول push_subscriptions در Supabase ساخته شده است.');
+                    return;
+                }
+                showToast('✅ اعلان فوری روی این گوشی فعال شد. از این به بعد حتی وقتی برنامه بسته باشد هم اعلان‌های مهم را روی همین گوشی می‌بینی.');
+            } catch (e) {
+                showToast('❌ فعال‌سازی اعلان با خطا مواجه شد: ' + (e.message || e));
+            }
+        }
+
+        // ارسال اعلان فوری به همه‌ی مشترکین یک نقش (پیش‌فرض: مدیر). کاملاً best-effort و
+        // بی‌صدا شکست می‌خورد (اگر Worker هنوز دیپلوی/تنظیم نشده) تا کارکرد اصلی برنامه قطع نشود.
+        async function sendPushNotificationToRole(title, body, role) {
+            if (!PUSH_NOTIFY_WORKER_URL) return; // هنوز Worker تنظیم نشده
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 6000);
+                try {
+                    await fetch(PUSH_NOTIFY_WORKER_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ secret: PUSH_SECRET, role: role || 'admin', title, body }),
+                        signal: controller.signal
+                    });
+                } finally {
+                    clearTimeout(timeoutId);
+                }
+            } catch (e) {
+                console.warn('خطا در ارسال اعلان فوری (بدون اشکال برای کارکرد اصلی برنامه)', e);
+            }
+        }
 
         // =========================================================================
         // بارگذاری هوشمند کتابخانه‌های بیرونی: هر کتابخانه از چند CDN مختلف امتحان می‌شود
@@ -3466,6 +3580,7 @@
             currentSessionUser = user;
             alertDismissedThisSession = false;
             reminderDismissedThisSession = false;
+            if (typeof resetIdleTimers === 'function') resetIdleTimers(); // شروع شمارش خروج خودکار امنیتی از همین لحظه ورود
 
             const badge = document.getElementById('userBadge');
             const displayName = user.full_name || user.username;
@@ -3560,6 +3675,7 @@
 
         function logout() {
             teardownRealtimeSubscriptions();
+            if (typeof idleWarningTimer !== 'undefined') { clearTimeout(idleWarningTimer); clearTimeout(idleLogoutTimer); }
             currentRole = "";
             currentUserLabel = "";
             currentSessionUser = null;
@@ -3832,7 +3948,7 @@
             box.innerHTML = `
                 <div class="report-card">
                     <h3>💰 فروش امروز (مجموع کل)</h3>
-                    <p style="font-size:18px; font-weight:bold; color:#38bdf8;">${todayRevenue.toLocaleString('fa-IR')} تومان</p>
+                    <p style="font-size:20px; font-weight:bold; color:#38bdf8;" id="dashTodayRevenueNum">۰ تومان</p>
                     <p style="font-size:12px; color:#94a3b8;">${todayCount.toLocaleString('fa-IR')} فاکتور ثبت شده</p>
                     <h4 style="color:#cbd5e1; margin-top:12px; margin-bottom:6px; font-size:13px;">👥 تفکیک دقیق به‌ازای هر فروشنده:</h4>
                     ${perPersonRows || '<p style="color:#94a3b8; font-size:12px;">هنوز امروز فروشی ثبت نشده است.</p>'}
@@ -3860,7 +3976,25 @@
                 <canvas id="dashboardTrendChart" height="180" style="margin-top:10px;"></canvas>
             `;
 
+            animateCounterElement('dashTodayRevenueNum', todayRevenue, ' تومان');
             renderSalesTrendChart('dashboardTrendChart', salesRes.data || []);
+        }
+
+        // شمارنده‌ی متحرک برای اعداد داشبورد: از ۰ با شتاب‌کاهشی تا عدد نهایی بالا می‌رود
+        // (حس یه داشبورد حرفه‌ای، نه یه عدد ثابت خشک)
+        function animateCounterElement(elId, target, suffix) {
+            const el = document.getElementById(elId);
+            if (!el) return;
+            const duration = 900;
+            const startTime = performance.now();
+            function tick(now) {
+                const progress = Math.min((now - startTime) / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+                const current = Math.round(target * eased);
+                el.textContent = current.toLocaleString('fa-IR') + (suffix || '');
+                if (progress < 1) requestAnimationFrame(tick);
+            }
+            requestAnimationFrame(tick);
         }
 
         // --- دفتر بدهی مشتریان ---
@@ -4057,6 +4191,7 @@
                     lastTelegramUrgentSignature = signature;
                     const plainText = urgentItems.map(t => t.replace(/<[^>]+>/g, '')).join('\n');
                     sendTelegramNotification(`🚨 هشدار موجودی فوری:\n${plainText}`);
+                    sendPushNotificationToRole('🚨 هشدار موجودی فوری', plainText.slice(0, 180), 'admin');
                 }
             } else {
                 lastTelegramUrgentSignature = '';
@@ -5016,6 +5151,7 @@
                     body: `کاربر ${currentUserLabel} در تاریخ ${getTehranDateString(now)} ساعت ${timeStrNow} ورود خود را ثبت کرد.\nمیزان تاخیر: ${delayMinutes} دقیقه\nحداکثر تاخیر مجاز طبق تنظیمات: ${settings.maxDelay} دقیقه\nمقدار بیش از حد مجاز: ${overBy} دقیقه`,
                     created_at: now.toISOString()
                 }]);
+                sendPushNotificationToRole('⚠️ هشدار تاخیر', `${currentUserLabel} با ${delayMinutes} دقیقه تاخیر (${overBy} دقیقه بیش از حد مجاز) وارد شد.`, 'admin');
             }
 
             if (type === 'exit' && exitDiffMinutes !== null && exitDiffMinutes < -settings.maxDelay) {
@@ -5027,6 +5163,7 @@
                     body: `کاربر ${currentUserLabel} در تاریخ ${getTehranDateString(now)} ساعت ${timeStrNow} خروج خود را ثبت کرد.\nساعت مقرر پایان شیفت: ${targetEndTime}\nمیزان زودتر رفتن: ${Math.abs(exitDiffMinutes)} دقیقه\nمقدار بیش از حد مجاز: ${earlyBy} دقیقه`,
                     created_at: now.toISOString()
                 }]);
+                sendPushNotificationToRole('⚠️ خروج زودهنگام', `${currentUserLabel} با ${Math.abs(exitDiffMinutes)} دقیقه زودتر از موعد خارج شد (${earlyBy} دقیقه بیش از حد مجاز).`, 'admin');
             }
 
             const { error } = await _supabase.from('attendance').insert([{
@@ -5109,6 +5246,7 @@
                     created_at: now.toISOString()
                 }]);
                 sendTelegramNotification(`⚠️ مشکل در ثبت حضور/غیاب: ${currentUserLabel}\n${reasonText}`);
+                sendPushNotificationToRole('⚠️ مشکل در ثبت حضور و غیاب', `${currentUserLabel}: ${reasonText}`, 'admin');
             } catch (e) {
                 console.warn('خطا در ارسال پیام هشدار به مدیر', e);
             }
