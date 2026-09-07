@@ -4840,6 +4840,26 @@
             }
         }
 
+        // پیام دقیق و مخصوص هر نوع خطای WebAuthn (به‌جای یک پیام کلی و مبهم)
+        function describeWebAuthnError(e) {
+            const name = e && e.name;
+            if (name === 'NotAllowedError') {
+                return 'درخواست تایید بیومتریک لغو شد یا زمانش تمام شد. معمولاً یعنی روی دکمه لغو زدید، اثر انگشت/چهره تشخیص داده نشد، یا بیش از حد صبر کردید. لطفاً دوباره تلاش کنید و این‌بار سریع‌تر انگشت/چهره را تایید کنید.';
+            }
+            if (name === 'InvalidStateError') {
+                return 'این اثر انگشت/چهره با ثبت قبلی مطابقت ندارد یا اطلاعات ثبت‌شده در این گوشی پاک شده (مثلاً بعد از ریست گوشی یا تغییر رمز قفل صفحه). از مدیر بخواهید ثبت قبلی‌تان را از بخش «مدیریت اثر انگشت پرسنل» ریست کند تا دوباره ثبت کنید.';
+            }
+            if (name === 'SecurityError') {
+                return 'آدرس سایت امن (https) نیست یا با آدرسی که موقع ثبت استفاده شده فرق دارد. مطمئن شوید دقیقاً از همان آدرس همیشگی برنامه وارد شده‌اید.';
+            }
+            if (name === 'NotSupportedError') {
+                return 'این گوشی/مرورگر امکانات لازم برای اثر انگشت/چهره را ندارد یا هیچ اثر انگشت/چهره‌ای در تنظیمات گوشی ثبت نشده. اول از تنظیمات گوشی حداقل یک اثر انگشت یا چهره ثبت کنید.';
+            }
+            if (name === 'AbortError') {
+                return 'عملیات نیمه‌کاره متوقف شد (مثلاً صفحه را ترک کردید یا برنامه به پس‌زمینه رفت). دوباره تلاش کنید و تا پایان روی همین صفحه بمانید.';
+            }
+            return 'خطای غیرمنتظره: ' + (e && e.message ? e.message : String(e));
+        }
         async function registerFingerprint() {
             if (!currentSessionUser) { showToast('⚠️ ابتدا وارد حساب کاربری خود شوید.'); return; }
             if (!window.PublicKeyCredential || !navigator.credentials) {
@@ -4917,7 +4937,9 @@
                 showToast('✅ اثر انگشت شما با موفقیت روی همین گوشی ثبت شد. از این به بعد برای ثبت ورود/خروج باید دقیقاً همین اثر انگشت را روی همین گوشی تایید کنید.');
                 loadFingerprintStatus();
             } catch (e) {
-                showToast('⛔ ثبت اثر انگشت لغو شد یا با خطا مواجه شد.\n\n(جزئیات: ' + (e.message || e) + ')');
+                console.error('خطای ثبت بیومتریک:', e);
+                const wantsRetry = await showConfirm('⛔ ثبت اثر انگشت/چهره انجام نشد.\n\nعلت دقیق: ' + describeWebAuthnError(e) + '\n\nمی‌خواهید همین الان دوباره تلاش کنید؟');
+                if (wantsRetry) registerFingerprint();
             }
         }
 
@@ -4967,7 +4989,14 @@
                 _supabase.from('staff_devices').update({ last_used_at: new Date().toISOString() }).eq('username', currentSessionUser.username).then(() => {});
                 return true;
             } catch (e) {
-                showToast('⛔ تایید اثر انگشت انجام نشد یا لغو شد؛ ثبت حضور و غیاب انجام نگرفت.\n\n(جزئیات: ' + (e.message || e) + ')');
+                console.error('خطای تایید بیومتریک هنگام ثبت حضور:', e);
+                const detail = describeWebAuthnError(e);
+                if (e && e.name === 'NotAllowedError') {
+                    const wantsRetry = await showConfirm('⛔ تایید بیومتریک انجام نشد.\n\n' + detail + '\n\nهمین الان دوباره تلاش کنید؟');
+                    if (wantsRetry) return await verifyFingerprintForAttendance();
+                    return false;
+                }
+                showToast('⛔ تایید بیومتریک انجام نشد؛ ثبت حضور و غیاب انجام نگرفت.\n\n' + detail);
                 return false;
             }
         }
