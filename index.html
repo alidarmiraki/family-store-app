@@ -4840,6 +4840,27 @@
             }
         }
 
+        // وقتی isUserVerifyingPlatformAuthenticatorAvailable() جواب «نه» می‌دهد، دلیلش خیلی وقت‌ها
+        // خود سنسور نیست — روی آیفون معمولاً یکی از این‌هاست: تب Private Browsing، باز بودن از طریق
+        // آیکون روی صفحه اصلی (PWA/standalone) با نسخه iOS قدیمی‌تر، یا مرورگر/وب‌ویوی داخل یک اپ دیگر
+        // (مثل تلگرام/اینستاگرام) که WebAuthn را اصلاً پشتیبانی نمی‌کند. این تابع حدس دقیق‌تری می‌زند.
+        function buildNoBiometricSensorMessage() {
+            const ua = navigator.userAgent || '';
+            const isIOS = /iPhone|iPad|iPod/.test(ua);
+            const isStandalone = (window.navigator.standalone === true) || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+            const isInAppWebview = /Instagram|Telegram|FBAN|FBAV|Line\//i.test(ua);
+
+            if (isInAppWebview) {
+                return '⚠️ به‌نظر می‌رسد این صفحه را از داخل یک اپ دیگر (مثل تلگرام/اینستاگرام) باز کرده‌اید، نه مستقیم از مرورگر. اثر انگشت/چهره در این حالت کار نمی‌کند. لطفاً روی سه‌نقطه بالای صفحه بزنید و «Open in Browser / باز کردن در مرورگر» را انتخاب کنید، یا لینک را مستقیم در Safari باز کنید.';
+            }
+            if (isIOS && isStandalone) {
+                return '⚠️ روی این آیفون، از طریق آیکون روی صفحه اصلی باز کرده‌اید. روی برخی نسخه‌های iOS، اثر انگشت/Face ID داخل این حالت (PWA) کار نمی‌کند.\n\nلطفاً یک‌بار برنامه را مستقیم در Safari (نه از روی آیکون صفحه اصلی) باز کنید و از همان‌جا امتحان کنید. اگر آنجا کار کرد، مشکل از نسخه iOS در حالت نصب‌شده است.';
+            }
+            if (isIOS) {
+                return '⚠️ روی این آیفون سنسور Face ID/Touch ID شناسایی نشد. محتمل‌ترین دلایل:\n۱) تب Safari در حالت خصوصی (Private Browsing) است — از یک تب عادی (غیرخصوصی) امتحان کنید.\n۲) نسخه iOS قدیمی است (حداقل iOS 16 پیشنهاد می‌شود) — از Settings > General > About بررسی کنید.\n۳) Face ID برای Safari در تنظیمات گوشی محدود شده — به Settings > Face ID & Passcode سر بزنید.';
+            }
+            return '⚠️ روی این گوشی سنسور اثر انگشت/فیس فعالی شناسایی نشد. مطمئن شوید در تنظیمات گوشی حداقل یک اثر انگشت یا فیس ثبت کرده‌اید، از حالت خصوصی/Incognito مرورگر خارج شوید و دوباره تلاش کنید.';
+        }
         // پیام دقیق و مخصوص هر نوع خطای WebAuthn (به‌جای یک پیام کلی و مبهم)
         function describeWebAuthnError(e) {
             const name = e && e.name;
@@ -4885,7 +4906,7 @@
             try {
                 const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
                 if (!available) {
-                    showToast('⚠️ روی این گوشی سنسور اثر انگشت/فیس فعالی شناسایی نشد. مطمئن شوید در تنظیمات گوشی حداقل یک اثر انگشت یا فیس ثبت کرده‌اید و دوباره تلاش کنید.');
+                    showToast(buildNoBiometricSensorMessage());
                     return;
                 }
             } catch (e) { /* بعضی مرورگرهای قدیمی این متد را ندارند؛ ادامه می‌دهیم */ }
