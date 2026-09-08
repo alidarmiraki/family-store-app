@@ -760,6 +760,20 @@
             padding: 16px;
         }
         #scannerOverlay.active { display: flex; }
+        #faceOverlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 10001;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        #faceOverlay.active { display: flex; }
+        #faceOvalGuide.face-detected { border-color: #10b981; box-shadow: 0 0 20px rgba(16,185,129,0.5); }
+        #faceOvalGuide.face-matched { border-color: #10b981; border-style: solid; }
+        #faceOvalGuide.face-mismatch { border-color: #ef4444; border-style: solid; }
         #adminEditSaleOverlay {
             position: fixed;
             inset: 0;
@@ -857,6 +871,23 @@
             <button class="cancel-edit-btn" style="display:block;" onclick="closeBarcodeScanner()">بستن</button>
         </div>
     </div>
+
+    <!-- اورلی تشخیص چهره‌ی اختصاصی (جایگزین/کمکی برای وقتی Face ID/اثر انگشت گوشی کار نمی‌کند) -->
+    <div id="faceOverlay">
+        <div class="scanner-box">
+            <h3 style="color:#38bdf8; margin:0 0 10px 0; font-size:14px;" id="faceOverlayTitle">🙂 تشخیص چهره اختصاصی</h3>
+            <div class="hint" style="margin-top:0;" id="faceOverlayHint">صورت خود را داخل کادر بگیرید و ثابت نگه دارید.</div>
+            <div id="faceVideoBox" style="position:relative; border-radius:10px; overflow:hidden; margin-top:10px; background:#000; min-height:240px;">
+                <video id="faceVideoEl" autoplay playsinline muted style="width:100%; display:block; transform:scaleX(-1);"></video>
+                <div id="faceOvalGuide" style="position:absolute; inset:0; border:3px dashed rgba(56,189,248,0.6); border-radius:50%; margin:14% 22%; pointer-events:none; transition:border-color 0.2s ease;"></div>
+            </div>
+            <canvas id="faceCaptureCanvas" style="display:none;"></canvas>
+            <div id="faceStatusText" class="hint">در حال باز کردن دوربین...</div>
+            <button class="submit-btn" id="faceCaptureBtn" style="display:none;" onclick="onFaceCaptureButtonClick()">📸 ثبت همین چهره</button>
+            <button class="cancel-edit-btn" style="display:block;" onclick="closeFaceOverlay(false)">بستن</button>
+        </div>
+    </div>
+
 
     <!-- اورلی ویرایش فاکتور فروش توسط مدیر (هر کالا، هر روز، هر کاربر) -->
     <div id="adminEditSaleOverlay">
@@ -987,6 +1018,7 @@
         <div style="display:flex; gap:6px; align-items:flex-start;">
             <input type="text" id="sName" dir="auto" list="dairyDatalist" placeholder="نام کالا را انتخاب یا تایپ کنید (لیست بر اساس الفبا مرتب است)" onchange="calculateSalePriceAuto('instore')" style="flex:1;">
             <button type="button" class="row-btn fill-btn" style="white-space:nowrap; margin-top:5px; padding:12px 10px;" onclick="openBarcodeScanner('instore')">📷 اسکن بارکد</button>
+            <button type="button" class="row-btn fill-btn" style="white-space:nowrap; margin-top:5px; padding:12px 10px;" onclick="startVoiceSaleEntry('instore')">🎤 ثبت با صدا</button>
         </div>
         <datalist id="productDatalist"></datalist>
         <datalist id="dairyDatalist"></datalist>
@@ -1061,6 +1093,7 @@
         <div style="display:flex; gap:6px; align-items:flex-start;">
             <input type="text" id="seName" dir="auto" list="productDatalist" placeholder="نام کالا را انتخاب یا تایپ کنید" onchange="calculateSalePriceAuto('ekala')" style="flex:1;">
             <button type="button" class="row-btn fill-btn" style="white-space:nowrap; margin-top:5px; padding:12px 10px;" onclick="openBarcodeScanner('ekala')">📷 اسکن بارکد</button>
+            <button type="button" class="row-btn fill-btn" style="white-space:nowrap; margin-top:5px; padding:12px 10px;" onclick="startVoiceSaleEntry('ekala')">🎤 ثبت با صدا</button>
         </div>
 
         <label>واحد وزن:</label>
@@ -1129,6 +1162,7 @@
         <div style="display:flex; gap:6px; align-items:flex-start;">
             <input type="text" id="ssName" dir="auto" list="sausageDatalist" placeholder="نام کالا را انتخاب یا تایپ کنید" onchange="calculateSalePriceAuto('sausage')" style="flex:1;">
             <button type="button" class="row-btn fill-btn" style="white-space:nowrap; margin-top:5px; padding:12px 10px;" onclick="openBarcodeScanner('sausage')">📷 اسکن بارکد</button>
+            <button type="button" class="row-btn fill-btn" style="white-space:nowrap; margin-top:5px; padding:12px 10px;" onclick="startVoiceSaleEntry('sausage')">🎤 ثبت با صدا</button>
         </div>
 
         <label>واحد وزن:</label>
@@ -1197,6 +1231,12 @@
         <div id="fingerprintStatusBox" class="hint" style="background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.3); border-radius:8px; padding:8px;">⏳ در حال بررسی وضعیت بیومتریک...</div>
         <button type="button" class="row-btn edit-btn" style="width:100%; margin-bottom:10px;" onclick="registerFingerprint()">👆 / 🙂 ثبت بیومتریک این گوشی (اثر انگشت یا تشخیص چهره)</button>
         <div class="hint" style="margin-top:-6px; margin-bottom:10px;">این دکمه با هر دو کار می‌کند: روی گوشی‌هایی که سنسور اثر انگشت دارند از همان استفاده می‌شود، روی گوشی‌هایی که Face ID/تشخیص چهره دارند از همان — نیازی به انتخاب دستی نیست، گوشی خودش تصمیم می‌گیرد.</div>
+
+        <div class="report-card" style="margin-top:2px; margin-bottom:12px;">
+            <h3 style="font-size:13px;">🆘 روش پشتیبان: تشخیص چهره اختصاصی برنامه</h3>
+            <div class="hint" style="margin-top:0;">اگر روی گوشی‌ات اثر انگشت/Face ID رسمی کار نمی‌کند (مثلاً روی بعضی آیفون‌ها)، این روش را ثبت کن — کاملاً مستقل است و توسط خود برنامه (نه سیستم‌عامل گوشی) تشخیص داده می‌شود.</div>
+            <button type="button" class="row-btn edit-btn" style="width:100%;" onclick="registerCustomFace()">🙂📸 ثبت چهره اختصاصی (روش پشتیبان)</button>
+        </div>
 
         <label>نوع ثبت:</label>
         <select id="attType" onchange="toggleAttendanceFields()">
@@ -1612,16 +1652,23 @@
         <div class="tare-box" style="margin-top:14px;">
             <label style="margin-top:0; color:#38bdf8;">📅 بازه فعلی (بازه‌ای که می‌خواهی بررسی کنی):</label>
             <div class="grid-2">
-                <div><label>از تاریخ:</label><input type="date" id="growthCurStart"></div>
-                <div><label>تا تاریخ:</label><input type="date" id="growthCurEnd"></div>
+                <div><label>از تاریخ:</label><input type="date" id="growthCurStart" oninput="updateGrowthDatePreview('growthCurStart','growthCurStartPreview')"><div class="hint" id="growthCurStartPreview" style="margin-top:3px;"></div></div>
+                <div><label>تا تاریخ:</label><input type="date" id="growthCurEnd" oninput="updateGrowthDatePreview('growthCurEnd','growthCurEndPreview')"><div class="hint" id="growthCurEndPreview" style="margin-top:3px;"></div></div>
+            </div>
+            <div class="hint" style="margin-top:8px;">⚠️ تقویمی که موبایل/مرورگر برای انتخاب تاریخ نشان می‌دهد <b>میلادی</b> است (نه شمسی)؛ برای همین معادل شمسی هر تاریخ را زیرش نشان می‌دهیم — قبل از ثبت گزارش حتماً چک کن که همون روزیه که منظورته. اگه مطمئن نیستی، از دکمه‌های زیر استفاده کن:</div>
+            <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;">
+                <button type="button" class="range-toggle-btn" style="flex:1; min-width:80px;" onclick="applyGrowthQuickRange('today')">امروز</button>
+                <button type="button" class="range-toggle-btn" style="flex:1; min-width:80px;" onclick="applyGrowthQuickRange('yesterday')">دیروز</button>
+                <button type="button" class="range-toggle-btn" style="flex:1; min-width:80px;" onclick="applyGrowthQuickRange('last7')">۷ روز اخیر</button>
+                <button type="button" class="range-toggle-btn" style="flex:1; min-width:80px;" onclick="applyGrowthQuickRange('last30')">۳۰ روز اخیر</button>
             </div>
         </div>
 
         <div class="tare-box" style="margin-top:10px;">
             <label style="margin-top:0; color:#38bdf8;">📅 بازه مقایسه (مثلاً هفته یا ماه قبل):</label>
             <div class="grid-2">
-                <div><label>از تاریخ:</label><input type="date" id="growthPrevStart"></div>
-                <div><label>تا تاریخ:</label><input type="date" id="growthPrevEnd"></div>
+                <div><label>از تاریخ:</label><input type="date" id="growthPrevStart" oninput="updateGrowthDatePreview('growthPrevStart','growthPrevStartPreview')"><div class="hint" id="growthPrevStartPreview" style="margin-top:3px;"></div></div>
+                <div><label>تا تاریخ:</label><input type="date" id="growthPrevEnd" oninput="updateGrowthDatePreview('growthPrevEnd','growthPrevEndPreview')"><div class="hint" id="growthPrevEndPreview" style="margin-top:3px;"></div></div>
             </div>
             <button class="range-toggle-btn" onclick="suggestPreviousGrowthRange()">⏪ پر کردن خودکار با یک بازه هم‌طول درست قبل از بازه فعلی</button>
         </div>
@@ -2148,6 +2195,32 @@
                 'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js'
             ], 8000);
         }
+        // کتابخانه تشخیص چهره اختصاصی (face-api.js) — فقط وقتی کاربر واقعاً اورلی چهره را باز کند لود می‌شود
+        function ensureFaceApiLoaded() {
+            return ensureLibraryLoaded('faceapi', () => typeof faceapi !== 'undefined', [
+                'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js',
+                'https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js'
+            ], 12000);
+        }
+        const FACE_MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
+        let faceModelsReady = false;
+        async function ensureFaceModelsLoaded() {
+            if (faceModelsReady) return true;
+            const libOk = await ensureFaceApiLoaded();
+            if (!libOk || typeof faceapi === 'undefined') return false;
+            try {
+                await Promise.all([
+                    faceapi.nets.tinyFaceDetector.loadFromUri(FACE_MODEL_URL),
+                    faceapi.nets.faceLandmark68Net.loadFromUri(FACE_MODEL_URL),
+                    faceapi.nets.faceRecognitionNet.loadFromUri(FACE_MODEL_URL)
+                ]);
+                faceModelsReady = true;
+                return true;
+            } catch (e) {
+                console.error('خطا در بارگذاری مدل‌های تشخیص چهره:', e);
+                return false;
+            }
+        }
 
         // راه‌اندازی امن اتصال به Supabase — اگر کتابخانه Supabase به هر دلیلی
         // (نت ضعیف، قطعی CDN، فیلترینگ) بارگذاری نشده باشد، به‌جای متوقف‌کردن
@@ -2227,6 +2300,32 @@
 
                 okBtn.addEventListener('click', onOk);
                 cancelBtn.addEventListener('click', onCancel);
+            });
+        }
+
+        // --- پیام آموزشی/هشدار با فقط یک دکمه «متوجه شدم» (برای مسدودسازی ثبت‌های اشتباه) ---
+        function showUnderstoodAlert(message) {
+            return new Promise((resolve) => {
+                const overlay = document.getElementById('confirmOverlay');
+                const msgEl = document.getElementById('confirmMessage');
+                const okBtn = document.getElementById('confirmOkBtn');
+                const cancelBtn = document.getElementById('confirmCancelBtn');
+                if (!overlay || !msgEl || !okBtn || !cancelBtn) { window.alert(message); resolve(); return; }
+
+                msgEl.innerText = message;
+                okBtn.innerText = '✅ متوجه شدم';
+                cancelBtn.style.display = 'none';
+                overlay.classList.add('active');
+
+                function cleanup() {
+                    overlay.classList.remove('active');
+                    okBtn.removeEventListener('click', onOk);
+                    okBtn.innerText = 'تایید';
+                    cancelBtn.style.display = '';
+                    resolve();
+                }
+                function onOk() { cleanup(); }
+                okBtn.addEventListener('click', onOk);
             });
         }
         let currentRole = "";
@@ -4280,6 +4379,178 @@
             }
         }
 
+        // =========================================================================
+        // ثبت فروش با صدا: کارمند نام کالا + مقدار را می‌گوید، برنامه خودش کالای
+        // مشابه را در لیست پیدا می‌کند، عدد را (چه رقمی چه به‌صورت کلمه فارسی) می‌خواند،
+        // فرم را پر می‌کند و بعد از ۴ ثانیه (قابل لغو) خودکار ثبت می‌کند.
+        // نکته مهم: Safari روی آیفون از این قابلیت (تشخیص گفتار مرورگر) پشتیبانی نمی‌کند؛
+        // این ویژگی فقط روی Chrome/Edge (اندروید یا دسکتاپ) کار می‌کند.
+        // =========================================================================
+        const PERSIAN_NUMBER_WORDS = {
+            'صفر': 0, 'یک': 1, 'دو': 2, 'سه': 3, 'چهار': 4, 'پنج': 5, 'شش': 6, 'هفت': 7, 'هشت': 8, 'نه': 9,
+            'ده': 10, 'یازده': 11, 'دوازده': 12, 'سیزده': 13, 'چهارده': 14, 'پانزده': 15, 'شانزده': 16, 'هفده': 17, 'هجده': 18, 'نوزده': 19,
+            'بیست': 20, 'سی': 30, 'چهل': 40, 'پنجاه': 50, 'شصت': 60, 'هفتاد': 70, 'هشتاد': 80, 'نود': 90,
+            'صد': 100, 'یکصد': 100, 'دویست': 200, 'سیصد': 300, 'چهارصد': 400, 'پانصد': 500, 'ششصد': 600, 'هفتصد': 700, 'هشتصد': 800, 'نهصد': 900
+        };
+        function parsePersianSpokenNumber(text) {
+            // اول امتحان کن ببین خود گوینده/تشخیص‌گر عدد را به‌صورت رقمی برگردانده (رایج‌ترین حالت)
+            const digitMatch = text.match(/\d+(\.\d+)?/);
+            if (digitMatch) return parseFloat(digitMatch[0]);
+
+            const normalized = text.replace(/ي/g, 'ی').replace(/ك/g, 'ک');
+            if (normalized.includes('نیم')) {
+                // "نیم کیلو" یا فقط "نیم"
+                return 0.5;
+            }
+            const words = normalized.split(/\s+/).map(w => w.replace(/^و$/, '').trim()).filter(Boolean);
+            let total = 0;
+            let found = false;
+            let thousandPart = 0;
+            for (const w of words) {
+                if (w === 'هزار') {
+                    thousandPart = (thousandPart || 1) * 1000;
+                    total += thousandPart;
+                    thousandPart = 0;
+                    found = true;
+                    continue;
+                }
+                if (PERSIAN_NUMBER_WORDS.hasOwnProperty(w)) {
+                    total += PERSIAN_NUMBER_WORDS[w];
+                    found = true;
+                }
+            }
+            return found ? total : null;
+        }
+
+        // پیدا کردن نزدیک‌ترین کالا در لیست بر اساس نام گفته‌شده (تطابق فازی ساده)
+        function findBestMatchingProduct(spokenText, categoryFilter) {
+            const normalize = (s) => (s || '').replace(/ي/g, 'ی').replace(/ك/g, 'ک').replace(/[\u200c\s]+/g, ' ').trim().toLowerCase();
+            const spoken = normalize(spokenText);
+            let candidates = cachedProductsList || [];
+            if (categoryFilter === 'sausage') candidates = candidates.filter(p => p.category === 'sausage');
+            else if (categoryFilter === 'dairy') candidates = candidates.filter(p => p.category !== 'sausage');
+
+            let best = null, bestScore = 0;
+            for (const p of candidates) {
+                const pname = normalize(p.name);
+                const pWords = pname.split(' ').filter(Boolean);
+                let score = 0;
+                for (const w of pWords) {
+                    if (w.length >= 2 && spoken.includes(w)) score += w.length;
+                }
+                if (spoken.includes(pname)) score += pname.length * 2;
+                if (score > bestScore) { bestScore = score; best = p; }
+            }
+            return bestScore >= 2 ? best : null;
+        }
+
+        let voiceSaleRecognition = null;
+        let voiceSaleAutoSubmitTimer = null;
+        function startVoiceSaleEntry(type) {
+            const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRec) {
+                showToast('❌ این مرورگر از ثبت با صدا پشتیبانی نمی‌کند.\n\n⚠️ نکته: Safari روی آیفون این قابلیت را ندارد؛ این ویژگی فقط روی Chrome (اندروید یا دسکتاپ) کار می‌کند.');
+                return;
+            }
+            if (voiceSaleAutoSubmitTimer) { clearTimeout(voiceSaleAutoSubmitTimer); voiceSaleAutoSubmitTimer = null; }
+
+            const recognition = new SpeechRec();
+            voiceSaleRecognition = recognition;
+            recognition.lang = 'fa-IR';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 3;
+
+            showToast('🎤 در حال گوش دادن... مثلاً بگو: «پنیر لیقوان دویست و پنجاه گرم»');
+            try { if (navigator.vibrate) navigator.vibrate(20); } catch (e) {}
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                handleVoiceSaleTranscript(type, transcript);
+            };
+            recognition.onerror = (event) => {
+                if (event.error === 'not-allowed' || event.error === 'permission-denied') {
+                    showToast('❌ اجازه‌ی دسترسی به میکروفون داده نشد.');
+                } else if (event.error === 'no-speech') {
+                    showToast('⚠️ صدایی شنیده نشد. دوباره امتحان کنید.');
+                } else {
+                    showToast('❌ خطا در تشخیص گفتار: ' + event.error);
+                }
+            };
+            try { recognition.start(); } catch (e) { showToast('❌ شروع تشخیص گفتار ممکن نشد.'); }
+        }
+
+        function handleVoiceSaleTranscript(type, transcript) {
+            const categoryFilter = type === 'sausage' ? 'sausage' : (type === 'instore' ? 'dairy' : null);
+            const product = findBestMatchingProduct(transcript, categoryFilter);
+            const qtyNumber = parsePersianSpokenNumber(transcript);
+            const isGram = /گرم/.test(transcript) && !/کیلو/.test(transcript);
+            const isHalfKg = /نیم/.test(transcript) && /کیلو/.test(transcript);
+
+            if (!product) {
+                showToast('⚠️ متوجه نشدم چه کالایی گفتی («' + transcript + '» شنیده شد). دوباره واضح‌تر امتحان کن یا دستی وارد کن.');
+                return;
+            }
+            if (qtyNumber === null || qtyNumber <= 0) {
+                showToast('⚠️ مقدار را متوجه نشدم («' + transcript + '» شنیده شد). دوباره امتحان کن، مثلاً: «' + product.name + ' پانصد گرم».');
+                return;
+            }
+
+            const ids = SALE_FORM_IDS[type];
+            document.getElementById(ids.name).value = product.name;
+
+            const unitRadios = document.querySelectorAll(`input[name="${ids.qtyUnitName}"]`);
+            if (isHalfKg) {
+                unitRadios.forEach(r => { r.checked = (r.value === 'kg'); });
+                document.getElementById(ids.qty).value = 0.5;
+            } else if (isGram) {
+                unitRadios.forEach(r => { r.checked = (r.value === 'gram'); });
+                document.getElementById(ids.qty).value = qtyNumber;
+            } else {
+                unitRadios.forEach(r => { r.checked = (r.value === 'kg'); });
+                document.getElementById(ids.qty).value = qtyNumber;
+            }
+            onSaleUnitChange(type);
+
+            const qtyLabelText = isGram ? (qtyNumber + ' گرم') : ((isHalfKg ? 0.5 : qtyNumber) + ' کیلوگرم');
+            showVoiceSaleConfirmToast(type, product.name, qtyLabelText);
+        }
+
+        // پیش‌نمایش نهایی با شمارش معکوس ۴ ثانیه‌ای قابل‌لغو، به‌جای ثبت کاملاً کور و بی‌بازگشت
+        // (چون یک اشتباه تشخیص صدا می‌تواند مستقیماً روی موجودی/پول اثر بگذارد)
+        function showVoiceSaleConfirmToast(type, productName, qtyLabelText) {
+            const container = document.getElementById('toastContainer');
+            if (!container) { showToast(`🎤 شنیدم: ${productName} — ${qtyLabelText}`); return; }
+            const el = document.createElement('div');
+            el.className = 'toast-item info';
+            el.style.cursor = 'pointer';
+            let seconds = 4;
+            el.innerHTML = `🎤 شنیدم: <b>${escapeHtmlForToast(productName)}</b> — <b>${escapeHtmlForToast(qtyLabelText)}</b><br><span style="font-size:11px;">در حال ثبت خودکار ظرف <span id="voiceCountdownNum">${seconds}</span> ثانیه... (برای لغو همین‌جا بزن)</span>`;
+            container.appendChild(el);
+
+            const countdownEl = el.querySelector('#voiceCountdownNum');
+            const interval = setInterval(() => {
+                seconds -= 1;
+                if (countdownEl) countdownEl.innerText = seconds;
+                if (seconds <= 0) clearInterval(interval);
+            }, 1000);
+
+            let cancelled = false;
+            el.addEventListener('click', () => {
+                cancelled = true;
+                clearInterval(interval);
+                clearTimeout(voiceSaleAutoSubmitTimer);
+                el.remove();
+                showToast('❌ ثبت خودکار لغو شد. می‌توانی مقدار/کالا را دستی اصلاح و ثبت کنی.');
+            });
+
+            voiceSaleAutoSubmitTimer = setTimeout(() => {
+                if (cancelled) return;
+                clearInterval(interval);
+                el.remove();
+                submitSale(type);
+            }, 4000);
+        }
+
         // --- ارسال پیام از فروشنده به مدیر ---
         async function sendMessageToAdmin() {
             const title = document.getElementById('msgTitle').value.trim();
@@ -4881,6 +5152,159 @@
             }
             return 'خطای غیرمنتظره: ' + (e && e.message ? e.message : String(e));
         }
+        // =========================================================================
+        // تشخیص چهره‌ی اختصاصی (مستقل از WebAuthn/Face ID گوشی) — با هوش مصنوعی سبک
+        // که مستقیم داخل خود مرورگر اجرا می‌شود (هیچ عکسی به سرور فرستاده نمی‌شود، فقط
+        // یک بردار عددی ۱۲۸ رقمی که معرف چهره است ذخیره می‌شود). این یک روش کاملاً جدا و
+        // پشتیبان است، برای وقتی WebAuthn (اثر انگشت/Face ID رسمی گوشی) کار نمی‌کند.
+        // =========================================================================
+        let faceStream = null;
+        let faceDetectLoopActive = false;
+        let faceLastDescriptor = null;
+
+        async function openFaceOverlayCamera() {
+            const overlay = document.getElementById('faceOverlay');
+            const statusText = document.getElementById('faceStatusText');
+            const video = document.getElementById('faceVideoEl');
+            overlay.classList.add('active');
+            statusText.innerText = '⏳ در حال آماده‌سازی تشخیص چهره...';
+            document.getElementById('faceOvalGuide').className = '';
+            document.getElementById('faceCaptureBtn').style.display = 'none';
+
+            const modelsOk = await ensureFaceModelsLoaded();
+            if (!modelsOk) {
+                statusText.innerText = '❌ بارگذاری موتور تشخیص چهره ناموفق بود (نیاز به اینترنت دارد). دوباره تلاش کنید.';
+                return false;
+            }
+            try {
+                faceStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } });
+                video.srcObject = faceStream;
+                await new Promise(resolve => { video.onloadedmetadata = () => resolve(); });
+                statusText.innerText = 'صورت خود را داخل کادر بگیرید...';
+                return true;
+            } catch (e) {
+                statusText.innerText = '❌ دسترسی به دوربین جلو ممکن نشد: ' + (e.message || e);
+                return false;
+            }
+        }
+
+        function closeFaceOverlay(keepResult) {
+            faceDetectLoopActive = false;
+            const overlay = document.getElementById('faceOverlay');
+            overlay.classList.remove('active');
+            if (faceStream) {
+                faceStream.getTracks().forEach(t => t.stop());
+                faceStream = null;
+            }
+            if (!keepResult) faceLastDescriptor = null;
+        }
+
+        // حلقه‌ی زنده‌ی تشخیص: هر ~400 میلی‌ثانیه یک فریم از ویدیو را بررسی می‌کند
+        async function runFaceDetectLoop(onDescriptor) {
+            faceDetectLoopActive = true;
+            const video = document.getElementById('faceVideoEl');
+            const guide = document.getElementById('faceOvalGuide');
+            const opts = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 });
+            while (faceDetectLoopActive) {
+                try {
+                    const result = await faceapi.detectSingleFace(video, opts).withFaceLandmarks().withFaceDescriptor();
+                    if (result) {
+                        guide.className = 'face-detected';
+                        faceLastDescriptor = Array.from(result.descriptor);
+                        onDescriptor(faceLastDescriptor);
+                    } else {
+                        guide.className = '';
+                        faceLastDescriptor = null;
+                    }
+                } catch (e) { /* یک فریم بد را نادیده بگیر، ادامه بده */ }
+                await new Promise(r => setTimeout(r, 400));
+            }
+        }
+
+        function euclideanDistance(a, b) {
+            let sum = 0;
+            for (let i = 0; i < a.length; i++) sum += (a[i] - b[i]) ** 2;
+            return Math.sqrt(sum);
+        }
+
+        // --- ثبت چهره (یک‌بار، از تب حضور و غیاب) ---
+        async function registerCustomFace() {
+            if (!currentSessionUser) return;
+            document.getElementById('faceOverlayTitle').innerText = '🙂 ثبت چهره اختصاصی';
+            document.getElementById('faceOverlayHint').innerText = 'صورت خود را داخل کادر بگیرید؛ وقتی کادر سبز شد، دکمه «ثبت همین چهره» را بزنید.';
+            const ok = await openFaceOverlayCamera();
+            if (!ok) { setTimeout(() => closeFaceOverlay(false), 2500); return; }
+            document.getElementById('faceCaptureBtn').style.display = 'block';
+            runFaceDetectLoop(() => {});
+        }
+
+        async function onFaceCaptureButtonClick() {
+            if (!faceLastDescriptor) {
+                showToast('⚠️ هنوز چهره‌ای به‌طور واضح شناسایی نشده. کمی جلوتر/عقب‌تر بروید و دوباره امتحان کنید.');
+                return;
+            }
+            const descriptorToSave = faceLastDescriptor.slice();
+            closeFaceOverlay(false);
+            const { error } = await _supabase.from('staff_face_data').upsert([{
+                username: currentSessionUser.username,
+                descriptor: descriptorToSave,
+                registered_at: new Date().toISOString()
+            }], { onConflict: 'username' });
+            if (error) {
+                showToast('❌ خطا در ذخیره چهره: ' + error.message + '\n\nمطمئن شوید جدول staff_face_data در Supabase ساخته شده است.');
+                return;
+            }
+            showToast('✅ چهره شما با موفقیت ثبت شد. از این به بعد اگر اثر انگشت/Face ID گوشی کار نکرد، می‌توانید از همین روش برای ورود/خروج استفاده کنید.');
+            loadFingerprintStatus();
+        }
+
+        // --- تایید چهره هنگام ثبت حضور (وقتی WebAuthn جواب نداد) — Promise<boolean> برمی‌گرداند ---
+        async function verifyCustomFace() {
+            if (!currentSessionUser) return false;
+            const { data: faceRow } = await _supabase.from('staff_face_data').select('*').eq('username', currentSessionUser.username).maybeSingle();
+            if (!faceRow || !faceRow.descriptor) {
+                showToast('⚠️ برای این حساب هنوز چهره‌ای ثبت نشده. از تب «⏰ حضور و غیاب» یک‌بار «ثبت چهره اختصاصی» را انجام دهید.');
+                return false;
+            }
+            const storedDescriptor = faceRow.descriptor;
+
+            document.getElementById('faceOverlayTitle').innerText = '🙂 تایید چهره برای ثبت حضور';
+            document.getElementById('faceOverlayHint').innerText = 'صورت خود را داخل کادر بگیرید تا خودکار شناسایی شود...';
+            const ok = await openFaceOverlayCamera();
+            if (!ok) { setTimeout(() => closeFaceOverlay(false), 2500); return false; }
+
+            const FACE_MATCH_THRESHOLD = 0.55; // هرچه کمتر، سخت‌گیرانه‌تر — مقدار استاندارد پیشنهادی face-api.js حدود ۰.۶ است
+            return await new Promise((resolve) => {
+                const guide = document.getElementById('faceOvalGuide');
+                const statusText = document.getElementById('faceStatusText');
+                let settled = false;
+                const timeoutId = setTimeout(() => {
+                    if (settled) return;
+                    settled = true;
+                    closeFaceOverlay(false);
+                    showToast('⏳ چهره در ۲۰ ثانیه تایید نشد. دوباره تلاش کنید یا از روش دیگری استفاده کنید.');
+                    resolve(false);
+                }, 20000);
+
+                runFaceDetectLoop((descriptor) => {
+                    if (settled) return;
+                    const distance = euclideanDistance(descriptor, storedDescriptor);
+                    if (distance < FACE_MATCH_THRESHOLD) {
+                        settled = true;
+                        clearTimeout(timeoutId);
+                        guide.className = 'face-matched';
+                        statusText.innerText = '✅ چهره تایید شد!';
+                        playScanBeepSound();
+                        vibrateShort();
+                        setTimeout(() => { closeFaceOverlay(false); resolve(true); }, 500);
+                    } else {
+                        guide.className = 'face-mismatch';
+                        statusText.innerText = '❌ این چهره با چهره ثبت‌شده مطابقت ندارد...';
+                    }
+                });
+            });
+        }
+
         async function registerFingerprint() {
             if (!currentSessionUser) { showToast('⚠️ ابتدا وارد حساب کاربری خود شوید.'); return; }
             if (!window.PublicKeyCredential || !navigator.credentials) {
@@ -4965,25 +5389,29 @@
         }
 
         // بررسی و تایید اثر انگشت قبل از ثبت ورود/خروج. خروجی: true = تایید شد و می‌توان ادامه داد، false = متوقف شود
+        // نتیجه‌ی تایید بیومتریک به‌صورت آبجکت برمی‌گردد (نه فقط true/false) تا مشخص شود
+        // اگر تایید نشد، آیا امکان ادامه‌ی ثبت بدون بیومتریک (با عکس/موقعیت مکانی) وجود دارد یا نه.
         async function verifyFingerprintForAttendance() {
-            if (!currentSessionUser) return false;
+            if (!currentSessionUser) return { ok: false, fallbackReason: 'کاربر لاگین نیست' };
 
             const { data: deviceRow, error } = await _supabase.from('staff_devices').select('*').eq('username', currentSessionUser.username).maybeSingle();
             if (error) {
-                showToast('⚠️ خطا در بررسی اثر انگشت ثبت‌شده: ' + error.message + '\n\nمطمئن شوید جدول staff_devices در Supabase ساخته شده است.');
-                return false;
+                return await resolveBiometricFailure('خطا در بررسی اثر انگشت ثبت‌شده: ' + error.message);
             }
 
             if (!deviceRow) {
-                const wantsRegister = await showConfirm('برای ثبت ورود/خروج، اول باید یک‌بار اثر انگشت خود را روی همین گوشی ثبت کنید. همین الان ثبت شود؟');
-                if (wantsRegister) await registerFingerprint();
-                showToast('لطفاً بعد از ثبت موفق اثر انگشت، دوباره روی دکمه «ثبت در سیستم حضور و غیاب» بزنید.');
-                return false;
+                const wantsRegister = await showConfirm('برای ورود/خروج بهتر است اول یک‌بار اثر انگشت یا چهره خود را روی همین گوشی ثبت کنید.\n\nهمین الان ثبت شود؟\n(اگر «انصراف» بزنید، می‌توانید بدون بیومتریک با عکس/موقعیت مکانی ادامه دهید.)');
+                if (wantsRegister) {
+                    await registerFingerprint();
+                    showToast('لطفاً بعد از ثبت موفق، دوباره روی دکمه «ثبت در سیستم حضور و غیاب» بزنید.');
+                    return { ok: false, fallbackReason: null, userCancelled: true };
+                }
+                return await resolveBiometricFailure('هنوز هیچ اثر انگشت/چهره‌ای برای این حساب ثبت نشده.');
             }
 
             if (!window.PublicKeyCredential || !navigator.credentials) {
                 showToast('⚠️ این دستگاه از تایید اثر انگشت پشتیبانی نمی‌کند؛ ثبت بدون تایید اثر انگشت انجام شد (لطفاً از مدیر بخواهید این مورد را بررسی کند).');
-                return true;
+                return { ok: true };
             }
 
             try {
@@ -4997,29 +5425,55 @@
                     }
                 });
 
-                if (!assertion) { showToast('⛔ تایید اثر انگشت انجام نشد؛ ثبت حضور و غیاب لغو شد.'); return false; }
+                if (!assertion) {
+                    return await resolveBiometricFailure('تایید اثر انگشت انجام نشد.');
+                }
 
                 // بررسی این‌که همین گوشی، همان گوشی ثبت اولیه است (نه گوشی دیگری از همین حساب)
                 const deviceUuid = getOrCreateDeviceUuid();
                 if (deviceRow.device_uuid && deviceRow.device_uuid !== deviceUuid) {
                     await notifyAdminAboutDeviceMismatch(deviceRow);
-                    showToast('⛔ این حساب قبلاً روی گوشی دیگری ثبت اثر انگشت شده و این گوشی با آن تطابق ندارد. این موضوع برای مدیر گزارش شد. اگر واقعاً گوشی خود را عوض کرده‌اید، از مدیر بخواهید ثبت قبلی را ریست کند.');
-                    return false;
+                    return await resolveBiometricFailure('این حساب قبلاً روی گوشی دیگری ثبت شده و این گوشی با آن تطابق ندارد (به مدیر گزارش شد).');
                 }
 
                 _supabase.from('staff_devices').update({ last_used_at: new Date().toISOString() }).eq('username', currentSessionUser.username).then(() => {});
-                return true;
+                return { ok: true };
             } catch (e) {
                 console.error('خطای تایید بیومتریک هنگام ثبت حضور:', e);
                 const detail = describeWebAuthnError(e);
                 if (e && e.name === 'NotAllowedError') {
                     const wantsRetry = await showConfirm('⛔ تایید بیومتریک انجام نشد.\n\n' + detail + '\n\nهمین الان دوباره تلاش کنید؟');
                     if (wantsRetry) return await verifyFingerprintForAttendance();
-                    return false;
                 }
-                showToast('⛔ تایید بیومتریک انجام نشد؛ ثبت حضور و غیاب انجام نگرفت.\n\n' + detail);
-                return false;
+                return await resolveBiometricFailure(detail);
             }
+        }
+
+        // وقتی بیومتریک رسمی گوشی (WebAuthn) به هر دلیلی کار نکرد، این تابع مرکزی تصمیم می‌گیرد:
+        // ۱) اگر کاربر چهره‌ی اختصاصی ثبت کرده، اول همان را امتحان می‌کند (بدون نیاز به WebAuthn/Face ID رسمی)
+        // ۲) اگر آن هم نبود/جواب نداد/کاربر نخواست، از کاربر می‌پرسد بدون بیومتریک با عکس/موقعیت ادامه دهد یا نه
+        // خروجی دقیقاً همان شکلی است که verifyFingerprintForAttendance برمی‌گرداند.
+        async function resolveBiometricFailure(reasonText) {
+            try {
+                const { data: faceRow } = await _supabase.from('staff_face_data').select('username').eq('username', currentSessionUser.username).maybeSingle();
+                if (faceRow) {
+                    const wantsFace = await showConfirm(
+                        '⚠️ تایید اثر انگشت/Face ID رسمی گوشی ممکن نشد.\n\n' + reasonText +
+                        '\n\nشما چهره‌ی اختصاصی هم ثبت کرده‌اید — می‌خواهید همان روش را امتحان کنید؟'
+                    );
+                    if (wantsFace) {
+                        const faceOk = await verifyCustomFace();
+                        if (faceOk) return { ok: true };
+                        // چهره تطابق نداشت/لغو شد → برو سراغ گزینه‌ی عکس/موقعیت مکانی
+                    }
+                }
+            } catch (e) { /* اگر جدول چهره وجود نداشت یا خطا داد، بی‌صدا رد شو و برو سراغ فال‌بک معمولی */ }
+
+            const proceed = await showConfirm(
+                '⚠️ تایید بیومتریک ممکن نشد.\n\n' + reasonText +
+                '\n\nمی‌خواهید بدون تایید بیومتریک، فقط با عکس/موقعیت مکانی ورود/خروج خود را ثبت کنید؟ (این مورد دقیقاً با همین دلیل به مدیر اطلاع داده می‌شود)'
+            );
+            return { ok: false, fallbackReason: proceed ? reasonText : null, userCancelled: !proceed };
         }
 
         async function notifyAdminAboutDeviceMismatch(deviceRow) {
@@ -5108,12 +5562,14 @@
                 return;
             }
 
+            let biometricFallbackReason = null;
             if (type === 'entry' || type === 'exit') {
                 if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = '👆 در حال تایید اثر انگشت...'; }
-                const fpOk = await verifyFingerprintForAttendance();
-                if (!fpOk) {
+                const fpResult = await verifyFingerprintForAttendance();
+                if (!fpResult.ok) {
                     if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'ثبت در سیستم حضور و غیاب'; }
-                    return;
+                    if (!fpResult.fallbackReason) return; // کاربر انصراف داد یا لغو کرد — ثبت نمی‌شود
+                    biometricFallbackReason = fpResult.fallbackReason; // کاربر خواست بدون بیومتریک ادامه دهد
                 }
             }
 
@@ -5223,9 +5679,21 @@
                 delay_minutes: delayMinutes,
                 exit_diff_minutes: exitDiffMinutes,
                 photo_url: photoUrl,
-                note: (note ? note + " | " : "") + (selectedLocationText ? selectedLocationText + " | " : "") + `زمان ثبت: ${fullDateTimeStr}`,
+                note: (note ? note + " | " : "") + (selectedLocationText ? selectedLocationText + " | " : "") + (biometricFallbackReason ? `⚠️ بدون تایید بیومتریک (${biometricFallbackReason}) | ` : "") + `زمان ثبت: ${fullDateTimeStr}`,
                 created_at: now.toISOString()
             }]);
+
+            if (!error && biometricFallbackReason) {
+                const typeLabelFa = type === 'entry' ? 'ورود' : 'خروج';
+                _supabase.from('messages').insert([{
+                    sender: "سیستم خودکار بیومتریک",
+                    recipient: "admin",
+                    title: `⚠️ ثبت ${typeLabelFa} بدون تایید بیومتریک: ${currentUserLabel}`,
+                    body: `کاربر ${currentUserLabel} در تاریخ ${getTehranDateString(now)} ساعت ${timeStrNow} ${typeLabelFa} خود را ثبت کرد، اما بیومتریک (اثر انگشت/چهره) کار نکرد و کاربر با عکس/موقعیت مکانی به‌جای آن ادامه داد.\nعلت فنی: ${biometricFallbackReason}`,
+                    created_at: now.toISOString()
+                }]).then(() => {});
+                sendPushNotificationToRole(`⚠️ ${typeLabelFa} بدون بیومتریک`, `${currentUserLabel}: بیومتریک کار نکرد (${biometricFallbackReason})، با عکس/موقعیت ثبت شد.`, 'admin');
+            }
 
             if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'ثبت در سیستم حضور و غیاب'; }
 
@@ -5880,7 +6348,13 @@
                 const currentBooth = product.booth_stock || 0;
 
                 if (diff < 0 && currentBooth < Math.abs(diff)) {
-                    showToast('⚠️ توجه: موجودی ظرف غرفه برای افزایش این مقدار کافی نیست؛ موجودی غرفه به صفر می‌رسد و ظرف نیاز به شارژ مجدد دارد.');
+                    await showUnderstoodAlert(
+                        `⛔ این مقدار قابل ثبت نیست!\n\n` +
+                        `موجودی فعلی «${product.name}» داخل ظرف غرفه: ${currentBooth.toLocaleString('fa-IR')} کیلوگرم\n` +
+                        `برای افزایش این فاکتور به مقدار جدید، به ${Math.abs(diff).toLocaleString('fa-IR')} کیلوگرم بیشتر از موجودی فعلی غرفه نیاز است که وجود ندارد.\n\n` +
+                        `📌 نحوه‌ی درست ثبت: مقدار فاکتور نباید از موجودی واقعی داخل ظرف غرفه بیشتر شود. اگر واقعاً غرفه شارژ شده ولی عدد سیستم درست نیست، اول از تب «🧊 وضعیت یخچال غرفه» موجودی را اصلاح کن، بعد این فاکتور را ویرایش کن.`
+                    );
+                    return;
                 }
 
                 const newEditCount = editing.editCount + 1;
@@ -5911,7 +6385,13 @@
 
             let currentBooth = product.booth_stock || 0;
             if (currentBooth < qty) {
-                showToast('⚠️ موجودی ظرف غرفه کمتر از مقدار فروش است! موجودی غرفه کسر گردید اما ظرف نیاز به شارژ دارد.');
+                await showUnderstoodAlert(
+                    `⛔ این مقدار قابل ثبت نیست!\n\n` +
+                    `موجودی فعلی «${product.name}» داخل ظرف غرفه: ${currentBooth.toLocaleString('fa-IR')} کیلوگرم\n` +
+                    `مقداری که وارد کردی: ${qty.toLocaleString('fa-IR')} کیلوگرم (${(qty - currentBooth).toLocaleString('fa-IR')} کیلوگرم بیشتر از موجودی)\n\n` +
+                    `📌 نحوه‌ی درست ثبت: مقدار هر فاکتور فروش نباید از موجودی واقعی داخل ظرف غرفه (نه انبار اصلی) بیشتر باشد. اگر همین الان غرفه را شارژ کرده‌ای ولی عدد سیستم به‌روز نشده، اول از تب «🧊 وضعیت یخچال غرفه» موجودی را اصلاح کن، بعد دوباره فروش را ثبت کن.`
+                );
+                return;
             }
 
             const { data: newBoothStock, error: boothAdjustErr } = await _supabase.rpc('adjust_booth_stock', { p_product_id: product.id, p_delta: -qty });
@@ -7631,6 +8111,47 @@
         }
 
         // ================== گزارش رشد/افت فروش (فقط مدیر) ==================
+        // معادل شمسی یک تاریخ میلادی (yyyy-mm-dd) را زیر همون فیلد نشون می‌ده — چون تقویم انتخاب تاریخ
+        // خود مرورگر/موبایل همیشه میلادیه، و این باعث اشتباه گرفتن بازه‌ی گزارش می‌شد.
+        function updateGrowthDatePreview(inputId, previewId) {
+            const input = document.getElementById(inputId);
+            const preview = document.getElementById(previewId);
+            if (!input || !preview) return;
+            if (!input.value) { preview.innerText = ''; return; }
+            try {
+                const d = new Date(input.value + 'T12:00:00+03:30');
+                preview.innerText = '📆 معادل شمسی: ' + getTehranDateString(d);
+            } catch (e) { preview.innerText = ''; }
+        }
+
+        // دکمه‌های میان‌بر: چون تقویم انتخاب تاریخ میلادیه و باعث گیج‌شدن می‌شد، این دکمه‌ها
+        // بازه‌ی فعلی و بازه‌ی مقایسه (هم‌طول، درست قبل از آن) را با یک تپ درست پر می‌کنند.
+        function applyGrowthQuickRange(kind) {
+            const today = new Date();
+            let curStart, curEnd;
+            if (kind === 'today') {
+                curStart = curEnd = getTehranISODate(today);
+            } else if (kind === 'yesterday') {
+                const y = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+                curStart = curEnd = getTehranISODate(y);
+            } else if (kind === 'last7') {
+                const s = new Date(today.getTime() - 6 * 24 * 60 * 60 * 1000);
+                curStart = getTehranISODate(s);
+                curEnd = getTehranISODate(today);
+            } else if (kind === 'last30') {
+                const s = new Date(today.getTime() - 29 * 24 * 60 * 60 * 1000);
+                curStart = getTehranISODate(s);
+                curEnd = getTehranISODate(today);
+            }
+            document.getElementById('growthCurStart').value = curStart;
+            document.getElementById('growthCurEnd').value = curEnd;
+            updateGrowthDatePreview('growthCurStart', 'growthCurStartPreview');
+            updateGrowthDatePreview('growthCurEnd', 'growthCurEndPreview');
+            suggestPreviousGrowthRange();
+            updateGrowthDatePreview('growthPrevStart', 'growthPrevStartPreview');
+            updateGrowthDatePreview('growthPrevEnd', 'growthPrevEndPreview');
+        }
+
         function suggestPreviousGrowthRange() {
             const curStart = document.getElementById('growthCurStart').value;
             const curEnd = document.getElementById('growthCurEnd').value;
@@ -7652,6 +8173,8 @@
 
             document.getElementById('growthPrevStart').value = getTehranISODate(prevStartDate);
             document.getElementById('growthPrevEnd').value = getTehranISODate(prevEndDate);
+            updateGrowthDatePreview('growthPrevStart', 'growthPrevStartPreview');
+            updateGrowthDatePreview('growthPrevEnd', 'growthPrevEndPreview');
         }
 
         function formatPctChange(pct) {
