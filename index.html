@@ -4392,7 +4392,22 @@
             'بیست': 20, 'سی': 30, 'چهل': 40, 'پنجاه': 50, 'شصت': 60, 'هفتاد': 70, 'هشتاد': 80, 'نود': 90,
             'صد': 100, 'یکصد': 100, 'دویست': 200, 'سیصد': 300, 'چهارصد': 400, 'پانصد': 500, 'ششصد': 600, 'هفتصد': 700, 'هشتصد': 800, 'نهصد': 900
         };
-        function parsePersianSpokenNumber(text) {
+        // تبدیل ارقام فارسی (۰-۹) و عربی (٠-٩) به ارقام انگلیسی معمولی، چون تشخیص گفتار
+        // فارسی معمولاً عدد را با ارقام فارسی برمی‌گرداند (مثلاً «۵۰۰» نه «500») و رجکس قبلی
+        // فقط ارقام انگلیسی را می‌شناخت — همین باعث می‌شد مقدارهای زیر یک کیلو هیچ‌وقت تشخیص داده نشوند.
+        function convertPersianDigitsToEnglish(text) {
+            const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
+            const arabicDigits = '٠١٢٣٤٥٦٧٨٩';
+            return text.replace(/[۰-۹٠-٩]/g, (ch) => {
+                const pIdx = persianDigits.indexOf(ch);
+                if (pIdx !== -1) return String(pIdx);
+                const aIdx = arabicDigits.indexOf(ch);
+                if (aIdx !== -1) return String(aIdx);
+                return ch;
+            });
+        }
+        function parsePersianSpokenNumber(rawText) {
+            const text = convertPersianDigitsToEnglish(rawText);
             // اول امتحان کن ببین خود گوینده/تشخیص‌گر عدد را به‌صورت رقمی برگردانده (رایج‌ترین حالت)
             const digitMatch = text.match(/\d+(\.\d+)?/);
             if (digitMatch) return parseFloat(digitMatch[0]);
@@ -5199,16 +5214,19 @@
             if (!keepResult) faceLastDescriptor = null;
         }
 
-        // حلقه‌ی زنده‌ی تشخیص: هر ~400 میلی‌ثانیه یک فریم از ویدیو را بررسی می‌کند
+        // حلقه‌ی زنده‌ی تشخیص: هر ~350 میلی‌ثانیه یک فریم از ویدیو را بررسی می‌کند.
+        // inputSize بزرگ‌تر (۴۱۶ به‌جای مقدار پیش‌فرض ۲۲۴) یعنی تحلیل با وضوح بیشتر → دقت بالاتر
+        // (کمی کندتر، ولی روی گوشی‌های امروزی همچنان زنده و سریع است). scoreThreshold بالاتر یعنی
+        // فقط فریم‌هایی که واقعاً مطمئنیم صورت است در نظر گرفته می‌شوند (نه یک شبح/سایه مبهم).
         async function runFaceDetectLoop(onDescriptor) {
             faceDetectLoopActive = true;
             const video = document.getElementById('faceVideoEl');
             const guide = document.getElementById('faceOvalGuide');
-            const opts = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 });
+            const opts = new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.6 });
             while (faceDetectLoopActive) {
                 try {
                     const result = await faceapi.detectSingleFace(video, opts).withFaceLandmarks().withFaceDescriptor();
-                    if (result) {
+                    if (result && result.detection.score >= 0.7) {
                         guide.className = 'face-detected';
                         faceLastDescriptor = Array.from(result.descriptor);
                         onDescriptor(faceLastDescriptor);
@@ -5217,7 +5235,7 @@
                         faceLastDescriptor = null;
                     }
                 } catch (e) { /* یک فریم بد را نادیده بگیر، ادامه بده */ }
-                await new Promise(r => setTimeout(r, 400));
+                await new Promise(r => setTimeout(r, 350));
             }
         }
 
@@ -5228,37 +5246,54 @@
         }
 
         // --- ثبت چهره (یک‌بار، از تب حضور و غیاب) ---
+        // برای دقت بالاتر، به‌جای ذخیره‌ی یک فریم تنها، ۳ نمونه‌ی معتبر پشت‌سرهم می‌گیریم و
+        // میانگین‌شان را ذخیره می‌کنیم — این باعث می‌شود نور لحظه‌ای/زاویه‌ی یک فریم بد، کل
+        // ثبت را خراب نکند و تشخیص بعدی خیلی پایدارتر باشد.
+        let faceRegisterSamples = [];
         async function registerCustomFace() {
             if (!currentSessionUser) return;
+            faceRegisterSamples = [];
             document.getElementById('faceOverlayTitle').innerText = '🙂 ثبت چهره اختصاصی';
-            document.getElementById('faceOverlayHint').innerText = 'صورت خود را داخل کادر بگیرید؛ وقتی کادر سبز شد، دکمه «ثبت همین چهره» را بزنید.';
+            document.getElementById('faceOverlayHint').innerText = 'صورت خود را داخل کادر بگیرید و ثابت نگه دارید؛ به‌محض سبز شدن کادر، ۳ نمونه به‌طور خودکار گرفته می‌شود (برای دقت بالاتر).';
             const ok = await openFaceOverlayCamera();
             if (!ok) { setTimeout(() => closeFaceOverlay(false), 2500); return; }
-            document.getElementById('faceCaptureBtn').style.display = 'block';
-            runFaceDetectLoop(() => {});
+            document.getElementById('faceCaptureBtn').style.display = 'none';
+            const statusText = document.getElementById('faceStatusText');
+
+            runFaceDetectLoop((descriptor) => {
+                if (faceRegisterSamples.length >= 3 || !faceDetectLoopActive) return;
+                faceRegisterSamples.push(descriptor);
+                statusText.innerText = `📸 نمونه ${faceRegisterSamples.length} از ۳ گرفته شد... ثابت بمانید.`;
+                if (faceRegisterSamples.length >= 3) {
+                    finalizeFaceRegistration();
+                }
+            });
         }
 
-        async function onFaceCaptureButtonClick() {
-            if (!faceLastDescriptor) {
-                showToast('⚠️ هنوز چهره‌ای به‌طور واضح شناسایی نشده. کمی جلوتر/عقب‌تر بروید و دوباره امتحان کنید.');
-                return;
+        async function finalizeFaceRegistration() {
+            faceDetectLoopActive = false;
+            const dims = faceRegisterSamples[0].length;
+            const avgDescriptor = new Array(dims).fill(0);
+            for (const sample of faceRegisterSamples) {
+                for (let i = 0; i < dims; i++) avgDescriptor[i] += sample[i] / faceRegisterSamples.length;
             }
-            const descriptorToSave = faceLastDescriptor.slice();
             closeFaceOverlay(false);
             const { error } = await _supabase.from('staff_face_data').upsert([{
                 username: currentSessionUser.username,
-                descriptor: descriptorToSave,
+                descriptor: avgDescriptor,
                 registered_at: new Date().toISOString()
             }], { onConflict: 'username' });
             if (error) {
                 showToast('❌ خطا در ذخیره چهره: ' + error.message + '\n\nمطمئن شوید جدول staff_face_data در Supabase ساخته شده است.');
                 return;
             }
-            showToast('✅ چهره شما با موفقیت ثبت شد. از این به بعد اگر اثر انگشت/Face ID گوشی کار نکرد، می‌توانید از همین روش برای ورود/خروج استفاده کنید.');
+            showToast('✅ چهره شما با موفقیت و با دقت بالا ثبت شد (از ۳ نمونه). از این به بعد اگر اثر انگشت/Face ID گوشی کار نکرد، می‌توانید از همین روش استفاده کنید.');
             loadFingerprintStatus();
         }
 
         // --- تایید چهره هنگام ثبت حضور (وقتی WebAuthn جواب نداد) — Promise<boolean> برمی‌گرداند ---
+        // برای دقت خیلی بالا: آستانه‌ی تطابق سخت‌گیرانه‌تر (۰.۵ به‌جای مقدار استاندارد ۰.۶) و
+        // نیاز به ۲ فریم پشت‌سرهم مطابق (نه فقط یک فریم شانسی) قبل از قبول‌کردن تشخیص.
         async function verifyCustomFace() {
             if (!currentSessionUser) return false;
             const { data: faceRow } = await _supabase.from('staff_face_data').select('*').eq('username', currentSessionUser.username).maybeSingle();
@@ -5273,7 +5308,9 @@
             const ok = await openFaceOverlayCamera();
             if (!ok) { setTimeout(() => closeFaceOverlay(false), 2500); return false; }
 
-            const FACE_MATCH_THRESHOLD = 0.55; // هرچه کمتر، سخت‌گیرانه‌تر — مقدار استاندارد پیشنهادی face-api.js حدود ۰.۶ است
+            const FACE_MATCH_THRESHOLD = 0.5; // سخت‌گیرانه‌تر از مقدار استاندارد ۰.۶ برای دقت بالاتر
+            const REQUIRED_CONSECUTIVE_MATCHES = 2;
+            let consecutiveMatches = 0;
             return await new Promise((resolve) => {
                 const guide = document.getElementById('faceOvalGuide');
                 const statusText = document.getElementById('faceStatusText');
@@ -5282,7 +5319,7 @@
                     if (settled) return;
                     settled = true;
                     closeFaceOverlay(false);
-                    showToast('⏳ چهره در ۲۰ ثانیه تایید نشد. دوباره تلاش کنید یا از روش دیگری استفاده کنید.');
+                    showToast('⏳ چهره در ۲۰ ثانیه با اطمینان کافی تایید نشد. دوباره تلاش کنید یا از روش دیگری استفاده کنید.');
                     resolve(false);
                 }, 20000);
 
@@ -5290,14 +5327,20 @@
                     if (settled) return;
                     const distance = euclideanDistance(descriptor, storedDescriptor);
                     if (distance < FACE_MATCH_THRESHOLD) {
-                        settled = true;
-                        clearTimeout(timeoutId);
+                        consecutiveMatches++;
                         guide.className = 'face-matched';
-                        statusText.innerText = '✅ چهره تایید شد!';
-                        playScanBeepSound();
-                        vibrateShort();
-                        setTimeout(() => { closeFaceOverlay(false); resolve(true); }, 500);
+                        statusText.innerText = consecutiveMatches < REQUIRED_CONSECUTIVE_MATCHES
+                            ? `✅ در حال تایید نهایی... (${consecutiveMatches}/${REQUIRED_CONSECUTIVE_MATCHES})`
+                            : '✅ چهره تایید شد!';
+                        if (consecutiveMatches >= REQUIRED_CONSECUTIVE_MATCHES) {
+                            settled = true;
+                            clearTimeout(timeoutId);
+                            playScanBeepSound();
+                            vibrateShort();
+                            setTimeout(() => { closeFaceOverlay(false); resolve(true); }, 400);
+                        }
                     } else {
+                        consecutiveMatches = 0;
                         guide.className = 'face-mismatch';
                         statusText.innerText = '❌ این چهره با چهره ثبت‌شده مطابقت ندارد...';
                     }
@@ -5411,7 +5454,7 @@
 
             if (!window.PublicKeyCredential || !navigator.credentials) {
                 showToast('⚠️ این دستگاه از تایید اثر انگشت پشتیبانی نمی‌کند؛ ثبت بدون تایید اثر انگشت انجام شد (لطفاً از مدیر بخواهید این مورد را بررسی کند).');
-                return { ok: true };
+                return { ok: true, method: 'unsupported' };
             }
 
             try {
@@ -5437,7 +5480,7 @@
                 }
 
                 _supabase.from('staff_devices').update({ last_used_at: new Date().toISOString() }).eq('username', currentSessionUser.username).then(() => {});
-                return { ok: true };
+                return { ok: true, method: 'webauthn' };
             } catch (e) {
                 console.error('خطای تایید بیومتریک هنگام ثبت حضور:', e);
                 const detail = describeWebAuthnError(e);
@@ -5463,7 +5506,7 @@
                     );
                     if (wantsFace) {
                         const faceOk = await verifyCustomFace();
-                        if (faceOk) return { ok: true };
+                        if (faceOk) return { ok: true, method: 'custom_face' };
                         // چهره تطابق نداشت/لغو شد → برو سراغ گزینه‌ی عکس/موقعیت مکانی
                     }
                 }
@@ -5563,6 +5606,7 @@
             }
 
             let biometricFallbackReason = null;
+            let biometricMethodLabel = null; // برای ثبت شفاف در گزارش مدیر که دقیقاً با چه روشی تایید شد
             if (type === 'entry' || type === 'exit') {
                 if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = '👆 در حال تایید اثر انگشت...'; }
                 const fpResult = await verifyFingerprintForAttendance();
@@ -5570,6 +5614,12 @@
                     if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'ثبت در سیستم حضور و غیاب'; }
                     if (!fpResult.fallbackReason) return; // کاربر انصراف داد یا لغو کرد — ثبت نمی‌شود
                     biometricFallbackReason = fpResult.fallbackReason; // کاربر خواست بدون بیومتریک ادامه دهد
+                } else if (fpResult.method === 'webauthn') {
+                    biometricMethodLabel = '✅ با اثر انگشت/Face ID رسمی گوشی تایید شد';
+                } else if (fpResult.method === 'custom_face') {
+                    biometricMethodLabel = '✅ با تشخیص چهره اختصاصی برنامه تایید شد';
+                } else if (fpResult.method === 'unsupported') {
+                    biometricMethodLabel = '⚠️ گوشی از بیومتریک پشتیبانی نمی‌کرد؛ بدون تایید بیومتریک رد شد';
                 }
             }
 
@@ -5582,29 +5632,34 @@
             const fullDateTimeStr = getTehranFullDateTimeString(now);
             const settings = await getShiftSettings();
 
-            let targetStartTime = (currentRole === 'morning_seller') ? settings.mStart : settings.eStart;
-            let targetEndTime = (currentRole === 'morning_seller') ? settings.mEnd : settings.eEnd;
+            // مدیر شیفت ثابت (صبح/عصر) ندارد؛ نباید با ساعت شیفت فروشنده‌ها مقایسه شود —
+            // قبلاً این مقایسه اشتباهی برای مدیر هم انجام می‌شد و پیام‌های نامربوط/گمراه‌کننده می‌داد.
+            const appliesShiftTiming = (currentRole === 'morning_seller' || currentRole === 'evening_seller');
+            let targetStartTime = appliesShiftTiming ? ((currentRole === 'morning_seller') ? settings.mStart : settings.eStart) : null;
+            let targetEndTime = appliesShiftTiming ? ((currentRole === 'morning_seller') ? settings.mEnd : settings.eEnd) : null;
 
             let delayMinutes = null;
             let exitDiffMinutes = null;
 
-            try {
-                if (type === 'entry') {
-                    const [hNow, mNow] = timeStrNow.split(':').map(Number);
-                    const [hTarget, mTarget] = (targetStartTime || '08:00').split(':').map(Number);
-                    const computed = (hNow * 60 + mNow) - (hTarget * 60 + mTarget);
-                    delayMinutes = Number.isFinite(computed) ? computed : 0;
-                } else if (type === 'exit') {
-                    const [hNow, mNow] = timeStrNow.split(':').map(Number);
-                    const [hTarget, mTarget] = (targetEndTime || '15:30').split(':').map(Number);
-                    // مثبت یعنی دیرتر از ساعت مقرر رفته (اشکالی ندارد)، منفی یعنی زودتر رفته
-                    const computed = (hNow * 60 + mNow) - (hTarget * 60 + mTarget);
-                    exitDiffMinutes = Number.isFinite(computed) ? computed : 0;
+            if (appliesShiftTiming) {
+                try {
+                    if (type === 'entry') {
+                        const [hNow, mNow] = timeStrNow.split(':').map(Number);
+                        const [hTarget, mTarget] = (targetStartTime || '08:00').split(':').map(Number);
+                        const computed = (hNow * 60 + mNow) - (hTarget * 60 + mTarget);
+                        delayMinutes = Number.isFinite(computed) ? computed : 0;
+                    } else if (type === 'exit') {
+                        const [hNow, mNow] = timeStrNow.split(':').map(Number);
+                        const [hTarget, mTarget] = (targetEndTime || '15:30').split(':').map(Number);
+                        // مثبت یعنی دیرتر از ساعت مقرر رفته (اشکالی ندارد)، منفی یعنی زودتر رفته
+                        const computed = (hNow * 60 + mNow) - (hTarget * 60 + mTarget);
+                        exitDiffMinutes = Number.isFinite(computed) ? computed : 0;
+                    }
+                } catch (calcErr) {
+                    console.warn('خطا در محاسبه تاخیر/زودرفتن، مقدار صفر در نظر گرفته شد', calcErr);
+                    if (type === 'entry') delayMinutes = 0;
+                    if (type === 'exit') exitDiffMinutes = 0;
                 }
-            } catch (calcErr) {
-                console.warn('خطا در محاسبه تاخیر/زودرفتن، مقدار صفر در نظر گرفته شد', calcErr);
-                if (type === 'entry') delayMinutes = 0;
-                if (type === 'exit') exitDiffMinutes = 0;
             }
 
             // اگر واقعاً دیرتر از ساعت پایان شیفت مانده، این مقدار را به‌عنوان اضافه‌کاری خودکار
@@ -5679,7 +5734,7 @@
                 delay_minutes: delayMinutes,
                 exit_diff_minutes: exitDiffMinutes,
                 photo_url: photoUrl,
-                note: (note ? note + " | " : "") + (selectedLocationText ? selectedLocationText + " | " : "") + (biometricFallbackReason ? `⚠️ بدون تایید بیومتریک (${biometricFallbackReason}) | ` : "") + `زمان ثبت: ${fullDateTimeStr}`,
+                note: (note ? note + " | " : "") + (selectedLocationText ? selectedLocationText + " | " : "") + (biometricFallbackReason ? `⚠️ بدون تایید بیومتریک (${biometricFallbackReason}) | ` : "") + (biometricMethodLabel ? biometricMethodLabel + " | " : "") + `زمان ثبت: ${fullDateTimeStr}`,
                 created_at: now.toISOString()
             }]);
 
@@ -5702,6 +5757,7 @@
 
                 if (type === 'entry' && delayMinutes !== null) {
                     successMsg += `\n🕗 ساعت مقرر شروع شیفت شما: ${targetStartTime}`;
+                    const ENTRY_EARLY_SANITY_CAP = 60; // بیش از این زودتر بودن، دیگه "زودتر اومدن خوب" نیست، احتمالاً اشتباه ثبت شده
                     if (delayMinutes > settings.maxDelay) {
                         const overBy2 = delayMinutes - settings.maxDelay;
                         const lateCount = await countRecentAttendanceIssues('entry', settings.maxDelay);
@@ -5710,13 +5766,26 @@
                         successMsg += `\n\n🕐 امروز دقیقاً ${delayMinutes} دقیقه تاخیر داشتید، اما چون حد مجاز مدیر ${settings.maxDelay} دقیقه است، مشکلی ندارد و برای مدیر به‌عنوان تاخیر گزارش نشد.`;
                     } else if (delayMinutes === 0) {
                         successMsg += `\n\n🎉 تبریک! دقیقاً سر ساعت مقرر (${targetStartTime}) حاضر شدید. عالی بود!`;
-                    } else {
+                    } else if (delayMinutes >= -ENTRY_EARLY_SANITY_CAP) {
                         successMsg += `\n\n🎉 تبریک! ${Math.abs(delayMinutes)} دقیقه زودتر از ساعت مقرر حاضر شدید. همینطور ادامه بدهید!`;
+                    } else {
+                        // خیلی زودتر از حد معمول (مثلاً چند ساعت) — به‌جای تبریک الکی، هشدار می‌دهیم؛
+                        // احتمالاً نوع ثبت اشتباه انتخاب شده یا ساعت گوشی درست نیست
+                        const hoursEarly = (Math.abs(delayMinutes) / 60).toFixed(1);
+                        successMsg += `\n\n⚠️ توجه: این ثبت ${Math.abs(delayMinutes)} دقیقه (حدود ${hoursEarly} ساعت) زودتر از ساعت مقرر شیفت (${targetStartTime}) است — خیلی بیشتر از حالت عادی. اگر اشتباهی زدید یا ساعت گوشی‌تان اشتباه است، به مدیر اطلاع دهید تا این ثبت بررسی/اصلاح شود.`;
+                        _supabase.from('messages').insert([{
+                            sender: "سیستم خودکار هشدار زمان",
+                            recipient: "admin",
+                            title: `⚠️ ثبت ورود در ساعت غیرمعمول: ${currentUserLabel}`,
+                            body: `کاربر ${currentUserLabel} ورود خود را ساعت ${timeStrNow} ثبت کرد که حدود ${hoursEarly} ساعت زودتر از ساعت مقرر شیفت (${targetStartTime}) است. ممکن است اشتباه ثبت شده باشد یا ساعت گوشی درست نباشد.`,
+                            created_at: now.toISOString()
+                        }]).then(() => {});
                     }
                 }
 
                 if (type === 'exit' && exitDiffMinutes !== null) {
                     successMsg += `\n🕗 ساعت مقرر پایان شیفت شما: ${targetEndTime}`;
+                    const EXIT_LATE_SANITY_CAP = 240; // بیش از ۴ ساعت دیرتر از پایان شیفت، دیگه "اضافه‌کاری خوب" نیست، احتمالاً اشتباه ثبت شده
                     if (exitDiffMinutes < -settings.maxDelay) {
                         const earlyBy2 = Math.abs(exitDiffMinutes) - settings.maxDelay;
                         const earlyCount = await countRecentAttendanceIssues('exit', settings.maxDelay);
@@ -5725,8 +5794,18 @@
                         successMsg += `\n\n🕐 شما دقیقاً ${Math.abs(exitDiffMinutes)} دقیقه زودتر از ساعت مقرر خارج شدید، اما چون در محدوده مجاز (${settings.maxDelay} دقیقه) بود، برای مدیر گزارش نشد.`;
                     } else if (exitDiffMinutes === 0) {
                         successMsg += `\n\n🎉 تبریک! دقیقاً سر ساعت مقرر (${targetEndTime}) خروج ثبت شد. عالی بود!`;
-                    } else {
+                    } else if (exitDiffMinutes <= EXIT_LATE_SANITY_CAP) {
                         successMsg += `\n\n🎉 تبریک! ${exitDiffMinutes} دقیقه دیرتر از ساعت مقرر ماندید، این به‌عنوان اضافه‌کاری ثبت شد.`;
+                    } else {
+                        const hoursLate = (exitDiffMinutes / 60).toFixed(1);
+                        successMsg += `\n\n⚠️ توجه: این ثبت ${exitDiffMinutes} دقیقه (حدود ${hoursLate} ساعت) دیرتر از ساعت مقرر پایان شیفت (${targetEndTime}) است — خیلی بیشتر از حالت عادی. اگر اشتباهی زدید یا ساعت گوشی‌تان اشتباه است، به مدیر اطلاع دهید تا این ثبت بررسی/اصلاح شود.`;
+                        _supabase.from('messages').insert([{
+                            sender: "سیستم خودکار هشدار زمان",
+                            recipient: "admin",
+                            title: `⚠️ ثبت خروج در ساعت غیرمعمول: ${currentUserLabel}`,
+                            body: `کاربر ${currentUserLabel} خروج خود را ساعت ${timeStrNow} ثبت کرد که حدود ${hoursLate} ساعت دیرتر از ساعت مقرر پایان شیفت (${targetEndTime}) است. ممکن است اشتباه ثبت شده باشد یا ساعت گوشی درست نباشد.`,
+                            created_at: now.toISOString()
+                        }]).then(() => {});
                     }
                 }
 
