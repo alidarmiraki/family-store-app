@@ -1547,6 +1547,12 @@
         <label>چند دقیقه بعد از شروع/پایان شیفت، در صورت فراموشی، به پرسنل یادآوری ثبت ورود/خروج نمایش داده شود؟</label>
         <input type="number" id="reminderMinutes" value="10" placeholder="مثلاً 10 دقیقه">
 
+        <label>حداکثر چند دقیقه زودتر از شروع شیفت، اجازه‌ی ثبت «ورود» وجود دارد؟ (زودتر از این، اصلاً ثبت نمی‌شود و فقط به شما اطلاع داده می‌شود)</label>
+        <input type="number" id="earlyEntryWindow" value="30" placeholder="مثلاً 30 دقیقه">
+
+        <label>حداکثر چند دقیقه بعد از پایان شیفت، اجازه‌ی ثبت «خروج» وجود دارد؟ (دیرتر از این، اصلاً ثبت نمی‌شود و فقط به شما اطلاع داده می‌شود — برای اضافه‌کاری‌های معمول عددی مناسب و نه خیلی کم بگذارید)</label>
+        <input type="number" id="lateExitWindow" value="60" placeholder="مثلاً 60 دقیقه">
+
         <button class="submit-btn" onclick="saveShiftSettings()">ذخیره تنظیمات شیفت‌ها</button>
 
         <h3 style="color:#38bdf8; margin-top:22px;">👆 مدیریت اثر انگشت و گوشی پرسنل</h3>
@@ -4461,13 +4467,39 @@
 
         let voiceSaleRecognition = null;
         let voiceSaleAutoSubmitTimer = null;
-        function startVoiceSaleEntry(type) {
+        // پیام دقیق برای خطای service-not-allowed در تشخیص گفتار — این خطا یعنی مجوز میکروفون
+        // مشکلی نداشته (چون به این مرحله رسیدیم)، بلکه خود پلتفرم سرویس تشخیص گفتار را نداده.
+        function buildSpeechServiceNotAllowedMessage() {
+            const ua = navigator.userAgent || '';
+            const isIOS = /iPhone|iPad|iPod/.test(ua);
+            const isStandalone = (window.navigator.standalone === true) || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+            if (isIOS && isStandalone) {
+                return '❌ تشخیص گفتار روی حالت نصب‌شده (آیکون صفحه اصلی) روی آیفون کار نمی‌کند.\n\nلطفاً یک‌بار برنامه را مستقیم در خود Safari (نه از روی آیکون) باز کن و دوباره امتحان کن.';
+            }
+            if (isIOS) {
+                return '❌ صادقانه بگم: این یک محدودیت خود اپل روی iOS Safari است، نه مشکل این برنامه — اپل هنوز سرویس تشخیص گفتار مرورگر (Web Speech API) را برای صفحات وب روی آیفون فعال نکرده، حتی با اینکه مجوز میکروفون داده شده.\n\n✅ راه‌حل واقعی: به‌جای دکمه «ثبت با صدا»، روی خود فیلد «نام کالا» یا «مقدار» تپ کن، بعد از کیبورد گوشی‌ات، دکمه میکروفون (کنار دکمه اسپیس) را بزن — دیکته‌ی خود آیفون دقت خیلی بالایی دارد و مستقیم داخل همان فیلد تایپ می‌کند.';
+            }
+            return '❌ سرویس تشخیص گفتار توسط این مرورگر/گوشی مسدود شده.';
+        }
+        async function startVoiceSaleEntry(type) {
             const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (!SpeechRec) {
-                showToast('❌ این مرورگر از ثبت با صدا پشتیبانی نمی‌کند.\n\n⚠️ نکته: Safari روی آیفون این قابلیت را ندارد؛ این ویژگی فقط روی Chrome (اندروید یا دسکتاپ) کار می‌کند.');
+                showToast('❌ این مرورگر از ثبت با صدا پشتیبانی نمی‌کند.\n\n⚠️ نکته: این ویژگی فقط روی Chrome (اندروید یا دسکتاپ) کار می‌کند.');
                 return;
             }
             if (voiceSaleAutoSubmitTimer) { clearTimeout(voiceSaleAutoSubmitTimer); voiceSaleAutoSubmitTimer = null; }
+
+            // اول صریحاً اجازه‌ی میکروفون را با getUserMedia درخواست می‌کنیم (پاپ‌آپ رسمی مجوز گوشی
+            // همین‌جا ظاهر می‌شود). این باعث می‌شود اگر مشکل فقط از مجوز میکروفون بود، همین‌جا حل شود؛
+            // اگر بعد از این هم SpeechRecognition جواب نداد (روی برخی مرورگرها مثل Safari/iOS)، یعنی
+            // خود پلتفرم سرویس تشخیص گفتار را برای صفحات وب فعال نکرده — چیزی که با کد قابل حل نیست.
+            try {
+                const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                micStream.getTracks().forEach(t => t.stop()); // فقط برای گرفتن مجوز؛ خود ضبط را SpeechRecognition انجام می‌دهد
+            } catch (e) {
+                showToast('❌ اجازه‌ی دسترسی به میکروفون داده نشد. از تنظیمات مرورگر/گوشی، دسترسی میکروفون این سایت را فعال کن و دوباره امتحان کن.');
+                return;
+            }
 
             const recognition = new SpeechRec();
             voiceSaleRecognition = recognition;
@@ -4487,6 +4519,8 @@
                     showToast('❌ اجازه‌ی دسترسی به میکروفون داده نشد.');
                 } else if (event.error === 'no-speech') {
                     showToast('⚠️ صدایی شنیده نشد. دوباره امتحان کنید.');
+                } else if (event.error === 'service-not-allowed') {
+                    showToast(buildSpeechServiceNotAllowedMessage());
                 } else {
                     showToast('❌ خطا در تشخیص گفتار: ' + event.error);
                 }
@@ -4709,6 +4743,8 @@
             const eEnd = document.getElementById('shiftEveningEnd').value;
             const maxDelay = parseInt(document.getElementById('maxDelayAllowed').value) || 15;
             const reminderMin = parseInt(document.getElementById('reminderMinutes').value) || 10;
+            const earlyEntryWindow = parseInt(document.getElementById('earlyEntryWindow').value) || 0;
+            const lateExitWindow = parseInt(document.getElementById('lateExitWindow').value) || 0;
 
             const { error } = await _supabase.from('shift_settings').upsert([{
                 id: 1,
@@ -4717,18 +4753,20 @@
                 evening_start: eStart,
                 evening_end: eEnd,
                 max_delay: maxDelay,
-                reminder_minutes: reminderMin
+                reminder_minutes: reminderMin,
+                early_entry_window: earlyEntryWindow,
+                late_exit_window: lateExitWindow
             }]);
 
             if (!error) {
                 showToast('✅ تنظیمات شیفت‌ها با موفقیت ذخیره شد و برای همه کاربران فعال است.');
             } else {
-                showToast('❌ خطا در ذخیره تنظیمات: ' + error.message + '\n\nمطمئن شوید جدول shift_settings در Supabase ساخته شده و ستون reminder_minutes را دارد.');
+                showToast('❌ خطا در ذخیره تنظیمات: ' + error.message + '\n\nمطمئن شوید جدول shift_settings در Supabase ستون‌های early_entry_window و late_exit_window را دارد.');
             }
         }
 
         async function getShiftSettings() {
-            const defaults = { mStart: "08:00", mEnd: "15:30", eStart: "15:30", eEnd: "23:00", maxDelay: 15, reminderMinutes: 10 };
+            const defaults = { mStart: "08:00", mEnd: "15:30", eStart: "15:30", eEnd: "23:00", maxDelay: 15, reminderMinutes: 10, earlyEntryWindow: 30, lateExitWindow: 60 };
             try {
                 const { data, error } = await _supabase.from('shift_settings').select('*').eq('id', 1).maybeSingle();
                 if (error || !data) return defaults;
@@ -4738,7 +4776,9 @@
                     eStart: data.evening_start || defaults.eStart,
                     eEnd: data.evening_end || defaults.eEnd,
                     maxDelay: (data.max_delay !== null && data.max_delay !== undefined) ? data.max_delay : defaults.maxDelay,
-                    reminderMinutes: (data.reminder_minutes !== null && data.reminder_minutes !== undefined) ? data.reminder_minutes : defaults.reminderMinutes
+                    reminderMinutes: (data.reminder_minutes !== null && data.reminder_minutes !== undefined) ? data.reminder_minutes : defaults.reminderMinutes,
+                    earlyEntryWindow: (data.early_entry_window !== null && data.early_entry_window !== undefined) ? data.early_entry_window : defaults.earlyEntryWindow,
+                    lateExitWindow: (data.late_exit_window !== null && data.late_exit_window !== undefined) ? data.late_exit_window : defaults.lateExitWindow
                 };
             } catch (e) {
                 return defaults;
@@ -4833,6 +4873,8 @@
             document.getElementById('shiftEveningEnd').value = s.eEnd;
             document.getElementById('maxDelayAllowed').value = s.maxDelay;
             document.getElementById('reminderMinutes').value = s.reminderMinutes;
+            document.getElementById('earlyEntryWindow').value = s.earlyEntryWindow;
+            document.getElementById('lateExitWindow').value = s.lateExitWindow;
         }
 
         function toggleAttendanceFields() {
@@ -5605,6 +5647,61 @@
                 return;
             }
 
+            const now = new Date();
+            const timeStrNow = getTehranTimeString(now);
+            const fullDateTimeStr = getTehranFullDateTimeString(now);
+            const settings = await getShiftSettings();
+
+            // مدیر شیفت ثابت (صبح/عصر) ندارد؛ نباید با ساعت شیفت فروشنده‌ها مقایسه شود —
+            // قبلاً این مقایسه اشتباهی برای مدیر هم انجام می‌شد و پیام‌های نامربوط/گمراه‌کننده می‌داد.
+            const appliesShiftTiming = (currentRole === 'morning_seller' || currentRole === 'evening_seller');
+            let targetStartTime = appliesShiftTiming ? ((currentRole === 'morning_seller') ? settings.mStart : settings.eStart) : null;
+            let targetEndTime = appliesShiftTiming ? ((currentRole === 'morning_seller') ? settings.mEnd : settings.eEnd) : null;
+
+            // --- محدوده‌ی مجاز زمانی برای ثبت ورود/خروج (تنظیم‌شده توسط مدیر) ---
+            // خارج از این محدوده، اصلاً ثبت انجام نمی‌شود؛ فقط یک پیام هشدار برای مدیر می‌رود
+            // که فلان فروشنده در فلان ساعت خواسته این کار را انجام دهد.
+            if (appliesShiftTiming && (type === 'entry' || type === 'exit')) {
+                const [hNowB, mNowB] = timeStrNow.split(':').map(Number);
+                const nowMinutesB = hNowB * 60 + mNowB;
+
+                if (type === 'entry' && targetStartTime) {
+                    const [hS, mS] = targetStartTime.split(':').map(Number);
+                    const startMinutesB = hS * 60 + mS;
+                    if (nowMinutesB < startMinutesB - settings.earlyEntryWindow) {
+                        const tooEarlyBy = (startMinutesB - settings.earlyEntryWindow) - nowMinutesB;
+                        showToast(`⛔ هنوز خیلی زوده! شیفت شما از ساعت ${targetStartTime} شروع می‌شود و حداکثر ${settings.earlyEntryWindow} دقیقه زودتر اجازه‌ی ثبت ورود دارید. حدود ${tooEarlyBy} دقیقه دیگر دوباره تلاش کنید.`);
+                        _supabase.from('messages').insert([{
+                            sender: "سیستم خودکار محدودیت زمانی",
+                            recipient: "admin",
+                            title: `⚠️ تلاش برای ثبت ورود زودتر از حد مجاز: ${currentUserLabel}`,
+                            body: `کاربر ${currentUserLabel} ساعت ${timeStrNow} تلاش کرد ورود ثبت کند، در حالی که شیفتش از ${targetStartTime} شروع می‌شود و حداکثر ${settings.earlyEntryWindow} دقیقه زودتر مجاز است. این ثبت انجام نشد.`,
+                            created_at: now.toISOString()
+                        }]).then(() => {});
+                        sendPushNotificationToRole('⚠️ تلاش ورود زودهنگام', `${currentUserLabel} خواست ساعت ${timeStrNow} ورود بزند (خیلی زودتر از حد مجاز).`, 'admin');
+                        return;
+                    }
+                }
+
+                if (type === 'exit' && targetEndTime) {
+                    const [hE, mE] = targetEndTime.split(':').map(Number);
+                    const endMinutesB = hE * 60 + mE;
+                    if (nowMinutesB > endMinutesB + settings.lateExitWindow) {
+                        const tooLateBy = nowMinutesB - (endMinutesB + settings.lateExitWindow);
+                        showToast(`⛔ این ثبت انجام نشد! پایان شیفت شما ساعت ${targetEndTime} است و حداکثر ${settings.lateExitWindow} دقیقه بعد از آن اجازه‌ی ثبت خروج دارید (${tooLateBy} دقیقه از این حد گذشته). به مدیر اطلاع داده شد؛ لطفاً موضوع را با او در میان بگذارید.`);
+                        _supabase.from('messages').insert([{
+                            sender: "سیستم خودکار محدودیت زمانی",
+                            recipient: "admin",
+                            title: `⚠️ تلاش برای ثبت خروج دیرتر از حد مجاز: ${currentUserLabel}`,
+                            body: `کاربر ${currentUserLabel} ساعت ${timeStrNow} تلاش کرد خروج ثبت کند، در حالی که پایان شیفتش ${targetEndTime} است و حداکثر ${settings.lateExitWindow} دقیقه بعد از آن مجاز است. این ثبت انجام نشد — شاید فراموش کرده به‌موقع خروج بزند و الان می‌خواهد ثبت جاافتاده را جبران کند؛ لازم است دستی بررسی/ثبت شود.`,
+                            created_at: now.toISOString()
+                        }]).then(() => {});
+                        sendPushNotificationToRole('⚠️ تلاش خروج دیرهنگام', `${currentUserLabel} خواست ساعت ${timeStrNow} خروج بزند (خیلی دیرتر از حد مجاز).`, 'admin');
+                        return;
+                    }
+                }
+            }
+
             let biometricFallbackReason = null;
             let biometricMethodLabel = null; // برای ثبت شفاف در گزارش مدیر که دقیقاً با چه روشی تایید شد
             if (type === 'entry' || type === 'exit') {
@@ -5626,17 +5723,6 @@
             let overtimeHours = val;
             if (unit === 'minute') overtimeHours = Number((val / 60).toFixed(2));
             if (unit === 'day') overtimeHours = Number((val * 8).toFixed(2));
-
-            const now = new Date();
-            const timeStrNow = getTehranTimeString(now);
-            const fullDateTimeStr = getTehranFullDateTimeString(now);
-            const settings = await getShiftSettings();
-
-            // مدیر شیفت ثابت (صبح/عصر) ندارد؛ نباید با ساعت شیفت فروشنده‌ها مقایسه شود —
-            // قبلاً این مقایسه اشتباهی برای مدیر هم انجام می‌شد و پیام‌های نامربوط/گمراه‌کننده می‌داد.
-            const appliesShiftTiming = (currentRole === 'morning_seller' || currentRole === 'evening_seller');
-            let targetStartTime = appliesShiftTiming ? ((currentRole === 'morning_seller') ? settings.mStart : settings.eStart) : null;
-            let targetEndTime = appliesShiftTiming ? ((currentRole === 'morning_seller') ? settings.mEnd : settings.eEnd) : null;
 
             let delayMinutes = null;
             let exitDiffMinutes = null;
