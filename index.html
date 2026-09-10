@@ -888,6 +888,18 @@
         </div>
     </div>
 
+    <!-- قفل تمام‌صفحه: وقتی فروشنده با تاخیر زیاد هنوز ورود نزده، تا ثبت نکند نمی‌تواند از بقیه‌ی
+         برنامه استفاده کند — فقط دکمه‌ی «برو به ثبت ورود» و «پیام فوری به مدیر» در دسترس است. -->
+    <div id="forceEntryLockOverlay" style="position:fixed; inset:0; z-index:10050; display:none; align-items:center; justify-content:center; background:rgba(5,8,15,0.96); padding:20px;">
+        <div class="scanner-box" style="text-align:center; border-color:#ef4444;">
+            <div style="font-size:44px;">⏰</div>
+            <h3 style="color:#ef4444; margin:10px 0;">هنوز ورود نزدید!</h3>
+            <div class="hint" id="forceEntryLockText" style="margin-top:0; text-align:center;"></div>
+            <button class="submit-btn" onclick="document.getElementById('forceEntryLockOverlay').style.display='none'; switchTab('attendance');">👆 برو به ثبت ورود</button>
+            <button class="row-btn edit-btn" style="width:100%; margin-top:8px;" onclick="sendUrgentHelpMessageToAdmin()">🆘 پیام فوری به مدیر (مشکل دارم)</button>
+        </div>
+    </div>
+
 
     <!-- اورلی ویرایش فاکتور فروش توسط مدیر (هر کالا، هر روز، هر کاربر) -->
     <div id="adminEditSaleOverlay">
@@ -3791,6 +3803,7 @@
         function logout() {
             teardownRealtimeSubscriptions();
             if (typeof idleWarningTimer !== 'undefined') { clearTimeout(idleWarningTimer); clearTimeout(idleLogoutTimer); }
+            hideForceEntryLock();
             currentRole = "";
             currentUserLabel = "";
             currentSessionUser = null;
@@ -3853,6 +3866,7 @@
             if (tab === 'sale') renderQuickPickButtons('instore');
             if (tab === 'saleEkala') renderQuickPickButtons('ekala');
             if (tab === 'saleSausage') renderQuickPickButtons('sausage');
+            if (tab === 'attendance') syncAttendanceTypeSelector();
         }
 
         // --- تشخیص خودکار کالاهای پرفروش بر اساس مجموع فروش ۳۰ روز اخیر ---
@@ -4899,14 +4913,74 @@
             document.getElementById('lateExitWindow').value = s.lateExitWindow;
         }
 
+        // وضعیت ثبت امروز این کاربر: آیا ورود زده؟ آیا خروج زده؟ — برای جلوگیری از ثبت تکراری
+        // و برای این‌که خودش خودکار روی گزینه‌ی درست (ورود/خروج) بایسته
+        async function getTodayAttendanceStatus() {
+            const todayISO = getTehranISODate(new Date());
+            const { data } = await _supabase.from('attendance')
+                .select('type, created_at')
+                .eq('seller_name', currentUserLabel)
+                .order('created_at', { ascending: true });
+            const todayRecords = (data || []).filter(r => getTehranISODate(new Date(r.created_at)) === todayISO);
+            return {
+                hasEntry: todayRecords.some(r => r.type === 'entry'),
+                hasExit: todayRecords.some(r => r.type === 'exit'),
+                records: todayRecords
+            };
+        }
+
+        // دکمه «نوع ثبت» را خودکار روی گزینه‌ی درست می‌گذارد تا اشتباهی «ورود» زده نشود
+        // وقتی از قبل ورود ثبت شده (یا برعکس)
+        async function syncAttendanceTypeSelector() {
+            if (currentRole !== 'morning_seller' && currentRole !== 'evening_seller') return;
+            const select = document.getElementById('attType');
+            if (!select) return;
+            const status = await getTodayAttendanceStatus();
+            const entryOption = select.querySelector('option[value="entry"]');
+            const exitOption = select.querySelector('option[value="exit"]');
+            if (status.hasEntry && !status.hasExit) {
+                select.value = 'exit';
+                if (entryOption) entryOption.disabled = true;
+                if (exitOption) exitOption.disabled = false;
+            } else if (status.hasEntry && status.hasExit) {
+                if (entryOption) entryOption.disabled = true;
+                if (exitOption) exitOption.disabled = true;
+                select.value = 'leave';
+            } else {
+                select.value = 'entry';
+                if (entryOption) entryOption.disabled = false;
+                if (exitOption) exitOption.disabled = true;
+            }
+            toggleAttendanceFields();
+        }
+
         function toggleAttendanceFields() {
             const type = document.getElementById('attType').value;
             document.getElementById('attTimeFields').style.display = (type === 'leave') ? 'none' : 'block';
         }
 
         // --- یادآوری خودکار ثبت ورود/خروج فراموش‌شده (فقط برای فروشنده‌ها) ---
+        // قفل تمام‌صفحه برای وقتی تاخیر ورود/خروج از حد مجاز گذشته — تا ثبت نکنند نمی‌توانند
+        // از بقیه‌ی برنامه استفاده کنند (فقط دکمه‌ی رفتن به ثبت یا پیام فوری به مدیر در دسترس است)
+        function showForceEntryLock(message) {
+            const overlay = document.getElementById('forceEntryLockOverlay');
+            const textEl = document.getElementById('forceEntryLockText');
+            if (!overlay || !textEl) return;
+            textEl.innerText = message;
+            overlay.style.display = 'flex';
+        }
+        function hideForceEntryLock() {
+            const overlay = document.getElementById('forceEntryLockOverlay');
+            if (overlay) overlay.style.display = 'none';
+        }
+        async function sendUrgentHelpMessageToAdmin() {
+            await notifyAdminAboutAttendanceIssue('فروشنده از پشت قفل صفحه‌ی تاخیر درخواست کمک فوری کرد — احتمالاً در ثبت ورود/خروج مشکل دارد (مثلاً دوربین/بیومتریک/موقعیت مکانی کار نمی‌کند).');
+            sendPushNotificationToRole('🆘 درخواست کمک فوری', `${currentUserLabel} از پشت قفل صفحه تاخیر درخواست کمک کرد.`, 'admin');
+            showToast('✅ پیام فوری برای مدیر ارسال شد؛ منتظر بمانید تا مدیر بررسی کند.');
+        }
+
         async function checkAttendanceReminders() {
-            if (currentRole !== 'morning_seller' && currentRole !== 'evening_seller') return;
+            if (currentRole !== 'morning_seller' && currentRole !== 'evening_seller') { hideForceEntryLock(); return; }
             if (Date.now() < reminderSnoozeUntil) return;
 
             const settings = await getShiftSettings();
@@ -4937,6 +5011,7 @@
                 panel.classList.remove('escalated');
                 panel.style.display = 'none';
                 panel.innerHTML = '';
+                hideForceEntryLock();
                 return;
             }
 
@@ -4962,12 +5037,16 @@
                     <br>۴) روی دکمه «ثبت در سیستم حضور و غیاب» بزنید
                     <button class="dismiss-alert-btn" onclick="dismissReminderBanner()">باشه، همین الان ثبت می‌کنم</button>`;
                 panel.style.display = 'block';
-                if (isEscalated) playLateAlertSound();
+                if (isEscalated) {
+                    playLateAlertSound();
+                    showForceEntryLock(`شیفت شما از ساعت ${shiftStart} شروع شده و حدود ${lateBy} دقیقه تاخیر دارید. تا زمانی که «ورود» را ثبت نکنید، امکان استفاده از بقیه‌ی برنامه وجود ندارد.`);
+                }
                 return;
             }
 
             if (hasEntry && !hasExit && nowMinutes >= endMinutes && nowMinutes < (endMinutes + reminderAfter)) {
                 panel.classList.remove('escalated');
+                hideForceEntryLock();
                 panel.innerHTML = `⏰ <b>وقتشه!</b> ساعت پایان شیفت شما (${shiftEnd}) فرارسیده. لطفاً <b>اول خروجتان را ثبت کنید</b>، بعد غرفه را ترک کنید:
                     <br>۱) روی تب «⏰ حضور و غیاب» بزنید
                     <br>۲) در «نوع ثبت»، گزینه «🔴 ثبت خروج از شیفت» را انتخاب کنید
@@ -4987,10 +5066,14 @@
                     <br>۳) عکس یا موقعیت مکانی را ثبت کنید و روی دکمه «ثبت در سیستم حضور و غیاب» بزنید
                     <button class="dismiss-alert-btn" onclick="dismissReminderBanner()">باشه، الان می‌زنم</button>`;
                 panel.style.display = 'block';
-                if (isEscalated) playLateAlertSound();
+                if (isEscalated) {
+                    playLateAlertSound();
+                    showForceEntryLock(`ساعت پایان شیفت شما (${shiftEnd}) حدود ${lateBy} دقیقه پیش گذشته. تا زمانی که «خروج» را ثبت نکنید، امکان استفاده از بقیه‌ی برنامه وجود ندارد.`);
+                }
                 return;
             }
 
+            hideForceEntryLock();
             panel.classList.remove('escalated');
             panel.style.display = 'none';
             panel.innerHTML = '';
@@ -5501,19 +5584,36 @@
         async function verifyFingerprintForAttendance() {
             if (!currentSessionUser) return { ok: false, fallbackReason: 'کاربر لاگین نیست' };
 
-            const { data: deviceRow, error } = await _supabase.from('staff_devices').select('*').eq('username', currentSessionUser.username).maybeSingle();
-            if (error) {
-                return await resolveBiometricFailure('خطا در بررسی اثر انگشت ثبت‌شده: ' + error.message);
+            // اول چک می‌کنیم این حساب دقیقاً کدام روش(ها) رو ثبت کرده — تا مستقیم و خودکار
+            // سراغ همون بریم، بدون این‌که یک روش ثبت‌نشده رو امتحان کنیم یا از کاربر اضافه بپرسیم
+            const [deviceResult, faceResult] = await Promise.all([
+                _supabase.from('staff_devices').select('*').eq('username', currentSessionUser.username).maybeSingle(),
+                _supabase.from('staff_face_data').select('username').eq('username', currentSessionUser.username).maybeSingle()
+            ]);
+            const deviceRow = deviceResult.data;
+            const deviceErr = deviceResult.error;
+            const hasCustomFace = !!(faceResult.data);
+
+            if (deviceErr) {
+                return await resolveBiometricFailure('خطا در بررسی اثر انگشت ثبت‌شده: ' + deviceErr.message, hasCustomFace);
             }
 
-            if (!deviceRow) {
+            if (!deviceRow && !hasCustomFace) {
                 const wantsRegister = await showConfirm('برای ورود/خروج بهتر است اول یک‌بار اثر انگشت یا چهره خود را روی همین گوشی ثبت کنید.\n\nهمین الان ثبت شود؟\n(اگر «انصراف» بزنید، می‌توانید بدون بیومتریک با عکس/موقعیت مکانی ادامه دهید.)');
                 if (wantsRegister) {
                     await registerFingerprint();
                     showToast('لطفاً بعد از ثبت موفق، دوباره روی دکمه «ثبت در سیستم حضور و غیاب» بزنید.');
                     return { ok: false, fallbackReason: null, userCancelled: true };
                 }
-                return await resolveBiometricFailure('هنوز هیچ اثر انگشت/چهره‌ای برای این حساب ثبت نشده.');
+                return await resolveBiometricFailure('هنوز هیچ اثر انگشت/چهره‌ای برای این حساب ثبت نشده.', false);
+            }
+
+            // فقط چهره اختصاصی ثبت شده (WebAuthn/Face ID رسمی ثبت نشده) — مستقیم و خودکار برو
+            // سراغ چهره اختصاصی، بدون اینکه اول امتحان بی‌فایده‌ی WebAuthn رو انجام بدیم یا از کاربر بپرسیم
+            if (!deviceRow && hasCustomFace) {
+                const faceOk = await verifyCustomFace();
+                if (faceOk) return { ok: true, method: 'custom_face' };
+                return await resolveBiometricFailure('تشخیص چهره اختصاصی تایید نشد.', true);
             }
 
             if (!window.PublicKeyCredential || !navigator.credentials) {
@@ -5533,14 +5633,14 @@
                 });
 
                 if (!assertion) {
-                    return await resolveBiometricFailure('تایید اثر انگشت انجام نشد.');
+                    return await resolveBiometricFailure('تایید اثر انگشت انجام نشد.', hasCustomFace);
                 }
 
                 // بررسی این‌که همین گوشی، همان گوشی ثبت اولیه است (نه گوشی دیگری از همین حساب)
                 const deviceUuid = getOrCreateDeviceUuid();
                 if (deviceRow.device_uuid && deviceRow.device_uuid !== deviceUuid) {
                     await notifyAdminAboutDeviceMismatch(deviceRow);
-                    return await resolveBiometricFailure('این حساب قبلاً روی گوشی دیگری ثبت شده و این گوشی با آن تطابق ندارد (به مدیر گزارش شد).');
+                    return await resolveBiometricFailure('این حساب قبلاً روی گوشی دیگری ثبت شده و این گوشی با آن تطابق ندارد (به مدیر گزارش شد).', hasCustomFace);
                 }
 
                 _supabase.from('staff_devices').update({ last_used_at: new Date().toISOString() }).eq('username', currentSessionUser.username).then(() => {});
@@ -5548,33 +5648,32 @@
             } catch (e) {
                 console.error('خطای تایید بیومتریک هنگام ثبت حضور:', e);
                 const detail = describeWebAuthnError(e);
-                if (e && e.name === 'NotAllowedError') {
+                if (e && e.name === 'NotAllowedError' && !hasCustomFace) {
                     const wantsRetry = await showConfirm('⛔ تایید بیومتریک انجام نشد.\n\n' + detail + '\n\nهمین الان دوباره تلاش کنید؟');
                     if (wantsRetry) return await verifyFingerprintForAttendance();
                 }
-                return await resolveBiometricFailure(detail);
+                return await resolveBiometricFailure(detail, hasCustomFace);
             }
         }
 
         // وقتی بیومتریک رسمی گوشی (WebAuthn) به هر دلیلی کار نکرد، این تابع مرکزی تصمیم می‌گیرد:
-        // ۱) اگر کاربر چهره‌ی اختصاصی ثبت کرده، اول همان را امتحان می‌کند (بدون نیاز به WebAuthn/Face ID رسمی)
-        // ۲) اگر آن هم نبود/جواب نداد/کاربر نخواست، از کاربر می‌پرسد بدون بیومتریک با عکس/موقعیت ادامه دهد یا نه
+        // ۱) اگر کاربر چهره‌ی اختصاصی ثبت کرده، خودکار (بدون سوال اضافه) همان را امتحان می‌کند
+        // ۲) اگر آن هم نبود/جواب نداد، از کاربر می‌پرسد بدون بیومتریک با عکس/موقعیت ادامه دهد یا نه
         // خروجی دقیقاً همان شکلی است که verifyFingerprintForAttendance برمی‌گرداند.
-        async function resolveBiometricFailure(reasonText) {
-            try {
-                const { data: faceRow } = await _supabase.from('staff_face_data').select('username').eq('username', currentSessionUser.username).maybeSingle();
-                if (faceRow) {
-                    const wantsFace = await showConfirm(
-                        '⚠️ تایید اثر انگشت/Face ID رسمی گوشی ممکن نشد.\n\n' + reasonText +
-                        '\n\nشما چهره‌ی اختصاصی هم ثبت کرده‌اید — می‌خواهید همان روش را امتحان کنید؟'
-                    );
-                    if (wantsFace) {
-                        const faceOk = await verifyCustomFace();
-                        if (faceOk) return { ok: true, method: 'custom_face' };
-                        // چهره تطابق نداشت/لغو شد → برو سراغ گزینه‌ی عکس/موقعیت مکانی
-                    }
-                }
-            } catch (e) { /* اگر جدول چهره وجود نداشت یا خطا داد، بی‌صدا رد شو و برو سراغ فال‌بک معمولی */ }
+        async function resolveBiometricFailure(reasonText, hasCustomFaceHint) {
+            let hasCustomFace = hasCustomFaceHint;
+            if (hasCustomFace === undefined) {
+                try {
+                    const { data: faceRow } = await _supabase.from('staff_face_data').select('username').eq('username', currentSessionUser.username).maybeSingle();
+                    hasCustomFace = !!faceRow;
+                } catch (e) { hasCustomFace = false; }
+            }
+            if (hasCustomFace) {
+                showToast('⚠️ ' + reasonText + '\n\nدر حال امتحان خودکار تشخیص چهره اختصاصی...');
+                const faceOk = await verifyCustomFace();
+                if (faceOk) return { ok: true, method: 'custom_face' };
+                reasonText = 'اثر انگشت/Face ID رسمی و تشخیص چهره اختصاصی، هیچ‌کدام تایید نشدند.';
+            }
 
             const proceed = await showConfirm(
                 '⚠️ تایید بیومتریک ممکن نشد.\n\n' + reasonText +
@@ -5688,6 +5787,32 @@
             if (type !== 'leave' && !selectedPhotoDataUrl && !selectedLocationText) {
                 showToast('⛔ خطا: جهت ثبت ورود و خروج ارسال عکس یا موقعیت مکانی **الزامی** می‌باشد!');
                 return;
+            }
+
+            // جلوگیری از ثبت تکراری: یک فروشنده در یک روز فقط یک‌بار «ورود» و یک‌بار «خروج» دارد.
+            // این از اشتباهاتی مثل زدن چندباره‌ی دکمه ورود جلوگیری می‌کند.
+            if (type === 'entry' || type === 'exit') {
+                const status = await getTodayAttendanceStatus();
+                if (type === 'entry' && status.hasEntry && !status.hasExit) {
+                    showToast('⛔ شما همین امروز قبلاً «ورود» ثبت کرده‌اید. الان فقط می‌توانید «خروج» بزنید.');
+                    document.getElementById('attType').value = 'exit';
+                    toggleAttendanceFields();
+                    return;
+                }
+                if (type === 'entry' && status.hasEntry && status.hasExit) {
+                    showToast('⛔ شما همین امروز یک شیفت کامل (ورود و خروج) ثبت کرده‌اید. اگر امروز شیفت دومی دارید، لطفاً موضوع را با مدیر در میان بگذارید.');
+                    return;
+                }
+                if (type === 'exit' && !status.hasEntry) {
+                    showToast('⛔ شما هنوز امروز «ورود» ثبت نکرده‌اید؛ ابتدا باید ورود بزنید.');
+                    document.getElementById('attType').value = 'entry';
+                    toggleAttendanceFields();
+                    return;
+                }
+                if (type === 'exit' && status.hasExit) {
+                    showToast('⛔ شما همین امروز قبلاً «خروج» ثبت کرده‌اید.');
+                    return;
+                }
             }
 
             const now = new Date();
@@ -5955,6 +6080,7 @@
                 locStatus.style.display = 'none';
                 locStatus.innerText = '';
                 checkAttendanceReminders();
+                syncAttendanceTypeSelector();
             } else {
                 showToast(`❌ ثبت حضور و غیاب ذخیره نشد.\n\n📶 دلیل احتمالی: قطعی یا ضعف اینترنت شما در این لحظه بوده است.\n\nلطفاً چند ثانیه صبر کنید و دوباره روی دکمه «ثبت در سیستم حضور و غیاب» بزنید. اگر چند بار امتحان کردید و باز هم ثبت نشد، می‌توانید به مدیر اطلاع دهید.\n\n(جزئیات فنی: ${error.message})`);
                 const wantsNotify = await showConfirm('آیا می‌خواهید همین الان یک پیام برای مدیر ارسال شود که در ثبت حضور/غیاب مشکل داشته‌اید؟');
