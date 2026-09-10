@@ -1014,6 +1014,7 @@
     <!-- فرم ثبت فروش لبنیات و ترشیجات (حضوری) -->
     <div id="saleTab" class="card">
         <h2 id="saleFormTitle">🧀 ثبت فروش لبنیات روزانه</h2>
+        <div id="sQuickPickBox" class="hint" style="margin-top:0;"></div>
         <label>انتخاب یا تایپ نام کالا:</label>
         <div style="display:flex; gap:6px; align-items:flex-start;">
             <input type="text" id="sName" dir="auto" list="dairyDatalist" placeholder="نام کالا را انتخاب یا تایپ کنید (لیست بر اساس الفبا مرتب است)" onchange="calculateSalePriceAuto('instore')" style="flex:1;">
@@ -1089,6 +1090,7 @@
     <div id="saleEkalaTab" class="card">
         <h2 id="saleEkalaFormTitle">🛒 ثبت فروش اکالا</h2>
         <div class="hint">وقتی سفارشی از طریق اکالا می‌آید و شما کالا را وزن و آماده تحویل به پیک/مشتری می‌کنید، همین‌جا ثبت کنید. این کاملاً از فروش حضوری جدا نگهداری می‌شود.</div>
+        <div id="seQuickPickBox" class="hint" style="margin-top:0;"></div>
         <label>انتخاب یا تایپ نام کالا:</label>
         <div style="display:flex; gap:6px; align-items:flex-start;">
             <input type="text" id="seName" dir="auto" list="productDatalist" placeholder="نام کالا را انتخاب یا تایپ کنید" onchange="calculateSalePriceAuto('ekala')" style="flex:1;">
@@ -1158,6 +1160,7 @@
     <div id="saleSausageTab" class="card">
         <h2 id="saleSausageFormTitle">🌭 ثبت فروش سوسیس و کالباس</h2>
         <div class="hint">این تب مخصوص فروش کالاهایی است که در «تعریف کالا» با نوع «سوسیس و کالباس» ثبت شده‌اند. لیست پیشنهادی این کادر فقط همین کالاها را نشان می‌دهد. این کاملاً از فروش حضوری و اکالای لبنیات/ترشیجات جدا نگهداری می‌شود.</div>
+        <div id="ssQuickPickBox" class="hint" style="margin-top:0;"></div>
         <label>انتخاب یا تایپ نام کالا:</label>
         <div style="display:flex; gap:6px; align-items:flex-start;">
             <input type="text" id="ssName" dir="auto" list="sausageDatalist" placeholder="نام کالا را انتخاب یا تایپ کنید" onchange="calculateSalePriceAuto('sausage')" style="flex:1;">
@@ -1864,7 +1867,11 @@
             if (!el) return;
             el.classList.toggle('show', !navigator.onLine);
         }
-        window.addEventListener('online', () => { updateConnectionBanner(); showToast('✅ اتصال اینترنت دوباره برقرار شد'); });
+        window.addEventListener('online', () => {
+            updateConnectionBanner();
+            showToast('✅ اتصال اینترنت دوباره برقرار شد');
+            if (typeof flushOfflineSaleQueue === 'function') flushOfflineSaleQueue();
+        });
         window.addEventListener('offline', () => { updateConnectionBanner(); showToast('⚠️ اتصال اینترنت قطع شد — به‌محض وصل شدن دوباره تلاش کنید'); });
         updateConnectionBanner();
 
@@ -2651,6 +2658,7 @@
                 calc: 'sCalcDisplay', submitBtn: 'saleSubmitBtn', formTitle: 'saleFormTitle',
                 cancelBtn: 'cancelSaleEditBtn', table: 'recentSalesTable', pageIndicator: 'salesPageIndicator',
                 lateToggle: 'sLateToggle', lateBox: 'sLateBox', lateDate: 'sLateDate', lateShift: 'sLateShift',
+                quickPick: 'sQuickPickBox',
                 defaultFormTitle: '🛍️ ثبت فروش حضوری روزانه', defaultSubmitText: 'ثبت فاکتور فروش حضوری'
             },
             ekala: {
@@ -2658,6 +2666,7 @@
                 calc: 'seCalcDisplay', submitBtn: 'saleEkalaSubmitBtn', formTitle: 'saleEkalaFormTitle',
                 cancelBtn: 'cancelSaleEkalaEditBtn', table: 'recentSalesTableEkala', pageIndicator: 'salesPageIndicatorEkala',
                 lateToggle: 'seLateToggle', lateBox: 'seLateBox', lateDate: 'seLateDate', lateShift: 'seLateShift',
+                quickPick: 'seQuickPickBox',
                 defaultFormTitle: '🛒 ثبت فروش اکالا', defaultSubmitText: 'ثبت فاکتور فروش اکالا'
             },
             sausage: {
@@ -2665,6 +2674,7 @@
                 calc: 'ssCalcDisplay', submitBtn: 'saleSausageSubmitBtn', formTitle: 'saleSausageFormTitle',
                 cancelBtn: 'cancelSaleSausageEditBtn', table: 'recentSalesTableSausage', pageIndicator: 'salesPageIndicatorSausage',
                 lateToggle: 'ssLateToggle', lateBox: 'ssLateBox', lateDate: 'ssLateDate', lateShift: 'ssLateShift',
+                quickPick: 'ssQuickPickBox',
                 defaultFormTitle: '🌭 ثبت فروش سوسیس و کالباس', defaultSubmitText: 'ثبت فاکتور فروش سوسیس و کالباس'
             }
         };
@@ -3838,6 +3848,11 @@
 
             if (targetBtn) targetBtn.classList.add('active');
             if (targetTab) targetTab.classList.add('active');
+
+            // کالاهای پرتکرار/مثل‌قبلی رو تازه کن وقتی وارد یکی از تب‌های فروش میشه
+            if (tab === 'sale') renderQuickPickButtons('instore');
+            if (tab === 'saleEkala') renderQuickPickButtons('ekala');
+            if (tab === 'saleSausage') renderQuickPickButtons('sausage');
         }
 
         // --- تشخیص خودکار کالاهای پرفروش بر اساس مجموع فروش ۳۰ روز اخیر ---
@@ -4378,7 +4393,14 @@
             if (product) {
                 selectedProductUnitPrice[type] = product.sell_price || 0;
                 const totalPrice = Math.round(qty * selectedProductUnitPrice[type]);
-                display.innerText = `مبلغ کل فاکتور: ${totalPrice.toLocaleString('fa-IR')} تومان (نرخ واحد: ${selectedProductUnitPrice[type].toLocaleString('fa-IR')} تومان/کیلو)`;
+                let html = `مبلغ کل فاکتور: ${totalPrice.toLocaleString('fa-IR')} تومان (نرخ واحد: ${selectedProductUnitPrice[type].toLocaleString('fa-IR')} تومان/کیلو)`;
+                // هشدار کمبود موجودی مستقیم همینجا (نه فقط تب انبار) — قبل از اینکه فروشنده جنسی رو
+                // بفروشه که تقریباً تمومه، همینجا متوجه بشه
+                const boothStock = product.booth_stock || 0;
+                if (boothStock <= 2) {
+                    html += `<br><span style="color:#fbbf24;">⚠️ فقط ${boothStock.toLocaleString('fa-IR')} کیلوگرم از این کالا داخل غرفه مونده — به مدیر اطلاع بده شارژ کنه.</span>`;
+                }
+                display.innerHTML = html;
             } else {
                 display.innerText = '⚠️ کالا یافت نشد؛ قیمت تعریف‌نشده است';
                 selectedProductUnitPrice[type] = 0;
@@ -5635,6 +5657,27 @@
             }
         }
 
+        // خلاصه‌ی کوتاه فروش امروز، وقتی فروشنده خروج می‌زند — حس خوب و بازخورد فوری از کارشان
+        async function buildEndOfShiftSummary() {
+            if (currentRole !== 'morning_seller' && currentRole !== 'evening_seller') return null;
+            try {
+                const todayISOTehran = getTehranISODate(new Date());
+                const { data: sales, error } = await _supabase
+                    .from('sales')
+                    .select('sell_price, created_at, seller_name')
+                    .eq('seller_name', currentUserLabel)
+                    .order('created_at', { ascending: false })
+                    .limit(300);
+                if (error || !sales) return null;
+                const todaySales = sales.filter(s => getTehranISODate(new Date(s.created_at)) === todayISOTehran);
+                if (todaySales.length === 0) return '📊 امروز فاکتور فروشی برای شما ثبت نشده بود.';
+                const totalSum = todaySales.reduce((sum, s) => sum + (Number(s.sell_price) || 0), 0);
+                return `👏 خلاصه‌ی کار امروز شما:\n🧾 ${todaySales.length.toLocaleString('fa-IR')} فاکتور ثبت کردید\n💰 مجموع فروش: ${totalSum.toLocaleString('fa-IR')} تومان\nخسته نباشید!`;
+            } catch (e) {
+                return null;
+            }
+        }
+
         async function submitAttendance() {
             const type = document.getElementById('attType').value;
             const val = parseFloat(document.getElementById('attOvertimeVal').value) || 0;
@@ -5895,6 +5938,11 @@
                     }
                 }
 
+                if (type === 'exit') {
+                    const shiftSummary = await buildEndOfShiftSummary();
+                    if (shiftSummary) successMsg += `\n\n${shiftSummary}`;
+                }
+
                 showToast(successMsg);
 
                 document.getElementById('attNote').value = '';
@@ -6152,6 +6200,140 @@
                     <tbody>${rows}</tbody>
                 </table>
             `;
+        }
+
+        // =========================================================================
+        // کالاهای پرتکرار + «مثل قبلی» — کاملاً محلی روی همین گوشی (localStorage)، سریع و
+        // بدون نیاز به اینترنت. هر فروشنده روی گوشی خودش کالاهای پرتکرار خودش رو می‌بینه.
+        // =========================================================================
+        function recordProductFrequency(type, productName) {
+            try {
+                const key = `productFreq_${type}`;
+                const freq = JSON.parse(localStorage.getItem(key) || '{}');
+                freq[productName] = (freq[productName] || 0) + 1;
+                localStorage.setItem(key, JSON.stringify(freq));
+            } catch (e) {}
+        }
+        function saveLastSale(type, productName, qtyKg, unit) {
+            try {
+                localStorage.setItem(`lastSale_${type}`, JSON.stringify({ name: productName, qty: qtyKg, unit: unit || 'kg' }));
+            } catch (e) {}
+        }
+        function renderQuickPickButtons(type) {
+            const ids = SALE_FORM_IDS[type];
+            const box = document.getElementById(ids.quickPick);
+            if (!box) return;
+            let freq = {};
+            let lastSale = null;
+            try { freq = JSON.parse(localStorage.getItem(`productFreq_${type}`) || '{}'); } catch (e) {}
+            try { lastSale = JSON.parse(localStorage.getItem(`lastSale_${type}`) || 'null'); } catch (e) {}
+
+            const topProducts = Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 6).map(e => e[0]);
+            if (topProducts.length === 0 && !lastSale) { box.innerHTML = ''; return; }
+
+            let html = '<div style="display:flex; gap:6px; flex-wrap:wrap; margin:6px 0;">';
+            if (lastSale) {
+                html += `<button type="button" class="range-toggle-btn" style="padding:8px 10px;" onclick="repeatLastSale('${type}')">🔁 مثل قبلی (${escapeHtmlForToast(lastSale.name)})</button>`;
+            }
+            for (const name of topProducts) {
+                html += `<button type="button" class="range-toggle-btn" style="padding:8px 10px;" onclick="applyQuickPickProduct('${type}', ${JSON.stringify(name).replace(/'/g, "\\'")})">⭐ ${escapeHtmlForToast(name)}</button>`;
+            }
+            html += '</div>';
+            box.innerHTML = html;
+        }
+        function applyQuickPickProduct(type, productName) {
+            const ids = SALE_FORM_IDS[type];
+            document.getElementById(ids.name).value = productName;
+            calculateSalePriceAuto(type);
+            document.getElementById(ids.qty).focus();
+            try { if (navigator.vibrate) navigator.vibrate(15); } catch (e) {}
+        }
+        function repeatLastSale(type) {
+            let lastSale = null;
+            try { lastSale = JSON.parse(localStorage.getItem(`lastSale_${type}`) || 'null'); } catch (e) {}
+            if (!lastSale) return;
+            const ids = SALE_FORM_IDS[type];
+            document.getElementById(ids.name).value = lastSale.name;
+            document.querySelectorAll(`input[name="${ids.qtyUnitName}"]`).forEach(r => { r.checked = (r.value === (lastSale.unit || 'kg')); });
+            document.getElementById(ids.qty).value = lastSale.qty;
+            onSaleUnitChange(type);
+            showToast(`🔁 فرم با آخرین فروش («${lastSale.name}») پر شد؛ اگه درسته، «ثبت فاکتور» رو بزن.`);
+        }
+
+        // =========================================================================
+        // صف آفلاین: اگه لحظه ثبت فروش اینترنت قطع باشه، فاکتور به‌جای خطا دادن، توی
+        // همین گوشی (localStorage) نگه داشته می‌شه و به‌محض وصل شدن اینترنت خودکار
+        // (بدون نیاز به هیچ کاری از طرف فروشنده) ارسال می‌شه.
+        // =========================================================================
+        function queueOfflineSale(type) {
+            const ids = SALE_FORM_IDS[type];
+            const name = document.getElementById(ids.name).value.trim();
+            const qtyRaw = document.getElementById(ids.qty).value;
+            const unit = document.querySelector(`input[name="${ids.qtyUnitName}"]:checked`)?.value || 'kg';
+            if (!name || !qtyRaw) {
+                showToast('⛔ لطفاً نام کالا و مقدار را وارد کنید.');
+                return;
+            }
+            let queue = [];
+            try { queue = JSON.parse(localStorage.getItem('offlineSaleQueue') || '[]'); } catch (e) {}
+            queue.push({ type, name, qtyRaw, unit, queuedAt: Date.now() });
+            localStorage.setItem('offlineSaleQueue', JSON.stringify(queue));
+            showToast(`📴 اینترنت قطعه؛ فاکتور «${name}» ذخیره شد و به‌محض وصل شدن اینترنت خودکار ثبت می‌شود (${queue.length.toLocaleString('fa-IR')} فاکتور در صف).`);
+            document.getElementById(ids.name).value = '';
+            document.getElementById(ids.qty).value = '';
+        }
+        let offlineQueueFlushing = false;
+        async function flushOfflineSaleQueue() {
+            if (offlineQueueFlushing) return;
+            let queue = [];
+            try { queue = JSON.parse(localStorage.getItem('offlineSaleQueue') || '[]'); } catch (e) {}
+            if (queue.length === 0) return;
+            offlineQueueFlushing = true;
+            showToast(`📶 اینترنت وصل شد؛ در حال ارسال ${queue.length.toLocaleString('fa-IR')} فاکتور صف‌شده...`);
+
+            while (queue.length > 0) {
+                const entry = queue[0];
+                const ids = SALE_FORM_IDS[entry.type];
+                if (!ids) { queue.shift(); continue; }
+
+                // قبل از ارسال خودکار، موجودی رو تازه چک می‌کنیم — اگه الان کافی نیست، به‌جای
+                // معطل موندن پشت یه پنجره‌ی تاییدی که کسی پشتش نیست، این یکی رو رد می‌کنیم و
+                // مستقیم به مدیر خبر می‌دیم که دستی بررسی کنه.
+                if (cachedProductsList.length === 0) {
+                    const { data } = await _supabase.from('products').select('*');
+                    cachedProductsList = sortProductsAlpha(data || []);
+                }
+                const product = cachedProductsList.find(p => p.name === entry.name);
+                const qtyKg = entry.unit === 'gram' ? Number((parseFloat(entry.qtyRaw) / 1000).toFixed(4)) : parseFloat(entry.qtyRaw);
+                if (!product || (product.booth_stock || 0) < qtyKg) {
+                    queue.shift();
+                    localStorage.setItem('offlineSaleQueue', JSON.stringify(queue));
+                    _supabase.from('messages').insert([{
+                        sender: "سیستم خودکار صف آفلاین",
+                        recipient: "admin",
+                        title: `⚠️ فاکتور آفلاین ثبت نشد: ${currentUserLabel}`,
+                        body: `کاربر ${currentUserLabel} وقتی آفلاین بود سعی کرد «${entry.name}» به مقدار ${entry.qtyRaw} ${entry.unit === 'gram' ? 'گرم' : 'کیلوگرم'} ثبت کند، اما الان (بعد از وصل شدن اینترنت) موجودی کافی نیست یا کالا پیدا نشد. لطفاً دستی بررسی/ثبت کنید.`,
+                        created_at: new Date().toISOString()
+                    }]).then(() => {});
+                    continue;
+                }
+
+                document.getElementById(ids.name).value = entry.name;
+                document.querySelectorAll(`input[name="${ids.qtyUnitName}"]`).forEach(r => { r.checked = (r.value === entry.unit); });
+                document.getElementById(ids.qty).value = entry.qtyRaw;
+                onSaleUnitChange(entry.type);
+                try {
+                    await submitSale(entry.type);
+                    queue.shift();
+                    localStorage.setItem('offlineSaleQueue', JSON.stringify(queue));
+                } catch (e) {
+                    console.warn('خطا در ارسال صف آفلاین، دوباره تلاش می‌شود', e);
+                    break; // شاید دوباره آفلاین شدیم؛ بقیه صف رو نگه می‌داریم برای دفعه بعد
+                }
+            }
+            offlineQueueFlushing = false;
+            const remaining = JSON.parse(localStorage.getItem('offlineSaleQueue') || '[]');
+            if (remaining.length === 0) showToast('✅ همه فاکتورهای صف‌شده با موفقیت ثبت شدند.');
         }
 
         async function loadProductDatalist() {
@@ -6422,6 +6604,12 @@
         }
 
         async function submitSale(type) {
+            // اگه اینترنت قطعه، به‌جای خطا دادن، فاکتور رو توی صف محلی نگه می‌داریم و به‌محض
+            // وصل شدن اینترنت خودکار ارسال میشه — برای وقتی نت لحظه‌ای قطع میشه، خیلی به‌کار میاد
+            if (!navigator.onLine) {
+                queueOfflineSale(type);
+                return;
+            }
             const ids = SALE_FORM_IDS[type];
             const typeLabel = (type === 'ekala') ? 'اکالا' : (type === 'sausage' ? 'سوسیس و کالباس' : 'حضوری');
             const inputVal = document.getElementById(ids.name).value.trim();
@@ -6591,6 +6779,12 @@
             document.querySelector(`input[name="${ids.qtyUnitName}"][value="kg"]`).checked = true;
             onSaleUnitChange(type);
             resetLateSaleFields(type);
+
+            // برای دکمه‌های «کالاهای پرتکرار» و «مثل قبلی» — کاملاً محلی (localStorage)، هیچ اثری
+            // روی دیتابیس یا سرعت ثبت نداره
+            recordProductFrequency(type, product.name);
+            saveLastSale(type, product.name, qty, 'kg');
+            renderQuickPickButtons(type);
 
             loadRecentSales(type);
             checkCriticalAfterSale(product, newBoothStock);
