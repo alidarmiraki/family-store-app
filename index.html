@@ -12,7 +12,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v42 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v43 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="icon" href="icon-192.png">
@@ -1892,32 +1892,42 @@
     <!-- تب دفترچه هزینه‌ها -->
     <div id="expensesTab" class="card">
         <h2>📒 دفترچه هزینه‌های جانبی</h2>
-        <div class="hint" style="margin-top:0;">هزینه‌هایی که خرید کالا نیستن ولی روی سود واقعی اثر دارن — اجاره، قبض، تعمیرات، حمل‌ونقل و غیره.</div>
+        <div class="hint" style="margin-top:0;">هزینه‌های جانبی مثل ظرف، دستکش، دستمال کاغذی و لوازم مصرفی رو اینجا ثبت کن. اگه خودت از جیب خودت خریدی، مشخص کن تا مدیر بدونه باید بهت پس بده.</div>
 
         <label>دسته‌بندی:</label>
         <select id="expenseCategory">
+            <option value="لوازم مصرفی">🧤 لوازم مصرفی (ظرف/دستکش/دستمال کاغذی و مشابه)</option>
             <option value="اجاره">🏠 اجاره</option>
             <option value="قبض">💡 قبض (برق/آب/گاز/تلفن)</option>
             <option value="تعمیرات">🔧 تعمیرات و نگهداری</option>
             <option value="حمل‌ونقل">🚚 حمل‌ونقل</option>
-            <option value="بسته‌بندی">📦 بسته‌بندی و لوازم مصرفی</option>
             <option value="سایر">📌 سایر</option>
         </select>
 
         <label>مبلغ (تومان):</label>
-        <input type="number" id="expenseAmount" placeholder="مثلاً 2500000">
+        <input type="number" id="expenseAmount" placeholder="مثلاً 250000">
 
         <label>توضیحات:</label>
-        <input type="text" id="expenseNote" placeholder="مثلاً اجاره شهریورماه">
+        <input type="text" id="expenseNote" placeholder="مثلاً خرید دستکش یکبارمصرف">
 
         <label>تاریخ:</label>
         <input type="date" id="expenseDate">
 
+        <label id="expensePaidByLabel" style="display:flex; align-items:center; gap:8px; margin-top:14px; cursor:pointer;">
+            <input type="checkbox" id="expensePaidBySelf" style="width:auto;" checked>
+            💸 این مبلغ رو خودم از جیب خودم پرداخت کردم (باید مدیر بعداً بهم پس بده)
+        </label>
+
         <button class="submit-btn" onclick="submitExpense()">💾 ثبت هزینه</button>
 
-        <div class="report-card" style="margin-top:16px;">
+        <div class="report-card" style="margin-top:16px;" id="expensesMonthTotalBox">
             <h3>📊 جمع هزینه‌های این ماه</h3>
             <p id="expensesMonthTotal" style="font-size:18px; font-weight:bold; color:#fbbf24;">در حال محاسبه...</p>
+        </div>
+
+        <div class="report-card" id="unsettledExpensesBox" style="margin-top:10px; display:none;">
+            <h3>🧾 مبالغی که هنوز حساب نشده (طلب از مدیر)</h3>
+            <div id="unsettledExpensesList"></div>
         </div>
 
         <div class="report-card" style="margin-top:10px;">
@@ -1926,7 +1936,7 @@
         </div>
     </div>
 
-    <div class="build-tag">v42 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v43 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
 
     <script>
         // ================== حالت روشن/تاریک ==================
@@ -3817,10 +3827,10 @@
                 document.getElementById('salaryAdminForm').style.display = 'block';
                 checkLowStockAlertNoWeight();
             } else if (currentRole === 'morning_seller') {
-                setupView(['btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnDebtLedger', 'btnPersonalTakeout', 'btnSalary', 'btnMyAccount'], 'saleTab');
+                setupView(['btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnDebtLedger', 'btnPersonalTakeout', 'btnSalary', 'btnExpenses', 'btnMyAccount'], 'saleTab');
                 document.getElementById('salaryAdminForm').style.display = 'none';
             } else {
-                setupView(['btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnReport', 'btnDebtLedger', 'btnPersonalTakeout', 'btnSalary', 'btnMyAccount'], 'saleTab');
+                setupView(['btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnReport', 'btnDebtLedger', 'btnPersonalTakeout', 'btnSalary', 'btnExpenses', 'btnMyAccount'], 'saleTab');
                 document.getElementById('salaryAdminForm').style.display = 'none';
             }
 
@@ -6124,6 +6134,24 @@
                 }
             }
 
+            // اگر تاخیر ورود از حد مجاز مدیر بیشتره (ولی هنوز داخل بازه‌ای هست که اصلاً اجازه‌ی
+            // ثبت داره، پس بلاک نشده)، حتماً باید دلیلش رو بنویسه — این دلیل هم داخل توضیحات خود
+            // ثبت ذخیره می‌شه و هم عیناً برای مدیر می‌ره، تا مدیر همیشه دلیل واقعی رو داشته باشه
+            let lateReasonText = null;
+            if (type === 'entry' && delayMinutes !== null && delayMinutes > settings.maxDelay) {
+                do {
+                    lateReasonText = window.prompt(`⛔ شما ${delayMinutes} دقیقه از حد مجاز (${settings.maxDelay} دقیقه) تاخیر دارید.\n\nلطفاً دلیل تاخیر را بنویسید (این پیام عیناً برای مدیر ارسال می‌شود) — نوشتن دلیل الزامی است:`);
+                    if (lateReasonText === null) {
+                        const wantsCancel = await showConfirm('اگه دلیلی ننویسی، این ثبت انجام نمی‌شه. مطمئنی می‌خوای انصراف بدی؟');
+                        if (wantsCancel) {
+                            if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'ثبت در سیستم حضور و غیاب'; }
+                            return;
+                        }
+                    }
+                } while (lateReasonText === null || lateReasonText.trim() === '');
+                lateReasonText = lateReasonText.trim();
+            }
+
             let photoUrl = null;
             if (type !== 'leave' && selectedPhotoDataUrl) {
                 if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = '⏳ در حال آپلود عکس...'; }
@@ -6162,10 +6190,10 @@
                     sender: "سیستم خودکار تاخیر",
                     recipient: "admin",
                     title: `⚠️ هشدار تاخیر ${currentUserLabel}`,
-                    body: `کاربر ${currentUserLabel} در تاریخ ${getTehranDateString(now)} ساعت ${timeStrNow} ورود خود را ثبت کرد.\nمیزان تاخیر: ${delayMinutes} دقیقه\nحداکثر تاخیر مجاز طبق تنظیمات: ${settings.maxDelay} دقیقه\nمقدار بیش از حد مجاز: ${overBy} دقیقه`,
+                    body: `کاربر ${currentUserLabel} در تاریخ ${getTehranDateString(now)} ساعت ${timeStrNow} ورود خود را ثبت کرد.\nمیزان تاخیر: ${delayMinutes} دقیقه\nحداکثر تاخیر مجاز طبق تنظیمات: ${settings.maxDelay} دقیقه\nمقدار بیش از حد مجاز: ${overBy} دقیقه\n📝 دلیلی که خودش نوشت: «${lateReasonText || '—'}»`,
                     created_at: now.toISOString()
                 }]);
-                sendPushNotificationToRole('⚠️ هشدار تاخیر', `${currentUserLabel} با ${delayMinutes} دقیقه تاخیر (${overBy} دقیقه بیش از حد مجاز) وارد شد.`, 'admin');
+                sendPushNotificationToRole('⚠️ هشدار تاخیر', `${currentUserLabel} با ${delayMinutes} دقیقه تاخیر (${overBy} دقیقه بیش از حد مجاز) وارد شد. دلیل: ${lateReasonText || '—'}`, 'admin');
             }
 
             if (type === 'exit' && exitDiffMinutes !== null && exitDiffMinutes < -settings.maxDelay) {
@@ -6187,7 +6215,7 @@
                 delay_minutes: delayMinutes,
                 exit_diff_minutes: exitDiffMinutes,
                 photo_url: photoUrl,
-                note: (note ? note + " | " : "") + (selectedLocationText ? selectedLocationText + " | " : "") + (biometricFallbackReason ? `⚠️ بدون تایید بیومتریک (${biometricFallbackReason}) | ` : "") + (biometricMethodLabel ? biometricMethodLabel + " | " : "") + `زمان ثبت: ${fullDateTimeStr}`,
+                note: (note ? note + " | " : "") + (selectedLocationText ? selectedLocationText + " | " : "") + (biometricFallbackReason ? `⚠️ بدون تایید بیومتریک (${biometricFallbackReason}) | ` : "") + (biometricMethodLabel ? biometricMethodLabel + " | " : "") + (lateReasonText ? `📝 دلیل تاخیر: ${lateReasonText} | ` : "") + `زمان ثبت: ${fullDateTimeStr}`,
                 created_at: now.toISOString()
             }]);
 
@@ -9488,9 +9516,10 @@
             const startUTC = new Date(Date.parse(startStr + 'T00:00:00.000Z') - 3.5 * 60 * 60 * 1000).toISOString();
             const endUTC = new Date(Date.parse(endStr + 'T00:00:00.000Z') - 3.5 * 60 * 60 * 1000 + 24 * 60 * 60 * 1000).toISOString();
 
-            const [{ data: sales }, { data: invoices }] = await Promise.all([
+            const [{ data: sales }, { data: invoices }, { data: expenseRows }] = await Promise.all([
                 _supabase.from('sales').select('sell_price, created_at').gte('created_at', startUTC).lt('created_at', endUTC).order('created_at', { ascending: true }).limit(5000),
-                _supabase.from('purchase_invoices').select('total_amount, invoice_date')
+                _supabase.from('purchase_invoices').select('total_amount, invoice_date'),
+                _supabase.from('expenses').select('amount, expense_date')
             ]);
 
             const filteredSales = (sales || []).filter(s => {
@@ -9499,10 +9528,12 @@
             });
 
             const filteredInvoices = (invoices || []).filter(inv => inv.invoice_date >= startStr && inv.invoice_date <= endStr);
+            const filteredExpenses = (expenseRows || []).filter(e => e.expense_date >= startStr && e.expense_date <= endStr);
 
             const totalSalesRevenue = filteredSales.reduce((sum, s) => sum + (Number(s.sell_price) || 0), 0);
             const totalPurchaseCost = filteredInvoices.reduce((sum, inv) => sum + (Number(inv.total_amount) || 0), 0);
-            const profit = totalSalesRevenue - totalPurchaseCost;
+            const totalExpenses = filteredExpenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+            const profit = totalSalesRevenue - totalPurchaseCost - totalExpenses;
 
             const rangeLabel = (startStr === endStr) ? startStr : `${startStr} تا ${endStr}`;
 
@@ -9510,9 +9541,10 @@
                 <div class="report-card">
                     <h3>📈 گزارش سود بازه (${rangeLabel})</h3>
                     <p>🧾 مجموع مبلغ فاکتورهای خرید ثبت‌شده در این بازه: <b style="color:#f87171;">${totalPurchaseCost.toLocaleString('fa-IR')} تومان</b> (${filteredInvoices.length} فاکتور)</p>
+                    <p>📒 مجموع هزینه‌های جانبی (اجاره/قبض/لوازم مصرفی و...): <b style="color:#fbbf24;">${totalExpenses.toLocaleString('fa-IR')} تومان</b> (${filteredExpenses.length} مورد)</p>
                     <p>🛍️ مجموع فروش ثبت‌شده در این بازه: <b style="color:#38bdf8;">${totalSalesRevenue.toLocaleString('fa-IR')} تومان</b> (${filteredSales.length} فاکتور)</p>
-                    <p style="font-size:15px; font-weight:bold;">${profit >= 0 ? '✅ سود' : '⚠️ ضرر'} این بازه: <span style="color:${profit >= 0 ? '#34d399' : '#ef4444'};">${Math.abs(profit).toLocaleString('fa-IR')} تومان</span></p>
-                    <div class="hint">این محاسبه بر اساس مجموع مبلغ فاکتورهای خرید ثبت‌شده (نه لزوماً کالاهای فروخته‌شده در همین بازه) در برابر مجموع فروش واقعی همین بازه است.</div>
+                    <p style="font-size:15px; font-weight:bold;">${profit >= 0 ? '✅ سود' : '⚠️ ضرر'} خالص این بازه: <span style="color:${profit >= 0 ? '#34d399' : '#ef4444'};">${Math.abs(profit).toLocaleString('fa-IR')} تومان</span></p>
+                    <div class="hint">این محاسبه = فروش − فاکتورهای خرید − هزینه‌های جانبی. بر اساس مجموع مبلغ فاکتورهای خرید ثبت‌شده (نه لزوماً کالاهای فروخته‌شده در همین بازه) است.</div>
                 </div>
             `;
         }
@@ -9777,13 +9809,15 @@
         }
 
         // =========================================================================
-        // دفترچه هزینه‌های جانبی (اجاره، قبض، تعمیرات...) — فقط مدیر می‌بیند
+        // دفترچه هزینه‌های جانبی — هم فروشنده‌ها می‌تونن ثبت کنن (مثلاً خرید دستکش با پول خودشون)
+        // هم مدیر. اگه فروشنده «خودم پرداخت کردم» رو بزنه، حساب‌نشده می‌مونه تا مدیر تسویه کنه.
         // =========================================================================
         async function submitExpense() {
             const category = document.getElementById('expenseCategory').value;
             const amount = parseFloat(document.getElementById('expenseAmount').value);
             const note = document.getElementById('expenseNote').value.trim();
             const dateVal = document.getElementById('expenseDate').value || getTehranISODate(new Date());
+            const paidBySelf = document.getElementById('expensePaidBySelf').checked;
 
             if (!amount || amount <= 0) {
                 showToast('⛔ لطفاً مبلغ هزینه را وارد کنید.');
@@ -9791,7 +9825,11 @@
             }
 
             const { error } = await _supabase.from('expenses').insert([{
-                category, amount, note, expense_date: dateVal, created_by: currentUserLabel, created_at: new Date().toISOString()
+                category, amount, note, expense_date: dateVal,
+                created_by: currentUserLabel,
+                paid_by_seller: paidBySelf,
+                reimbursed: !paidBySelf, // اگه خودش پرداخت نکرده (یعنی مستقیم از صندوق/مدیر بوده)، از اول تسویه‌شده حساب میشه
+                created_at: new Date().toISOString()
             }]);
 
             if (error) {
@@ -9799,9 +9837,26 @@
                 return;
             }
 
-            showToast(`✅ هزینه «${category}» به مبلغ ${amount.toLocaleString('fa-IR')} تومان ثبت شد.`);
+            if (paidBySelf) {
+                _supabase.from('messages').insert([{
+                    sender: "سیستم خودکار هزینه",
+                    recipient: "admin",
+                    title: `💸 هزینه حساب‌نشده: ${currentUserLabel}`,
+                    body: `${currentUserLabel} مبلغ ${amount.toLocaleString('fa-IR')} تومان بابت «${category}»${note ? ' (' + note + ')' : ''} از جیب خودش پرداخت کرده و هنوز تسویه نشده.`,
+                    created_at: new Date().toISOString()
+                }]).then(() => {});
+            }
+
+            showToast(`✅ هزینه «${category}» به مبلغ ${amount.toLocaleString('fa-IR')} تومان ثبت شد.${paidBySelf ? ' (به مدیر اطلاع داده شد که باید بهت پس بده)' : ''}`);
             document.getElementById('expenseAmount').value = '';
             document.getElementById('expenseNote').value = '';
+            loadExpensesTab();
+        }
+
+        async function markExpenseReimbursed(expenseId) {
+            const { error } = await _supabase.from('expenses').update({ reimbursed: true }).eq('id', expenseId);
+            if (error) { showToast('❌ خطا: ' + error.message); return; }
+            showToast('✅ این هزینه به‌عنوان تسویه‌شده ثبت شد.');
             loadExpensesTab();
         }
 
@@ -9809,28 +9864,74 @@
             document.getElementById('expenseDate').value = getTehranISODate(new Date());
             const listBox = document.getElementById('expensesList');
             const totalBox = document.getElementById('expensesMonthTotal');
+            const unsettledBox = document.getElementById('unsettledExpensesBox');
+            const unsettledList = document.getElementById('unsettledExpensesList');
             listBox.innerHTML = skeletonCards(3);
 
-            const { data, error } = await _supabase.from('expenses').select('*').order('expense_date', { ascending: false }).limit(100);
+            const isAdmin = currentRole === 'admin';
+            // برای مدیر فقط دکمه "پرداخت خودم" واقعاً معنی نداره (اونی که همیشه مستقیم داره پرداخت
+            // می‌کنه) پس اون گزینه رو براش پیش‌فرض غیرفعال نشون می‌دیم
+            if (isAdmin) document.getElementById('expensePaidBySelf').checked = false;
+
+            const { data, error } = await _supabase.from('expenses').select('*').order('expense_date', { ascending: false }).limit(150);
             if (error || !data) {
                 listBox.innerHTML = '<p style="color:#ef4444;">خطا در بارگذاری هزینه‌ها — مطمئن شوید جدول expenses ساخته شده است.</p>';
                 totalBox.innerText = '—';
                 return;
             }
 
-            const nowMonth = getTehranISODate(new Date()).slice(0, 7); // YYYY-MM
-            const thisMonthExpenses = data.filter(e => (e.expense_date || '').slice(0, 7) === nowMonth);
-            const monthTotal = thisMonthExpenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
-            totalBox.innerText = `${monthTotal.toLocaleString('fa-IR')} تومان (${thisMonthExpenses.length.toLocaleString('fa-IR')} مورد)`;
+            // فروشنده فقط هزینه‌های خودش رو می‌بینه، مدیر همه رو
+            const visibleData = isAdmin ? data : data.filter(e => e.created_by === currentUserLabel);
 
-            if (data.length === 0) {
+            const nowMonth = getTehranISODate(new Date()).slice(0, 7);
+            const thisMonthAll = data.filter(e => (e.expense_date || '').slice(0, 7) === nowMonth); // جمع کل ماه همیشه برای همه محاسبه میشه (شفافیت)
+            const monthTotal = thisMonthAll.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+            totalBox.innerText = `${monthTotal.toLocaleString('fa-IR')} تومان (${thisMonthAll.length.toLocaleString('fa-IR')} مورد، کل فروشگاه)`;
+
+            // بخش «حساب‌نشده‌ها» — مدیر همه رو می‌بینه با دکمه تسویه، فروشنده فقط طلب خودش رو می‌بینه
+            const unsettled = (isAdmin ? data : visibleData).filter(e => e.paid_by_seller && !e.reimbursed);
+            if (unsettled.length > 0) {
+                unsettledBox.style.display = 'block';
+                if (isAdmin) {
+                    const perSeller = {};
+                    unsettled.forEach(e => {
+                        if (!perSeller[e.created_by]) perSeller[e.created_by] = { total: 0, items: [] };
+                        perSeller[e.created_by].total += Number(e.amount) || 0;
+                        perSeller[e.created_by].items.push(e);
+                    });
+                    unsettledList.innerHTML = Object.entries(perSeller).map(([seller, info]) => `
+                        <div style="border:1px solid #ef4444; border-radius:8px; padding:8px; margin-bottom:8px;">
+                            <b style="color:#f87171;">👤 ${seller} — جمعاً ${info.total.toLocaleString('fa-IR')} تومان طلب دارد</b>
+                            ${info.items.map(e => `
+                                <div class="summary-mini">
+                                    <span>${e.category}${e.note ? ' — ' + escapeHtmlForToast(e.note) : ''} (${e.expense_date})</span>
+                                    <span>
+                                        <b style="color:#f87171;">${Number(e.amount).toLocaleString('fa-IR')}</b>
+                                        <button class="row-btn edit-btn" style="padding:4px 8px; font-size:10px;" onclick="markExpenseReimbursed('${e.id}')">✅ تسویه شد</button>
+                                    </span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `).join('');
+                } else {
+                    const myTotal = unsettled.reduce((s, e) => s + (Number(e.amount) || 0), 0);
+                    unsettledList.innerHTML = `<p style="color:#f87171; font-weight:bold;">جمعاً ${myTotal.toLocaleString('fa-IR')} تومان از مدیر طلب داری (هنوز تسویه نشده).</p>` +
+                        unsettled.map(e => `<div class="summary-mini"><span>${e.category}${e.note ? ' — ' + escapeHtmlForToast(e.note) : ''} (${e.expense_date})</span><b style="color:#f87171;">${Number(e.amount).toLocaleString('fa-IR')}</b></div>`).join('');
+                }
+            } else {
+                unsettledBox.style.display = 'none';
+            }
+
+            if (visibleData.length === 0) {
                 listBox.innerHTML = '<p class="hint">هنوز هیچ هزینه‌ای ثبت نشده.</p>';
                 return;
             }
 
-            listBox.innerHTML = data.map(e => `
+            listBox.innerHTML = visibleData.map(e => `
                 <div class="report-card">
-                    <h3>${e.category} — ${(Number(e.amount) || 0).toLocaleString('fa-IR')} تومان</h3>
+                    <h3>${e.category} — ${(Number(e.amount) || 0).toLocaleString('fa-IR')} تومان
+                        ${e.paid_by_seller ? (e.reimbursed ? ' <span style="font-size:10px; color:#10b981;">✅ تسویه‌شده</span>' : ' <span style="font-size:10px; color:#ef4444;">⏳ حساب‌نشده</span>') : ''}
+                    </h3>
                     <p>📅 ${e.expense_date || '-'} | ثبت‌کننده: ${e.created_by || '-'}</p>
                     ${e.note ? `<p>📝 ${escapeHtmlForToast(e.note)}</p>` : ''}
                 </div>
