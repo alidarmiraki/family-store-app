@@ -12,7 +12,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v41 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v42 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="icon" href="icon-192.png">
@@ -277,7 +277,31 @@
             from { opacity: 0; transform: translateY(6px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        h2 { color: var(--accent); margin-top: 0; font-size: 16px; }
+
+        /* اسکلت لودینگ (Skeleton) — به‌جای متن خشک «در حال بارگذاری...» */
+        .skeleton-block {
+            border-radius: 8px;
+            background: linear-gradient(90deg, var(--bg-input) 25%, rgba(148,163,184,0.18) 50%, var(--bg-input) 75%);
+            background-size: 200% 100%;
+            animation: skeletonShimmer 1.4s ease-in-out infinite;
+        }
+        @keyframes skeletonShimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        .skeleton-line { height: 14px; margin: 8px 0; }
+        .skeleton-card { height: 64px; margin: 10px 0; border-radius: 12px; }
+        h2 {
+            color: var(--accent);
+            margin-top: 0;
+            font-size: 16px;
+            padding-right: 10px;
+            border-right: 4px solid var(--accent);
+            background: linear-gradient(90deg, rgba(56,189,248,0.08), transparent 70%);
+            padding-top: 4px;
+            padding-bottom: 4px;
+            border-radius: 4px;
+        }
         label { font-size: 12px; color: var(--text-secondary); display: block; margin-top: 10px; text-align: right; }
         input, select, textarea {
             width: 100%;
@@ -1013,6 +1037,7 @@
         <button class="tab-btn" id="btnPurchaseInvoices" onclick="switchTab('purchaseInvoices'); loadPurchaseInvoices();">🧾 فاکتور خرید (مدیر)</button>
         <button class="tab-btn" id="btnTakeoutAdmin" onclick="switchTab('takeoutAdmin'); loadTakeoutAdminSummary();">🧺 برداشت‌های حساب‌نشده</button>
         <button class="tab-btn" id="btnSalary" onclick="switchTab('salary'); loadSalaryTab();">💰 واریز حقوق</button>
+        <button class="tab-btn" id="btnExpenses" onclick="switchTab('expenses'); loadExpensesTab();">📒 دفترچه هزینه‌ها</button>
         <button class="tab-btn" id="btnPersonalTakeout" onclick="switchTab('personalTakeout'); loadMyTakeouts();">🛒 برداشت شخصی</button>
         <button class="tab-btn" id="btnMyAccount" onclick="switchTab('myAccount'); prefillMyAccountTab();">⚙️ حساب کاربری من</button>
     </div>
@@ -1020,7 +1045,7 @@
     <!-- تب خلاصه روز (داشبورد مدیر) -->
     <div id="dashboardTab" class="card">
         <h2>🏠 خلاصه امروز</h2>
-        <div id="dashboardContent">در حال بارگذاری...</div>
+        <div id="dashboardContent"><div class="skeleton-block skeleton-card"></div><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
     <!-- فرم ثبت فروش لبنیات و ترشیجات (حضوری) -->
@@ -1086,7 +1111,7 @@
                         </tr>
                     </thead>
                     <tbody id="recentSalesTable">
-                        <tr><td colspan="6">در حال بارگذاری...</td></tr>
+                        <tr><td colspan="6"><div class="skeleton-block skeleton-line"></div></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -1156,7 +1181,7 @@
                         </tr>
                     </thead>
                     <tbody id="recentSalesTableEkala">
-                        <tr><td colspan="6">در حال بارگذاری...</td></tr>
+                        <tr><td colspan="6"><div class="skeleton-block skeleton-line"></div></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -1226,7 +1251,7 @@
                         </tr>
                     </thead>
                     <tbody id="recentSalesTableSausage">
-                        <tr><td colspan="6">در حال بارگذاری...</td></tr>
+                        <tr><td colspan="6"><div class="skeleton-block skeleton-line"></div></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -1321,7 +1346,7 @@
     <!-- صندوقچه پیام‌ها -->
     <div id="inboxTab" class="card">
         <h2>📥 صندوقچه پیام‌ها و هشدارها</h2>
-        <div id="inboxList">در حال بارگذاری...</div>
+        <div id="inboxList"><div class="skeleton-block skeleton-card"></div><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
     <!-- تب مدیریت ظروف یخچال غرفه -->
@@ -1384,7 +1409,7 @@
         </div>
 
         <h3 style="color:#38bdf8; margin-top:18px;">📦 سفارشات در راه (هنوز نرسیده)</h3>
-        <div id="poPendingList">در حال بارگذاری...</div>
+        <div id="poPendingList"><div class="skeleton-block skeleton-card"></div></div>
 
         <h3 style="color:#38bdf8; margin-top:18px;">✅ سفارشات دریافت‌شده اخیر</h3>
         <div id="poReceivedList"></div>
@@ -1505,7 +1530,7 @@
     <!-- گزارش فروش -->
     <div id="reportTab" class="card">
         <h2>📊 گزارش فروش غرفه</h2>
-        <div id="reportContent">در حال بارگذاری...</div>
+        <div id="reportContent"><div class="skeleton-block skeleton-card"></div><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
     <!-- گزارش کارکرد ماهانه پرسنل مدیر -->
@@ -1628,7 +1653,7 @@
         <div class="report-card" style="margin-top:16px;">
             <h3>📋 بدهی‌های ثبت‌شده</h3>
             <div class="search-box"><input type="text" id="debtSearchInput" dir="auto" placeholder="🔎 جستجوی نام مشتری..." oninput="filterDebtLedger()"></div>
-            <div id="debtLedgerList">در حال بارگذاری...</div>
+            <div id="debtLedgerList"><div class="skeleton-block skeleton-card"></div><div class="skeleton-block skeleton-card"></div></div>
         </div>
     </div>
 
@@ -1664,7 +1689,7 @@
         </div>
 
         <div class="hint">برای هر فروشنده‌ای که هنوز قرارداد را تکمیل و امضا نکرده، می‌توانید یک مهلت مشخص تعیین کنید. با این کار یک پیام یادآوری برای همان شیفت ارسال می‌شود و مهلت روی صفحه‌ی ثبت‌نام او هم نمایش داده خواهد شد. به محض اینکه فروشنده فرم را تکمیل و امضا کند، بلافاصله یک پیام به شما ارسال می‌شود.</div>
-        <div id="contractAdminList" style="margin-top:12px;">در حال بارگذاری...</div>
+        <div id="contractAdminList" style="margin-top:12px;"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
     <!-- تب گزارش رشد/افت فروش (فقط مدیر) -->
@@ -1759,7 +1784,7 @@
                 <div><label>تا تاریخ:</label><input type="date" id="piListRangeEnd"></div>
             </div>
             <button class="submit-btn" onclick="loadPurchaseInvoices()">نمایش فاکتورهای این بازه</button>
-            <div id="purchaseInvoicesList" style="margin-top:10px;">در حال بارگذاری...</div>
+            <div id="purchaseInvoicesList" style="margin-top:10px;"><div class="skeleton-block skeleton-card"></div></div>
         </div>
 
         <div class="report-card" style="margin-top:16px;">
@@ -1795,7 +1820,7 @@
 
         <div class="report-card" style="margin-top:16px;">
             <h3>📋 برداشت‌های ثبت‌شده شما</h3>
-            <div id="myTakeoutList">در حال بارگذاری...</div>
+            <div id="myTakeoutList"><div class="skeleton-block skeleton-card"></div></div>
             <div class="pagination-bar">
                 <button class="row-btn edit-btn" onclick="changeTakeoutPage(-1)">◀ قبلی</button>
                 <span id="takeoutPageIndicator">صفحه ۱</span>
@@ -1860,11 +1885,48 @@
         </div>
         <div class="report-card" style="margin-top:16px;">
             <h3>📋 تاریخچه واریز حقوق</h3>
-            <div id="salaryList">در حال بارگذاری...</div>
+            <div id="salaryList"><div class="skeleton-block skeleton-card"></div></div>
         </div>
     </div>
 
-    <div class="build-tag">v41 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <!-- تب دفترچه هزینه‌ها -->
+    <div id="expensesTab" class="card">
+        <h2>📒 دفترچه هزینه‌های جانبی</h2>
+        <div class="hint" style="margin-top:0;">هزینه‌هایی که خرید کالا نیستن ولی روی سود واقعی اثر دارن — اجاره، قبض، تعمیرات، حمل‌ونقل و غیره.</div>
+
+        <label>دسته‌بندی:</label>
+        <select id="expenseCategory">
+            <option value="اجاره">🏠 اجاره</option>
+            <option value="قبض">💡 قبض (برق/آب/گاز/تلفن)</option>
+            <option value="تعمیرات">🔧 تعمیرات و نگهداری</option>
+            <option value="حمل‌ونقل">🚚 حمل‌ونقل</option>
+            <option value="بسته‌بندی">📦 بسته‌بندی و لوازم مصرفی</option>
+            <option value="سایر">📌 سایر</option>
+        </select>
+
+        <label>مبلغ (تومان):</label>
+        <input type="number" id="expenseAmount" placeholder="مثلاً 2500000">
+
+        <label>توضیحات:</label>
+        <input type="text" id="expenseNote" placeholder="مثلاً اجاره شهریورماه">
+
+        <label>تاریخ:</label>
+        <input type="date" id="expenseDate">
+
+        <button class="submit-btn" onclick="submitExpense()">💾 ثبت هزینه</button>
+
+        <div class="report-card" style="margin-top:16px;">
+            <h3>📊 جمع هزینه‌های این ماه</h3>
+            <p id="expensesMonthTotal" style="font-size:18px; font-weight:bold; color:#fbbf24;">در حال محاسبه...</p>
+        </div>
+
+        <div class="report-card" style="margin-top:10px;">
+            <h3>📋 آخرین هزینه‌های ثبت‌شده</h3>
+            <div id="expensesList"><div class="skeleton-block skeleton-card"></div></div>
+        </div>
+    </div>
+
+    <div class="build-tag">v42 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
 
     <script>
         // ================== حالت روشن/تاریک ==================
@@ -2290,6 +2352,19 @@
         let cachedProductsList = [];
 
         // --- سیستم اعلان (Toast) به‌جای showToast() پیش‌فرض مرورگر ---
+        // اسکلت لودینگ: چند خط/کارت خاکستری متحرک به‌جای متن خشک «در حال بارگذاری...»
+        function skeletonRows(colCount, rowCount) {
+            let html = '';
+            for (let i = 0; i < (rowCount || 3); i++) {
+                html += `<tr>${'<td><div class="skeleton-block skeleton-line"></div></td>'.repeat(colCount)}</tr>`;
+            }
+            return html;
+        }
+        function skeletonCards(count) {
+            let html = '';
+            for (let i = 0; i < (count || 3); i++) html += '<div class="skeleton-block skeleton-card"></div>';
+            return html;
+        }
         function escapeHtmlForToast(text) {
             return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         }
@@ -3236,7 +3311,7 @@
         // --- مدیریت قرارداد پرسنل توسط مدیر: تعیین مهلت و پیگیری وضعیت ---
         async function loadContractAdminTab() {
             const box = document.getElementById('contractAdminList');
-            box.innerHTML = 'در حال بارگذاری...';
+            box.innerHTML = skeletonCards(2);
 
             const template = await getContractTemplate(true);
             const editor = document.getElementById('contractTemplateEditor');
@@ -3738,7 +3813,7 @@
             document.getElementById('buyPriceField').style.display = (currentRole === 'admin') ? 'block' : 'none';
 
             if (currentRole === 'admin') {
-                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnInbox', 'btnStaffMessage', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnShiftSettings', 'btnTelegramSettings', 'btnDebtLedger', 'btnContractAdmin', 'btnGrowthReport', 'btnPurchaseInvoices', 'btnTakeoutAdmin', 'btnSalary', 'btnMyAccount'], 'dashboardTab');
+                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnInbox', 'btnStaffMessage', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnShiftSettings', 'btnTelegramSettings', 'btnDebtLedger', 'btnContractAdmin', 'btnGrowthReport', 'btnPurchaseInvoices', 'btnTakeoutAdmin', 'btnSalary', 'btnExpenses', 'btnMyAccount'], 'dashboardTab');
                 document.getElementById('salaryAdminForm').style.display = 'block';
                 checkLowStockAlertNoWeight();
             } else if (currentRole === 'morning_seller') {
@@ -3884,6 +3959,44 @@
             if (tab === 'saleSausage') renderQuickPickButtons('sausage');
             if (tab === 'attendance') syncAttendanceTypeSelector();
         }
+
+        // =========================================================================
+        // سوایپ بین تب‌ها با انگشت — مثل اپ‌های واقعی. فقط وقتی حرکت واقعاً افقیه (نه اسکرول
+        // عمودی معمولی) و روی چیزی که خودش نیاز به سوایپ افقی داره (جدول، نوار تب‌ها، دوربین)
+        // شروع نشده باشه، فعال می‌شه تا با کارهای دیگه تداخل نکنه.
+        // =========================================================================
+        function getTabSlugFromButton(btn) {
+            if (!btn || !btn.id || !btn.id.startsWith('btn')) return null;
+            const rest = btn.id.slice(3);
+            return rest.charAt(0).toLowerCase() + rest.slice(1);
+        }
+        let _swipeStartX = 0, _swipeStartY = 0, _swipeAllowed = false;
+        document.addEventListener('touchstart', (e) => {
+            if (e.touches.length !== 1) return;
+            const target = e.target;
+            _swipeAllowed = !target.closest('.tabs, table, #scannerOverlay, #faceOverlay, input, textarea, select, .toast-item');
+            _swipeStartX = e.touches[0].clientX;
+            _swipeStartY = e.touches[0].clientY;
+        }, { passive: true });
+        document.addEventListener('touchend', (e) => {
+            if (!_swipeAllowed || !currentSessionUser) return;
+            const touch = e.changedTouches[0];
+            const dx = touch.clientX - _swipeStartX;
+            const dy = touch.clientY - _swipeStartY;
+            if (Math.abs(dx) < 70 || Math.abs(dy) > 60) return;
+
+            const visibleBtns = Array.from(document.querySelectorAll('.tab-btn')).filter(b => getComputedStyle(b).display !== 'none');
+            const activeBtn = visibleBtns.find(b => b.classList.contains('active'));
+            if (!activeBtn) return;
+            const idx = visibleBtns.indexOf(activeBtn);
+            const nextIdx = dx < 0 ? idx + 1 : idx - 1; // راست‌به‌چپ: سوایپ به چپ = تب بعدی
+            if (nextIdx < 0 || nextIdx >= visibleBtns.length) return;
+            const nextSlug = getTabSlugFromButton(visibleBtns[nextIdx]);
+            if (nextSlug) {
+                switchTab(nextSlug);
+                try { if (navigator.vibrate) navigator.vibrate(10); } catch (err) {}
+            }
+        }, { passive: true });
 
         // --- تشخیص خودکار کالاهای پرفروش بر اساس مجموع فروش ۳۰ روز اخیر ---
         async function computeBestSellerCodes() {
@@ -4045,7 +4158,7 @@
 
         async function loadAdminDashboard() {
             const box = document.getElementById('dashboardContent');
-            box.innerHTML = 'در حال بارگذاری...';
+            box.innerHTML = skeletonCards(2);
 
             const now = new Date();
             const todayISO = getTehranISODate(now);
@@ -4198,7 +4311,7 @@
 
         async function loadDebtLedger() {
             const box = document.getElementById('debtLedgerList');
-            box.innerHTML = 'در حال بارگذاری...';
+            box.innerHTML = skeletonCards(2);
 
             const { data, error } = await _supabase.from('customer_debts').select('*').order('created_at', { ascending: false });
 
@@ -5763,7 +5876,7 @@
         async function loadStaffDevicesAdmin() {
             const box = document.getElementById('staffDevicesList');
             if (!box) return;
-            box.innerHTML = 'در حال بارگذاری...';
+            box.innerHTML = skeletonCards(2);
             const { data, error } = await _supabase.from('staff_devices').select('*').order('registered_at', { ascending: false });
             if (error) {
                 box.innerHTML = `<p style="color:#ef4444;">❌ خطا در دریافت فهرست: ${error.message}<br>مطمئن شوید جدول staff_devices در Supabase ساخته شده است.</p>`;
@@ -7046,7 +7159,7 @@
             const ids = SALE_FORM_IDS[type];
             const tbody = document.getElementById(ids.table);
             if (!tbody) return;
-            tbody.innerHTML = '<tr><td colspan="6">در حال بارگذاری...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6"><div class="skeleton-block skeleton-line"></div></td></tr>';
             salesPage[type] = 0;
 
             if (!currentUserLabel) {
@@ -7646,7 +7759,7 @@
 
             const pendingBox = document.getElementById('poPendingList');
             const receivedBox = document.getElementById('poReceivedList');
-            pendingBox.innerHTML = 'در حال بارگذاری...';
+            pendingBox.innerHTML = skeletonCards(2);
             receivedBox.innerHTML = '';
 
             const { data: orders, error } = await _supabase
@@ -8020,7 +8133,7 @@
 
         async function loadSalesReport() {
             const content = document.getElementById('reportContent');
-            content.innerHTML = 'در حال بارگذاری...';
+            content.innerHTML = skeletonCards(2);
 
             const now = new Date();
             const todayISOTehran = getTehranISODate(now);
@@ -9284,7 +9397,7 @@
 
         async function loadPurchaseInvoices() {
             const box = document.getElementById('purchaseInvoicesList');
-            box.innerHTML = 'در حال بارگذاری...';
+            box.innerHTML = skeletonCards(2);
 
             if (!document.getElementById('piDate').value) {
                 document.getElementById('piDate').value = getTehranISODate(new Date());
@@ -9589,7 +9702,7 @@
             const startStr = document.getElementById('takeoutRangeStart').value;
             const endStr = document.getElementById('takeoutRangeEnd').value;
             const box = document.getElementById('takeoutAdminSummary');
-            box.innerHTML = 'در حال بارگذاری...';
+            box.innerHTML = skeletonCards(2);
 
             const { data, error } = await _supabase.from('personal_takeouts').select('*').order('created_at', { ascending: false });
 
@@ -9663,9 +9776,70 @@
             }
         }
 
+        // =========================================================================
+        // دفترچه هزینه‌های جانبی (اجاره، قبض، تعمیرات...) — فقط مدیر می‌بیند
+        // =========================================================================
+        async function submitExpense() {
+            const category = document.getElementById('expenseCategory').value;
+            const amount = parseFloat(document.getElementById('expenseAmount').value);
+            const note = document.getElementById('expenseNote').value.trim();
+            const dateVal = document.getElementById('expenseDate').value || getTehranISODate(new Date());
+
+            if (!amount || amount <= 0) {
+                showToast('⛔ لطفاً مبلغ هزینه را وارد کنید.');
+                return;
+            }
+
+            const { error } = await _supabase.from('expenses').insert([{
+                category, amount, note, expense_date: dateVal, created_by: currentUserLabel, created_at: new Date().toISOString()
+            }]);
+
+            if (error) {
+                showToast('❌ خطا در ثبت هزینه: ' + error.message + '\n\nمطمئن شوید جدول expenses در Supabase ساخته شده است.');
+                return;
+            }
+
+            showToast(`✅ هزینه «${category}» به مبلغ ${amount.toLocaleString('fa-IR')} تومان ثبت شد.`);
+            document.getElementById('expenseAmount').value = '';
+            document.getElementById('expenseNote').value = '';
+            loadExpensesTab();
+        }
+
+        async function loadExpensesTab() {
+            document.getElementById('expenseDate').value = getTehranISODate(new Date());
+            const listBox = document.getElementById('expensesList');
+            const totalBox = document.getElementById('expensesMonthTotal');
+            listBox.innerHTML = skeletonCards(3);
+
+            const { data, error } = await _supabase.from('expenses').select('*').order('expense_date', { ascending: false }).limit(100);
+            if (error || !data) {
+                listBox.innerHTML = '<p style="color:#ef4444;">خطا در بارگذاری هزینه‌ها — مطمئن شوید جدول expenses ساخته شده است.</p>';
+                totalBox.innerText = '—';
+                return;
+            }
+
+            const nowMonth = getTehranISODate(new Date()).slice(0, 7); // YYYY-MM
+            const thisMonthExpenses = data.filter(e => (e.expense_date || '').slice(0, 7) === nowMonth);
+            const monthTotal = thisMonthExpenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+            totalBox.innerText = `${monthTotal.toLocaleString('fa-IR')} تومان (${thisMonthExpenses.length.toLocaleString('fa-IR')} مورد)`;
+
+            if (data.length === 0) {
+                listBox.innerHTML = '<p class="hint">هنوز هیچ هزینه‌ای ثبت نشده.</p>';
+                return;
+            }
+
+            listBox.innerHTML = data.map(e => `
+                <div class="report-card">
+                    <h3>${e.category} — ${(Number(e.amount) || 0).toLocaleString('fa-IR')} تومان</h3>
+                    <p>📅 ${e.expense_date || '-'} | ثبت‌کننده: ${e.created_by || '-'}</p>
+                    ${e.note ? `<p>📝 ${escapeHtmlForToast(e.note)}</p>` : ''}
+                </div>
+            `).join('');
+        }
+
         async function loadSalaryTab() {
             const box = document.getElementById('salaryList');
-            box.innerHTML = 'در حال بارگذاری...';
+            box.innerHTML = skeletonCards(2);
 
             let query = _supabase.from('salary_payments').select('*').order('paid_at', { ascending: false });
 
