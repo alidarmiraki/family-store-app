@@ -12,7 +12,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v43 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v44 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="icon" href="icon-192.png">
@@ -1905,7 +1905,8 @@
         </select>
 
         <label>مبلغ (تومان):</label>
-        <input type="number" id="expenseAmount" placeholder="مثلاً 250000">
+        <input type="number" id="expenseAmount" placeholder="مثلاً 250000" oninput="updateExpenseAmountPreview()">
+        <div class="hint" id="expenseAmountPreview" style="margin-top:3px; color:#38bdf8; font-weight:bold;"></div>
 
         <label>توضیحات:</label>
         <input type="text" id="expenseNote" placeholder="مثلاً خرید دستکش یکبارمصرف">
@@ -1918,7 +1919,7 @@
             💸 این مبلغ رو خودم از جیب خودم پرداخت کردم (باید مدیر بعداً بهم پس بده)
         </label>
 
-        <button class="submit-btn" onclick="submitExpense()">💾 ثبت هزینه</button>
+        <button class="submit-btn" id="expenseSubmitBtn" onclick="submitExpense()">💾 ثبت هزینه</button>
 
         <div class="report-card" style="margin-top:16px;" id="expensesMonthTotalBox">
             <h3>📊 جمع هزینه‌های این ماه</h3>
@@ -1936,7 +1937,7 @@
         </div>
     </div>
 
-    <div class="build-tag">v43 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v44 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
 
     <script>
         // ================== حالت روشن/تاریک ==================
@@ -9812,27 +9813,54 @@
         // دفترچه هزینه‌های جانبی — هم فروشنده‌ها می‌تونن ثبت کنن (مثلاً خرید دستکش با پول خودشون)
         // هم مدیر. اگه فروشنده «خودم پرداخت کردم» رو بزنه، حساب‌نشده می‌مونه تا مدیر تسویه کنه.
         // =========================================================================
+        // نمایش زنده‌ی مبلغ وارد‌شده با جداکننده هزارگان، تا همون لحظه که تایپ می‌کنی مطمئن بشی
+        // چند تومان نوشتی (مثلاً ۳,۷۰۰,۰۰۰ به‌جای فقط یه رشته عدد بی‌فاصله)
+        function updateExpenseAmountPreview() {
+            const val = parseFloat(document.getElementById('expenseAmount').value);
+            const preview = document.getElementById('expenseAmountPreview');
+            preview.innerText = (val && val > 0) ? `💰 ${val.toLocaleString('fa-IR')} تومان` : '';
+        }
+
         async function submitExpense() {
             const category = document.getElementById('expenseCategory').value;
             const amount = parseFloat(document.getElementById('expenseAmount').value);
             const note = document.getElementById('expenseNote').value.trim();
             const dateVal = document.getElementById('expenseDate').value || getTehranISODate(new Date());
-            const paidBySelf = document.getElementById('expensePaidBySelf').checked;
+            const paidBySelf = (currentRole === 'admin') ? false : document.getElementById('expensePaidBySelf').checked;
 
             if (!amount || amount <= 0) {
                 showToast('⛔ لطفاً مبلغ هزینه را وارد کنید.');
                 return;
             }
 
-            const { error } = await _supabase.from('expenses').insert([{
-                category, amount, note, expense_date: dateVal,
-                created_by: currentUserLabel,
-                paid_by_seller: paidBySelf,
-                reimbursed: !paidBySelf, // اگه خودش پرداخت نکرده (یعنی مستقیم از صندوق/مدیر بوده)، از اول تسویه‌شده حساب میشه
-                created_at: new Date().toISOString()
-            }]);
+            const submitBtn = document.getElementById('expenseSubmitBtn');
+            if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = '⏳ در حال ثبت...'; }
+
+            let error = null;
+            try {
+                const res = await _supabase.from('expenses').insert([{
+                    category, amount, note, expense_date: dateVal,
+                    created_by: currentUserLabel,
+                    paid_by_seller: paidBySelf,
+                    reimbursed: !paidBySelf, // اگه خودش پرداخت نکرده (یعنی مستقیم از صندوق/مدیر بوده)، از اول تسویه‌شده حساب میشه
+                    created_at: new Date().toISOString()
+                }]);
+                error = res.error;
+            } catch (networkErr) {
+                error = networkErr;
+            }
+
+            if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = '💾 ثبت هزینه'; }
 
             if (error) {
+                // معمولاً یعنی اینترنت لحظه‌ای قطع/کند بوده (نه اینکه اطلاعات اشتباه بوده) — برای
+                // همین به‌جای فقط نشون دادن خطا، یه دکمه «دوباره تلاش کن» هم می‌دیم
+                const isNetworkIssue = /abort|network|fetch|timeout/i.test(error.message || '');
+                if (isNetworkIssue) {
+                    const retry = await showConfirm('⚠️ به‌خاطر ضعف اینترنت، ثبت هزینه انجام نشد.\n\nهمین الان دوباره تلاش کنم؟');
+                    if (retry) return await submitExpense();
+                    return;
+                }
                 showToast('❌ خطا در ثبت هزینه: ' + error.message + '\n\nمطمئن شوید جدول expenses در Supabase ساخته شده است.');
                 return;
             }
@@ -9849,6 +9877,7 @@
 
             showToast(`✅ هزینه «${category}» به مبلغ ${amount.toLocaleString('fa-IR')} تومان ثبت شد.${paidBySelf ? ' (به مدیر اطلاع داده شد که باید بهت پس بده)' : ''}`);
             document.getElementById('expenseAmount').value = '';
+            document.getElementById('expenseAmountPreview').innerText = '';
             document.getElementById('expenseNote').value = '';
             loadExpensesTab();
         }
@@ -9871,6 +9900,9 @@
             const isAdmin = currentRole === 'admin';
             // برای مدیر فقط دکمه "پرداخت خودم" واقعاً معنی نداره (اونی که همیشه مستقیم داره پرداخت
             // می‌کنه) پس اون گزینه رو براش پیش‌فرض غیرفعال نشون می‌دیم
+            // این بخش فقط برای فروشنده‌ها معنی داره (پرداخت از جیب خودشون)؛ مدیر خودش صاحب صندوقه
+            // و نیازی به «تسویه با خودش» نداره، پس این بخش رو خودکار براش مخفی می‌کنیم
+            document.getElementById('expensePaidByLabel').style.display = isAdmin ? 'none' : 'flex';
             if (isAdmin) document.getElementById('expensePaidBySelf').checked = false;
 
             const { data, error } = await _supabase.from('expenses').select('*').order('expense_date', { ascending: false }).limit(150);
