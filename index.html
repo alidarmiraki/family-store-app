@@ -12,7 +12,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v40 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v41 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="icon" href="icon-192.png">
@@ -1864,7 +1864,7 @@
         </div>
     </div>
 
-    <div class="build-tag">v40 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v41 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
 
     <script>
         // ================== حالت روشن/تاریک ==================
@@ -2780,11 +2780,17 @@
         }
 
         function getTehranTimeString(dateObj = new Date()) {
+            // نکته حیاتی: numberingSystem: 'latn' باعث می‌شه خروجی همیشه با ارقام انگلیسی
+            // (07:51) باشه، نه فارسی (۰۷:۵۱) — چون قبلاً این تابع بدون این تنظیم، ارقام فارسی
+            // برمی‌گردوند و Number('۰۷') در جاوااسکریپت NaN می‌شه؛ همین باعث می‌شد محاسبه‌ی
+            // تاخیر/زودرفتن همیشه به‌صورت خاموش با خطا مواجه بشه و مقدار ۰ (یعنی «دقیقاً به‌موقع»)
+            // جایگزینش بشه، بدون اینکه هیچ خطای قابل‌مشاهده‌ای نشون داده بشه.
             return new Intl.DateTimeFormat('fa-IR', {
                 timeZone: 'Asia/Tehran',
                 hour: '2-digit',
                 minute: '2-digit',
-                hour12: false
+                hour12: false,
+                numberingSystem: 'latn'
             }).format(dateObj);
         }
 
@@ -5880,7 +5886,6 @@
             const appliesShiftTiming = (currentRole === 'morning_seller' || currentRole === 'evening_seller');
             let targetStartTime = appliesShiftTiming ? ((currentRole === 'morning_seller') ? settings.mStart : settings.eStart) : null;
             let targetEndTime = appliesShiftTiming ? ((currentRole === 'morning_seller') ? settings.mEnd : settings.eEnd) : null;
-            console.log('🔍 DEBUG attendance:', { currentRole, appliesShiftTiming, targetStartTime, targetEndTime, timeStrNow, earlyEntryWindow: settings.earlyEntryWindow, lateExitWindow: settings.lateExitWindow, maxDelay: settings.maxDelay, type });
 
             // --- محدوده‌ی مجاز زمانی برای ثبت ورود/خروج (تنظیم‌شده توسط مدیر) ---
             // خارج از این محدوده، اصلاً ثبت انجام نمی‌شود؛ فقط یک پیام هشدار برای مدیر می‌رود
@@ -6088,7 +6093,7 @@
             if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'ثبت در سیستم حضور و غیاب'; }
 
             if (!error) {
-                let successMsg = `✅ اطلاعات حضور و غیاب با موفقیت ثبت گردید.\n⏱️ زمان ثبت: ${fullDateTimeStr}\n🛠️ DEBUG: نقش=${currentRole} | appliesShiftTiming=${appliesShiftTiming} | earlyEntryWindow=${settings.earlyEntryWindow} | lateExitWindow=${settings.lateExitWindow} | maxDelay=${settings.maxDelay}`;
+                let successMsg = `✅ اطلاعات حضور و غیاب با موفقیت ثبت گردید.\n⏱️ زمان ثبت: ${fullDateTimeStr}`;
 
                 if (type === 'entry' && delayMinutes !== null) {
                     successMsg += `\n🕗 ساعت مقرر شروع شیفت شما: ${targetStartTime}`;
