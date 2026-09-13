@@ -12,7 +12,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v46 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v47 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="icon" href="icon-192.png">
@@ -1617,6 +1617,27 @@
 
         <button class="submit-btn" onclick="saveShiftSettings()">ذخیره تنظیمات شیفت‌ها</button>
 
+        <h3 style="color:#38bdf8; margin-top:22px;">🎯 هدف فروش و پاداش حقوق</h3>
+        <div class="hint" style="margin-top:0;">مثلاً: «اگه فروش امشب به ۵ میلیون برسه، ۱۰٪ به حقوق اضافه می‌کنم» یا «اگه جمع فروش ۷ روز اخیر به X برسه...». این فقط پیشرفت رو به فروشنده‌ها نشون می‌ده و توی محاسبه حقوق یادآوری می‌کنه؛ خودت دستی درصد رو موقع واریز حقوق اعمال می‌کنی.</div>
+        <label>بازه هدف:</label>
+        <select id="bonusScope" onchange="toggleBonusPeriodField()">
+            <option value="daily">روزانه (همون شیفت امروز)</option>
+            <option value="period">جمع چند روز اخیر</option>
+        </select>
+        <div id="bonusPeriodBox" style="display:none;">
+            <label>چند روز اخیر؟</label>
+            <input type="number" id="bonusPeriodDays" value="7" placeholder="مثلاً 7">
+        </div>
+        <label>مبلغ هدف (تومان):</label>
+        <input type="number" id="bonusTargetAmount" placeholder="مثلاً 5000000">
+        <label>درصد افزایش حقوق در صورت رسیدن به هدف:</label>
+        <input type="number" id="bonusPercent" placeholder="مثلاً 10">
+        <label style="display:flex; align-items:center; gap:8px; margin-top:10px; cursor:pointer;">
+            <input type="checkbox" id="bonusActive" style="width:auto;" checked>
+            فعال باشد و به فروشنده‌ها نشون داده بشه
+        </label>
+        <button class="submit-btn" onclick="saveBonusTarget()">💾 ذخیره هدف پاداش</button>
+
         <h3 style="color:#38bdf8; margin-top:22px;">👆 مدیریت اثر انگشت و گوشی پرسنل</h3>
         <div class="hint" style="margin-top:0;">هر پرسنل فقط روی یک گوشی (همان گوشی که اول ثبت اثر انگشت کرده) می‌تواند ورود/خروج بزند. اگر گوشی کسی خراب شد یا عوض شد، از همین‌جا ثبت قبلی‌اش را ریست کنید تا بتواند روی گوشی جدید دوباره ثبت کند.</div>
         <button class="row-btn edit-btn" style="width:100%; margin-top:6px;" onclick="loadStaffDevicesAdmin()">🔄 بارگذاری فهرست اثر انگشت‌های ثبت‌شده</button>
@@ -1949,7 +1970,7 @@
         </div>
     </div>
 
-    <div class="build-tag">v46 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v47 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
 
     <script>
         // ================== حالت روشن/تاریک ==================
@@ -4217,7 +4238,7 @@
             const todayStartTehranOffsetMs = 3.5 * 60 * 60 * 1000;
             const todayStartUTC = new Date(Date.parse(todayISO + 'T00:00:00.000Z') - todayStartTehranOffsetMs);
 
-            const [salesRes, attendanceRes, messagesRes, productsRes, handoverRes, monthSalesRes, monthAttRes] = await Promise.all([
+            const [salesRes, attendanceRes, messagesRes, productsRes, handoverRes, monthSalesRes, monthAttRes, bonusRes] = await Promise.all([
                 _supabase.from('sales').select('sell_price, quantity, created_at, seller_name, sale_type')
                     .gte('created_at', todayStartUTC.toISOString())
                     .order('created_at', { ascending: false }).limit(1000),
@@ -4228,7 +4249,8 @@
                 _supabase.from('products').select('id, name, stock, min_stock, booth_stock'),
                 _supabase.from('shift_handover_notes').select('*').is('read_at', null).order('created_at', { ascending: false }).limit(5),
                 _supabase.from('sales').select('sell_price, seller_name, created_at').gte('created_at', new Date(now.getFullYear(), now.getMonth(), 1).toISOString()).limit(3000),
-                _supabase.from('attendance').select('seller_name, type, delay_minutes, created_at').gte('created_at', new Date(now.getFullYear(), now.getMonth(), 1).toISOString()).limit(2000)
+                _supabase.from('attendance').select('seller_name, type, delay_minutes, created_at').gte('created_at', new Date(now.getFullYear(), now.getMonth(), 1).toISOString()).limit(2000),
+                _supabase.from('bonus_targets').select('*').eq('id', 1).maybeSingle()
             ]);
 
             const todaySales = (salesRes.data || []).filter(s => getTehranISODate(new Date(s.created_at)) === todayISO);
@@ -4271,6 +4293,36 @@
 
             // --- کارت هشدار شخصی برای خود فروشنده (فقط اگه لاگین‌کننده فروشنده باشه و هنوز
             // ورود نزده باشه) — چشمک‌زن و قرمز، تا حتماً روی صفحه اصلی دیده بشه و یادش بمونه
+            // --- هدف فروش و پاداش: پیشرفت خود فروشنده نسبت به هدفی که مدیر تعیین کرده ---
+            let bonusCard = '';
+            const bonusTarget = bonusRes.data;
+            if (bonusTarget && bonusTarget.active && (currentRole === 'morning_seller' || currentRole === 'evening_seller')) {
+                const myPrefix = currentRole === 'morning_seller' ? 'فروشنده صبح' : 'فروشنده شب';
+                let myProgressAmount = 0;
+                let periodLabel = '';
+                if (bonusTarget.scope === 'daily') {
+                    myProgressAmount = todaySales.filter(s => s.seller_name && s.seller_name.indexOf(myPrefix) === 0).reduce((a, s) => a + (Number(s.sell_price) || 0), 0);
+                    periodLabel = 'امروز';
+                } else {
+                    const days = bonusTarget.period_days || 7;
+                    const periodStartISO = new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString();
+                    const { data: periodSales } = await _supabase.from('sales').select('sell_price, seller_name, created_at').eq('seller_name', currentUserLabel).gte('created_at', periodStartISO).limit(2000);
+                    myProgressAmount = (periodSales || []).reduce((a, s) => a + (Number(s.sell_price) || 0), 0);
+                    periodLabel = `${days} روز اخیر`;
+                }
+                const pct = Math.min(100, Math.round((myProgressAmount / bonusTarget.target_amount) * 100));
+                const reached = myProgressAmount >= bonusTarget.target_amount;
+                bonusCard = `
+                    <div class="report-card" style="border-color:${reached ? '#10b981' : '#fbbf24'};">
+                        <h3>${reached ? '🎉 به هدف رسیدی!' : '🎯 هدف فروش'} (${periodLabel})</h3>
+                        <p>${myProgressAmount.toLocaleString('fa-IR')} از ${bonusTarget.target_amount.toLocaleString('fa-IR')} تومان (${pct.toLocaleString('fa-IR')}٪)</p>
+                        <div style="background:var(--bg-input); border-radius:6px; height:10px; overflow:hidden; margin-top:6px;">
+                            <div style="background:${reached ? '#10b981' : '#fbbf24'}; height:100%; width:${pct}%; transition:width 0.4s ease;"></div>
+                        </div>
+                        ${reached ? `<p style="color:#10b981; font-weight:bold; margin-top:6px;">🎁 ${bonusTarget.bonus_percent}٪ به حقوقت اضافه میشه!</p>` : ''}
+                    </div>`;
+            }
+
             let personalAlarmCard = '';
             if (currentRole === 'morning_seller' || currentRole === 'evening_seller') {
                 const myEntered = todayAttendance.some(a => a.seller_name === currentUserLabel && a.type === 'entry');
@@ -4325,6 +4377,7 @@
             box.innerHTML = `
                 ${personalAlarmCard}
                 ${handoverCard}
+                ${bonusCard}
                 <div class="report-card">
                     <h3>💰 فروش امروز (مجموع کل)</h3>
                     <p style="font-size:20px; font-weight:bold; color:#38bdf8;" id="dashTodayRevenueNum">۰ تومان</p>
@@ -5174,6 +5227,46 @@
             document.getElementById('reminderMinutes').value = s.reminderMinutes;
             document.getElementById('earlyEntryWindow').value = s.earlyEntryWindow;
             document.getElementById('lateExitWindow').value = s.lateExitWindow;
+            loadBonusTargetIntoForm();
+        }
+
+        // =========================================================================
+        // هدف فروش و پاداش حقوق
+        // =========================================================================
+        function toggleBonusPeriodField() {
+            document.getElementById('bonusPeriodBox').style.display =
+                document.getElementById('bonusScope').value === 'period' ? 'block' : 'none';
+        }
+        async function saveBonusTarget() {
+            const scope = document.getElementById('bonusScope').value;
+            const period_days = parseInt(document.getElementById('bonusPeriodDays').value) || 7;
+            const target_amount = parseFloat(document.getElementById('bonusTargetAmount').value) || 0;
+            const bonus_percent = parseFloat(document.getElementById('bonusPercent').value) || 0;
+            const active = document.getElementById('bonusActive').checked;
+
+            if (!target_amount || !bonus_percent) {
+                showToast('⛔ لطفاً مبلغ هدف و درصد پاداش را وارد کنید.');
+                return;
+            }
+
+            const { error } = await _supabase.from('bonus_targets').upsert([{
+                id: 1, scope, period_days, target_amount, bonus_percent, active
+            }]);
+            if (error) {
+                showToast('❌ خطا در ذخیره هدف پاداش: ' + error.message + '\n\nمطمئن شوید جدول bonus_targets در Supabase ساخته شده است.');
+                return;
+            }
+            showToast('✅ هدف پاداش ذخیره شد و برای همه فروشنده‌ها نمایش داده می‌شود.');
+        }
+        async function loadBonusTargetIntoForm() {
+            const { data } = await _supabase.from('bonus_targets').select('*').eq('id', 1).maybeSingle();
+            if (!data) return;
+            document.getElementById('bonusScope').value = data.scope || 'daily';
+            document.getElementById('bonusPeriodDays').value = data.period_days || 7;
+            document.getElementById('bonusTargetAmount').value = data.target_amount || '';
+            document.getElementById('bonusPercent').value = data.bonus_percent || '';
+            document.getElementById('bonusActive').checked = !!data.active;
+            toggleBonusPeriodField();
         }
 
         // وضعیت ثبت امروز این کاربر: آیا ورود زده؟ آیا خروج زده؟ — برای جلوگیری از ثبت تکراری
@@ -5197,6 +5290,22 @@
             document.getElementById('exitChecklistText').innerText = text;
             document.getElementById('exitChecklistOverlay').style.display = 'flex';
             return new Promise((resolve) => { _exitChecklistResolver = resolve; });
+        }
+
+        // پیدا کردن آخرین ورودی که خروج نداره و مال امروز هم نیست — یعنی دفعه‌ی قبل یادش رفته خروج بزنه
+        async function getUnclosedPreviousShift() {
+            const { data } = await _supabase.from('attendance')
+                .select('type, created_at')
+                .eq('seller_name', currentUserLabel)
+                .order('created_at', { ascending: false })
+                .limit(10);
+            if (!data || data.length === 0) return null;
+            const mostRecent = data[0];
+            if (mostRecent.type !== 'entry') return null; // آخرین رکورد خروج/مرخصی بوده، یعنی چیزی باز نمونده
+            const entryDate = getTehranISODate(new Date(mostRecent.created_at));
+            const todayDate = getTehranISODate(new Date());
+            if (entryDate === todayDate) return null; // ورود امروزه، جای دیگه‌ای هندل میشه
+            return mostRecent;
         }
 
         async function getTodayAttendanceStatus() {
@@ -5325,6 +5434,18 @@
                     playLateAlertSound();
                     showForceEntryLock(`شیفت شما از ساعت ${shiftStart} شروع شده و حدود ${lateBy} دقیقه تاخیر دارید. تا زمانی که «ورود» را ثبت نکنید، امکان استفاده از بقیه‌ی برنامه وجود ندارد.`);
                 }
+                return;
+            }
+
+            // یادآوری پیش‌فعال: چند دقیقه قبل از رسیدن ساعت پایان شیفت (نه بعدش)، یه بار مهربونانه
+            // یادآوری می‌کنیم «یادت نره خروج بزنی» — تا وقتی که واقعاً وقتش برسه، غافلگیر نشه
+            if (hasEntry && !hasExit && nowMinutes >= (endMinutes - reminderAfter) && nowMinutes < endMinutes) {
+                const minutesLeft = endMinutes - nowMinutes;
+                panel.classList.remove('escalated');
+                panel.innerHTML = `🔔 <b>یادآوری:</b> تا ${minutesLeft} دقیقه دیگه شیفتت تموم میشه. یادت نره سر وقت خروج بزنی!
+                    <br><button class="dismiss-alert-btn" onclick="dismissReminderBanner()">🔕 ۵ دقیقه بعد یادآوری کن</button>
+                    <button class="dismiss-alert-btn" style="background:#10b981;" onclick="switchTab('attendance'); dismissReminderBanner();">👆 الان میرم ثبت می‌کنم</button>`;
+                panel.style.display = 'block';
                 return;
             }
 
@@ -6096,9 +6217,27 @@
                 return;
             }
 
+            // اگه یه ورود قبلی (نه امروز) هنوز خروج نخورده مونده (یعنی دفعه قبل یادش رفته خروج بزنه)،
+            // اول باید همون رو ببنده — نمی‌تونه ورود جدید بزنه تا خروج جاافتاده رو ثبت نکنه
+            let isMakeupExit = false;
+            if (type === 'entry' && (currentRole === 'morning_seller' || currentRole === 'evening_seller')) {
+                const unclosed = await getUnclosedPreviousShift();
+                if (unclosed) {
+                    const missedDateFa = getTehranFullDateTimeString(new Date(unclosed.created_at));
+                    showToast(`⛔ دفعه قبل (${missedDateFa}) یادت رفت خروج بزنی! این سری فقط خروج همون شیفت رو بزن — دفعه بعد حتماً همون شب یادت باشه، خودم بهت یادآوری می‌کنم.`);
+                    document.getElementById('attType').value = 'exit';
+                    toggleAttendanceFields();
+                    return;
+                }
+            }
+            if (type === 'exit' && (currentRole === 'morning_seller' || currentRole === 'evening_seller')) {
+                const unclosed = await getUnclosedPreviousShift();
+                if (unclosed) isMakeupExit = true; // این خروج، خروجِ جاافتاده‌ی یه شیفت قبلیه، نه امروز
+            }
+
             // جلوگیری از ثبت تکراری: یک فروشنده در یک روز فقط یک‌بار «ورود» و یک‌بار «خروج» دارد.
             // این از اشتباهاتی مثل زدن چندباره‌ی دکمه ورود جلوگیری می‌کند.
-            if (type === 'entry' || type === 'exit') {
+            if ((type === 'entry' || type === 'exit') && !isMakeupExit) {
                 const status = await getTodayAttendanceStatus();
                 if (type === 'entry' && status.hasEntry && !status.hasExit) {
                     showToast('⛔ شما همین امروز قبلاً «ورود» ثبت کرده‌اید. الان فقط می‌توانید «خروج» بزنید.');
@@ -6123,8 +6262,9 @@
             }
 
             // چک‌لیست پایان شیفت — قبل از هر تایید بیومتریک/عکسی، همین اول ازش می‌پرسیم
+            // (برای خروج جاافتاده‌ی یه شیفت قدیمی، این چک‌لیست معنی نداره، رد می‌شیم)
             let exitChecklistAnswer = null;
-            if (type === 'exit' && (currentRole === 'morning_seller' || currentRole === 'evening_seller')) {
+            if (type === 'exit' && !isMakeupExit && (currentRole === 'morning_seller' || currentRole === 'evening_seller')) {
                 exitChecklistAnswer = await askExitChecklist();
                 if (exitChecklistAnswer === 'no') {
                     showToast('باشه، مشکلی نیست — برو انجامش بده و بعد دوباره بزن «ثبت در سیستم حضور و غیاب» 🙂');
@@ -6146,7 +6286,7 @@
             // --- محدوده‌ی مجاز زمانی برای ثبت ورود/خروج (تنظیم‌شده توسط مدیر) ---
             // خارج از این محدوده، اصلاً ثبت انجام نمی‌شود؛ فقط یک پیام هشدار برای مدیر می‌رود
             // که فلان فروشنده در فلان ساعت خواسته این کار را انجام دهد.
-            if (appliesShiftTiming && (type === 'entry' || type === 'exit')) {
+            if (appliesShiftTiming && (type === 'entry' || type === 'exit') && !isMakeupExit) {
                 const [hNowB, mNowB] = timeStrNow.split(':').map(Number);
                 const nowMinutesB = hNowB * 60 + mNowB;
 
@@ -6237,7 +6377,7 @@
             let delayMinutes = null;
             let exitDiffMinutes = null;
 
-            if (appliesShiftTiming) {
+            if (appliesShiftTiming && !isMakeupExit) {
                 try {
                     if (type === 'entry') {
                         const [hNow, mNow] = timeStrNow.split(':').map(Number);
@@ -6348,7 +6488,7 @@
                 delay_minutes: delayMinutes,
                 exit_diff_minutes: exitDiffMinutes,
                 photo_url: photoUrl,
-                note: (note ? note + " | " : "") + (selectedLocationText ? selectedLocationText + " | " : "") + (biometricFallbackReason ? `⚠️ بدون تایید بیومتریک (${biometricFallbackReason}) | ` : "") + (biometricMethodLabel ? biometricMethodLabel + " | " : "") + (lateReasonText ? `📝 دلیل تاخیر: ${lateReasonText} | ` : "") + `زمان ثبت: ${fullDateTimeStr}`,
+                note: (note ? note + " | " : "") + (selectedLocationText ? selectedLocationText + " | " : "") + (biometricFallbackReason ? `⚠️ بدون تایید بیومتریک (${biometricFallbackReason}) | ` : "") + (biometricMethodLabel ? biometricMethodLabel + " | " : "") + (lateReasonText ? `📝 دلیل تاخیر: ${lateReasonText} | ` : "") + (isMakeupExit ? `⏮️ خروج جاافتاده (فراموش‌شده از شیفت قبل) | ` : "") + `زمان ثبت: ${fullDateTimeStr}`,
                 created_at: now.toISOString()
             }]);
 
@@ -6368,6 +6508,12 @@
 
             if (!error) {
                 let successMsg = `✅ اطلاعات حضور و غیاب با موفقیت ثبت گردید.\n⏱️ زمان ثبت: ${fullDateTimeStr}`;
+                if (type === 'entry' && (currentRole === 'morning_seller' || currentRole === 'evening_seller')) {
+                    successMsg += `\n\n👋 ورودت رو ثبت کردم، خوش اومدی!`;
+                }
+                if (isMakeupExit) {
+                    successMsg += `\n\n⏮️ خروج جاافتاده‌ی دفعه قبل ثبت شد. دفعه بعد حتماً همون شب یادت باشه خروج بزنی، خودم بهت یادآوری می‌کنم. الان می‌تونی ورود امروزت رو هم بزنی.`;
+                }
 
                 if (type === 'entry' && delayMinutes !== null) {
                     successMsg += `\n🕗 ساعت مقرر شروع شیفت شما: ${targetStartTime}`;
