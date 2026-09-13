@@ -12,7 +12,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v44 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v46 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="icon" href="icon-192.png">
@@ -921,6 +921,18 @@
             <div class="hint" id="forceEntryLockText" style="margin-top:0; text-align:center;"></div>
             <button class="submit-btn" onclick="document.getElementById('forceEntryLockOverlay').style.display='none'; switchTab('attendance');">👆 برو به ثبت ورود</button>
             <button class="row-btn edit-btn" style="width:100%; margin-top:8px;" onclick="sendUrgentHelpMessageToAdmin()">🆘 پیام فوری به مدیر (مشکل دارم)</button>
+        </div>
+    </div>
+
+    <!-- چک‌لیست پایان شیفت — قبل از ثبت خروج پرسیده می‌شود -->
+    <div id="exitChecklistOverlay" style="position:fixed; inset:0; z-index:10060; display:none; align-items:center; justify-content:center; background:rgba(5,8,15,0.96); padding:20px;">
+        <div class="scanner-box" style="text-align:center;">
+            <div style="font-size:40px;">🧹</div>
+            <h3 style="color:#38bdf8; margin:10px 0;">قبل از رفتن...</h3>
+            <div class="hint" id="exitChecklistText" style="margin-top:0; text-align:center;"></div>
+            <button class="submit-btn" onclick="resolveExitChecklist('yes')">✅ بله، انجام دادم</button>
+            <button class="row-btn edit-btn" style="width:100%; margin-top:8px;" onclick="resolveExitChecklist('hurry')">⏱️ عجله دارم</button>
+            <button class="cancel-edit-btn" style="display:block; margin-top:8px;" onclick="resolveExitChecklist('no')">❌ نه، یادم رفت</button>
         </div>
     </div>
 
@@ -1937,7 +1949,7 @@
         </div>
     </div>
 
-    <div class="build-tag">v44 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v46 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
 
     <script>
         // ================== حالت روشن/تاریک ==================
@@ -4167,6 +4179,29 @@
             });
         }
 
+        async function submitHandoverNote() {
+            const noteEl = document.getElementById('handoverNoteInput');
+            const note = noteEl.value.trim();
+            if (!note) { showToast('⛔ چیزی ننوشتی.'); return; }
+            const { error } = await _supabase.from('shift_handover_notes').insert([{
+                from_role: currentRole,
+                note,
+                created_by: currentUserLabel,
+                created_at: new Date().toISOString()
+            }]);
+            if (error) {
+                showToast('❌ خطا در ارسال یادداشت: ' + error.message + '\n\nمطمئن شوید جدول shift_handover_notes ساخته شده است.');
+                return;
+            }
+            showToast('✅ یادداشت برای شیفت بعد ارسال شد.');
+            noteEl.value = '';
+        }
+
+        async function markHandoverNoteRead(noteId) {
+            await _supabase.from('shift_handover_notes').update({ read_at: new Date().toISOString() }).eq('id', noteId);
+            loadAdminDashboard();
+        }
+
         async function loadAdminDashboard() {
             const box = document.getElementById('dashboardContent');
             box.innerHTML = skeletonCards(2);
@@ -4182,7 +4217,7 @@
             const todayStartTehranOffsetMs = 3.5 * 60 * 60 * 1000;
             const todayStartUTC = new Date(Date.parse(todayISO + 'T00:00:00.000Z') - todayStartTehranOffsetMs);
 
-            const [salesRes, attendanceRes, messagesRes, productsRes] = await Promise.all([
+            const [salesRes, attendanceRes, messagesRes, productsRes, handoverRes, monthSalesRes, monthAttRes] = await Promise.all([
                 _supabase.from('sales').select('sell_price, quantity, created_at, seller_name, sale_type')
                     .gte('created_at', todayStartUTC.toISOString())
                     .order('created_at', { ascending: false }).limit(1000),
@@ -4190,7 +4225,10 @@
                     .gte('created_at', todayStartUTC.toISOString())
                     .order('created_at', { ascending: false }).limit(500),
                 _supabase.from('messages').select('id, title, sender, created_at, recipient').eq('recipient', 'admin').order('created_at', { ascending: false }).limit(5),
-                _supabase.from('products').select('id, name, stock, min_stock, booth_stock')
+                _supabase.from('products').select('id, name, stock, min_stock, booth_stock'),
+                _supabase.from('shift_handover_notes').select('*').is('read_at', null).order('created_at', { ascending: false }).limit(5),
+                _supabase.from('sales').select('sell_price, seller_name, created_at').gte('created_at', new Date(now.getFullYear(), now.getMonth(), 1).toISOString()).limit(3000),
+                _supabase.from('attendance').select('seller_name, type, delay_minutes, created_at').gte('created_at', new Date(now.getFullYear(), now.getMonth(), 1).toISOString()).limit(2000)
             ]);
 
             const todaySales = (salesRes.data || []).filter(s => getTehranISODate(new Date(s.created_at)) === todayISO);
@@ -4231,7 +4269,62 @@
 
             const recentMessages = messagesRes.data || [];
 
+            // --- کارت هشدار شخصی برای خود فروشنده (فقط اگه لاگین‌کننده فروشنده باشه و هنوز
+            // ورود نزده باشه) — چشمک‌زن و قرمز، تا حتماً روی صفحه اصلی دیده بشه و یادش بمونه
+            let personalAlarmCard = '';
+            if (currentRole === 'morning_seller' || currentRole === 'evening_seller') {
+                const myEntered = todayAttendance.some(a => a.seller_name === currentUserLabel && a.type === 'entry');
+                const myExited = todayAttendance.some(a => a.seller_name === currentUserLabel && a.type === 'exit');
+                const myOnLeave = todayAttendance.some(a => a.seller_name === currentUserLabel && a.type === 'leave');
+                if (!myOnLeave && !myEntered) {
+                    personalAlarmCard = `<div class="report-card escalated" style="border-color:#ef4444; animation: escalatedPulse 1.1s ease-in-out infinite;">
+                        <h3 style="color:#ef4444;">⛔ یادت نره! هنوز ورودت رو نزدی</h3>
+                        <button class="submit-btn" style="margin-top:6px;" onclick="switchTab('attendance');">همین الان ثبت کن</button>
+                    </div>`;
+                } else if (myEntered && !myExited && !myOnLeave) {
+                    personalAlarmCard = `<div class="report-card" style="border-color:#fbbf24;">
+                        <h3 style="color:#fbbf24;">⏰ یادت نره آخر شیفت خروج بزنی</h3>
+                    </div>`;
+                }
+            }
+
+            // --- یادداشت تحویل شیفت: آخرین یادداشتی که مال شیفت خودمون نیست (یعنی از طرف اون
+            // یکی شیفت برامون گذاشته شده) و هنوز خونده نشده
+            const myShiftLabel = currentRole === 'morning_seller' ? 'فروشنده صبح' : (currentRole === 'evening_seller' ? 'فروشنده شب' : null);
+            const handoverForMe = (handoverRes.data || []).filter(n => n.from_role !== currentRole && (myShiftLabel || currentRole === 'admin'));
+            const handoverCard = handoverForMe.length > 0 ? `
+                <div class="report-card" style="border-color:#38bdf8;">
+                    <h3>📝 یادداشت از شیفت قبل</h3>
+                    ${handoverForMe.map(n => `
+                        <div class="summary-mini" style="display:block;">
+                            <p style="margin:4px 0;">${escapeHtmlForToast(n.note)}</p>
+                            <p style="font-size:10px; color:#94a3b8;">از: ${n.created_by} — ${getTehranFullDateTimeString(new Date(n.created_at))}</p>
+                            ${(currentRole === 'morning_seller' || currentRole === 'evening_seller') ? `<button class="row-btn edit-btn" style="padding:4px 8px; font-size:10px;" onclick="markHandoverNoteRead('${n.id}')">✅ خوندم</button>` : ''}
+                        </div>
+                    `).join('')}
+                </div>` : '';
+
+            // --- رقابت دوستانه این ماه: فروش و تاخیر هر شیفت (فقط برای انگیزه، بدون قضاوت) ---
+            const monthSales = monthSalesRes.data || [];
+            const monthAtt = monthAttRes.data || [];
+            const shiftStats = (prefix) => {
+                const sum = monthSales.filter(s => s.seller_name && s.seller_name.indexOf(prefix) === 0).reduce((a, s) => a + (Number(s.sell_price) || 0), 0);
+                const lateCount = monthAtt.filter(a => a.seller_name && a.seller_name.indexOf(prefix) === 0 && a.type === 'entry' && a.delay_minutes > 0).length;
+                return { sum, lateCount };
+            };
+            const mStats = shiftStats('فروشنده صبح');
+            const eStats = shiftStats('فروشنده شب');
+            const leaderboardCard = `
+                <div class="report-card">
+                    <h3>🏆 رقابت دوستانه این ماه</h3>
+                    <div class="summary-mini"><span>🌅 فروشنده صبح</span><span style="color:#38bdf8;">${mStats.sum.toLocaleString('fa-IR')} تومان <span style="color:#94a3b8; font-size:10px;">(${mStats.lateCount.toLocaleString('fa-IR')} تاخیر)</span></span></div>
+                    <div class="summary-mini"><span>🌙 فروشنده شب</span><span style="color:#38bdf8;">${eStats.sum.toLocaleString('fa-IR')} تومان <span style="color:#94a3b8; font-size:10px;">(${eStats.lateCount.toLocaleString('fa-IR')} تاخیر)</span></span></div>
+                    <p style="font-size:11px; color:#94a3b8; margin-top:6px;">${mStats.sum === eStats.sum ? '🤝 مساوی!' : (mStats.sum > eStats.sum ? '🥇 شیفت صبح جلوتره!' : '🥇 شیفت شب جلوتره!')}</p>
+                </div>`;
+
             box.innerHTML = `
+                ${personalAlarmCard}
+                ${handoverCard}
                 <div class="report-card">
                     <h3>💰 فروش امروز (مجموع کل)</h3>
                     <p style="font-size:20px; font-weight:bold; color:#38bdf8;" id="dashTodayRevenueNum">۰ تومان</p>
@@ -4259,6 +4352,14 @@
                     `).join('')}
                     <button class="row-btn edit-btn" style="width:100%; margin-top:8px;" onclick="switchTab('inbox'); loadInbox();">مشاهده صندوقچه پیام‌ها</button>
                 </div>
+                ${leaderboardCard}
+                ${(currentRole === 'morning_seller' || currentRole === 'evening_seller') ? `
+                <div class="report-card">
+                    <h3>📝 یادداشت برای شیفت بعد</h3>
+                    <div class="hint" style="margin-top:0;">مثلاً «فلان کالا تموم شد، یادت باشه سفارش بدی» — مستقیم به شیفت بعدی می‌رسه.</div>
+                    <textarea id="handoverNoteInput" rows="2" placeholder="یادداشتت رو اینجا بنویس..."></textarea>
+                    <button class="row-btn edit-btn" style="width:100%; margin-top:8px;" onclick="submitHandoverNote()">📤 ارسال برای شیفت بعد</button>
+                </div>` : ''}
                 <canvas id="dashboardTrendChart" height="180" style="margin-top:10px;"></canvas>
             `;
 
@@ -5077,6 +5178,27 @@
 
         // وضعیت ثبت امروز این کاربر: آیا ورود زده؟ آیا خروج زده؟ — برای جلوگیری از ثبت تکراری
         // و برای این‌که خودش خودکار روی گزینه‌ی درست (ورود/خروج) بایسته
+        // چک‌لیست پایان شیفت — برای هر شیفت متن جداگانه، و اگه دفعه قبل «عجله دارم» زده بود یادآوری می‌کنه
+        let _exitChecklistResolver = null;
+        function resolveExitChecklist(choice) {
+            document.getElementById('exitChecklistOverlay').style.display = 'none';
+            if (_exitChecklistResolver) { _exitChecklistResolver(choice); _exitChecklistResolver = null; }
+        }
+        function askExitChecklist() {
+            const isMorning = currentRole === 'morning_seller';
+            let text = isMorning
+                ? 'شیشه‌ها، دستگاه برش، زمین، داخل یخچال و ظرف‌ها رو پر و تمیز کردی؟'
+                : 'دستگاه برش، روی یخچال، روی زمین، زیر ترازو و زیر دستگاه وکیوم رو تمیز کردی؟';
+            let hadHurryLastTime = false;
+            try { hadHurryLastTime = localStorage.getItem('exitChecklistHurryFlag_' + currentUserLabel) === '1'; } catch (e) {}
+            if (hadHurryLastTime) {
+                text = '⚠️ دفعه قبل عجله داشتی و این کار رو نکرده بودی — امروز حتماً انجامش بده!\n\n' + text;
+            }
+            document.getElementById('exitChecklistText').innerText = text;
+            document.getElementById('exitChecklistOverlay').style.display = 'flex';
+            return new Promise((resolve) => { _exitChecklistResolver = resolve; });
+        }
+
         async function getTodayAttendanceStatus() {
             const todayISO = getTehranISODate(new Date());
             const { data } = await _supabase.from('attendance')
@@ -6000,6 +6122,16 @@
                 }
             }
 
+            // چک‌لیست پایان شیفت — قبل از هر تایید بیومتریک/عکسی، همین اول ازش می‌پرسیم
+            let exitChecklistAnswer = null;
+            if (type === 'exit' && (currentRole === 'morning_seller' || currentRole === 'evening_seller')) {
+                exitChecklistAnswer = await askExitChecklist();
+                if (exitChecklistAnswer === 'no') {
+                    showToast('باشه، مشکلی نیست — برو انجامش بده و بعد دوباره بزن «ثبت در سیستم حضور و غیاب» 🙂');
+                    return;
+                }
+            }
+
             const now = new Date();
             const timeStrNow = getTehranTimeString(now);
             const fullDateTimeStr = getTehranFullDateTimeString(now);
@@ -6294,6 +6426,16 @@
                 if (type === 'exit') {
                     const shiftSummary = await buildEndOfShiftSummary();
                     if (shiftSummary) successMsg += `\n\n${shiftSummary}`;
+
+                    const isMorningShift = currentRole === 'morning_seller';
+                    const greeting = isMorningShift ? 'روزت خوش! 🌤️' : 'شبت خوش! 🌙';
+                    if (exitChecklistAnswer === 'hurry') {
+                        localStorage.setItem('exitChecklistHurryFlag_' + currentUserLabel, '1');
+                        successMsg += `\n\n⏱️ باشه، الان خروجت رو ثبت کردم و این‌بار چیزی به مدیر نگفتم. ولی دفعه بعد حتماً یادت باشه تمیزکاری رو انجام بدی. مراقب خودت باش، ${greeting}`;
+                    } else if (exitChecklistAnswer === 'yes') {
+                        localStorage.removeItem('exitChecklistHurryFlag_' + currentUserLabel);
+                        successMsg += `\n\n👏 دمت گرم که همه‌چیز رو مرتب کردی! ${greeting}`;
+                    }
                 }
 
                 showToast(successMsg);
