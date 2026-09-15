@@ -12,7 +12,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v48 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v49 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="icon" href="icon-192.png">
@@ -1987,7 +1987,7 @@
         </div>
     </div>
 
-    <div class="build-tag">v48 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v49 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
 
     <script>
         function toggleLoginPasswordVisibility() {
@@ -4031,6 +4031,21 @@
         // عمودی معمولی) و روی چیزی که خودش نیاز به سوایپ افقی داره (جدول، نوار تب‌ها، دوربین)
         // شروع نشده باشه، فعال می‌شه تا با کارهای دیگه تداخل نکنه.
         // =========================================================================
+        // پیدا کردن اینکه آیا خود المنت لمس‌شده (یا یکی از پدرهاش تا سقف منطقی) خودش قابلیت
+        // اسکرول افقی داره — اگه داشت، سوایپ تب رو غیرفعال می‌کنیم تا با اسکرول خودش تداخل نکنه
+        function hasHorizontalScrollAncestor(el) {
+            let node = el;
+            let depth = 0;
+            while (node && node !== document.body && depth < 6) {
+                if (node.scrollWidth > node.clientWidth + 4) {
+                    const overflowX = getComputedStyle(node).overflowX;
+                    if (overflowX === 'auto' || overflowX === 'scroll') return true;
+                }
+                node = node.parentElement;
+                depth++;
+            }
+            return false;
+        }
         function getTabSlugFromButton(btn) {
             if (!btn || !btn.id || !btn.id.startsWith('btn')) return null;
             const rest = btn.id.slice(3);
@@ -4040,7 +4055,9 @@
         document.addEventListener('touchstart', (e) => {
             if (e.touches.length !== 1) return;
             const target = e.target;
-            _swipeAllowed = !target.closest('.tabs, table, #scannerOverlay, #faceOverlay, input, textarea, select, .toast-item');
+            // اگه لمس روی یه المنتی شروع شده که خودش قابلیت اسکرول افقی داره (مثل تقویم رنگی یا
+            // جدول‌ها)، سوایپ غیرفعال می‌شه تا با اسکرول خود اون المنت تداخل نکنه
+            _swipeAllowed = !target.closest('.tabs, table, #scannerOverlay, #faceOverlay, input, textarea, select, .toast-item') && !hasHorizontalScrollAncestor(target);
             _swipeStartX = e.touches[0].clientX;
             _swipeStartY = e.touches[0].clientY;
         }, { passive: true });
@@ -6797,11 +6814,15 @@
             box.innerHTML = skeletonCards(1);
 
             const thirtyDaysAgoISO = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-            const { data } = await _supabase.from('attendance')
-                .select('type, delay_minutes, exit_diff_minutes, created_at')
-                .ilike('seller_name', seller + '%')
+            // به‌جای فیلتر سمت سرور با ilike (که به فاصله/کاراکترهای نامرئی حساسه)، عین همون روشی
+            // که توی «رقابت دوستانه» جواب داده رو به‌کار می‌بریم: همه رو می‌گیریم و خودمون با
+            // indexOf دقیق فیلتر می‌کنیم — قابل‌اعتمادتره
+            const { data: allData } = await _supabase.from('attendance')
+                .select('seller_name, type, delay_minutes, exit_diff_minutes, created_at')
                 .gte('created_at', thirtyDaysAgoISO)
-                .order('created_at', { ascending: true });
+                .order('created_at', { ascending: true })
+                .limit(2000);
+            const data = (allData || []).filter(r => r.seller_name && r.seller_name.indexOf(seller) === 0);
 
             const byDate = {};
             (data || []).forEach(r => {
@@ -6815,7 +6836,8 @@
             const persianDayFormatter = new Intl.DateTimeFormat('fa-IR-u-ca-persian', { timeZone: 'Asia/Tehran', day: '2-digit', numberingSystem: 'latn' });
             const todayISO = getTehranISODate(new Date());
 
-            let html = '<div style="display:flex; gap:6px; overflow-x:auto; padding-bottom:8px;">';
+            let html = `<div class="hint" style="margin-top:0;">${data.length} ثبت پیدا شد برای «${escapeHtmlForToast(seller)}» در ۳۰ روز اخیر</div>`;
+            html += '<div style="display:flex; gap:6px; overflow-x:auto; padding-bottom:8px;">';
             for (let i = 29; i >= 0; i--) {
                 const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
                 const iso = getTehranISODate(d);
@@ -6826,6 +6848,7 @@
                     if (info.leave) { color = '#818cf8'; title = 'مرخصی'; }
                     else if (info.entry !== null && info.entry > 0) { color = '#ef4444'; title = `${info.entry} دقیقه تاخیر`; }
                     else if (info.entry !== null) { color = '#10b981'; title = 'به‌موقع'; }
+                    else if (info.exit !== null) { color = '#38bdf8'; title = 'فقط خروج ثبت شده'; }
                 } else if (iso < todayISO) {
                     color = '#7f1d1d'; title = 'هیچ ثبتی نداشت (احتمال غیبت)';
                 } else if (iso === todayISO) {
