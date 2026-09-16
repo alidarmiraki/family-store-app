@@ -12,7 +12,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v49 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v50 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="icon" href="icon-192.png">
@@ -1055,6 +1055,7 @@
         <button class="tab-btn" id="btnTakeoutAdmin" onclick="switchTab('takeoutAdmin'); loadTakeoutAdminSummary();">🧺 برداشت‌های حساب‌نشده</button>
         <button class="tab-btn" id="btnSalary" onclick="switchTab('salary'); loadSalaryTab();">💰 واریز حقوق</button>
         <button class="tab-btn" id="btnExpenses" onclick="switchTab('expenses'); loadExpensesTab();">📒 دفترچه هزینه‌ها</button>
+        <button class="tab-btn" id="btnPersonnel" onclick="switchTab('personnel'); loadPersonnelTab();">🪪 اطلاعات پرسنل</button>
         <button class="tab-btn" id="btnPersonalTakeout" onclick="switchTab('personalTakeout'); loadMyTakeouts();">🛒 برداشت شخصی</button>
         <button class="tab-btn" id="btnMyAccount" onclick="switchTab('myAccount'); prefillMyAccountTab();">⚙️ حساب کاربری من</button>
     </div>
@@ -1564,7 +1565,7 @@
     <div id="workReportTab" class="card">
         <h2>🗓️ گزارش کارکرد و حضور و غیاب پرسنل</h2>
         <label>انتخاب فروشنده:</label>
-        <select id="workSellerSelect" onchange="loadWorkReport()">
+        <select id="workSellerSelect" onchange="saveLastViewedSeller(); loadWorkReport();">
             <option value="فروشنده صبح">فروشنده صبح</option>
             <option value="فروشنده شب">فروشنده شب</option>
         </select>
@@ -1987,7 +1988,14 @@
         </div>
     </div>
 
-    <div class="build-tag">v49 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <!-- تب اطلاعات پرسنل — مشخصات کامل، جدا از صندوقچه پیام -->
+    <div id="personnelTab" class="card">
+        <h2>🪪 اطلاعات و مشخصات پرسنل</h2>
+        <div class="hint" style="margin-top:0;">مشخصات کامل هر کسی که ثبت‌نام و قرارداد را امضا کرده — نام، کد ملی، شماره تماس، عکس کارت ملی و امضا. اینجا جدا از صندوقچه پیام نگه‌داری می‌شود تا همیشه در دسترس باشد.</div>
+        <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
+    </div>
+
+    <div class="build-tag">v50 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
 
     <script>
         function toggleLoginPasswordVisibility() {
@@ -3879,7 +3887,7 @@
             document.getElementById('buyPriceField').style.display = (currentRole === 'admin') ? 'block' : 'none';
 
             if (currentRole === 'admin') {
-                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnInbox', 'btnStaffMessage', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnShiftSettings', 'btnTelegramSettings', 'btnDebtLedger', 'btnContractAdmin', 'btnGrowthReport', 'btnPurchaseInvoices', 'btnTakeoutAdmin', 'btnSalary', 'btnExpenses', 'btnMyAccount'], 'dashboardTab');
+                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnInbox', 'btnStaffMessage', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnShiftSettings', 'btnTelegramSettings', 'btnDebtLedger', 'btnContractAdmin', 'btnGrowthReport', 'btnPurchaseInvoices', 'btnTakeoutAdmin', 'btnSalary', 'btnExpenses', 'btnPersonnel', 'btnMyAccount'], 'dashboardTab');
                 document.getElementById('salaryAdminForm').style.display = 'block';
                 checkLowStockAlertNoWeight();
             } else if (currentRole === 'morning_seller') {
@@ -6751,6 +6759,24 @@
                 }
             }
 
+            // نشان‌های دقیق و سریع‌الخوان برای مدیر — استخراج‌شده از توضیحات، به‌جای اینکه مجبور
+            // باشه کل متن توضیحات رو بخونه تا بفهمه با چی تایید شده یا خروج جاافتاده بوده یا نه
+            let verifyBadge = '';
+            const noteText = r.note || '';
+            if (noteText.includes('با اثر انگشت/Face ID رسمی گوشی تایید شد')) {
+                verifyBadge = '<span style="background:#10b981; color:#fff; font-size:9px; border-radius:5px; padding:2px 5px;">👆 اثر انگشت/Face ID</span>';
+            } else if (noteText.includes('با تشخیص چهره اختصاصی برنامه تایید شد')) {
+                verifyBadge = '<span style="background:#0284c7; color:#fff; font-size:9px; border-radius:5px; padding:2px 5px;">🙂 چهره اختصاصی</span>';
+            } else if (noteText.includes('بدون تایید بیومتریک')) {
+                verifyBadge = '<span style="background:#ef4444; color:#fff; font-size:9px; border-radius:5px; padding:2px 5px;">⚠️ بدون بیومتریک</span>';
+            }
+            if (noteText.includes('خروج جاافتاده')) {
+                verifyBadge += ' <span style="background:#a855f7; color:#fff; font-size:9px; border-radius:5px; padding:2px 5px;">⏮️ جاافتاده (شیفت قبل)</span>';
+            }
+            if (noteText.includes('دلیل تاخیر:')) {
+                verifyBadge += ' <span style="background:#f59e0b; color:#000; font-size:9px; border-radius:5px; padding:2px 5px;">📝 دلیل ثبت‌شده</span>';
+            }
+
             return `
                 <tr>
                     <td style="font-weight:bold; color:#38bdf8;">${(r.seller_name || '-').replace(/^.*?-\s*/, '')}</td>
@@ -6759,7 +6785,7 @@
                     <td>${delayCell}</td>
                     <td>${r.overtime_hours || 0} ساعت</td>
                     <td>${r.photo_url ? `<a href="${r.photo_url}" target="_blank" style="color:#38bdf8;">👁️ مشاهده عکس</a>` : 'بدون عکس'}</td>
-                    <td>${linkify(r.note) || '-'}</td>
+                    <td>${verifyBadge ? `<div style="margin-bottom:4px;">${verifyBadge}</div>` : ''}${linkify(r.note) || '-'}</td>
                 </tr>
             `;
         }
@@ -6809,14 +6835,12 @@
 
         // تقویم رنگی ۳۰ روز اخیر — سریع‌ترین راه برای دیدن الگوی حضور یه فروشنده با یه نگاه
         async function renderAttendanceCalendar() {
+            restoreLastViewedSeller();
             const seller = document.getElementById('workSellerSelect').value;
             const box = document.getElementById('attendanceCalendarBox');
             box.innerHTML = skeletonCards(1);
 
             const thirtyDaysAgoISO = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-            // به‌جای فیلتر سمت سرور با ilike (که به فاصله/کاراکترهای نامرئی حساسه)، عین همون روشی
-            // که توی «رقابت دوستانه» جواب داده رو به‌کار می‌بریم: همه رو می‌گیریم و خودمون با
-            // indexOf دقیق فیلتر می‌کنیم — قابل‌اعتمادتره
             const { data: allData } = await _supabase.from('attendance')
                 .select('seller_name, type, delay_minutes, exit_diff_minutes, created_at')
                 .gte('created_at', thirtyDaysAgoISO)
@@ -6836,33 +6860,47 @@
             const persianDayFormatter = new Intl.DateTimeFormat('fa-IR-u-ca-persian', { timeZone: 'Asia/Tehran', day: '2-digit', numberingSystem: 'latn' });
             const todayISO = getTehranISODate(new Date());
 
-            let html = `<div class="hint" style="margin-top:0;">${data.length} ثبت پیدا شد برای «${escapeHtmlForToast(seller)}» در ۳۰ روز اخیر</div>`;
+            let html = `<h4 style="color:#38bdf8; margin:4px 0;">🗓️ تقویم ۳۰ روز اخیر — ${escapeHtmlForToast(seller)}</h4>`;
+            html += `<div class="hint" style="margin-top:0;">${data.length} ثبت پیدا شد — روی هر روز بزن تا جزئیاتش رو ببینی</div>`;
             html += '<div style="display:flex; gap:6px; overflow-x:auto; padding-bottom:8px;">';
             for (let i = 29; i >= 0; i--) {
                 const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
                 const iso = getTehranISODate(d);
                 const dayLabel = persianDayFormatter.format(d);
                 const info = byDate[iso];
-                let color = '#334155', title = 'بدون داده';
+                let color = '#334155', detail = 'بدون داده برای این روز';
                 if (info) {
-                    if (info.leave) { color = '#818cf8'; title = 'مرخصی'; }
-                    else if (info.entry !== null && info.entry > 0) { color = '#ef4444'; title = `${info.entry} دقیقه تاخیر`; }
-                    else if (info.entry !== null) { color = '#10b981'; title = 'به‌موقع'; }
-                    else if (info.exit !== null) { color = '#38bdf8'; title = 'فقط خروج ثبت شده'; }
+                    if (info.leave) { color = '#818cf8'; detail = 'مرخصی بوده'; }
+                    else if (info.entry !== null && info.entry > 0) { color = '#ef4444'; detail = `${info.entry} دقیقه تاخیر داشته`; }
+                    else if (info.entry !== null) { color = '#10b981'; detail = 'به‌موقع حاضر شده'; }
+                    else if (info.exit !== null) { color = '#38bdf8'; detail = 'فقط خروج ثبت شده (بدون ورود)'; }
                 } else if (iso < todayISO) {
-                    color = '#7f1d1d'; title = 'هیچ ثبتی نداشت (احتمال غیبت)';
+                    color = '#7f1d1d'; detail = 'هیچ ثبتی نداشت (احتمال غیبت)';
                 } else if (iso === todayISO) {
-                    color = '#1e293b'; title = 'امروز';
+                    color = '#1e293b'; detail = 'امروز';
                 }
-                html += `<div title="${title}" style="min-width:36px; text-align:center; flex-shrink:0;">
+                const fullDateFa = getTehranFullDateTimeString(d).split(',')[0];
+                html += `<div onclick="showToast('📅 ${fullDateFa}\\n${detail}')" style="min-width:36px; text-align:center; flex-shrink:0; cursor:pointer;">
                     <div style="width:34px; height:34px; border-radius:8px; background:${color}; display:flex; align-items:center; justify-content:center; font-size:10px; color:#fff; font-weight:bold;">${dayLabel}</div>
                 </div>`;
             }
-            html += '</div><div class="hint" style="margin-top:6px;">🟢 به‌موقع &nbsp; 🔴 تاخیر &nbsp; 🟣 مرخصی &nbsp; ⚫ غیبت (بدون ثبت) — روی هر روز نگه دار تا جزئیات رو ببینی</div>';
+            html += '</div><div class="hint" style="margin-top:6px;">🟢 به‌موقع &nbsp; 🔴 تاخیر &nbsp; 🟣 مرخصی &nbsp; ⚫ غیبت (بدون ثبت)</div>';
             box.innerHTML = html;
         }
 
+        // یادآوری آخرین فروشنده‌ای که مدیر داشت گزارشش رو می‌دید — تا هر بار برنگرده رو صبح تنظیم کنه
+        function saveLastViewedSeller() {
+            try { localStorage.setItem('lastViewedSellerRole', document.getElementById('workSellerSelect').value); } catch (e) {}
+        }
+        function restoreLastViewedSeller() {
+            try {
+                const saved = localStorage.getItem('lastViewedSellerRole');
+                if (saved) document.getElementById('workSellerSelect').value = saved;
+            } catch (e) {}
+        }
+
         async function loadWorkReport() {
+            restoreLastViewedSeller();
             const sellerRole = document.getElementById('workSellerSelect').value;
             const container = document.getElementById('workReportTodayContent');
             container.innerHTML = 'در حال دریافت کارکرد امروز...';
@@ -10360,6 +10398,38 @@
             if (error) { showToast('❌ خطا: ' + error.message); return; }
             showToast('✅ این هزینه به‌عنوان تسویه‌شده ثبت شد.');
             loadExpensesTab();
+        }
+
+        // اطلاعات پرسنل — مستقیم از جدول users، جدا از صندوقچه پیام
+        async function loadPersonnelTab() {
+            const box = document.getElementById('personnelList');
+            box.innerHTML = skeletonCards(3);
+            const { data, error } = await _supabase.from('users').select('*').order('created_at', { ascending: false });
+            if (error) {
+                box.innerHTML = '<p style="color:#ef4444;">خطا در بارگذاری اطلاعات پرسنل: ' + error.message + '</p>';
+                return;
+            }
+            if (!data || data.length === 0) {
+                box.innerHTML = '<p class="hint">هنوز کسی ثبت‌نام نکرده.</p>';
+                return;
+            }
+            const roleLabels = { admin: '👑 مدیر', morning_seller: '🌅 فروشنده صبح', evening_seller: '🌙 فروشنده شب' };
+            box.innerHTML = data.map(u => {
+                const idPhoto = u.national_id_photo_url || u.id_photo_url || u.national_id_photo;
+                const sig = u.signature_url || u.signature;
+                const phone = u.phone || u.phone_number || u.mobile || '-';
+                const nationalId = u.national_id || u.national_id_code || '-';
+                return `
+                <div class="report-card">
+                    <h3>${roleLabels[u.role] || u.role} — ${u.full_name || u.username}</h3>
+                    <p>👤 نام کاربری: ${u.username}</p>
+                    <p>🪪 کد ملی: ${nationalId}</p>
+                    <p>📱 شماره تماس: ${phone}</p>
+                    ${u.created_at ? `<p>📅 تاریخ ثبت‌نام: ${getTehranFullDateTimeString(new Date(u.created_at))}</p>` : ''}
+                    ${idPhoto ? `<a href="${idPhoto}" target="_blank" style="color:#38bdf8;">👁️ مشاهده عکس کارت ملی</a>` : '<span class="hint">بدون عکس کارت ملی</span>'}
+                    ${sig ? ` | <a href="${sig}" target="_blank" style="color:#38bdf8;">✍️ مشاهده امضا</a>` : ''}
+                </div>`;
+            }).join('');
         }
 
         async function loadExpensesTab() {
