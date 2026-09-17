@@ -12,7 +12,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v50 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v51 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="icon" href="icon-192.png">
@@ -1300,6 +1300,12 @@
             <button type="button" class="row-btn edit-btn" style="width:100%;" onclick="registerCustomFace()">🙂📸 ثبت چهره اختصاصی (روش پشتیبان)</button>
         </div>
 
+        <div id="attendanceDayCompleteBox" class="report-card" style="display:none; border-color:#10b981; text-align:center;">
+            <h3 style="color:#10b981;">✅ شیفت امروزت کامل شد!</h3>
+            <p>هم ورود هم خروج رو زدی، چیز دیگه‌ای لازم نیست ثبت کنی. خسته نباشی 👏</p>
+        </div>
+
+        <div id="attendanceFormBox">
         <label>نوع ثبت:</label>
         <select id="attType" onchange="toggleAttendanceFields()">
             <option value="entry">🟢 ثبت ورود به شیفت</option>
@@ -1336,6 +1342,7 @@
         <textarea id="attNote" placeholder="مثلاً دلیل تاخیر یا توضیحات اضافه‌کاری..."></textarea>
 
         <button class="submit-btn" onclick="submitAttendance()">ثبت در سیستم حضور و غیاب</button>
+        </div>
 
         <div class="report-card" style="margin-top:16px;">
             <h3>🏖️ مرخصی‌های من</h3>
@@ -1995,7 +2002,7 @@
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v50 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v51 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
 
     <script>
         function toggleLoginPasswordVisibility() {
@@ -4031,7 +4038,7 @@
             if (tab === 'sale') { renderQuickPickButtons('instore'); loadRecentCustomers(); }
             if (tab === 'saleEkala') { renderQuickPickButtons('ekala'); loadRecentCustomers(); }
             if (tab === 'saleSausage') { renderQuickPickButtons('sausage'); loadRecentCustomers(); }
-            if (tab === 'attendance') { syncAttendanceTypeSelector(); loadMyLeaveRecords(); }
+            if (tab === 'attendance') { syncAttendanceTypeSelector(); loadMyLeaveRecords(); checkAttendanceReminders(); }
         }
 
         // =========================================================================
@@ -5423,14 +5430,24 @@
             const status = await getTodayAttendanceStatus();
             const entryOption = select.querySelector('option[value="entry"]');
             const exitOption = select.querySelector('option[value="exit"]');
+            const formBox = document.getElementById('attendanceFormBox');
+            const completeBox = document.getElementById('attendanceDayCompleteBox');
+
+            if (status.hasEntry && status.hasExit) {
+                // شیفت امروز کامل شده — به‌جای اینکه خودکار روی «مرخصی» بره (که خطرناکه، ممکنه
+                // یه تپ اشتباهی یه مرخصی الکی ثبت کنه)، کل فرم رو مخفی می‌کنیم و یه پیام مطمئن
+                // نشون می‌دیم؛ اگه واقعاً بخواد مرخصی بزنه، باید از پایین دکمه‌ی جداگانه رو بزنه
+                if (formBox) formBox.style.display = 'none';
+                if (completeBox) completeBox.style.display = 'block';
+                return;
+            }
+            if (formBox) formBox.style.display = 'block';
+            if (completeBox) completeBox.style.display = 'none';
+
             if (status.hasEntry && !status.hasExit) {
                 select.value = 'exit';
                 if (entryOption) entryOption.disabled = true;
                 if (exitOption) exitOption.disabled = false;
-            } else if (status.hasEntry && status.hasExit) {
-                if (entryOption) entryOption.disabled = true;
-                if (exitOption) exitOption.disabled = true;
-                select.value = 'leave';
             } else {
                 select.value = 'entry';
                 if (entryOption) entryOption.disabled = false;
@@ -5464,9 +5481,11 @@
             showToast('✅ پیام فوری برای مدیر ارسال شد؛ منتظر بمانید تا مدیر بررسی کند.');
         }
 
+        let _attendanceReminderCallId = 0;
         async function checkAttendanceReminders() {
             if (currentRole !== 'morning_seller' && currentRole !== 'evening_seller') { hideForceEntryLock(); return; }
             if (Date.now() < reminderSnoozeUntil) return;
+            const myCallId = ++_attendanceReminderCallId;
 
             const settings = await getShiftSettings();
             const todayISO = getTehranISODate(new Date());
@@ -5483,6 +5502,11 @@
                 .eq('seller_name', currentUserLabel)
                 .order('created_at', { ascending: false })
                 .limit(20);
+
+            // اگه توی این فاصله یه فراخوانی جدیدتر (مثلاً از تعویض تب) شروع شده، این جواب دیگه
+            // قدیمیه و نباید چیزی رو رو صفحه بازنویسی کنه — جلوی چشمک‌زدن و نمایش لحظه‌ای اطلاعات
+            // کهنه رو می‌گیره
+            if (myCallId !== _attendanceReminderCallId) return;
 
             const todayRecords = (records || []).filter(r => getTehranISODate(new Date(r.created_at)) === todayISO);
             const hasEntry = todayRecords.some(r => r.type === 'entry');
@@ -6309,6 +6333,30 @@
                 return;
             }
 
+            // مرخصی یه تصمیم حساسه (روی حقوق/گزارش اثر می‌ذاره) — قبل از ثبت واقعی، حتماً تایید
+            // می‌گیریم تا یه تپ اشتباهی (دست‌خوردن) باعث یه مرخصی الکی نشه
+            let leaveReason = null;
+            if (type === 'leave') {
+                const reallyWantsLeave = await showConfirm('🏖️ می‌خوای برای امروز مرخصی ثبت کنی؟\n\nاگه اشتباهی این گزینه انتخاب شده (دستت خورده)، «انصراف» رو بزن — چیزی ثبت نمی‌شه.');
+                if (!reallyWantsLeave) {
+                    showToast('باشه، چیزی ثبت نشد 🙂');
+                    syncAttendanceTypeSelector();
+                    return;
+                }
+                while (leaveReason === null || leaveReason.trim() === '') {
+                    leaveReason = window.prompt('دلیل مرخصی رو بنویس (این برای مدیر فرستاده می‌شه):');
+                    if (leaveReason === null) {
+                        const stillCancel = await showConfirm('بدون نوشتن دلیل، مرخصی ثبت نمی‌شه.\n\nمی‌خوای کامل انصراف بدی؟');
+                        if (stillCancel) {
+                            showToast('باشه، چیزی ثبت نشد 🙂');
+                            syncAttendanceTypeSelector();
+                            return;
+                        }
+                    }
+                }
+                leaveReason = leaveReason.trim();
+            }
+
             // اگه یه ورود قبلی (نه امروز) هنوز خروج نخورده مونده (یعنی دفعه قبل یادش رفته خروج بزنه)،
             // اول باید همون رو ببنده — نمی‌تونه ورود جدید بزنه تا خروج جاافتاده رو ثبت نکنه
             let isMakeupExit = false;
@@ -6580,7 +6628,7 @@
                 delay_minutes: delayMinutes,
                 exit_diff_minutes: exitDiffMinutes,
                 photo_url: photoUrl,
-                note: (note ? note + " | " : "") + (selectedLocationText ? selectedLocationText + " | " : "") + (biometricFallbackReason ? `⚠️ بدون تایید بیومتریک (${biometricFallbackReason}) | ` : "") + (biometricMethodLabel ? biometricMethodLabel + " | " : "") + (lateReasonText ? `📝 دلیل تاخیر: ${lateReasonText} | ` : "") + (isMakeupExit ? `⏮️ خروج جاافتاده (فراموش‌شده از شیفت قبل) | ` : "") + `زمان ثبت: ${fullDateTimeStr}`,
+                note: (note ? note + " | " : "") + (leaveReason ? `🏖️ دلیل مرخصی: ${leaveReason} | ` : "") + (selectedLocationText ? selectedLocationText + " | " : "") + (biometricFallbackReason ? `⚠️ بدون تایید بیومتریک (${biometricFallbackReason}) | ` : "") + (biometricMethodLabel ? biometricMethodLabel + " | " : "") + (lateReasonText ? `📝 دلیل تاخیر: ${lateReasonText} | ` : "") + (isMakeupExit ? `⏮️ خروج جاافتاده (فراموش‌شده از شیفت قبل) | ` : "") + `زمان ثبت: ${fullDateTimeStr}`,
                 created_at: now.toISOString()
             }]);
 
@@ -6605,6 +6653,17 @@
                 }
                 if (isMakeupExit) {
                     successMsg += `\n\n⏮️ خروج جاافتاده‌ی دفعه قبل ثبت شد. دفعه بعد حتماً همون شب یادت باشه خروج بزنی، خودم بهت یادآوری می‌کنم. الان می‌تونی ورود امروزت رو هم بزنی.`;
+                }
+                if (type === 'leave' && leaveReason) {
+                    successMsg += `\n\n🏖️ مرخصی امروزت با دلیل «${leaveReason}» برای مدیر ارسال شد.`;
+                    _supabase.from('messages').insert([{
+                        sender: "سیستم خودکار مرخصی",
+                        recipient: "admin",
+                        title: `🏖️ درخواست مرخصی: ${currentUserLabel}`,
+                        body: `${currentUserLabel} برای تاریخ ${getTehranDateString(now)} مرخصی ثبت کرد.\nدلیل: ${leaveReason}`,
+                        created_at: now.toISOString()
+                    }]).then(() => {});
+                    sendPushNotificationToRole('🏖️ درخواست مرخصی', `${currentUserLabel}: ${leaveReason}`, 'admin');
                 }
 
                 if (type === 'entry' && delayMinutes !== null) {
@@ -6880,7 +6939,7 @@
                     color = '#1e293b'; detail = 'امروز';
                 }
                 const fullDateFa = getTehranFullDateTimeString(d).split(',')[0];
-                html += `<div onclick="showToast('📅 ${fullDateFa}\\n${detail}')" style="min-width:36px; text-align:center; flex-shrink:0; cursor:pointer;">
+                html += `<div onclick="showToast('👤 ${escapeHtmlForToast(seller)}\\n📅 ${fullDateFa}\\n${detail}')" style="min-width:36px; text-align:center; flex-shrink:0; cursor:pointer;">
                     <div style="width:34px; height:34px; border-radius:8px; background:${color}; display:flex; align-items:center; justify-content:center; font-size:10px; color:#fff; font-weight:bold;">${dayLabel}</div>
                 </div>`;
             }
@@ -8649,7 +8708,8 @@
             const { data: sales, error } = await _supabase
                 .from('sales')
                 .select('product_code, quantity, sell_price, created_at, seller_name, sale_type, shift_label')
-                .order('created_at', { ascending: false });
+                .order('created_at', { ascending: false })
+                .limit(10000);
 
             if (error) {
                 content.innerHTML = '❌ خطا در دریافت گزارش: ' + error.message;
