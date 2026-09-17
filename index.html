@@ -12,7 +12,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v51 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v52 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="icon" href="icon-192.png">
@@ -2002,7 +2002,7 @@
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v51 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v52 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
 
     <script>
         function toggleLoginPasswordVisibility() {
@@ -10464,7 +10464,7 @@
         async function loadPersonnelTab() {
             const box = document.getElementById('personnelList');
             box.innerHTML = skeletonCards(3);
-            const { data, error } = await _supabase.from('users').select('*').order('created_at', { ascending: false });
+            const { data, error } = await _supabase.from('users').select('*');
             if (error) {
                 box.innerHTML = '<p style="color:#ef4444;">خطا در بارگذاری اطلاعات پرسنل: ' + error.message + '</p>';
                 return;
