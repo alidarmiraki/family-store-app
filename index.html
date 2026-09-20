@@ -12,7 +12,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v52 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v53 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="icon" href="icon-192.png">
@@ -1044,7 +1044,7 @@
         <button class="tab-btn" id="btnProduct" onclick="switchTab('product')">➕ تعریف کالا</button>
         <button class="tab-btn" id="btnInventory" onclick="switchTab('inventory'); loadInventory();">📦 موجودی انبار</button>
         <button class="tab-btn" id="btnReport" onclick="switchTab('report'); loadSalesReport();">📊 گزارش فروش</button>
-        <button class="tab-btn" id="btnWorkReport" onclick="switchTab('workReport'); loadWorkReport();">🗓️ کارکرد پرسنل</button>
+        <button class="tab-btn" id="btnWorkReport" onclick="openWorkReportTab()">🗓️ کارکرد پرسنل</button>
         <button class="tab-btn" id="btnDashboard" onclick="switchTab('dashboard'); loadAdminDashboard();">🏠 خلاصه روز</button>
         <button class="tab-btn" id="btnShiftSettings" onclick="switchTab('shiftSettings'); loadShiftSettings();">⚙️ تنظیمات شیفت‌ها</button>
         <button class="tab-btn" id="btnTelegramSettings" onclick="switchTab('telegramSettings'); loadTelegramSettings();">📲 اتصال تلگرام</button>
@@ -2002,7 +2002,7 @@
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v52 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v53 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
 
     <script>
         function toggleLoginPasswordVisibility() {
@@ -2448,6 +2448,14 @@
         }
         function escapeHtmlForToast(text) {
             return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        // برای گذاشتن متن دلخواه (مثل اسم کالا) داخل یک ویژگی HTML مثل data-xxx="...":
+        // برخلاف escapeHtmlForToast، این تابع کوتیشن‌ها (' و ") را هم فرار می‌دهد، چون اگر
+        // اسم کالا کوتیشن داشته باشد و فرار داده نشود، همان ویژگی زودتر از موعد بسته می‌شود
+        // و باقی HTML خراب/بی‌اثر می‌شود.
+        function escapeHtmlAttr(text) {
+            return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         }
 
         function showToast(message, type) {
@@ -5475,6 +5483,14 @@
             const overlay = document.getElementById('forceEntryLockOverlay');
             if (overlay) overlay.style.display = 'none';
         }
+        // اگر کاربر همین الان خودش داخل تب «حضور و غیاب» است (چه با زدن خود تب، چه با زدن
+        // دکمه‌ی «برو به ثبت ورود» روی همین قفل)، دیگر نباید دوباره قفل تمام‌صفحه رویش بیاید —
+        // چون دقیقاً همان کاری را می‌کند که قفل از او می‌خواهد؛ نمایش دوباره‌ی قفل فقط باعث
+        // می‌شود بین «برو ثبت کن» و «دوباره قفل شو» گیر کند و اصلاً نتواند ثبت را کامل کند.
+        function isUserOnAttendanceTab() {
+            const tabEl = document.getElementById('attendanceTab');
+            return !!(tabEl && tabEl.classList.contains('active'));
+        }
         async function sendUrgentHelpMessageToAdmin() {
             await notifyAdminAboutAttendanceIssue('فروشنده از پشت قفل صفحه‌ی تاخیر درخواست کمک فوری کرد — احتمالاً در ثبت ورود/خروج مشکل دارد (مثلاً دوربین/بیومتریک/موقعیت مکانی کار نمی‌کند).');
             sendPushNotificationToRole('🆘 درخواست کمک فوری', `${currentUserLabel} از پشت قفل صفحه تاخیر درخواست کمک کرد.`, 'admin');
@@ -5548,7 +5564,11 @@
                 panel.style.display = 'block';
                 if (isEscalated) {
                     playLateAlertSound();
-                    showForceEntryLock(`شیفت شما از ساعت ${shiftStart} شروع شده و حدود ${lateBy} دقیقه تاخیر دارید. تا زمانی که «ورود» را ثبت نکنید، امکان استفاده از بقیه‌ی برنامه وجود ندارد.`);
+                    if (isUserOnAttendanceTab()) {
+                        hideForceEntryLock();
+                    } else {
+                        showForceEntryLock(`شیفت شما از ساعت ${shiftStart} شروع شده و حدود ${lateBy} دقیقه تاخیر دارید. تا زمانی که «ورود» را ثبت نکنید، امکان استفاده از بقیه‌ی برنامه وجود ندارد.`);
+                    }
                 }
                 return;
             }
@@ -5589,7 +5609,11 @@
                 panel.style.display = 'block';
                 if (isEscalated) {
                     playLateAlertSound();
-                    showForceEntryLock(`ساعت پایان شیفت شما (${shiftEnd}) حدود ${lateBy} دقیقه پیش گذشته. تا زمانی که «خروج» را ثبت نکنید، امکان استفاده از بقیه‌ی برنامه وجود ندارد.`);
+                    if (isUserOnAttendanceTab()) {
+                        hideForceEntryLock();
+                    } else {
+                        showForceEntryLock(`ساعت پایان شیفت شما (${shiftEnd}) حدود ${lateBy} دقیقه پیش گذشته. تا زمانی که «خروج» را ثبت نکنید، امکان استفاده از بقیه‌ی برنامه وجود ندارد.`);
+                    }
                 }
                 return;
             }
@@ -6920,7 +6944,7 @@
                 .gte('created_at', thirtyDaysAgoISO)
                 .order('created_at', { ascending: true })
                 .limit(2000);
-            const data = (allData || []).filter(r => r.seller_name && r.seller_name.indexOf(seller) === 0);
+            const data = (allData || []).filter(r => r.seller_name === seller);
 
             const byDate = {};
             (data || []).forEach(r => {
@@ -6973,6 +6997,42 @@
             } catch (e) {}
         }
 
+        // --- پر کردن لیست «انتخاب فروشنده» با اسم تک‌تک پرسنل (نه فقط «فروشنده صبح»/«فروشنده شب») ---
+        // قبلاً این لیست فقط دو گزینه‌ی کلی «فروشنده صبح» و «فروشنده شب» داشت و همه‌ی کسانی که
+        // زیر یک شیفت کار می‌کردند با هم در یک گزارش/تقویم قاطی می‌شدند. حالا هر پرسنل با
+        // اسم دقیق خودش (دقیقاً همان‌طور که در attendance.seller_name ذخیره می‌شود) لیست می‌شود
+        // تا گزارش و تقویم رنگی هرکس کاملاً جدا از بقیه دیده شود.
+        async function openWorkReportTab() {
+            switchTab('workReport');
+            await populateWorkSellerSelect();
+            loadWorkReport();
+        }
+        async function populateWorkSellerSelect() {
+            const select = document.getElementById('workSellerSelect');
+            if (!select) return;
+            const roleLabelsLocal = { morning_seller: '🌅 فروشنده صبح', evening_seller: '🌙 فروشنده شب' };
+            try {
+                const { data, error } = await _supabase.from('users').select('*').in('role', ['morning_seller', 'evening_seller']);
+                if (error || !data || data.length === 0) return; // خطا یا خالی بودن: گزینه‌های فعلی دست‌نخورده می‌مانند
+                const sorted = data.slice().sort((a, b) => {
+                    if (a.role !== b.role) return a.role === 'morning_seller' ? -1 : 1;
+                    return String(a.full_name || a.username).localeCompare(String(b.full_name || b.username), 'fa');
+                });
+                let saved = null;
+                try { saved = localStorage.getItem('lastViewedSellerRole'); } catch (e) {}
+                const previousValue = select.value;
+                select.innerHTML = sorted.map(u => {
+                    const label = `${roleLabelsLocal[u.role] || u.role} - ${u.full_name || u.username}`;
+                    return `<option value="${escapeHtmlAttr(label)}">${escapeHtmlForToast(label)}</option>`;
+                }).join('');
+                const labels = sorted.map(u => `${roleLabelsLocal[u.role] || u.role} - ${u.full_name || u.username}`);
+                const match = [saved, previousValue].filter(Boolean).find(v => labels.includes(v));
+                if (match) select.value = match;
+            } catch (e) {
+                console.warn('خطا در پر کردن لیست فروشنده‌ها برای گزارش کارکرد:', e);
+            }
+        }
+
         async function loadWorkReport() {
             restoreLastViewedSeller();
             const sellerRole = document.getElementById('workSellerSelect').value;
@@ -6985,7 +7045,7 @@
             const { data: records, error } = await _supabase
                 .from('attendance')
                 .select('*')
-                .ilike('seller_name', `${sellerRole}%`)
+                .eq('seller_name', sellerRole)
                 .order('created_at', { ascending: false });
 
             if (error) {
@@ -7002,16 +7062,8 @@
 
             const rows = todayRecords.map(r => buildAttendanceRow(r, settings)).join('');
 
-            // اگه امروز بیش از یک اسم متفاوت زیر همین شیفت ثبت زده، یعنی چند نفر مختلف
-            // از این حساب استفاده کردن — مدیر باید بدونه
-            const distinctNames = [...new Set(todayRecords.map(r => (r.seller_name || '').replace(/^.*?-\s*/, '').trim()).filter(Boolean))];
-            const multiPersonWarning = distinctNames.length > 1
-                ? `<div class="hint" style="background:rgba(239,68,68,0.1); border:1px solid #ef4444; color:#fecaca; border-radius:8px; padding:8px; margin-bottom:10px;">⚠️ امروز ${distinctNames.length.toLocaleString('fa-IR')} نفر مختلف با نام‌های زیر از حساب «${sellerRole}» ثبت ورود/خروج زده‌اند: ${distinctNames.join('، ')}</div>`
-                : '';
-
             container.innerHTML = `
                 <h4 style="color:#38bdf8; margin-bottom:6px;">📋 ثبت‌های امروز (${getTehranDateString(new Date())}) - ${sellerRole}</h4>
-                ${multiPersonWarning}
                 <table>
                     <thead>
                         <tr>
@@ -7061,7 +7113,7 @@
             const { data: records, error } = await _supabase
                 .from('attendance')
                 .select('*')
-                .ilike('seller_name', `${sellerRole}%`)
+                .eq('seller_name', sellerRole)
                 .order('created_at', { ascending: false });
 
             if (error) {
@@ -7144,7 +7196,7 @@
                 html += `<button type="button" class="range-toggle-btn" style="padding:8px 10px;" onclick="repeatLastSale('${type}')">🔁 مثل قبلی (${escapeHtmlForToast(lastSale.name)})</button>`;
             }
             for (const name of topProducts) {
-                html += `<button type="button" class="range-toggle-btn" style="padding:8px 10px;" onclick="applyQuickPickProduct('${type}', ${JSON.stringify(name).replace(/'/g, "\\'")})">⭐ ${escapeHtmlForToast(name)}</button>`;
+                html += `<button type="button" class="range-toggle-btn" style="padding:8px 10px;" data-qp-type="${type}" data-qp-name="${escapeHtmlAttr(name)}" onclick="applyQuickPickProduct(this.dataset.qpType, this.dataset.qpName)">⭐ ${escapeHtmlForToast(name)}</button>`;
             }
             html += '</div>';
             box.innerHTML = html;
