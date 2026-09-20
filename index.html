@@ -12,7 +12,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v53 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v54 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="icon" href="icon-192.png">
@@ -2002,7 +2002,7 @@
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v53 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v54 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
 
     <script>
         function toggleLoginPasswordVisibility() {
@@ -6944,7 +6944,7 @@
                 .gte('created_at', thirtyDaysAgoISO)
                 .order('created_at', { ascending: true })
                 .limit(2000);
-            const data = (allData || []).filter(r => r.seller_name === seller);
+            const data = (allData || []).filter(r => sellerNameMatchesSelection(r.seller_name, seller));
 
             const byDate = {};
             (data || []).forEach(r => {
@@ -6986,6 +6986,19 @@
             box.innerHTML = html;
         }
 
+        // --- تطبیق انتخاب فروشنده: اگه یک نفر مشخص انتخاب شده («نقش - اسم») دقیق مچ می‌کنیم،
+        // ولی اگه (مثلاً به‌خاطر خطای شبکه لحظه‌ی پر شدن لیست) فقط نقش کلی انتخاب مونده
+        // («فروشنده صبح» بدون اسم)، به‌جای اینکه هیچی پیدا نشه، مثل قبل بر اساس نقش فیلتر می‌کنیم ---
+        function sellerNameMatchesSelection(sellerName, selection) {
+            if (!sellerName || !selection) return false;
+            if (selection.indexOf(' - ') !== -1) return sellerName === selection;
+            return sellerName.indexOf(selection) === 0;
+        }
+        function applySellerFilterToQuery(query, selection) {
+            if (selection && selection.indexOf(' - ') !== -1) return query.eq('seller_name', selection);
+            return query.ilike('seller_name', `${selection}%`);
+        }
+
         // یادآوری آخرین فروشنده‌ای که مدیر داشت گزارشش رو می‌دید — تا هر بار برنگرده رو صبح تنظیم کنه
         function saveLastViewedSeller() {
             try { localStorage.setItem('lastViewedSellerRole', document.getElementById('workSellerSelect').value); } catch (e) {}
@@ -7010,7 +7023,10 @@
         async function populateWorkSellerSelect() {
             const select = document.getElementById('workSellerSelect');
             if (!select) return;
-            const roleLabelsLocal = { morning_seller: '🌅 فروشنده صبح', evening_seller: '🌙 فروشنده شب' };
+            // نکته مهم: اینجا باید از همون roleLabels سراسری (بدون ایموجی) استفاده بشه، چون
+            // دقیقاً همینه که currentUserLabel موقع ثبت حضور و غیاب باهاش ساخته می‌شه و توی
+            // seller_name ذخیره می‌شه — هر تفاوتی (حتی یک ایموجی اضافه) باعث می‌شه فیلتر دقیق
+            // هیچ رکوردی رو پیدا نکنه و انگار همه‌چیز خالی/پاک‌شده به نظر برسه.
             try {
                 const { data, error } = await _supabase.from('users').select('*').in('role', ['morning_seller', 'evening_seller']);
                 if (error || !data || data.length === 0) return; // خطا یا خالی بودن: گزینه‌های فعلی دست‌نخورده می‌مانند
@@ -7022,10 +7038,10 @@
                 try { saved = localStorage.getItem('lastViewedSellerRole'); } catch (e) {}
                 const previousValue = select.value;
                 select.innerHTML = sorted.map(u => {
-                    const label = `${roleLabelsLocal[u.role] || u.role} - ${u.full_name || u.username}`;
+                    const label = `${roleLabels[u.role] || u.role} - ${u.full_name || u.username}`;
                     return `<option value="${escapeHtmlAttr(label)}">${escapeHtmlForToast(label)}</option>`;
                 }).join('');
-                const labels = sorted.map(u => `${roleLabelsLocal[u.role] || u.role} - ${u.full_name || u.username}`);
+                const labels = sorted.map(u => `${roleLabels[u.role] || u.role} - ${u.full_name || u.username}`);
                 const match = [saved, previousValue].filter(Boolean).find(v => labels.includes(v));
                 if (match) select.value = match;
             } catch (e) {
@@ -7042,11 +7058,9 @@
             const settings = await getShiftSettings();
             const todayISO = getTehranISODate(new Date());
 
-            const { data: records, error } = await _supabase
-                .from('attendance')
-                .select('*')
-                .eq('seller_name', sellerRole)
-                .order('created_at', { ascending: false });
+            const { data: records, error } = await applySellerFilterToQuery(
+                _supabase.from('attendance').select('*'), sellerRole
+            ).order('created_at', { ascending: false });
 
             if (error) {
                 container.innerHTML = `<p style="color:#ef4444;">خطا در دریافت اطلاعات: ${error.message}</p>`;
@@ -7110,11 +7124,9 @@
 
             const settings = await getShiftSettings();
 
-            const { data: records, error } = await _supabase
-                .from('attendance')
-                .select('*')
-                .eq('seller_name', sellerRole)
-                .order('created_at', { ascending: false });
+            const { data: records, error } = await applySellerFilterToQuery(
+                _supabase.from('attendance').select('*'), sellerRole
+            ).order('created_at', { ascending: false });
 
             if (error) {
                 container.innerHTML = `<p style="color:#ef4444;">خطا: ${error.message}</p>`;
