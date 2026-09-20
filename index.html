@@ -12,7 +12,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v54 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v55 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="icon" href="icon-192.png">
@@ -1577,6 +1577,17 @@
             <option value="فروشنده شب">فروشنده شب</option>
         </select>
 
+        <div class="report-card" style="margin-top:14px; border-color:#10b981;">
+            <h3>🌴 ثبت مرخصی برای این فروشنده</h3>
+            <div class="hint" style="margin-top:0;">یک تاریخ انتخاب کن و مرخصی رو برای «فروشنده‌ی انتخاب‌شده بالا» ثبت کن. اون روز دیگه لازم نیست ورود/خروج بزنه؛ ولی اگه خودش وارد برنامه بشه، بهش نوشته می‌شه «مدیر براتون مرخصی ثبت کرده، استراحت کنید» و دیگه هشدار/قفل تاخیر براش نمیاد.</div>
+            <label>تاریخ مرخصی:</label>
+            <input type="date" id="adminLeaveDate">
+            <label>توضیح (اختیاری - فقط برای خودت، مثلاً دلیل مرخصی):</label>
+            <input type="text" id="adminLeaveNote" dir="auto" placeholder="مثلاً مرخصی استعلاجی">
+            <button class="submit-btn" style="background:#10b981;" onclick="submitAdminLeave()">🌴 ثبت مرخصی</button>
+            <div id="adminLeaveResult" style="margin-top:8px;"></div>
+        </div>
+
         <div id="workReportTodayContent" style="margin-top:15px;"></div>
 
         <button class="range-toggle-btn" onclick="toggleRangeReport()">📆 مشاهده گزارش بازه‌ای (چند روز اومده، چند روز مرخصی، چقدر تاخیر و اضافه‌کاری)</button>
@@ -2002,7 +2013,7 @@
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v54 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v55 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
 
     <script>
         function toggleLoginPasswordVisibility() {
@@ -5514,7 +5525,7 @@
 
             const { data: records } = await _supabase
                 .from('attendance')
-                .select('type, created_at')
+                .select('type, created_at, note')
                 .eq('seller_name', currentUserLabel)
                 .order('created_at', { ascending: false })
                 .limit(20);
@@ -5533,10 +5544,18 @@
             if (!panel) return;
 
             if (hasLeave) {
-                panel.classList.remove('escalated');
-                panel.style.display = 'none';
-                panel.innerHTML = '';
                 hideForceEntryLock();
+                const leaveRecord = todayRecords.find(r => r.type === 'leave');
+                const isAdminLeave = !!(leaveRecord && leaveRecord.note && leaveRecord.note.indexOf(ADMIN_LEAVE_MARKER) === 0);
+                if (isAdminLeave) {
+                    panel.classList.remove('escalated');
+                    panel.style.display = 'block';
+                    panel.innerHTML = `🌴 <b>مدیر براتون امروز مرخصی ثبت کرده — استراحت کنید!</b> نیازی به ثبت ورود/خروج امروز ندارید.`;
+                } else {
+                    panel.classList.remove('escalated');
+                    panel.style.display = 'none';
+                    panel.innerHTML = '';
+                }
                 return;
             }
 
@@ -6984,6 +7003,68 @@
             }
             html += '</div><div class="hint" style="margin-top:6px;">🟢 به‌موقع &nbsp; 🔴 تاخیر &nbsp; 🟣 مرخصی &nbsp; ⚫ غیبت (بدون ثبت)</div>';
             box.innerHTML = html;
+        }
+
+        // برچسبی که ابتدای note رکوردهای مرخصیِ ثبت‌شده توسط مدیر گذاشته می‌شه، تا هم بشه
+        // تشخیص داد این مرخصی خودِ فروشنده رو نبوده (مدیر براش زده)، هم پیام مخصوص «مدیر
+        // براتون مرخصی ثبت کرده» بهش نشون داده بشه
+        const ADMIN_LEAVE_MARKER = '🌴 مرخصی توسط مدیر ثبت شده';
+
+        async function submitAdminLeave() {
+            const sellerLabel = document.getElementById('workSellerSelect').value;
+            const dateStr = document.getElementById('adminLeaveDate').value;
+            const customNote = document.getElementById('adminLeaveNote').value.trim();
+            const resultBox = document.getElementById('adminLeaveResult');
+
+            if (!sellerLabel || sellerLabel.indexOf(' - ') === -1) {
+                showToast('❌ لطفاً اول از لیست بالا یک فروشنده‌ی مشخص (با اسم) انتخاب کنید، نه فقط نقش کلی.');
+                return;
+            }
+            if (!dateStr) {
+                showToast('❌ لطفاً تاریخ مرخصی را انتخاب کنید.');
+                return;
+            }
+
+            // چک کنیم برای همین فروشنده و همین روز قبلاً چیزی ثبت نشده باشه (مرخصی یا ورود/خروج)
+            const { data: existing } = await _supabase
+                .from('attendance')
+                .select('id, type, created_at')
+                .eq('seller_name', sellerLabel);
+            const existingOnDate = (existing || []).filter(r => getTehranISODate(new Date(r.created_at)) === dateStr);
+            if (existingOnDate.length > 0) {
+                const alreadyLeave = existingOnDate.some(r => r.type === 'leave');
+                const msg = alreadyLeave
+                    ? 'برای این فروشنده در این تاریخ قبلاً مرخصی ثبت شده. می‌خوای یک مرخصی دیگه هم اضافه کنی؟'
+                    : 'برای این فروشنده در این تاریخ قبلاً ورود/خروج ثبت شده. مطمئنی می‌خوای مرخصی هم براش ثبت کنی؟';
+                const confirmed = await showConfirm(msg);
+                if (!confirmed) return;
+            }
+
+            const friendlyNote = ADMIN_LEAVE_MARKER + (customNote ? (' | ' + customNote) : '');
+            // ساعت ۱۲ ظهر به‌وقت تهران انتخاب شده تا مطمئناً همون روزِ انتخابی حساب بشه (نه
+            // نیمه‌شب که با اختلاف منطقه زمانی ممکنه به روز قبل/بعد لیز بخوره)
+            const isoDateTime = `${dateStr}T12:00:00+03:30`;
+
+            const { error } = await _supabase.from('attendance').insert([{
+                seller_name: sellerLabel,
+                type: 'leave',
+                overtime_hours: null,
+                delay_minutes: null,
+                exit_diff_minutes: null,
+                photo_url: null,
+                note: friendlyNote,
+                created_at: isoDateTime
+            }]);
+
+            if (error) {
+                resultBox.innerHTML = `<p style="color:#ef4444;">❌ ثبت مرخصی با خطا مواجه شد: ${error.message}</p>`;
+                return;
+            }
+
+            resultBox.innerHTML = `<p style="color:#34d399;">✅ مرخصی برای ${sellerLabel} در تاریخ ${getTehranDateString(new Date(isoDateTime))} ثبت شد.</p>`;
+            showToast(`✅ مرخصی برای ${sellerLabel} ثبت شد.`);
+            document.getElementById('adminLeaveNote').value = '';
+            loadWorkReport();
         }
 
         // --- تطبیق انتخاب فروشنده: اگه یک نفر مشخص انتخاب شده («نقش - اسم») دقیق مچ می‌کنیم،
