@@ -6328,6 +6328,12 @@
             const note = document.getElementById('attNote').value.trim();
             const submitBtn = document.querySelector('#attendanceTab .submit-btn');
 
+            // --- محافظ کلی: اگر هر خطای پیش‌بینی‌نشده‌ای در هر مرحله از این تابع رخ بدهد
+            // (قطعی اینترنت وسط کار، خطای بیومتریک، خطای دوربین/موقعیت مکانی و ...)، دیگر
+            // دکمه برای همیشه روی حالت «در حال ثبت...» یخ نمی‌زند و بی‌حرکت نمی‌ماند؛ به
+            // کاربر پیام خطا نشان داده می‌شود و دکمه دوباره فعال می‌شود تا بتواند امتحان کند.
+            try {
+
             if (type !== 'leave' && !selectedPhotoDataUrl && !selectedLocationText) {
                 showToast('⛔ خطا: جهت ثبت ورود و خروج ارسال عکس یا موقعیت مکانی **الزامی** می‌باشد!');
                 return;
@@ -6755,6 +6761,15 @@
                     await notifyAdminAboutAttendanceIssue('خطا در ذخیره رکورد حضور و غیاب: ' + error.message);
                     showToast('✅ پیام برای مدیر ارسال شد.');
                 }
+            }
+
+            } catch (unexpectedErr) {
+                // یعنی یک خطای پیش‌بینی‌نشده (غیر از خطاهای عادی که بالاتر مدیریت شده‌اند) رخ
+                // داده — مثلاً قطع ناگهانی اینترنت وسط کار، خطای دوربین/موقعیت مکانی، یا خطای
+                // بیومتریک. دکمه را از حالت یخ‌زده خارج می‌کنیم تا کاربر گیر نکند.
+                console.error('خطای غیرمنتظره در ثبت حضور و غیاب:', unexpectedErr);
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'ثبت در سیستم حضور و غیاب'; }
+                showToast('❌ یک خطای غیرمنتظره باعث شد ثبت انجام نشود (دکمه دوباره فعال شد).\n\nلطفاً دوباره روی دکمه بزنید. اگر باز هم همین اتفاق افتاد، اینترنت گوشی را چک کنید یا برنامه را کامل ببندید و دوباره باز کنید.\n\n(جزئیات فنی: ' + (unexpectedErr && unexpectedErr.message ? unexpectedErr.message : unexpectedErr) + ')');
             }
         }
 
