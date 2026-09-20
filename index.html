@@ -12,7 +12,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v55 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v56 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="icon" href="icon-192.png">
@@ -33,52 +33,82 @@
          به‌صورت خودکار لود می‌شوند — کد کامل این منطق در ابتدای اسکریپت اصلی است. -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="window.__supabasePrimaryFailed = true;"></script>
     <style>
-        * { -webkit-tap-highlight-color: transparent; }
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
         :root {
-            --bg-primary: #0f172a;
-            --bg-card: rgba(30, 41, 59, 0.7);
-            --bg-card-solid: rgba(30, 41, 59, 0.9);
-            --bg-input: #1e293b;
-            --border-color: #334155;
-            --text-primary: #f8fafc;
-            --text-secondary: #94a3b8;
-            --text-hint: #94a3b8;
-            --accent: #38bdf8;
-            --grad-glow-1: rgba(56, 189, 248, 0.10);
-            --grad-glow-2: rgba(16, 185, 129, 0.08);
+            --bg-primary: #060814;
+            --bg-card: rgba(22, 27, 46, 0.58);
+            --bg-card-solid: rgba(15, 19, 36, 0.94);
+            --bg-input: rgba(13, 17, 32, 0.85);
+            --border-color: rgba(148, 163, 255, 0.16);
+            --border-glow: rgba(56, 189, 248, 0.45);
+            --text-primary: #f3f6ff;
+            --text-secondary: #98a2c4;
+            --text-hint: #7d87ab;
+            --accent: #22d3ee;
+            --accent-2: #a78bfa;
+            --accent-3: #34d399;
+            --accent-warm: #fb923c;
+            --grad-glow-1: rgba(56, 189, 248, 0.16);
+            --grad-glow-2: rgba(167, 139, 250, 0.14);
+            --grad-glow-3: rgba(52, 211, 153, 0.12);
+            --shadow-soft: 0 8px 26px rgba(2, 6, 23, 0.4);
+            --shadow-strong: 0 20px 55px rgba(2, 6, 23, 0.55);
         }
         html.light-theme {
-            --bg-primary: #eef2f7;
-            --bg-card: rgba(255, 255, 255, 0.85);
-            --bg-card-solid: rgba(255, 255, 255, 0.96);
-            --bg-input: #ffffff;
-            --border-color: #cbd5e1;
-            --text-primary: #0f172a;
-            --text-secondary: #475569;
-            --text-hint: #64748b;
-            --accent: #0284c7;
-            --grad-glow-1: rgba(56, 189, 248, 0.16);
-            --grad-glow-2: rgba(16, 185, 129, 0.12);
+            --bg-primary: #eef1fb;
+            --bg-card: rgba(255, 255, 255, 0.68);
+            --bg-card-solid: rgba(255, 255, 255, 0.95);
+            --bg-input: rgba(255, 255, 255, 0.92);
+            --border-color: rgba(99, 102, 241, 0.18);
+            --border-glow: rgba(14, 165, 233, 0.4);
+            --text-primary: #0f1629;
+            --text-secondary: #4b5468;
+            --text-hint: #6b7490;
+            --accent: #0ea5e9;
+            --accent-2: #7c3aed;
+            --accent-3: #059669;
+            --accent-warm: #ea580c;
+            --grad-glow-1: rgba(14, 165, 233, 0.18);
+            --grad-glow-2: rgba(124, 58, 237, 0.14);
+            --grad-glow-3: rgba(5, 150, 105, 0.12);
+            --shadow-soft: 0 8px 24px rgba(30, 41, 90, 0.12);
+            --shadow-strong: 0 20px 48px rgba(30, 41, 90, 0.16);
         }
         body {
             background: var(--bg-primary);
             background-image:
-                radial-gradient(circle at 15% 0%, var(--grad-glow-1), transparent 45%),
-                radial-gradient(circle at 100% 20%, var(--grad-glow-2), transparent 40%);
+                radial-gradient(circle at 8% -8%, var(--grad-glow-1), transparent 42%),
+                radial-gradient(circle at 108% 8%, var(--grad-glow-2), transparent 46%),
+                radial-gradient(circle at 25% 115%, var(--grad-glow-3), transparent 46%);
             background-attachment: fixed;
+            background-size: 180% 180%;
+            animation: auroraDrift 24s ease-in-out infinite;
             color: var(--text-primary);
             font-family: 'Vazirmatn', Tahoma, 'IRANSans', sans-serif;
             padding: 12px;
             margin: 0;
-            transition: background 0.3s ease, color 0.3s ease;
+            min-height: 100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
+        @keyframes auroraDrift {
+            0%, 100% { background-position: 0% 0%, 100% 0%, 20% 100%; }
+            50% { background-position: 15% 15%, 85% 20%, 35% 85%; }
+        }
+        ::-webkit-scrollbar { width: 7px; height: 7px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, var(--accent), var(--accent-2));
+            border-radius: 10px;
+        }
+        ::selection { background: var(--accent); color: #06121a; }
+
         .theme-toggle-btn {
             position: fixed;
             top: 14px;
             left: 14px;
             z-index: 9998;
-            width: 40px;
-            height: 40px;
+            width: 42px;
+            height: 42px;
             border-radius: 50%;
             border: 1px solid var(--border-color);
             background: var(--bg-card-solid);
@@ -88,26 +118,32 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-            transition: transform 0.2s ease;
+            box-shadow: var(--shadow-soft), 0 0 0 1px rgba(255,255,255,0.03) inset;
+            transition: transform 0.2s ease, box-shadow 0.25s ease;
         }
-        .theme-toggle-btn:active { transform: scale(0.9) rotate(15deg); }
+        .theme-toggle-btn:active {
+            transform: scale(0.88) rotate(15deg);
+            box-shadow: 0 0 0 4px var(--grad-glow-1), var(--shadow-soft);
+        }
 
         .connection-banner {
             position: fixed;
             top: 0; left: 0; right: 0;
             z-index: 9997;
-            background: linear-gradient(90deg, #dc2626, #b91c1c);
+            background: linear-gradient(90deg, #f43f5e, #dc2626, #f43f5e);
+            background-size: 200% 100%;
+            animation: bannerSheen 2.4s linear infinite;
             color: #fff;
             text-align: center;
             font-size: 12px;
             font-weight: bold;
-            padding: 9px;
+            padding: 10px;
             transform: translateY(-100%);
             transition: transform 0.3s ease;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            box-shadow: 0 6px 20px rgba(220, 38, 38, 0.45);
         }
         .connection-banner.show { transform: translateY(0); }
+        @keyframes bannerSheen { to { background-position: -200% 0; } }
 
         /* ================== صفحه لودینگ اولیه (Splash) ================== */
         #appSplash {
@@ -120,35 +156,40 @@
             justify-content: center;
             background: var(--bg-primary);
             background-image:
-                radial-gradient(circle at 20% 15%, rgba(56, 189, 248, 0.18), transparent 45%),
-                radial-gradient(circle at 85% 80%, rgba(16, 185, 129, 0.15), transparent 45%);
+                radial-gradient(circle at 18% 12%, rgba(56, 189, 248, 0.22), transparent 45%),
+                radial-gradient(circle at 82% 18%, rgba(167, 139, 250, 0.2), transparent 45%),
+                radial-gradient(circle at 50% 90%, rgba(52, 211, 153, 0.18), transparent 45%);
             transition: opacity 0.6s ease, visibility 0.6s ease;
             overflow: hidden;
         }
         #appSplash.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-        /* ذرات نورانی شناور در پس‌زمینه، برای عمق بیشتر */
         .splash-particle {
             position: absolute;
             border-radius: 50%;
-            background: radial-gradient(circle, rgba(56,189,248,0.5), transparent 70%);
+            background: radial-gradient(circle, rgba(56,189,248,0.55), transparent 70%);
             animation: splashFloat 6s ease-in-out infinite;
             pointer-events: none;
+            filter: blur(0.5px);
         }
+        .splash-particle:nth-of-type(2) { background: radial-gradient(circle, rgba(167,139,250,0.55), transparent 70%); }
+        .splash-particle:nth-of-type(3) { background: radial-gradient(circle, rgba(52,211,153,0.5), transparent 70%); }
+        .splash-particle:nth-of-type(4) { background: radial-gradient(circle, rgba(251,146,60,0.45), transparent 70%); }
         @keyframes splashFloat {
             0%, 100% { transform: translateY(0) translateX(0); opacity: 0.4; }
-            50% { transform: translateY(-26px) translateX(10px); opacity: 0.9; }
+            50% { transform: translateY(-26px) translateX(10px); opacity: 0.95; }
         }
         .splash-logo-wrap {
-            width: 92px;
-            height: 92px;
-            border-radius: 26px;
-            background: linear-gradient(135deg, #0284c7, #10b981);
+            width: 96px;
+            height: 96px;
+            border-radius: 28px;
+            background: linear-gradient(135deg, #0ea5e9, #a78bfa 55%, #10b981);
+            background-size: 220% 220%;
+            animation: splashPulse 1.7s ease-in-out infinite, splashEntrance 0.6s cubic-bezier(.34,1.56,.64,1), splashGradientShift 5s ease infinite;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 44px;
-            box-shadow: 0 10px 34px rgba(2, 132, 199, 0.4);
-            animation: splashPulse 1.7s ease-in-out infinite, splashEntrance 0.6s cubic-bezier(.34,1.56,.64,1);
+            font-size: 46px;
+            box-shadow: 0 14px 40px rgba(56, 189, 248, 0.35), 0 0 0 1px rgba(255,255,255,0.08) inset;
             position: relative;
             z-index: 2;
         }
@@ -156,30 +197,39 @@
             0%, 100% { transform: scale(1) rotate(0deg); }
             50% { transform: scale(1.08) rotate(-3deg); }
         }
+        @keyframes splashGradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
         @keyframes splashEntrance {
             from { transform: scale(0.4) rotate(-25deg); opacity: 0; }
             to { transform: scale(1) rotate(0deg); opacity: 1; }
         }
         .splash-ring {
-            width: 50px;
-            height: 50px;
+            width: 52px;
+            height: 52px;
             border-radius: 50%;
             border: 4px solid var(--border-color);
             border-top-color: var(--accent);
-            border-left-color: rgba(16, 185, 129, 0.6);
-            margin-top: 24px;
-            animation: splashSpin 0.85s linear infinite;
+            border-left-color: var(--accent-2);
+            margin-top: 26px;
+            animation: splashSpin 0.9s linear infinite;
         }
         @keyframes splashSpin { to { transform: rotate(360deg); } }
         .splash-title {
-            margin-top: 20px;
+            margin-top: 22px;
             font-weight: bold;
-            color: var(--text-primary);
-            font-size: 17px;
+            font-size: 18px;
             letter-spacing: 0.5px;
             opacity: 0;
-            animation: splashTextIn 0.5s ease 0.25s forwards;
+            background: linear-gradient(90deg, #22d3ee, #a78bfa, #34d399, #22d3ee);
+            background-size: 300% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: splashTextIn 0.5s ease 0.25s forwards, splashShine 4s linear infinite;
         }
+        @keyframes splashShine { to { background-position: -300% center; } }
         .splash-sub {
             margin-top: 8px;
             font-size: 11.5px;
@@ -194,20 +244,22 @@
             to { opacity: 1; transform: translateY(0); }
         }
         .splash-progress-track {
-            width: 160px;
-            height: 4px;
-            border-radius: 4px;
+            width: 170px;
+            height: 5px;
+            border-radius: 5px;
             background: var(--bg-input);
-            margin-top: 18px;
+            margin-top: 20px;
             overflow: hidden;
             opacity: 0;
             animation: splashTextIn 0.5s ease 0.5s forwards;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
         }
         .splash-progress-fill {
             height: 100%;
             width: 0%;
-            border-radius: 4px;
-            background: linear-gradient(90deg, #0284c7, #10b981);
+            border-radius: 5px;
+            background: linear-gradient(90deg, #0ea5e9, #a78bfa, #10b981);
+            box-shadow: 0 0 12px rgba(56,189,248,0.6);
             transition: width 0.4s ease;
         }
         .header-clock {
@@ -215,73 +267,126 @@
             font-size: 13px;
             color: var(--accent);
             background: var(--bg-card-solid);
-            padding: 10px;
-            border-radius: 12px;
+            backdrop-filter: blur(14px);
+            padding: 11px;
+            border-radius: 14px;
             margin-bottom: 12px;
-            border: 1px solid rgba(56, 189, 248, 0.2);
+            border: 1px solid var(--border-color);
             font-weight: bold;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            letter-spacing: 0.3px;
+            box-shadow: var(--shadow-soft), 0 0 20px -8px var(--border-glow);
         }
         .login-box {
+            position: relative;
             background: var(--bg-card-solid);
             border: 1px solid var(--border-color);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            padding: 20px;
+            backdrop-filter: blur(18px);
+            border-radius: 22px;
+            padding: 26px 22px;
             margin-top: 20px;
             text-align: center;
+            box-shadow: var(--shadow-strong), 0 0 0 1px rgba(255,255,255,0.03) inset;
+            overflow: hidden;
+        }
+        .login-box::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            border-radius: 22px;
+            padding: 2px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2), var(--accent-3), var(--accent));
+            background-size: 300% 300%;
+            animation: loginBorderShift 6s ease infinite;
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0.55;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .login-box > * { position: relative; z-index: 1; }
+        @keyframes loginBorderShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
         }
         .tabs {
             display: flex;
-            gap: 6px;
-            margin-bottom: 15px;
+            gap: 8px;
+            margin-bottom: 16px;
             overflow-x: auto;
+            overflow-y: hidden;
+            scroll-snap-type: x proximity;
+            padding: 4px 2px 12px;
+            -webkit-overflow-scrolling: touch;
         }
+        .tabs::-webkit-scrollbar { height: 5px; }
         .tab-btn {
-            flex: 1;
-            padding: 10px 6px;
-            background: var(--bg-input);
+            flex: 0 0 auto;
+            scroll-snap-align: start;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            padding: 11px 15px 10px;
+            background: var(--bg-card-solid);
             color: var(--text-secondary);
             border: 1px solid var(--border-color);
-            border-radius: 10px;
+            border-radius: 17px;
             font-weight: bold;
             font-size: 11px;
             cursor: pointer;
             display: none;
             white-space: nowrap;
-            transition: transform 0.15s ease, background 0.2s ease, box-shadow 0.2s ease;
+            backdrop-filter: blur(10px);
+            position: relative;
+            transition: transform 0.15s ease, background 0.25s ease, box-shadow 0.25s ease, color 0.2s ease;
         }
+        .tab-btn .tab-ico { font-size: 19px; line-height: 1; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.25)); }
+        .tab-btn .tab-label { font-size: 10px; line-height: 1.15; white-space: nowrap; }
         .tab-btn.active {
-            background: linear-gradient(90deg, #0284c7, #2563eb);
+            background: linear-gradient(115deg, #0ea5e9, #6366f1 55%, #a78bfa);
             color: #fff;
             border: none;
-            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
-            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45), 0 0 0 1px rgba(255,255,255,0.08) inset;
+            transform: translateY(-2px);
+        }
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 5px; height: 5px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 8px 1px var(--accent);
         }
         .tab-btn:active, button:active, .row-btn:active {
-            transform: scale(0.96);
+            transform: scale(0.95);
         }
         .card {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            padding: 16px;
+            backdrop-filter: blur(16px);
+            border-radius: 18px;
+            padding: 17px;
             display: none;
+            box-shadow: var(--shadow-soft);
         }
         .card.active {
             display: block;
-            animation: cardFadeIn 0.28s ease;
+            animation: cardFadeIn 0.32s cubic-bezier(.22,1,.36,1);
         }
         @keyframes cardFadeIn {
-            from { opacity: 0; transform: translateY(6px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; transform: translateY(10px) scale(0.99); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
-        /* اسکلت لودینگ (Skeleton) — به‌جای متن خشک «در حال بارگذاری...» */
+        /* اسکلت لودینگ (Skeleton) */
         .skeleton-block {
             border-radius: 8px;
-            background: linear-gradient(90deg, var(--bg-input) 25%, rgba(148,163,184,0.18) 50%, var(--bg-input) 75%);
+            background: linear-gradient(90deg, var(--bg-input) 25%, rgba(148,163,184,0.22) 50%, var(--bg-input) 75%);
             background-size: 200% 100%;
             animation: skeletonShimmer 1.4s ease-in-out infinite;
         }
@@ -290,65 +395,73 @@
             100% { background-position: -200% 0; }
         }
         .skeleton-line { height: 14px; margin: 8px 0; }
-        .skeleton-card { height: 64px; margin: 10px 0; border-radius: 12px; }
+        .skeleton-card { height: 64px; margin: 10px 0; border-radius: 14px; }
         h2 {
-            color: var(--accent);
+            color: var(--text-primary);
             margin-top: 0;
             font-size: 16px;
-            padding-right: 10px;
-            border-right: 4px solid var(--accent);
-            background: linear-gradient(90deg, rgba(56,189,248,0.08), transparent 70%);
-            padding-top: 4px;
-            padding-bottom: 4px;
-            border-radius: 4px;
+            padding: 6px 12px;
+            border-right: 4px solid transparent;
+            border-image: linear-gradient(180deg, var(--accent), var(--accent-2)) 1;
+            background: linear-gradient(90deg, var(--grad-glow-1), transparent 75%);
+            border-radius: 6px;
+            letter-spacing: 0.2px;
         }
-        label { font-size: 12px; color: var(--text-secondary); display: block; margin-top: 10px; text-align: right; }
+        label { font-size: 12px; color: var(--text-secondary); display: block; margin-top: 10px; text-align: right; font-weight: 600; }
         input, select, textarea {
             width: 100%;
-            padding: 12px;
-            margin-top: 5px;
-            border-radius: 10px;
+            padding: 12px 13px;
+            margin-top: 6px;
+            border-radius: 12px;
             border: 1px solid var(--border-color);
             background: var(--bg-input);
             color: var(--text-primary);
             box-sizing: border-box;
             font-size: 14px;
             font-family: inherit;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--grad-glow-1);
         }
         textarea { resize: vertical; height: 90px; }
         .price-display {
             font-size: 13px;
-            color: #38bdf8;
+            color: var(--accent);
             margin-top: 6px;
             font-weight: bold;
             text-align: right;
-            background: rgba(56, 189, 248, 0.1);
-            padding: 8px;
-            border-radius: 8px;
-            border: 1px dashed rgba(56, 189, 248, 0.3);
+            background: var(--grad-glow-1);
+            padding: 9px 10px;
+            border-radius: 10px;
+            border: 1px dashed var(--border-glow);
         }
         .hint {
             font-size: 11px;
             color: var(--text-hint);
             margin-top: 4px;
             text-align: right;
-            line-height: 1.5;
+            line-height: 1.6;
         }
         .user-badge {
             display: none;
-            background: var(--bg-card);
+            background: var(--bg-card-solid);
             border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 8px 12px;
+            border-radius: 12px;
+            padding: 9px 12px;
             margin-bottom: 12px;
             font-size: 12px;
             color: var(--accent);
             text-align: center;
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-soft);
         }
         .logout-btn {
             background: transparent;
             border: none;
-            color: #ef4444;
+            color: #f87171;
             font-size: 11px;
             cursor: pointer;
             margin-right: 8px;
@@ -356,81 +469,89 @@
         }
         button.submit-btn {
             width: 100%;
-            padding: 13px;
+            padding: 14px;
             margin-top: 15px;
-            border-radius: 10px;
+            border-radius: 13px;
             border: none;
-            background: linear-gradient(90deg, #10b981, #059669);
+            background: linear-gradient(100deg, #10b981, #06b6d4 60%, #0ea5e9);
+            background-size: 200% 100%;
             color: white;
             font-weight: bold;
             font-size: 14px;
             cursor: pointer;
-            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
-            transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.2s ease;
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35);
+            transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.2s ease, background-position 0.4s ease;
         }
+        button.submit-btn:hover { background-position: 100% 0; }
         button.submit-btn:active {
             transform: scale(0.97);
-            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
         }
         button.submit-btn:disabled {
-            opacity: 0.6;
+            opacity: 0.55;
             box-shadow: none;
         }
         button.cancel-edit-btn {
             width: 100%;
-            padding: 10px;
+            padding: 11px;
             margin-top: 8px;
-            border-radius: 10px;
-            border: 1px solid #334155;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
             background: transparent;
-            color: #94a3b8;
+            color: var(--text-secondary);
             font-size: 13px;
             cursor: pointer;
             display: none;
+            transition: background 0.2s ease, color 0.2s ease;
         }
+        button.cancel-edit-btn:active { background: var(--bg-input); }
         table {
             width: 100%;
-            border-collapse: collapse;
+            border-collapse: separate;
+            border-spacing: 0;
             margin-top: 10px;
             font-size: 11px;
+            border-radius: 10px;
+            overflow: hidden;
         }
         th, td {
             border: 1px solid var(--border-color);
             padding: 8px 4px;
             text-align: center;
         }
-        th { background: var(--bg-input); color: var(--accent); }
+        th { background: var(--bg-input); color: var(--accent); font-weight: bold; }
         .error-msg {
-            color: #ef4444;
+            color: #f87171;
             font-size: 12px;
             margin-top: 10px;
             display: none;
         }
         .low-stock-banner {
             display: none;
-            background: rgba(239, 68, 68, 0.15);
-            border: 1px solid #ef4444;
+            background: rgba(239, 68, 68, 0.14);
+            border: 1px solid rgba(239,68,68,0.5);
             color: #fecaca;
-            border-radius: 10px;
-            padding: 10px;
+            border-radius: 12px;
+            padding: 11px;
             font-size: 12px;
             margin-bottom: 10px;
             text-align: right;
             line-height: 1.9;
+            backdrop-filter: blur(8px);
         }
         .reminder-banner {
             display: none;
-            background: rgba(251,191,36,0.15);
-            border: 1px solid #f59e0b;
+            background: rgba(251,191,36,0.14);
+            border: 1px solid rgba(245,158,11,0.5);
             color: #fde68a;
-            border-radius: 10px;
-            padding: 10px;
+            border-radius: 12px;
+            padding: 11px;
             font-size: 12px;
             margin-bottom: 10px;
             text-align: right;
             line-height: 1.9;
+            backdrop-filter: blur(8px);
         }
-        /* حالت هشدار شدید: وقتی تاخیر خیلی زیاد شده (بیشتر از حد مجاز مدیر) — قرمز و چشمک‌زن تا حتماً دیده شود */
         .reminder-banner.escalated {
             background: rgba(239, 68, 68, 0.2);
             border: 2px solid #ef4444;
@@ -439,29 +560,37 @@
         }
         @keyframes escalatedPulse {
             0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.55); }
-            50% { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
+            50% { box-shadow: 0 0 0 10px rgba(239,68,68,0); }
         }
         .row-btn {
             border: none;
-            border-radius: 6px;
-            padding: 5px 8px;
+            border-radius: 9px;
+            padding: 6px 10px;
             font-size: 11px;
+            font-weight: bold;
             cursor: pointer;
             margin: 2px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            transition: transform 0.12s ease, box-shadow 0.15s ease, filter 0.15s ease;
         }
-        .edit-btn { background: #2563eb; color: #fff; }
-        .delete-btn { background: #dc2626; color: #fff; }
-        .fill-btn { background: linear-gradient(90deg, #0284c7, #2563eb); color: #fff; font-weight: bold; }
-        .confirm-btn { background: linear-gradient(90deg, #059669, #10b981); color: #fff; font-weight: bold; }
+        .row-btn:active { filter: brightness(1.12); }
+        .edit-btn { background: linear-gradient(100deg, #2563eb, #38bdf8); color: #fff; }
+        .delete-btn { background: linear-gradient(100deg, #dc2626, #f43f5e); color: #fff; }
+        .fill-btn { background: linear-gradient(100deg, #0284c7, #6366f1); color: #fff; font-weight: bold; }
+        .confirm-btn { background: linear-gradient(100deg, #059669, #10b981); color: #fff; font-weight: bold; }
         .report-card, .msg-card {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
-            border-radius: 12px;
+            border-radius: 14px;
             padding: 14px;
             margin-bottom: 12px;
-            border-right: 3px solid rgba(56, 189, 248, 0.5);
-            transition: transform 0.15s ease, border-color 0.15s ease;
+            border-right: 3px solid transparent;
+            border-image: linear-gradient(180deg, var(--accent), var(--accent-2)) 1;
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-soft);
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
         }
+        .report-card:active, .msg-card:active { transform: scale(0.99); }
         .report-card h3, .msg-card h3 {
             margin: 0 0 8px 0;
             color: var(--accent);
@@ -475,7 +604,7 @@
         }
         .msg-time {
             font-size: 10px;
-            color: #94a3b8;
+            color: var(--text-secondary);
             text-align: left;
             display: block;
         }
@@ -483,13 +612,15 @@
             display: inline-block;
             font-size: 10px;
             color: #34d399;
-            background: rgba(16,185,129,0.12);
-            border: 1px solid rgba(16,185,129,0.3);
-            border-radius: 6px;
-            padding: 2px 6px;
+            background: rgba(16,185,129,0.14);
+            border: 1px solid rgba(16,185,129,0.35);
+            border-radius: 8px;
+            padding: 2px 7px;
             margin-right: 6px;
+            font-weight: bold;
         }
-        input[type="radio"] { width: auto; margin-left: 4px; }
+        input[type="radio"] { width: auto; margin-left: 4px; accent-color: var(--accent); }
+        input[type="checkbox"] { accent-color: var(--accent); }
         .unit-toggle {
             display: flex;
             gap: 14px;
@@ -499,19 +630,20 @@
             display: flex;
             align-items: center;
             font-size: 13px;
-            color: #f8fafc;
+            color: var(--text-primary);
             margin-top: 0;
         }
         .status-tag {
-            padding: 3px 6px;
-            border-radius: 6px;
+            padding: 4px 8px;
+            border-radius: 8px;
             font-size: 10px;
             font-weight: bold;
             display: inline-block;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
-        .status-full { background: #065f46; color: #34d399; }
-        .status-half { background: #854d0e; color: #fde047; }
-        .status-empty { background: #991b1b; color: #fca5a5; }
+        .status-full { background: linear-gradient(100deg, #065f46, #10b981); color: #ecfdf5; }
+        .status-half { background: linear-gradient(100deg, #854d0e, #f59e0b); color: #fffbeb; }
+        .status-empty { background: linear-gradient(100deg, #991b1b, #ef4444); color: #fef2f2; }
         .need-charge-text {
             color: #fbbf24;
             font-size: 10px;
@@ -529,28 +661,30 @@
         .build-tag {
             text-align: center;
             font-size: 11px;
-            color: #38bdf8;
-            margin-top: 20px;
+            color: var(--accent);
+            margin-top: 22px;
             font-weight: bold;
-            background: rgba(30, 41, 59, 0.5);
-            padding: 8px;
-            border-radius: 8px;
-            border: 1px solid rgba(56, 189, 248, 0.2);
+            background: var(--bg-card-solid);
+            backdrop-filter: blur(10px);
+            padding: 9px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-soft);
         }
         .photo-preview {
             max-width: 100%;
             height: 120px;
             object-fit: cover;
-            border-radius: 8px;
+            border-radius: 10px;
             margin-top: 8px;
             display: none;
-            border: 1px solid #334155;
+            border: 1px solid var(--border-color);
         }
         .tare-box {
-            background: rgba(15, 23, 42, 0.4);
-            border: 1px dashed #38bdf8;
-            border-radius: 10px;
-            padding: 10px;
+            background: rgba(15, 23, 42, 0.35);
+            border: 1px dashed var(--border-glow);
+            border-radius: 12px;
+            padding: 11px;
             margin-top: 10px;
         }
         .grid-2 {
@@ -565,20 +699,22 @@
         }
         .mode-btn {
             flex: 1;
-            padding: 8px;
-            background: #1e293b;
-            border: 1px solid #334155;
-            color: #94a3b8;
-            border-radius: 8px;
+            padding: 9px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            border-radius: 10px;
             font-size: 11px;
+            font-weight: bold;
             cursor: pointer;
             text-align: center;
+            transition: all 0.2s ease;
         }
         .mode-btn.active {
-            background: #0284c7;
+            background: linear-gradient(100deg, #0284c7, #6366f1);
             color: #fff;
-            border-color: #38bdf8;
-            font-weight: bold;
+            border-color: transparent;
+            box-shadow: 0 4px 14px rgba(99,102,241,0.4);
         }
         .recent-sales-wrap {
             overflow-x: auto;
@@ -592,54 +728,58 @@
         }
         .pagination-bar span {
             font-size: 11px;
-            color: #94a3b8;
+            color: var(--text-secondary);
         }
         .checklist-box {
             background: rgba(16, 185, 129, 0.08);
-            border: 1px solid rgba(16,185,129,0.3);
-            border-radius: 12px;
-            padding: 12px;
+            border: 1px solid rgba(16,185,129,0.35);
+            border-radius: 14px;
+            padding: 13px;
             margin-bottom: 14px;
+            backdrop-filter: blur(8px);
         }
         .checklist-box h3 { color:#34d399; margin:0 0 8px 0; font-size:14px; }
         .checklist-item {
             display:flex;
             justify-content:space-between;
             align-items:center;
-            background: rgba(15,23,42,0.5);
-            border-radius: 8px;
+            background: rgba(15,23,42,0.4);
+            border-radius: 10px;
             padding: 8px 10px;
             margin-bottom:6px;
             font-size:12px;
         }
-        .checklist-item b { color:#38bdf8; }
+        .checklist-item b { color: var(--accent); }
         .checklist-need { color:#fbbf24; font-weight:bold; white-space:nowrap; }
         .congrats-box {
             background: rgba(16,185,129,0.15);
             border: 1px solid #10b981;
-            border-radius: 12px;
-            padding: 14px;
+            border-radius: 14px;
+            padding: 15px;
             text-align:center;
             color:#34d399;
             font-weight:bold;
             font-size:13px;
             line-height:1.9;
             margin-bottom:14px;
+            box-shadow: 0 0 24px -6px rgba(16,185,129,0.35);
         }
         .range-toggle-btn {
             width:100%;
-            padding:10px;
+            padding:11px;
             margin-top:10px;
-            border-radius:10px;
-            border:1px solid #334155;
-            background:#1e293b;
-            color:#38bdf8;
+            border-radius:12px;
+            border:1px solid var(--border-color);
+            background: var(--bg-input);
+            color: var(--accent);
             font-size:12px;
             cursor:pointer;
             font-weight:bold;
+            transition: all 0.2s ease;
         }
+        .range-toggle-btn:active { background: var(--grad-glow-1); }
         .location-link {
-            color:#38bdf8;
+            color: var(--accent);
             text-decoration:underline;
             font-weight:bold;
             font-size:11px;
@@ -648,9 +788,9 @@
             width:100%;
             padding:11px;
             margin-top:10px;
-            border-radius:10px;
+            border-radius:12px;
             border:none;
-            background: linear-gradient(90deg, #334155, #1e293b);
+            background: linear-gradient(100deg, #334155, #1e293b);
             color:#e2e8f0;
             font-weight:bold;
             font-size:12px;
@@ -658,14 +798,15 @@
         }
         .search-box { margin-bottom: 10px; }
         .summary-mini {
-            background: rgba(15,23,42,0.5);
-            border-radius: 8px;
-            padding: 8px 10px;
+            background: rgba(15,23,42,0.4);
+            border-radius: 10px;
+            padding: 9px 11px;
             margin-bottom: 6px;
             font-size: 12px;
             display:flex;
             justify-content:space-between;
             align-items:center;
+            border: 1px solid var(--border-color);
         }
         .qty-inline-input {
             width: 70px !important;
@@ -690,20 +831,21 @@
             pointer-events: none;
         }
         .toast-item {
-            background: rgba(15, 23, 42, 0.98);
-            border: 1px solid #334155;
-            border-right: 4px solid #38bdf8;
-            border-radius: 12px;
+            background: var(--bg-card-solid);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-right: 4px solid var(--accent);
+            border-radius: 14px;
             padding: 14px 34px 14px 14px;
             font-size: 13px;
             line-height: 1.9;
-            color: #f8fafc;
-            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+            color: var(--text-primary);
+            box-shadow: var(--shadow-strong);
             white-space: pre-line;
             text-align: right;
             pointer-events: auto;
             position: relative;
-            animation: toastIn 0.22s ease-out;
+            animation: toastIn 0.25s cubic-bezier(.22,1,.36,1);
         }
         .toast-item.success { border-right-color: #10b981; }
         .toast-item.error { border-right-color: #ef4444; }
@@ -714,20 +856,21 @@
             left: 10px;
             background: none;
             border: none;
-            color: #94a3b8;
+            color: var(--text-secondary);
             font-size: 15px;
             cursor: pointer;
             line-height: 1;
             padding: 2px;
         }
         @keyframes toastIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; transform: translateY(-12px) scale(0.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
         #confirmOverlay {
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.65);
+            background: rgba(2, 6, 20, 0.7);
+            backdrop-filter: blur(4px);
             z-index: 10000;
             display: none;
             align-items: center;
@@ -736,19 +879,21 @@
         }
         #confirmOverlay.active { display: flex; }
         .confirm-box {
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 16px;
-            padding: 20px;
+            background: var(--bg-card-solid);
+            backdrop-filter: blur(18px);
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            padding: 22px;
             max-width: 400px;
             width: 100%;
             text-align: right;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            box-shadow: var(--shadow-strong);
+            animation: cardFadeIn 0.25s ease;
         }
         .confirm-box p {
             font-size: 14px;
             line-height: 1.9;
-            color: #f8fafc;
+            color: var(--text-primary);
             white-space: pre-line;
             margin: 0 0 18px 0;
         }
@@ -759,24 +904,27 @@
         .confirm-actions button {
             flex: 1;
             padding: 12px;
-            border-radius: 10px;
+            border-radius: 12px;
             border: none;
             font-weight: bold;
             font-size: 13px;
             cursor: pointer;
         }
         .confirm-btn-ok {
-            background: linear-gradient(90deg, #10b981, #059669);
+            background: linear-gradient(100deg, #10b981, #059669);
             color: #fff;
+            box-shadow: 0 6px 18px rgba(16,185,129,0.35);
         }
         .confirm-btn-cancel {
-            background: #334155;
-            color: #e2e8f0;
+            background: var(--bg-input);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color) !important;
         }
         #scannerOverlay {
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(2, 6, 20, 0.85);
+            backdrop-filter: blur(4px);
             z-index: 10001;
             display: none;
             align-items: center;
@@ -787,7 +935,8 @@
         #faceOverlay {
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(2, 6, 20, 0.85);
+            backdrop-filter: blur(4px);
             z-index: 10001;
             display: none;
             align-items: center;
@@ -795,13 +944,14 @@
             padding: 16px;
         }
         #faceOverlay.active { display: flex; }
-        #faceOvalGuide.face-detected { border-color: #10b981; box-shadow: 0 0 20px rgba(16,185,129,0.5); }
+        #faceOvalGuide.face-detected { border-color: #10b981; box-shadow: 0 0 24px rgba(16,185,129,0.55); }
         #faceOvalGuide.face-matched { border-color: #10b981; border-style: solid; }
         #faceOvalGuide.face-mismatch { border-color: #ef4444; border-style: solid; }
         #adminEditSaleOverlay {
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(2, 6, 20, 0.85);
+            backdrop-filter: blur(4px);
             z-index: 10001;
             display: none;
             align-items: center;
@@ -810,28 +960,30 @@
         }
         #adminEditSaleOverlay.active { display: flex; }
         .scanner-box {
-            background: #1e293b;
-            border: 2px solid #334155;
-            border-radius: 16px;
-            padding: 16px;
+            background: var(--bg-card-solid);
+            backdrop-filter: blur(18px);
+            border: 2px solid var(--border-color);
+            border-radius: 18px;
+            padding: 17px;
             max-width: 420px;
             width: 100%;
             text-align: right;
+            box-shadow: var(--shadow-strong);
             transition: border-color 0.15s ease, box-shadow 0.15s ease;
+            animation: cardFadeIn 0.25s ease;
         }
         .scanner-box.scan-flash {
             border-color: #10b981;
-            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.35), 0 0 24px rgba(16, 185, 129, 0.5);
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.35), 0 0 28px rgba(16, 185, 129, 0.55);
         }
         #scannerReaderBox {
             position: relative;
-            border-radius: 10px;
+            border-radius: 12px;
             overflow: hidden;
             margin-top: 10px;
             background: #000;
             min-height: 200px;
         }
-        /* خط لیزری اسکن، بالا-پایین می‌رود تا حس یه اسکنر واقعی صندوق فروشگاهی رو بده */
         #scannerReaderBox::after {
             content: '';
             position: absolute;
@@ -849,7 +1001,7 @@
             50% { top: 88%; opacity: 1; }
             100% { top: 8%; opacity: 0.2; }
         }
-    </style>
+</style>
 </head>
 <body>
 
@@ -956,7 +1108,7 @@
 
     <!-- صفحه ورود -->
     <div id="loginScreen" class="login-box" style="max-width:380px; margin:40px auto 0; animation: cardFadeIn 0.4s ease;">
-        <div style="width:72px; height:72px; border-radius:22px; background:linear-gradient(135deg, #0284c7, #10b981); display:flex; align-items:center; justify-content:center; font-size:34px; margin:0 auto 14px; box-shadow:0 10px 26px rgba(2,132,199,0.35);">🧀</div>
+        <div style="width:76px; height:76px; border-radius:24px; background:linear-gradient(135deg, #0ea5e9, #a78bfa 55%, #10b981); background-size:220% 220%; animation: splashGradientShift 5s ease infinite; display:flex; align-items:center; justify-content:center; font-size:36px; margin:0 auto 14px; box-shadow:0 14px 32px rgba(56,132,199,0.4), 0 0 0 1px rgba(255,255,255,0.08) inset;">🧀</div>
         <h2 style="border:none; background:none; padding:0; text-align:center;">غرفه فامیلی</h2>
         <div class="hint" style="text-align:center; margin-top:-6px; margin-bottom:12px;">سیستم مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس</div>
         <label>👤 نام کاربری:</label>
@@ -1032,32 +1184,32 @@
 
     <!-- تب‌های بالای صفحه -->
     <div class="tabs" id="tabContainer">
-        <button class="tab-btn" id="btnSale" onclick="switchTab('sale'); loadProductDatalist(); loadRecentSales('instore');">🧀 ثبت فروش لبنیات</button>
-        <button class="tab-btn" id="btnSaleEkala" onclick="switchTab('saleEkala'); loadProductDatalist(); loadRecentSales('ekala');">🛒 ثبت فروش اکالا</button>
-        <button class="tab-btn" id="btnSaleSausage" onclick="switchTab('saleSausage'); loadProductDatalist(); loadRecentSales('sausage');">🌭 ثبت فروش سوسیس و کالباس</button>
-        <button class="tab-btn" id="btnAttendance" onclick="switchTab('attendance'); loadFingerprintStatus();">⏰ حضور و غیاب</button>
-        <button class="tab-btn" id="btnMessage" onclick="switchTab('message');">📩 ارسال پیام به مدیر</button>
-        <button class="tab-btn" id="btnStaffMessage" onclick="switchTab('staffMessage'); loadStaffMessageTargets();">📤 پیام به پرسنل</button>
-        <button class="tab-btn" id="btnInbox" onclick="switchTab('inbox'); loadInbox();">📥 صندوقچه پیام‌ها</button>
-        <button class="tab-btn" id="btnBooth" onclick="switchTab('booth'); loadBoothInventory();">🧊 وضعیت یخچال غرفه</button>
-        <button class="tab-btn" id="btnPurchaseOrders" onclick="switchTab('purchaseOrders'); loadPurchaseOrders();">🧾 سفارشات خرید</button>
-        <button class="tab-btn" id="btnProduct" onclick="switchTab('product')">➕ تعریف کالا</button>
-        <button class="tab-btn" id="btnInventory" onclick="switchTab('inventory'); loadInventory();">📦 موجودی انبار</button>
-        <button class="tab-btn" id="btnReport" onclick="switchTab('report'); loadSalesReport();">📊 گزارش فروش</button>
-        <button class="tab-btn" id="btnWorkReport" onclick="openWorkReportTab()">🗓️ کارکرد پرسنل</button>
-        <button class="tab-btn" id="btnDashboard" onclick="switchTab('dashboard'); loadAdminDashboard();">🏠 خلاصه روز</button>
-        <button class="tab-btn" id="btnShiftSettings" onclick="switchTab('shiftSettings'); loadShiftSettings();">⚙️ تنظیمات شیفت‌ها</button>
-        <button class="tab-btn" id="btnTelegramSettings" onclick="switchTab('telegramSettings'); loadTelegramSettings();">📲 اتصال تلگرام</button>
-        <button class="tab-btn" id="btnDebtLedger" onclick="switchTab('debtLedger'); loadDebtLedger();">📒 دفتر بدهی مشتریان</button>
-        <button class="tab-btn" id="btnContractAdmin" onclick="switchTab('contractAdmin'); loadContractAdminTab();">📄 قرارداد پرسنل</button>
-        <button class="tab-btn" id="btnGrowthReport" onclick="switchTab('growthReport');">📈 رشد و افت فروش</button>
-        <button class="tab-btn" id="btnPurchaseInvoices" onclick="switchTab('purchaseInvoices'); loadPurchaseInvoices();">🧾 فاکتور خرید (مدیر)</button>
-        <button class="tab-btn" id="btnTakeoutAdmin" onclick="switchTab('takeoutAdmin'); loadTakeoutAdminSummary();">🧺 برداشت‌های حساب‌نشده</button>
-        <button class="tab-btn" id="btnSalary" onclick="switchTab('salary'); loadSalaryTab();">💰 واریز حقوق</button>
-        <button class="tab-btn" id="btnExpenses" onclick="switchTab('expenses'); loadExpensesTab();">📒 دفترچه هزینه‌ها</button>
-        <button class="tab-btn" id="btnPersonnel" onclick="switchTab('personnel'); loadPersonnelTab();">🪪 اطلاعات پرسنل</button>
-        <button class="tab-btn" id="btnPersonalTakeout" onclick="switchTab('personalTakeout'); loadMyTakeouts();">🛒 برداشت شخصی</button>
-        <button class="tab-btn" id="btnMyAccount" onclick="switchTab('myAccount'); prefillMyAccountTab();">⚙️ حساب کاربری من</button>
+        <button class="tab-btn" id="btnSale" onclick="switchTab('sale'); loadProductDatalist(); loadRecentSales('instore');"><span class="tab-ico">🧀</span><span class="tab-label">ثبت فروش لبنیات</span></button>
+        <button class="tab-btn" id="btnSaleEkala" onclick="switchTab('saleEkala'); loadProductDatalist(); loadRecentSales('ekala');"><span class="tab-ico">🛒</span><span class="tab-label">ثبت فروش اکالا</span></button>
+        <button class="tab-btn" id="btnSaleSausage" onclick="switchTab('saleSausage'); loadProductDatalist(); loadRecentSales('sausage');"><span class="tab-ico">🌭</span><span class="tab-label">ثبت فروش سوسیس و کالباس</span></button>
+        <button class="tab-btn" id="btnAttendance" onclick="switchTab('attendance'); loadFingerprintStatus();"><span class="tab-ico">⏰</span><span class="tab-label">حضور و غیاب</span></button>
+        <button class="tab-btn" id="btnMessage" onclick="switchTab('message');"><span class="tab-ico">📩</span><span class="tab-label">ارسال پیام به مدیر</span></button>
+        <button class="tab-btn" id="btnStaffMessage" onclick="switchTab('staffMessage'); loadStaffMessageTargets();"><span class="tab-ico">📤</span><span class="tab-label">پیام به پرسنل</span></button>
+        <button class="tab-btn" id="btnInbox" onclick="switchTab('inbox'); loadInbox();"><span class="tab-ico">📥</span><span class="tab-label">صندوقچه پیام‌ها</span></button>
+        <button class="tab-btn" id="btnBooth" onclick="switchTab('booth'); loadBoothInventory();"><span class="tab-ico">🧊</span><span class="tab-label">وضعیت یخچال غرفه</span></button>
+        <button class="tab-btn" id="btnPurchaseOrders" onclick="switchTab('purchaseOrders'); loadPurchaseOrders();"><span class="tab-ico">🧾</span><span class="tab-label">سفارشات خرید</span></button>
+        <button class="tab-btn" id="btnProduct" onclick="switchTab('product')"><span class="tab-ico">➕</span><span class="tab-label">تعریف کالا</span></button>
+        <button class="tab-btn" id="btnInventory" onclick="switchTab('inventory'); loadInventory();"><span class="tab-ico">📦</span><span class="tab-label">موجودی انبار</span></button>
+        <button class="tab-btn" id="btnReport" onclick="switchTab('report'); loadSalesReport();"><span class="tab-ico">📊</span><span class="tab-label">گزارش فروش</span></button>
+        <button class="tab-btn" id="btnWorkReport" onclick="openWorkReportTab()"><span class="tab-ico">🗓️</span><span class="tab-label">کارکرد پرسنل</span></button>
+        <button class="tab-btn" id="btnDashboard" onclick="switchTab('dashboard'); loadAdminDashboard();"><span class="tab-ico">🏠</span><span class="tab-label">خلاصه روز</span></button>
+        <button class="tab-btn" id="btnShiftSettings" onclick="switchTab('shiftSettings'); loadShiftSettings();"><span class="tab-ico">⚙️</span><span class="tab-label">تنظیمات شیفت‌ها</span></button>
+        <button class="tab-btn" id="btnTelegramSettings" onclick="switchTab('telegramSettings'); loadTelegramSettings();"><span class="tab-ico">📲</span><span class="tab-label">اتصال تلگرام</span></button>
+        <button class="tab-btn" id="btnDebtLedger" onclick="switchTab('debtLedger'); loadDebtLedger();"><span class="tab-ico">📒</span><span class="tab-label">دفتر بدهی مشتریان</span></button>
+        <button class="tab-btn" id="btnContractAdmin" onclick="switchTab('contractAdmin'); loadContractAdminTab();"><span class="tab-ico">📄</span><span class="tab-label">قرارداد پرسنل</span></button>
+        <button class="tab-btn" id="btnGrowthReport" onclick="switchTab('growthReport');"><span class="tab-ico">📈</span><span class="tab-label">رشد و افت فروش</span></button>
+        <button class="tab-btn" id="btnPurchaseInvoices" onclick="switchTab('purchaseInvoices'); loadPurchaseInvoices();"><span class="tab-ico">🧾</span><span class="tab-label">فاکتور خرید (مدیر)</span></button>
+        <button class="tab-btn" id="btnTakeoutAdmin" onclick="switchTab('takeoutAdmin'); loadTakeoutAdminSummary();"><span class="tab-ico">🧺</span><span class="tab-label">برداشت‌های حساب‌نشده</span></button>
+        <button class="tab-btn" id="btnSalary" onclick="switchTab('salary'); loadSalaryTab();"><span class="tab-ico">💰</span><span class="tab-label">واریز حقوق</span></button>
+        <button class="tab-btn" id="btnExpenses" onclick="switchTab('expenses'); loadExpensesTab();"><span class="tab-ico">📒</span><span class="tab-label">دفترچه هزینه‌ها</span></button>
+        <button class="tab-btn" id="btnPersonnel" onclick="switchTab('personnel'); loadPersonnelTab();"><span class="tab-ico">🪪</span><span class="tab-label">اطلاعات پرسنل</span></button>
+        <button class="tab-btn" id="btnPersonalTakeout" onclick="switchTab('personalTakeout'); loadMyTakeouts();"><span class="tab-ico">🛒</span><span class="tab-label">برداشت شخصی</span></button>
+        <button class="tab-btn" id="btnMyAccount" onclick="switchTab('myAccount'); prefillMyAccountTab();"><span class="tab-ico">⚙️</span><span class="tab-label">حساب کاربری من</span></button>
     </div>
 
     <!-- تب خلاصه روز (داشبورد مدیر) -->
@@ -1989,6 +2141,7 @@
         </label>
 
         <button class="submit-btn" id="expenseSubmitBtn" onclick="submitExpense()">💾 ثبت هزینه</button>
+        <button class="row-btn edit-btn" id="expenseCancelEditBtn" style="width:100%; margin-top:8px; display:none; background:#475569;" onclick="cancelExpenseEdit()">✖️ انصراف از ویرایش</button>
 
         <div class="report-card" style="margin-top:16px;" id="expensesMonthTotalBox">
             <h3>📊 جمع هزینه‌های این ماه</h3>
@@ -2013,7 +2166,7 @@
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v55 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v56 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
 
     <script>
         function toggleLoginPasswordVisibility() {
@@ -2442,6 +2595,8 @@
         })();
 
         let cachedProductsList = [];
+        let cachedExpensesList = [];
+        let editingExpenseId = null;
 
         // --- سیستم اعلان (Toast) به‌جای showToast() پیش‌فرض مرورگر ---
         // اسکلت لودینگ: چند خط/کارت خاکستری متحرک به‌جای متن خشک «در حال بارگذاری...»
@@ -4028,7 +4183,7 @@
         function setupView(allowedBtns, defaultTab) {
             document.getElementById('loginScreen').style.display = 'none';
             allowedBtns.forEach(btnId => {
-                document.getElementById(btnId).style.display = 'block';
+                document.getElementById(btnId).style.display = 'flex';
             });
             switchTab(defaultTab.replace('Tab', ''));
         }
@@ -10564,39 +10719,51 @@
                 return;
             }
 
+            const isEditing = !!editingExpenseId;
             const submitBtn = document.getElementById('expenseSubmitBtn');
-            if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = '⏳ در حال ثبت...'; }
+            if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = isEditing ? '⏳ در حال به‌روزرسانی...' : '⏳ در حال ثبت...'; }
 
             let error = null;
             try {
-                const res = await _supabase.from('expenses').insert([{
-                    category, amount, note, expense_date: dateVal,
-                    created_by: currentUserLabel,
-                    paid_by_seller: paidBySelf,
-                    reimbursed: !paidBySelf, // اگه خودش پرداخت نکرده (یعنی مستقیم از صندوق/مدیر بوده)، از اول تسویه‌شده حساب میشه
-                    created_at: new Date().toISOString()
-                }]);
-                error = res.error;
+                if (isEditing) {
+                    let q = _supabase.from('expenses').update({
+                        category, amount, note, expense_date: dateVal,
+                        paid_by_seller: paidBySelf,
+                        reimbursed: !paidBySelf
+                    }).eq('id', editingExpenseId);
+                    if (currentRole !== 'admin') q = q.eq('created_by', currentUserLabel);
+                    const res = await q;
+                    error = res.error;
+                } else {
+                    const res = await _supabase.from('expenses').insert([{
+                        category, amount, note, expense_date: dateVal,
+                        created_by: currentUserLabel,
+                        paid_by_seller: paidBySelf,
+                        reimbursed: !paidBySelf, // اگه خودش پرداخت نکرده (یعنی مستقیم از صندوق/مدیر بوده)، از اول تسویه‌شده حساب میشه
+                        created_at: new Date().toISOString()
+                    }]);
+                    error = res.error;
+                }
             } catch (networkErr) {
                 error = networkErr;
             }
 
-            if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = '💾 ثبت هزینه'; }
+            if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = isEditing ? '🔄 به‌روزرسانی هزینه' : '💾 ثبت هزینه'; }
 
             if (error) {
                 // معمولاً یعنی اینترنت لحظه‌ای قطع/کند بوده (نه اینکه اطلاعات اشتباه بوده) — برای
                 // همین به‌جای فقط نشون دادن خطا، یه دکمه «دوباره تلاش کن» هم می‌دیم
                 const isNetworkIssue = /abort|network|fetch|timeout/i.test(error.message || '');
                 if (isNetworkIssue) {
-                    const retry = await showConfirm('⚠️ به‌خاطر ضعف اینترنت، ثبت هزینه انجام نشد.\n\nهمین الان دوباره تلاش کنم؟');
+                    const retry = await showConfirm(`⚠️ به‌خاطر ضعف اینترنت، ${isEditing ? 'به‌روزرسانی' : 'ثبت'} هزینه انجام نشد.\n\nهمین الان دوباره تلاش کنم؟`);
                     if (retry) return await submitExpense();
                     return;
                 }
-                showToast('❌ خطا در ثبت هزینه: ' + error.message + '\n\nمطمئن شوید جدول expenses در Supabase ساخته شده است.');
+                showToast(`❌ خطا در ${isEditing ? 'به‌روزرسانی' : 'ثبت'} هزینه: ` + error.message + '\n\nمطمئن شوید جدول expenses در Supabase ساخته شده است.');
                 return;
             }
 
-            if (paidBySelf) {
+            if (!isEditing && paidBySelf) {
                 _supabase.from('messages').insert([{
                     sender: "سیستم خودکار هزینه",
                     recipient: "admin",
@@ -10606,10 +10773,70 @@
                 }]).then(() => {});
             }
 
-            showToast(`✅ هزینه «${category}» به مبلغ ${amount.toLocaleString('fa-IR')} تومان ثبت شد.${paidBySelf ? ' (به مدیر اطلاع داده شد که باید بهت پس بده)' : ''}`);
+            showToast(isEditing
+                ? `✅ هزینه «${category}» ویرایش شد.`
+                : `✅ هزینه «${category}» به مبلغ ${amount.toLocaleString('fa-IR')} تومان ثبت شد.${paidBySelf ? ' (به مدیر اطلاع داده شد که باید بهت پس بده)' : ''}`);
+
+            if (isEditing) cancelExpenseEdit();
             document.getElementById('expenseAmount').value = '';
             document.getElementById('expenseAmountPreview').innerText = '';
             document.getElementById('expenseNote').value = '';
+            loadExpensesTab();
+        }
+
+        // یه هزینه ثبت‌شده رو برای ویرایش توی همون فرم بالا باز می‌کنه — مدیر همه رو می‌تونه
+        // ویرایش کنه، فروشنده فقط هزینه‌های خودش رو
+        function editExpense(expenseId) {
+            const e = cachedExpensesList.find(x => String(x.id) === String(expenseId));
+            if (!e) return;
+            if (currentRole !== 'admin' && e.created_by !== currentUserLabel) {
+                showToast('⛔ فقط می‌توانید هزینه‌های ثبت‌شده توسط خودتان را ویرایش کنید.');
+                return;
+            }
+
+            editingExpenseId = e.id;
+            document.getElementById('expenseCategory').value = e.category;
+            document.getElementById('expenseAmount').value = e.amount;
+            updateExpenseAmountPreview();
+            document.getElementById('expenseNote').value = e.note || '';
+            document.getElementById('expenseDate').value = e.expense_date || getTehranISODate(new Date());
+            if (currentRole !== 'admin') document.getElementById('expensePaidBySelf').checked = !!e.paid_by_seller;
+
+            document.getElementById('expenseSubmitBtn').innerText = '🔄 به‌روزرسانی هزینه';
+            document.getElementById('expenseCancelEditBtn').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function cancelExpenseEdit() {
+            editingExpenseId = null;
+            document.getElementById('expenseCategory').selectedIndex = 0;
+            document.getElementById('expenseAmount').value = '';
+            document.getElementById('expenseAmountPreview').innerText = '';
+            document.getElementById('expenseNote').value = '';
+            document.getElementById('expenseDate').value = getTehranISODate(new Date());
+            if (currentRole !== 'admin') document.getElementById('expensePaidBySelf').checked = true;
+            document.getElementById('expenseSubmitBtn').innerText = '💾 ثبت هزینه';
+            document.getElementById('expenseCancelEditBtn').style.display = 'none';
+        }
+
+        async function deleteExpense(expenseId) {
+            const e = cachedExpensesList.find(x => String(x.id) === String(expenseId));
+            if (!e) return;
+            if (currentRole !== 'admin' && e.created_by !== currentUserLabel) {
+                showToast('⛔ فقط می‌توانید هزینه‌های ثبت‌شده توسط خودتان را حذف کنید.');
+                return;
+            }
+
+            const sure = await showConfirm(`آیا از حذف هزینه «${e.category}» به مبلغ ${Number(e.amount).toLocaleString('fa-IR')} تومان مطمئن هستید؟ این کار قابل بازگشت نیست.`);
+            if (!sure) return;
+
+            let q = _supabase.from('expenses').delete().eq('id', expenseId);
+            if (currentRole !== 'admin') q = q.eq('created_by', currentUserLabel);
+            const { error } = await q;
+            if (error) { showToast('❌ خطا در حذف: ' + error.message); return; }
+
+            showToast('✅ هزینه حذف شد.');
+            if (String(editingExpenseId) === String(expenseId)) cancelExpenseEdit();
             loadExpensesTab();
         }
 
@@ -10675,6 +10902,8 @@
                 return;
             }
 
+            cachedExpensesList = data;
+
             // فروشنده فقط هزینه‌های خودش رو می‌بینه، مدیر همه رو
             const visibleData = isAdmin ? data : data.filter(e => e.created_by === currentUserLabel);
 
@@ -10729,6 +10958,10 @@
                     </h3>
                     <p>📅 ${e.expense_date || '-'} | ثبت‌کننده: ${e.created_by || '-'}</p>
                     ${e.note ? `<p>📝 ${escapeHtmlForToast(e.note)}</p>` : ''}
+                    <div style="display:flex; gap:6px; margin-top:6px;">
+                        <button class="row-btn edit-btn" style="flex:1; padding:5px 8px; font-size:11px;" onclick="editExpense('${e.id}')">✏️ ویرایش</button>
+                        <button class="row-btn delete-btn" style="flex:1; padding:5px 8px; font-size:11px;" onclick="deleteExpense('${e.id}')">🗑️ حذف</button>
+                    </div>
                 </div>
             `).join('');
         }
