@@ -1177,6 +1177,8 @@
         <button class="tab-btn" id="btnTakeoutAdmin" onclick="switchTab('takeoutAdmin'); loadTakeoutAdminSummary();"><span class="tab-ico">🧺</span><span class="tab-label">برداشت‌های حساب‌نشده</span></button>
         <button class="tab-btn" id="btnSalary" onclick="switchTab('salary'); loadSalaryTab();"><span class="tab-ico">💰</span><span class="tab-label">واریز حقوق</span></button>
         <button class="tab-btn" id="btnExpenses" onclick="switchTab('expenses'); loadExpensesTab();"><span class="tab-ico">📒</span><span class="tab-label">دفترچه هزینه‌ها</span></button>
+        <button class="tab-btn" id="btnDeletedSales" onclick="switchTab('deletedSales'); loadDeletedSalesBackup();"><span class="tab-ico">🗑️</span><span class="tab-label">فاکتورهای حذف‌شده</span></button>
+        <button class="tab-btn" id="btnWeeklyReports" onclick="switchTab('weeklyReports'); loadWeeklyReportsList();"><span class="tab-ico">📅</span><span class="tab-label">گزارش‌های هفتگی</span></button>
         <button class="tab-btn" id="btnPersonnel" onclick="switchTab('personnel'); loadPersonnelTab();"><span class="tab-ico">🪪</span><span class="tab-label">اطلاعات پرسنل</span></button>
         <button class="tab-btn" id="btnPersonalTakeout" onclick="switchTab('personalTakeout'); loadMyTakeouts();"><span class="tab-ico">🛒</span><span class="tab-label">برداشت شخصی</span></button>
         <button class="tab-btn" id="btnMyAccount" onclick="switchTab('myAccount'); prefillMyAccountTab();"><span class="tab-ico">⚙️</span><span class="tab-label">حساب کاربری من</span></button>
@@ -2129,6 +2131,21 @@
         </div>
     </div>
 
+    <!-- تب فاکتورهای فروش حذف‌شده (فقط مدیر) — از جدول بک‌آپ می‌خونه، برای شفافیت و بازیابی احتمالی -->
+    <div id="deletedSalesTab" class="card">
+        <h2>🗑️ فاکتورهای فروش حذف‌شده</h2>
+        <div class="hint" style="margin-top:0;">هر فاکتور فروشی که (چه توسط فروشنده چه توسط مدیر) حذف بشه، قبل از حذف یه نسخه کامل ازش اینجا نگه داشته می‌شه. اگه فاکتوری اشتباهی حذف شده، از همینجا قابل بازگردوندنه.</div>
+        <div id="deletedSalesList" style="margin-top:12px;"><div class="skeleton-block skeleton-card"></div></div>
+    </div>
+
+    <!-- تب گزارش‌های هفتگی (فقط مدیر) — هر هفته‌ی شمسی یک اکسل رنگی ساخته و اینجا آرشیو می‌شه، و همزمان به تلگرام هم فرستاده می‌شه -->
+    <div id="weeklyReportsTab" class="card">
+        <h2>📅 گزارش‌های هفتگی (اکسل رنگی + تلگرام)</h2>
+        <div class="hint" style="margin-top:0;">هر بار که وارد برنامه بشی، اگه برای هفته‌ی شمسی گذشته (شنبه تا جمعه) هنوز گزارشی ساخته نشده باشه، خودش یک فایل اکسل رنگی و مرتب می‌سازه، همینجا برای دانلود همیشگی نگه می‌داره، و بلافاصله یک نسخه‌ش رو به ربات تلگرام می‌فرسته. برای ساخت فوری گزارش هفته‌ی گذشته یا بازسازی/ارسال دوباره‌ی یکی از گزارش‌های قبلی، از دکمه‌های زیر استفاده کن.</div>
+        <button class="submit-btn" id="manualWeeklyReportBtn" onclick="manualGenerateLastWeekReport()">🔄 ساخت/بازساخت گزارش هفته‌ی گذشته</button>
+        <div id="weeklyReportsList" style="margin-top:14px;"><div class="skeleton-block skeleton-card"></div></div>
+    </div>
+
     <!-- تب اطلاعات پرسنل — مشخصات کامل، جدا از صندوقچه پیام -->
     <div id="personnelTab" class="card">
         <h2>🪪 اطلاعات و مشخصات پرسنل</h2>
@@ -2506,6 +2523,14 @@
                 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
                 'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js'
             ], 8000);
+        }
+        // برای گزارش هفتگی رنگی/استایل‌دار از ExcelJS استفاده می‌کنیم چون کتابخانه xlsx بالا
+        // (نسخه رایگان) رنگ پس‌زمینه و استایل سلول رو موقع ذخیره‌سازی پشتیبانی نمی‌کنه
+        function ensureExcelJsLoaded() {
+            return ensureLibraryLoaded('exceljs', () => typeof ExcelJS !== 'undefined', [
+                'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js',
+                'https://unpkg.com/exceljs@4.4.0/dist/exceljs.min.js'
+            ], 10000);
         }
         // کتابخانه تشخیص چهره اختصاصی (face-api.js) — فقط وقتی کاربر واقعاً اورلی چهره را باز کند لود می‌شود
         function ensureFaceApiLoaded() {
@@ -3030,6 +3055,7 @@
 
         const ATTENDANCE_BUCKET = "attendance-photos";
         const CRITICAL_ALERT_COOLDOWN_HOURS = 6;
+        const WEEKLY_REPORTS_BUCKET = "weekly-reports";
 
         let selectedPiPhotoDataUrl = null;
         const PI_BUCKET = "purchase-invoice-photos";
@@ -3123,6 +3149,44 @@
             const timeStr = getTehranTimeString(dateObj);
             const [h, m] = timeStr.split(':').map(Number);
             return h * 60 + m;
+        }
+
+        // ================== محاسبه‌ی بازه‌ی هفته‌ی شمسی (شنبه تا جمعه) برای گزارش هفتگی ==================
+        // هفته‌ی ایرانی از شنبه شروع و جمعه تموم می‌شه. این تابع عدد ۰ تا ۶ برمی‌گردونه:
+        // ۰=شنبه، ۱=یکشنبه، ...، ۶=جمعه — بر اساس روز هفته‌ی واقعی تهران (نه مرورگر کاربر)
+        function getTehranWeekdayIndex(dateObj = new Date()) {
+            const wd = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Tehran', weekday: 'short' }).format(dateObj);
+            const map = { Sat: 0, Sun: 1, Mon: 2, Tue: 3, Wed: 4, Thu: 5, Fri: 6 };
+            return map[wd];
+        }
+
+        // آخرین «هفته‌ی کامل شمسی» (شنبه تا جمعه) که قبل از امروز تمام شده رو برمی‌گردونه —
+        // مثلاً اگه امروز سه‌شنبه‌ی این هفته باشه، بازه‌ی هفته‌ی قبل (شنبه تا جمعه‌ی قبل) رو می‌ده
+        function getLastCompletedTehranWeekRange(refDate = new Date()) {
+            const wd = getTehranWeekdayIndex(refDate); // فاصله‌ی امروز تا شنبه‌ی همین هفته
+            const thisWeekStartISO = getTehranISODate(new Date(refDate.getTime() - wd * 86400000));
+            const thisWeekStartNoon = new Date(thisWeekStartISO + 'T12:00:00+03:30');
+            const lastWeekStartNoon = new Date(thisWeekStartNoon.getTime() - 7 * 86400000);
+            const lastWeekEndNoon = new Date(thisWeekStartNoon.getTime() - 1 * 86400000);
+            return {
+                startISODate: getTehranISODate(lastWeekStartNoon),
+                endISODate: getTehranISODate(lastWeekEndNoon)
+            };
+        }
+
+        // شروع/پایان یه بازه‌ی تاریخی (بر اساس تاریخ ساده yyyy-mm-dd میلادی که پایه‌ی تاریخ تهرانه)
+        // رو به دو مرز ISO دقیق (شروعِ ۰۰:۰۰ روز اول تا شروعِ ۰۰:۰۰ روز بعد از آخر) تبدیل می‌کنه —
+        // برای استفاده مستقیم توی gte/lt کوئری‌های Supabase
+        function tehranDateRangeToISOBounds(startISODate, endISODate) {
+            const startUTC = new Date(startISODate + 'T00:00:00+03:30').toISOString();
+            const dayAfterEnd = getTehranISODate(new Date(new Date(endISODate + 'T12:00:00+03:30').getTime() + 86400000));
+            const endUTC = new Date(dayAfterEnd + 'T00:00:00+03:30').toISOString();
+            return { startUTC, endUTC };
+        }
+
+        // تبدیل یه تاریخ yyyy-mm-dd میلادی (پایه‌ی تهران) به رشته‌ی شمسی خوانا برای نمایش
+        function jalaliLabelForISODate(isoDate) {
+            return getTehranDateString(new Date(isoDate + 'T12:00:00+03:30'));
         }
 
         function timeStrToMinutes(timeStr) {
@@ -4038,7 +4102,8 @@
             document.getElementById('buyPriceField').style.display = (currentRole === 'admin') ? 'block' : 'none';
 
             if (currentRole === 'admin') {
-                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnInbox', 'btnStaffMessage', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnShiftSettings', 'btnTelegramSettings', 'btnDebtLedger', 'btnContractAdmin', 'btnGrowthReport', 'btnPurchaseInvoices', 'btnTakeoutAdmin', 'btnSalary', 'btnExpenses', 'btnPersonnel', 'btnMyAccount'], 'dashboardTab');
+                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnInbox', 'btnStaffMessage', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnShiftSettings', 'btnTelegramSettings', 'btnDebtLedger', 'btnContractAdmin', 'btnGrowthReport', 'btnPurchaseInvoices', 'btnTakeoutAdmin', 'btnSalary', 'btnExpenses', 'btnDeletedSales', 'btnWeeklyReports', 'btnPersonnel', 'btnMyAccount'], 'dashboardTab');
+                checkAndGenerateWeeklyReport();
                 document.getElementById('salaryAdminForm').style.display = 'block';
                 checkLowStockAlertNoWeight();
             } else if (currentRole === 'morning_seller') {
@@ -5380,6 +5445,36 @@
                 }
             } catch (e) {
                 console.warn('خطا در ارسال پیام تلگرام (بدون اشکال برای کارکرد اصلی برنامه) — احتمالاً بدون فیلترشکن قابل دسترس نیست', e);
+            }
+        }
+
+        // ارسال یک فایل (مثلاً اکسل گزارش هفتگی) مستقیم به تلگرام، همراه یک کپشن توضیحی
+        async function sendTelegramDocument(blob, filename, caption) {
+            try {
+                const s = await getTelegramSettings();
+                if (!s.enabled || !s.botToken || !s.chatId) return false;
+
+                const form = new FormData();
+                form.append('chat_id', s.chatId);
+                form.append('caption', caption || '');
+                form.append('document', blob, filename);
+
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 20000); // فایل اکسل ممکنه ارسالش کمی طول بکشه
+                try {
+                    const res = await fetch(`https://api.telegram.org/bot${s.botToken}/sendDocument`, {
+                        method: 'POST',
+                        body: form,
+                        signal: controller.signal
+                    });
+                    const json = await res.json().catch(() => null);
+                    return !!(json && json.ok);
+                } finally {
+                    clearTimeout(timeoutId);
+                }
+            } catch (e) {
+                console.warn('خطا در ارسال فایل به تلگرام (بدون اشکال برای کارکرد اصلی برنامه)', e);
+                return false;
             }
         }
 
@@ -8179,8 +8274,26 @@
                 return;
             }
 
-            const sure = await showConfirm('آیا از حذف این فاکتور فروش مطمئن هستید؟ کل مقدار فروخته‌شده به موجودی ظرف غرفه بازگردانده می‌شود.');
+            const sure = await showConfirm('آیا از حذف این فاکتور فروش مطمئن هستید؟ کل مقدار فروخته‌شده به موجودی ظرف غرفه بازگردانده می‌شود.\n\n(یک نسخه از این فاکتور قبل از حذف، برای احتیاط در جدول deleted_sales_backup نگه داشته می‌شود.)');
             if (!sure) return;
+
+            // قبل از حذف، یه نسخه کامل از فاکتور رو توی جدول بک‌آپ نگه می‌داریم تا اگه
+            // اشتباهی حذف شد، بشه از همون جدول برش گردوند (اگه جدول ساخته نشده باشه، این
+            // مرحله فقط رد می‌شه و جلوی خود حذف رو نمی‌گیره)
+            try {
+                await _supabase.from('deleted_sales_backup').insert([{
+                    original_sale_id: sale.id,
+                    product_code: sale.product_code,
+                    quantity: sale.quantity,
+                    sell_price: sale.sell_price,
+                    seller_name: sale.seller_name,
+                    sale_type: sale.sale_type,
+                    customer_name: sale.customer_name || null,
+                    original_created_at: sale.created_at,
+                    deleted_by: currentUserLabel,
+                    deleted_at: new Date().toISOString()
+                }]);
+            } catch (backupErr) { /* اگه جدول بک‌آپ ساخته نشده باشه، بی‌خیال می‌شیم و ادامه می‌دیم */ }
 
             const { data: product } = await _supabase.from('products').select('*').eq('code', sale.product_code).maybeSingle();
 
@@ -9435,6 +9548,290 @@
             panel.style.display = (panel.style.display === 'none' || !panel.style.display) ? 'block' : 'none';
         }
 
+        // =========================================================================
+        // ================== گزارش هفتگی خودکار (رنگی + شمسی + تلگرام) ==================
+        // هر هفته (شنبه تا جمعه‌ی شمسی) یک فایل اکسل رنگی و مرتب از فروش و هزینه‌ها ساخته
+        // می‌شه، توی خود سایت (Supabase Storage) ذخیره می‌مونه که هر موقع خواستی دانلودش کنی،
+        // و همون لحظه یک نسخه‌ش هم خودکار به ربات تلگرام فرستاده می‌شه.
+        //
+        // نکته‌ی مهم و صادقانه: چون این یک فایل تک‌صفحه‌ایه که فقط توی مرورگر کاربر اجرا می‌شه
+        // (نه روی یک سرور همیشه‌روشن)، این چک «خودکار» دقیقاً وقتی انجام می‌شه که مدیر وارد
+        // برنامه بشه — نه دقیقاً لحظه‌ی تمام‌شدن هفته حتی اگه هیچ‌کس برنامه رو باز نکرده باشه.
+        // در عمل چون مدیر معمولاً هر روز چند بار وارد می‌شه، عملاً هفته‌به‌هفته بدون نیاز به
+        // کار دستی تولید و ارسال می‌شه. برای خودکارسازی صددرصدی (حتی بدون باز کردن برنامه)
+        // باید یک Supabase Edge Function با زمان‌بند (cron) روی خود سرور Supabase تنظیم بشه.
+        // =========================================================================
+
+        // رنگ‌ها و استایل‌های مشترک گزارش هفتگی
+        const WEEKLY_REPORT_COLORS = {
+            headerFill: 'FF0EA5E9',   // آبی
+            headerFont: 'FFFFFFFF',
+            titleFill: 'FF6366F1',    // بنفش-آبی
+            totalFill: 'FF10B981',    // سبز
+            bandFill: 'FFEFF6FF',     // آبی خیلی روشن برای ردیف‌های زوج
+            expenseHeaderFill: 'FFF97316', // نارنجی برای برگه‌ی هزینه‌ها
+            border: { style: 'thin', color: { argb: 'FFCBD5E1' } }
+        };
+
+        function styleHeaderRow(row, fillColor) {
+            row.eachCell(cell => {
+                cell.font = { bold: true, color: { argb: WEEKLY_REPORT_COLORS.headerFont }, size: 11 };
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fillColor || WEEKLY_REPORT_COLORS.headerFill } };
+                cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+                cell.border = { top: WEEKLY_REPORT_COLORS.border, bottom: WEEKLY_REPORT_COLORS.border, left: WEEKLY_REPORT_COLORS.border, right: WEEKLY_REPORT_COLORS.border };
+            });
+            row.height = 22;
+        }
+
+        function styleDataRow(row, isEven) {
+            row.eachCell(cell => {
+                cell.border = { top: WEEKLY_REPORT_COLORS.border, bottom: WEEKLY_REPORT_COLORS.border, left: WEEKLY_REPORT_COLORS.border, right: WEEKLY_REPORT_COLORS.border };
+                cell.alignment = { horizontal: 'center', vertical: 'middle' };
+                if (isEven) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: WEEKLY_REPORT_COLORS.bandFill } };
+            });
+        }
+
+        // اصل ساخت فایل اکسل رنگی گزارش هفتگی — بین startISODate و endISODate (شامل هر دو روز)
+        async function generateWeeklyReportExcelBlob(startISODate, endISODate) {
+            const ok = await ensureExcelJsLoaded();
+            if (!ok || typeof ExcelJS === 'undefined') {
+                throw new Error('کتابخانه ExcelJS بارگذاری نشد. اتصال اینترنت را بررسی کنید.');
+            }
+
+            const { startUTC, endUTC } = tehranDateRangeToISOBounds(startISODate, endISODate);
+            const jalaliRangeLabel = `${jalaliLabelForISODate(startISODate)} تا ${jalaliLabelForISODate(endISODate)}`;
+
+            const [salesRes, expensesRes, productsRes] = await Promise.all([
+                _supabase.from('sales').select('*').gte('created_at', startUTC).lt('created_at', endUTC).order('created_at', { ascending: true }),
+                _supabase.from('expenses').select('*').gte('created_at', startUTC).lt('created_at', endUTC).order('created_at', { ascending: true }),
+                _supabase.from('products').select('code, name')
+            ]);
+
+            if (salesRes.error) throw new Error('خطا در دریافت فروش: ' + salesRes.error.message);
+            if (expensesRes.error) throw new Error('خطا در دریافت هزینه‌ها: ' + expensesRes.error.message);
+
+            const sales = salesRes.data || [];
+            const expenses = expensesRes.data || [];
+            const nameByCode = {};
+            (productsRes.data || []).forEach(p => { nameByCode[p.code] = p.name; });
+
+            const totalSales = sales.reduce((sum, s) => sum + (Number(s.sell_price) || 0), 0);
+            const totalExpenses = expenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+
+            // خلاصه فروش هر فروشنده
+            const sellerMap = {};
+            sales.forEach(s => {
+                const name = s.seller_name || 'نامشخص';
+                if (!sellerMap[name]) sellerMap[name] = { sum: 0, count: 0, qty: 0 };
+                sellerMap[name].sum += Number(s.sell_price) || 0;
+                sellerMap[name].count += 1;
+                sellerMap[name].qty += Number(s.quantity) || 0;
+            });
+
+            const wb = new ExcelJS.Workbook();
+            wb.creator = 'سیستم مدیریت غرفه فامیلی';
+            wb.created = new Date();
+
+            // ---------- برگه‌ی خلاصه ----------
+            const wsSummary = wb.addWorksheet('خلاصه هفتگی', { views: [{ rightToLeft: true }] });
+            wsSummary.mergeCells('A1:D1');
+            const titleCell = wsSummary.getCell('A1');
+            titleCell.value = `📊 گزارش هفتگی — غرفه فامیلی (دره میرکی)`;
+            titleCell.font = { bold: true, size: 15, color: { argb: 'FFFFFFFF' } };
+            titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: WEEKLY_REPORT_COLORS.titleFill } };
+            titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+            wsSummary.getRow(1).height = 30;
+
+            wsSummary.mergeCells('A2:D2');
+            const rangeCell = wsSummary.getCell('A2');
+            rangeCell.value = `📅 از تاریخ ${jalaliLabelForISODate(startISODate)} تا تاریخ ${jalaliLabelForISODate(endISODate)}`;
+            rangeCell.font = { bold: true, size: 12, color: { argb: 'FF0369A1' } };
+            rangeCell.alignment = { horizontal: 'center', vertical: 'middle' };
+            wsSummary.getRow(2).height = 22;
+
+            wsSummary.addRow([]);
+            const kpiHeaderRow = wsSummary.addRow(['شاخص', 'مقدار', '', '']);
+            styleHeaderRow(kpiHeaderRow);
+            const kpiRows = [
+                ['🧾 تعداد کل فاکتورهای فروش', sales.length],
+                ['💰 مجموع کل فروش (تومان)', totalSales],
+                ['🧺 تعداد ردیف‌های هزینه', expenses.length],
+                ['💸 مجموع کل هزینه‌ها (تومان)', totalExpenses],
+                ['📈 سود ناخالص تخمینی (فروش − هزینه)', totalSales - totalExpenses]
+            ];
+            kpiRows.forEach((r, idx) => {
+                const row = wsSummary.addRow(r);
+                styleDataRow(row, idx % 2 === 0);
+                row.getCell(2).numFmt = '#,##0';
+                row.getCell(1).alignment = { horizontal: 'right', vertical: 'middle' };
+            });
+            const totalRow = wsSummary.lastRow;
+            totalRow.eachCell(c => { c.font = { bold: true }; c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: WEEKLY_REPORT_COLORS.totalFill } }; c.font = { bold: true, color: { argb: 'FFFFFFFF' } }; });
+
+            wsSummary.addRow([]);
+            const sellerHeaderRow = wsSummary.addRow(['فروشنده', 'مجموع فروش (تومان)', 'تعداد فاکتور', 'مجموع مقدار (کیلو)']);
+            styleHeaderRow(sellerHeaderRow);
+            Object.entries(sellerMap).sort((a, b) => b[1].sum - a[1].sum).forEach(([name, s], idx) => {
+                const row = wsSummary.addRow([name, s.sum, s.count, Number(s.qty.toFixed(3))]);
+                styleDataRow(row, idx % 2 === 0);
+                row.getCell(2).numFmt = '#,##0';
+            });
+            wsSummary.columns = [{ width: 32 }, { width: 22 }, { width: 16 }, { width: 20 }];
+
+            // ---------- برگه‌ی فروش‌ها ----------
+            const wsSales = wb.addWorksheet('فروش‌ها', { views: [{ rightToLeft: true, state: 'frozen', ySplit: 1 }] });
+            const salesHeaderRow = wsSales.addRow(['تاریخ و ساعت', 'نوع فروش', 'کالا', 'فروشنده', 'مشتری', 'مقدار (کیلو)', 'مبلغ (تومان)']);
+            styleHeaderRow(salesHeaderRow);
+            sales.forEach((s, idx) => {
+                const row = wsSales.addRow([
+                    getTehranFullDateTimeString(new Date(s.created_at)),
+                    s.sale_type || '',
+                    nameByCode[s.product_code] || s.product_code,
+                    s.seller_name || '',
+                    s.customer_name || '',
+                    Number(s.quantity) || 0,
+                    Number(s.sell_price) || 0
+                ]);
+                styleDataRow(row, idx % 2 === 0);
+                row.getCell(7).numFmt = '#,##0';
+            });
+            wsSales.columns = [{ width: 20 }, { width: 14 }, { width: 26 }, { width: 18 }, { width: 20 }, { width: 14 }, { width: 16 }];
+            if (sales.length) wsSales.autoFilter = { from: 'A1', to: `G${sales.length + 1}` };
+
+            // ---------- برگه‌ی هزینه‌ها ----------
+            const wsExp = wb.addWorksheet('هزینه‌ها', { views: [{ rightToLeft: true, state: 'frozen', ySplit: 1 }] });
+            const expHeaderRow = wsExp.addRow(['تاریخ', 'دسته‌بندی', 'مبلغ (تومان)', 'ثبت‌کننده', 'توضیحات', 'پرداخت‌شده توسط']);
+            styleHeaderRow(expHeaderRow, WEEKLY_REPORT_COLORS.expenseHeaderFill);
+            expenses.forEach((e, idx) => {
+                const row = wsExp.addRow([
+                    e.expense_date || getTehranISODate(new Date(e.created_at)),
+                    e.category || '',
+                    Number(e.amount) || 0,
+                    e.created_by || '',
+                    e.note || '',
+                    e.paid_by_seller ? 'فروشنده (باید تسویه شود)' : 'مستقیم از صندوق'
+                ]);
+                styleDataRow(row, idx % 2 === 0);
+                row.getCell(3).numFmt = '#,##0';
+            });
+            wsExp.columns = [{ width: 16 }, { width: 18 }, { width: 16 }, { width: 18 }, { width: 34 }, { width: 22 }];
+            if (expenses.length) wsExp.autoFilter = { from: 'A1', to: `F${expenses.length + 1}` };
+
+            const buffer = await wb.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const fileName = `گزارش-هفتگی_${startISODate}_تا_${endISODate}.xlsx`;
+
+            return { blob, fileName, jalaliRangeLabel, totalSales, totalExpenses, salesCount: sales.length, expensesCount: expenses.length };
+        }
+
+        // تولید کامل، آپلود توی Supabase Storage، ثبت توی جدول weekly_reports، و ارسال به تلگرام
+        async function buildStoreAndSendWeeklyReport(startISODate, endISODate) {
+            const result = await generateWeeklyReportExcelBlob(startISODate, endISODate);
+
+            const storagePath = `${startISODate}_${endISODate}.xlsx`;
+            const { error: uploadErr } = await _supabase.storage.from(WEEKLY_REPORTS_BUCKET)
+                .upload(storagePath, result.blob, {
+                    contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    upsert: true
+                });
+            if (uploadErr) throw new Error('خطا در آپلود فایل به Supabase Storage: ' + uploadErr.message + '\n\nمطمئن شوید باکت weekly-reports در Supabase ساخته شده و public است.');
+
+            const { data: urlData } = _supabase.storage.from(WEEKLY_REPORTS_BUCKET).getPublicUrl(storagePath);
+            const fileUrl = urlData ? urlData.publicUrl : null;
+
+            await _supabase.from('weekly_reports').upsert([{
+                week_start_date: startISODate,
+                week_end_date: endISODate,
+                jalali_range_label: result.jalaliRangeLabel,
+                file_url: fileUrl,
+                file_name: result.fileName,
+                total_sales: result.totalSales,
+                sales_count: result.salesCount,
+                total_expenses: result.totalExpenses,
+                expenses_count: result.expensesCount,
+                created_at: new Date().toISOString()
+            }], { onConflict: 'week_start_date' });
+
+            const caption = `📊 گزارش هفتگی غرفه فامیلی\n📅 از ${jalaliLabelForISODate(startISODate)} تا ${jalaliLabelForISODate(endISODate)}\n\n🧾 تعداد فاکتور فروش: ${result.salesCount.toLocaleString('fa-IR')}\n💰 مجموع فروش: ${result.totalSales.toLocaleString('fa-IR')} تومان\n💸 مجموع هزینه‌ها: ${result.totalExpenses.toLocaleString('fa-IR')} تومان`;
+            await sendTelegramDocument(result.blob, result.fileName, caption);
+
+            return result;
+        }
+
+        // وقتی مدیر وارد برنامه می‌شه صدا زده می‌شه — اگه برای «آخرین هفته‌ی کامل‌شده» هنوز
+        // گزارشی ساخته نشده باشه، خودش می‌سازه، ذخیره می‌کنه و به تلگرام می‌فرسته (بی‌سروصدا)
+        async function checkAndGenerateWeeklyReport() {
+            try {
+                const { startISODate, endISODate } = getLastCompletedTehranWeekRange();
+                const { data: existing } = await _supabase.from('weekly_reports').select('id').eq('week_start_date', startISODate).maybeSingle();
+                if (existing) return; // قبلاً برای این هفته ساخته شده
+
+                const result = await buildStoreAndSendWeeklyReport(startISODate, endISODate);
+                showToast(`📊 گزارش هفتگی (${result.jalaliRangeLabel}) به‌صورت خودکار ساخته و به تلگرام ارسال شد. از تب «گزارش‌های هفتگی» هم قابل دانلوده.`);
+                const tab = document.getElementById('weeklyReportsTab');
+                if (tab && tab.classList.contains('active')) loadWeeklyReportsList();
+            } catch (e) {
+                console.warn('گزارش هفتگی خودکار ساخته نشد (بدون اشکال برای کارکرد اصلی برنامه):', e);
+            }
+        }
+
+        // دکمه‌ی دستی توی تب گزارش‌های هفتگی — برای ساخت/بازساخت فوری هفته‌ی گذشته
+        async function manualGenerateLastWeekReport() {
+            const btn = document.getElementById('manualWeeklyReportBtn');
+            if (btn) { btn.disabled = true; btn.textContent = '⏳ در حال ساخت گزارش...'; }
+            try {
+                const { startISODate, endISODate } = getLastCompletedTehranWeekRange();
+                const result = await buildStoreAndSendWeeklyReport(startISODate, endISODate);
+                showToast(`✅ گزارش هفته‌ی ${result.jalaliRangeLabel} ساخته شد، توی سایت ذخیره شد و به تلگرام ارسال شد.`);
+                loadWeeklyReportsList();
+            } catch (e) {
+                showToast('❌ خطا در ساخت گزارش هفتگی: ' + e.message);
+            } finally {
+                if (btn) { btn.disabled = false; btn.textContent = '🔄 ساخت/بازساخت گزارش هفته‌ی گذشته'; }
+            }
+        }
+
+        async function loadWeeklyReportsList() {
+            const box = document.getElementById('weeklyReportsList');
+            if (!box) return;
+            box.innerHTML = '<div class="skeleton-block skeleton-card"></div>';
+
+            const { data, error } = await _supabase.from('weekly_reports').select('*').order('week_start_date', { ascending: false }).limit(52);
+            if (error) {
+                box.innerHTML = `<div class="report-card"><p>⚠️ جدول weekly_reports هنوز ساخته نشده یا در دسترس نیست.</p><p style="font-size:11px; color:var(--text-hint);">${escapeHtmlForToast(error.message)}</p></div>`;
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                box.innerHTML = '<div class="report-card"><p>هنوز هیچ گزارش هفتگی‌ای ساخته نشده. با دکمه‌ی بالا اولین گزارش رو بساز.</p></div>';
+                return;
+            }
+
+            box.innerHTML = data.map(r => `
+                <div class="report-card">
+                    <h3>📅 ${r.jalali_range_label || (r.week_start_date + ' تا ' + r.week_end_date)}</h3>
+                    <p>🧾 ${Number(r.sales_count || 0).toLocaleString('fa-IR')} فاکتور فروش — 💰 ${Number(r.total_sales || 0).toLocaleString('fa-IR')} تومان</p>
+                    <p>💸 ${Number(r.expenses_count || 0).toLocaleString('fa-IR')} ردیف هزینه — ${Number(r.total_expenses || 0).toLocaleString('fa-IR')} تومان</p>
+                    <div style="display:flex; gap:6px; margin-top:6px;">
+                        ${r.file_url ? `<a href="${r.file_url}" target="_blank" class="row-btn confirm-btn" style="flex:1; padding:5px 8px; font-size:11px; text-align:center; text-decoration:none;">⬇️ دانلود اکسل</a>` : ''}
+                        <button class="row-btn fill-btn" style="flex:1; padding:5px 8px; font-size:11px;" onclick="resendWeeklyReportToTelegram('${r.week_start_date}', '${r.week_end_date}')">📨 ارسال دوباره به تلگرام</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function resendWeeklyReportToTelegram(startISODate, endISODate) {
+            showToast('⏳ در حال ساخت دوباره‌ی فایل و ارسال به تلگرام...');
+            try {
+                const result = await generateWeeklyReportExcelBlob(startISODate, endISODate);
+                const caption = `📊 گزارش هفتگی غرفه فامیلی (ارسال مجدد)\n📅 از ${jalaliLabelForISODate(startISODate)} تا ${jalaliLabelForISODate(endISODate)}\n\n🧾 تعداد فاکتور فروش: ${result.salesCount.toLocaleString('fa-IR')}\n💰 مجموع فروش: ${result.totalSales.toLocaleString('fa-IR')} تومان\n💸 مجموع هزینه‌ها: ${result.totalExpenses.toLocaleString('fa-IR')} تومان`;
+                const ok = await sendTelegramDocument(result.blob, result.fileName, caption);
+                showToast(ok ? '✅ دوباره به تلگرام ارسال شد.' : '❌ ارسال به تلگرام انجام نشد — تنظیمات تلگرام رو توی تب «تنظیمات تلگرام» بررسی کن.');
+            } catch (e) {
+                showToast('❌ خطا: ' + e.message);
+            }
+        }
+
         function switchReportMode(key, mode) {
             const singleBox = document.getElementById('singleDateBox_' + key);
             const rangeBox = document.getElementById('rangeDateBox_' + key);
@@ -9711,14 +10108,44 @@
         }
 
         async function adminDeleteSaleFromReport(saleId, key) {
-            const sure = await showConfirm('آیا از حذف این فاکتور فروش مطمئن هستید؟ مقدار آن به موجودی ظرف غرفه بازگردانده می‌شود. این عملیات مخصوص مدیر است و روی هر فاکتوری (هر تاریخ، هر کاربر) قابل انجام است.');
-            if (!sure) return;
-
             const { data: sale, error: fetchErr } = await _supabase.from('sales').select('*').eq('id', saleId).maybeSingle();
             if (fetchErr || !sale) {
                 showToast('❌ فاکتور یافت نشد.');
                 return;
             }
+
+            const saleDate = new Date(sale.created_at);
+            const ageDays = Math.floor((Date.now() - saleDate.getTime()) / 86400000);
+            const dateStr = getTehranFullDateTimeString(saleDate);
+            const amountStr = Number(sale.sell_price || 0).toLocaleString('fa-IR');
+
+            const sure = await showConfirm(`آیا از حذف این فاکتور مطمئن هستید؟\n\n📅 تاریخ فاکتور: ${dateStr}\n👤 ثبت‌کننده: ${sale.seller_name}\n💰 مبلغ: ${amountStr} تومان\n\nمقدار آن به موجودی ظرف غرفه بازگردانده می‌شود. این عملیات مخصوص مدیر است و روی هر فاکتوری (هر تاریخ، هر کاربر) قابل انجام است.\n\n(یک نسخه از این فاکتور برای احتیاط در جدول deleted_sales_backup نگه داشته می‌شود.)`);
+            if (!sure) return;
+
+            // برای فاکتورهای قدیمی (بیشتر از ۲ روز)، چون معمولاً حذف اشتباهی اثر بیشتری داره،
+            // یک تاییدیه‌ی دوم و صریح‌تر هم می‌گیریم
+            if (ageDays > 2) {
+                const doubleSure = await showConfirm(`⚠️ توجه: این فاکتور مربوط به ${ageDays} روز پیش است (${dateStr}).\n\nحذف فاکتورهای قدیمی معمولاً به‌خاطر اشتباه در گزارش‌گیری مالی گذشته انجام نمی‌شود. آیا کاملاً مطمئنید که می‌خواهید همین فاکتور قدیمی حذف شود؟`);
+                if (!doubleSure) return;
+            }
+
+            // قبل از حذف، یه نسخه کامل از فاکتور رو توی جدول بک‌آپ نگه می‌داریم تا اگه
+            // اشتباهی حذف شد، بشه از همون جدول برش گردوند (اگه جدول ساخته نشده باشه، این
+            // مرحله فقط رد می‌شه و جلوی خود حذف رو نمی‌گیره)
+            try {
+                await _supabase.from('deleted_sales_backup').insert([{
+                    original_sale_id: sale.id,
+                    product_code: sale.product_code,
+                    quantity: sale.quantity,
+                    sell_price: sale.sell_price,
+                    seller_name: sale.seller_name,
+                    sale_type: sale.sale_type,
+                    customer_name: sale.customer_name || null,
+                    original_created_at: sale.created_at,
+                    deleted_by: currentUserLabel,
+                    deleted_at: new Date().toISOString()
+                }]);
+            } catch (backupErr) { /* اگه جدول بک‌آپ ساخته نشده باشه، بی‌خیال می‌شیم و ادامه می‌دیم */ }
 
             const { data: product } = await _supabase.from('products').select('*').eq('code', sale.product_code).maybeSingle();
             if (product) {
@@ -9737,6 +10164,98 @@
 
             showToast('✅ فاکتور حذف شد و مقدار آن به موجودی غرفه بازگشت.');
             loadDetailReportV23(key);
+        }
+
+        // ================== تب فاکتورهای فروش حذف‌شده (فقط مدیر) ==================
+        let cachedDeletedSalesList = [];
+
+        async function loadDeletedSalesBackup() {
+            const listBox = document.getElementById('deletedSalesList');
+            listBox.innerHTML = '<div class="skeleton-block skeleton-card"></div>';
+
+            const { data, error } = await _supabase.from('deleted_sales_backup')
+                .select('*')
+                .order('deleted_at', { ascending: false })
+                .limit(200);
+
+            if (error) {
+                listBox.innerHTML = `<div class="report-card"><p>⚠️ جدول deleted_sales_backup هنوز توی Supabase ساخته نشده یا در دسترس نیست.</p><p style="font-size:11px; color:var(--text-hint);">${escapeHtmlForToast(error.message)}</p></div>`;
+                return;
+            }
+
+            cachedDeletedSalesList = data || [];
+
+            if (cachedDeletedSalesList.length === 0) {
+                listBox.innerHTML = '<div class="report-card"><p>تا الان هیچ فاکتور فروشی حذف نشده. 👍</p></div>';
+                return;
+            }
+
+            const { data: products } = await _supabase.from('products').select('code, name');
+            const nameByCode = {};
+            (products || []).forEach(p => { nameByCode[p.code] = p.name; });
+
+            listBox.innerHTML = cachedDeletedSalesList.map(d => `
+                <div class="report-card">
+                    <h3>${nameByCode[d.product_code] || d.product_code} — ${(Number(d.sell_price) || 0).toLocaleString('fa-IR')} تومان</h3>
+                    <p>📦 مقدار: ${Number(d.quantity).toLocaleString('fa-IR')} کیلو ${d.customer_name ? '| 🙋 مشتری: ' + escapeHtmlForToast(d.customer_name) : ''}</p>
+                    <p>📅 تاریخ فروش اصلی: ${getTehranFullDateTimeString(new Date(d.original_created_at))}</p>
+                    <p>🗑️ حذف‌شده توسط: ${escapeHtmlForToast(d.deleted_by || '-')} در ${getTehranFullDateTimeString(new Date(d.deleted_at))}</p>
+                    <div style="display:flex; gap:6px; margin-top:6px;">
+                        <button class="row-btn confirm-btn" style="flex:1; padding:5px 8px; font-size:11px;" onclick="restoreDeletedSale('${d.id}')">↩️ بازگردانی فاکتور</button>
+                        <button class="row-btn delete-btn" style="flex:1; padding:5px 8px; font-size:11px;" onclick="permanentlyRemoveBackupRow('${d.id}')">🗑️ حذف همیشگی از این لیست</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // یه فاکتور حذف‌شده رو دوباره به جدول sales برمی‌گردونه و به همون اندازه از موجودی غرفه کم می‌کنه
+        // (چون موقع حذف اولیه، مقدارش به موجودی غرفه برگشته بود)
+        async function restoreDeletedSale(backupId) {
+            const rec = cachedDeletedSalesList.find(x => String(x.id) === String(backupId));
+            if (!rec) return;
+
+            const sure = await showConfirm(`آیا از بازگردانی این فاکتور به لیست فروش‌ها مطمئن هستید؟\n\nمقدار ${Number(rec.quantity).toLocaleString('fa-IR')} کیلو دوباره از موجودی غرفه کم خواهد شد (چون موقع حذف به غرفه برگشته بود).`);
+            if (!sure) return;
+
+            const { data: product } = await _supabase.from('products').select('*').eq('code', rec.product_code).maybeSingle();
+            if (product) {
+                const { error: adjustErr } = await _supabase.rpc('adjust_booth_stock', { p_product_id: product.id, p_delta: -Number(rec.quantity) });
+                if (adjustErr) {
+                    showToast('❌ خطا در کم‌کردن موجودی غرفه: ' + adjustErr.message);
+                    return;
+                }
+            }
+
+            const { error: insertErr } = await _supabase.from('sales').insert([{
+                product_code: rec.product_code,
+                quantity: rec.quantity,
+                sell_price: rec.sell_price,
+                seller_name: rec.seller_name,
+                sale_type: rec.sale_type,
+                customer_name: rec.customer_name,
+                created_at: rec.original_created_at
+            }]);
+
+            if (insertErr) {
+                showToast('❌ خطا در بازگردانی فاکتور: ' + insertErr.message);
+                return;
+            }
+
+            await _supabase.from('deleted_sales_backup').delete().eq('id', backupId);
+            showToast('✅ فاکتور با موفقیت به لیست فروش‌ها بازگردانده شد.');
+            loadDeletedSalesBackup();
+        }
+
+        // فقط از خودِ لیست بک‌آپ پاکش می‌کنه (فاکتور همچنان توی sales حذف‌شده باقی می‌مونه) —
+        // برای وقتی که مدیر مطمئنه این حذف درست بوده و دیگه لازم نیست نگهش داره
+        async function permanentlyRemoveBackupRow(backupId) {
+            const sure = await showConfirm('این فقط ردیف رو از لیست «فاکتورهای حذف‌شده» پاک می‌کنه (نه از فروش‌ها، چون قبلاً از اونجا حذف شده). مطمئنید؟');
+            if (!sure) return;
+
+            const { error } = await _supabase.from('deleted_sales_backup').delete().eq('id', backupId);
+            if (error) { showToast('❌ خطا: ' + error.message); return; }
+            showToast('✅ از لیست پاک شد.');
+            loadDeletedSalesBackup();
         }
 
         // ================== گزارش رشد/افت فروش (فقط مدیر) ==================
