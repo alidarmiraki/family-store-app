@@ -2138,11 +2138,20 @@
         <div id="deletedSalesList" style="margin-top:12px;"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <!-- تب گزارش‌های هفتگی (فقط مدیر) — هر هفته‌ی شمسی یک اکسل رنگی ساخته و اینجا آرشیو می‌شه، و همزمان به تلگرام هم فرستاده می‌شه -->
+    <!-- تب گزارش‌های هفتگی (فقط مدیر) — هر هفته‌ی شمسی دو اکسل رنگی (کلی + جزئیات) ساخته و اینجا آرشیو می‌شه، و همزمان به تلگرام هم فرستاده می‌شه -->
     <div id="weeklyReportsTab" class="card">
         <h2>📅 گزارش‌های هفتگی (اکسل رنگی + تلگرام)</h2>
-        <div class="hint" style="margin-top:0;">هر بار که وارد برنامه بشی، اگه برای هفته‌ی شمسی گذشته (شنبه تا جمعه) هنوز گزارشی ساخته نشده باشه، خودش یک فایل اکسل رنگی و مرتب می‌سازه، همینجا برای دانلود همیشگی نگه می‌داره، و بلافاصله یک نسخه‌ش رو به ربات تلگرام می‌فرسته. برای ساخت فوری گزارش هفته‌ی گذشته یا بازسازی/ارسال دوباره‌ی یکی از گزارش‌های قبلی، از دکمه‌های زیر استفاده کن.</div>
-        <button class="submit-btn" id="manualWeeklyReportBtn" onclick="manualGenerateLastWeekReport()">🔄 ساخت/بازساخت گزارش هفته‌ی گذشته</button>
+        <div class="hint" style="margin-top:0;">برای هر بازه‌ای که انتخاب کنی، دو فایل اکسل ساخته می‌شه: یکی «کلی» (خلاصه و عملکرد هر پرسنل) و یکی «جزئیات» (ریز فروش، هزینه، کارکرد و برداشتی پرسنل). هر دو همینجا برای دانلود دائمی ذخیره می‌شن و به تلگرام هم فرستاده می‌شن. هر بار وارد برنامه بشی، برای هفته‌ی گذشته هم خودش (بی‌سروصدا) همین کار رو می‌کنه.</div>
+
+        <label style="margin-top:14px;">بازه‌ی گزارش را انتخاب کن:</label>
+        <div class="mode-selector" style="margin-top:6px;">
+            <button type="button" class="mode-btn" id="wrOffsetBtn_0" onclick="selectWeeklyReportOffset(0)">هفته جاری (تا امروز)</button>
+            <button type="button" class="mode-btn" id="wrOffsetBtn_1" onclick="selectWeeklyReportOffset(1)">هفته‌ی قبل</button>
+            <button type="button" class="mode-btn" id="wrOffsetBtn_2" onclick="selectWeeklyReportOffset(2)">دو هفته‌ی قبل</button>
+        </div>
+        <div class="price-display" id="weeklyReportRangePreview" style="margin-top:10px;"></div>
+
+        <button class="submit-btn" id="manualWeeklyReportBtn" onclick="manualGenerateWeeklyReport()">📊 ساخت و ارسال گزارش‌های این بازه</button>
         <div id="weeklyReportsList" style="margin-top:14px;"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
@@ -3158,20 +3167,6 @@
             const wd = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Tehran', weekday: 'short' }).format(dateObj);
             const map = { Sat: 0, Sun: 1, Mon: 2, Tue: 3, Wed: 4, Thu: 5, Fri: 6 };
             return map[wd];
-        }
-
-        // آخرین «هفته‌ی کامل شمسی» (شنبه تا جمعه) که قبل از امروز تمام شده رو برمی‌گردونه —
-        // مثلاً اگه امروز سه‌شنبه‌ی این هفته باشه، بازه‌ی هفته‌ی قبل (شنبه تا جمعه‌ی قبل) رو می‌ده
-        function getLastCompletedTehranWeekRange(refDate = new Date()) {
-            const wd = getTehranWeekdayIndex(refDate); // فاصله‌ی امروز تا شنبه‌ی همین هفته
-            const thisWeekStartISO = getTehranISODate(new Date(refDate.getTime() - wd * 86400000));
-            const thisWeekStartNoon = new Date(thisWeekStartISO + 'T12:00:00+03:30');
-            const lastWeekStartNoon = new Date(thisWeekStartNoon.getTime() - 7 * 86400000);
-            const lastWeekEndNoon = new Date(thisWeekStartNoon.getTime() - 1 * 86400000);
-            return {
-                startISODate: getTehranISODate(lastWeekStartNoon),
-                endISODate: getTehranISODate(lastWeekEndNoon)
-            };
         }
 
         // شروع/پایان یه بازه‌ی تاریخی (بر اساس تاریخ ساده yyyy-mm-dd میلادی که پایه‌ی تاریخ تهرانه)
@@ -9549,27 +9544,31 @@
         }
 
         // =========================================================================
-        // ================== گزارش هفتگی خودکار (رنگی + شمسی + تلگرام) ==================
-        // هر هفته (شنبه تا جمعه‌ی شمسی) یک فایل اکسل رنگی و مرتب از فروش و هزینه‌ها ساخته
-        // می‌شه، توی خود سایت (Supabase Storage) ذخیره می‌مونه که هر موقع خواستی دانلودش کنی،
-        // و همون لحظه یک نسخه‌ش هم خودکار به ربات تلگرام فرستاده می‌شه.
+        // ================== گزارش هفتگی (کلی + جزئیات، رنگی، شمسی، تلگرام) ==================
+        // برای هر بازه‌ی انتخابی، دو فایل اکسل جدا ساخته می‌شه:
+        //   ۱) «کلی» — یک برگه‌ی داشبوردی رنگی با اعداد خلاصه + عملکرد هر پرسنل (فروش،
+        //      کارکرد/تاخیر/اضافه‌کار، برداشتی) در یک جدول.
+        //   ۲) «جزئیات» — چند برگه با ریز تمام فروش‌ها، هزینه‌ها، کارکرد پرسنل (ورود/خروج/
+        //      مرخصی) و برداشتی‌های حساب‌نشده‌ی پرسنل.
+        // هر دو فایل توی Supabase Storage ذخیره می‌شن (همیشه از تب «گزارش‌های هفتگی» قابل
+        // دانلودن) و همون لحظه هر دو به تلگرام فرستاده می‌شن.
         //
-        // نکته‌ی مهم و صادقانه: چون این یک فایل تک‌صفحه‌ایه که فقط توی مرورگر کاربر اجرا می‌شه
-        // (نه روی یک سرور همیشه‌روشن)، این چک «خودکار» دقیقاً وقتی انجام می‌شه که مدیر وارد
-        // برنامه بشه — نه دقیقاً لحظه‌ی تمام‌شدن هفته حتی اگه هیچ‌کس برنامه رو باز نکرده باشه.
-        // در عمل چون مدیر معمولاً هر روز چند بار وارد می‌شه، عملاً هفته‌به‌هفته بدون نیاز به
-        // کار دستی تولید و ارسال می‌شه. برای خودکارسازی صددرصدی (حتی بدون باز کردن برنامه)
-        // باید یک Supabase Edge Function با زمان‌بند (cron) روی خود سرور Supabase تنظیم بشه.
+        // نکته‌ی صادقانه: چون این یک فایل تک‌صفحه‌ایه که فقط توی مرورگر اجرا می‌شه، چک
+        // خودکارِ «هفته‌ی گذشته» دقیقاً وقتی انجام می‌شه که مدیر وارد برنامه بشه — نه لحظه‌ی
+        // دقیق تمام‌شدن هفته حتی اگه هیچ‌کس برنامه رو باز نکرده باشه. برای خودکارسازی
+        // صددرصدی (بدون باز کردن برنامه)، فایل جدا weekly-report/index.ts که قبلاً دادم
+        // باید روی خود Supabase به‌عنوان Edge Function با Cron فعال بشه.
         // =========================================================================
 
-        // رنگ‌ها و استایل‌های مشترک گزارش هفتگی
         const WEEKLY_REPORT_COLORS = {
-            headerFill: 'FF0EA5E9',   // آبی
+            headerFill: 'FF0EA5E9',
             headerFont: 'FFFFFFFF',
-            titleFill: 'FF6366F1',    // بنفش-آبی
-            totalFill: 'FF10B981',    // سبز
-            bandFill: 'FFEFF6FF',     // آبی خیلی روشن برای ردیف‌های زوج
-            expenseHeaderFill: 'FFF97316', // نارنجی برای برگه‌ی هزینه‌ها
+            titleFill: 'FF6366F1',
+            totalFill: 'FF10B981',
+            bandFill: 'FFEFF6FF',
+            expenseHeaderFill: 'FFF97316',
+            attendanceHeaderFill: 'FF8B5CF6',
+            takeoutHeaderFill: 'FFEC4899',
             border: { style: 'thin', color: { argb: 'FFCBD5E1' } }
         };
 
@@ -9591,20 +9590,43 @@
             });
         }
 
-        // اصل ساخت فایل اکسل رنگی گزارش هفتگی — بین startISODate و endISODate (شامل هر دو روز)
-        async function generateWeeklyReportExcelBlob(startISODate, endISODate) {
-            const ok = await ensureExcelJsLoaded();
-            if (!ok || typeof ExcelJS === 'undefined') {
-                throw new Error('کتابخانه ExcelJS بارگذاری نشد. اتصال اینترنت را بررسی کنید.');
-            }
+        function attendanceTypeLabel(type) {
+            if (type === 'entry') return '🟢 ورود';
+            if (type === 'exit') return '🔴 خروج';
+            if (type === 'leave') return '🟡 مرخصی';
+            return type || '';
+        }
 
+        // ---------- محاسبه‌ی بازه‌ی هفته بر اساس افست (۰=هفته جاری تا امروز، ۱=هفته قبل، ۲=دو هفته قبل...) ----------
+        function getTehranWeekRangeByOffset(offset, refDate = new Date()) {
+            const wd = getTehranWeekdayIndex(refDate);
+            const thisWeekStartISO = getTehranISODate(new Date(refDate.getTime() - wd * 86400000));
+            const thisWeekStartNoon = new Date(thisWeekStartISO + 'T12:00:00+03:30');
+
+            if (offset === 0) {
+                return { startISODate: thisWeekStartISO, endISODate: getTehranISODate(refDate), isInProgress: true };
+            }
+            const startNoon = new Date(thisWeekStartNoon.getTime() - offset * 7 * 86400000);
+            const endNoon = new Date(thisWeekStartNoon.getTime() - (offset - 1) * 7 * 86400000 - 86400000);
+            return { startISODate: getTehranISODate(startNoon), endISODate: getTehranISODate(endNoon), isInProgress: false };
+        }
+
+        // هفته‌ی کامل شمسی گذشته (برای چک خودکار موقع ورود مدیر)
+        function getLastCompletedTehranWeekRange(refDate = new Date()) {
+            return getTehranWeekRangeByOffset(1, refDate);
+        }
+
+        // ---------- دریافت همه‌ی داده‌های لازم برای یک بازه (فروش، هزینه، کارکرد، برداشتی) ----------
+        async function fetchWeeklyReportRawData(startISODate, endISODate) {
             const { startUTC, endUTC } = tehranDateRangeToISOBounds(startISODate, endISODate);
             const jalaliRangeLabel = `${jalaliLabelForISODate(startISODate)} تا ${jalaliLabelForISODate(endISODate)}`;
 
-            const [salesRes, expensesRes, productsRes] = await Promise.all([
+            const [salesRes, expensesRes, productsRes, attendanceRes, takeoutsRes] = await Promise.all([
                 _supabase.from('sales').select('*').gte('created_at', startUTC).lt('created_at', endUTC).order('created_at', { ascending: true }),
                 _supabase.from('expenses').select('*').gte('created_at', startUTC).lt('created_at', endUTC).order('created_at', { ascending: true }),
-                _supabase.from('products').select('code, name')
+                _supabase.from('products').select('code, name'),
+                _supabase.from('attendance').select('*').gte('created_at', startUTC).lt('created_at', endUTC).order('created_at', { ascending: true }),
+                _supabase.from('personal_takeouts').select('*').gte('created_at', startUTC).lt('created_at', endUTC).order('created_at', { ascending: true })
             ]);
 
             if (salesRes.error) throw new Error('خطا در دریافت فروش: ' + salesRes.error.message);
@@ -9612,13 +9634,15 @@
 
             const sales = salesRes.data || [];
             const expenses = expensesRes.data || [];
+            const attendance = attendanceRes.error ? [] : (attendanceRes.data || []);
+            const takeouts = takeoutsRes.error ? [] : (takeoutsRes.data || []);
             const nameByCode = {};
             (productsRes.data || []).forEach(p => { nameByCode[p.code] = p.name; });
 
-            const totalSales = sales.reduce((sum, s) => sum + (Number(s.sell_price) || 0), 0);
-            const totalExpenses = expenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+            const totalSales = sales.reduce((s, r) => s + (Number(r.sell_price) || 0), 0);
+            const totalExpenses = expenses.reduce((s, r) => s + (Number(r.amount) || 0), 0);
+            const totalTakeouts = takeouts.reduce((s, r) => s + (Number(r.amount) || 0), 0);
 
-            // خلاصه فروش هر فروشنده
             const sellerMap = {};
             sales.forEach(s => {
                 const name = s.seller_name || 'نامشخص';
@@ -9628,65 +9652,144 @@
                 sellerMap[name].qty += Number(s.quantity) || 0;
             });
 
+            const productMap = {};
+            sales.forEach(s => {
+                const key = nameByCode[s.product_code] || s.product_code;
+                if (!productMap[key]) productMap[key] = { sum: 0, qty: 0 };
+                productMap[key].sum += Number(s.sell_price) || 0;
+                productMap[key].qty += Number(s.quantity) || 0;
+            });
+
+            const attendanceSellerMap = {};
+            attendance.forEach(a => {
+                const name = a.seller_name || 'نامشخص';
+                if (!attendanceSellerMap[name]) attendanceSellerMap[name] = { entries: 0, leaves: 0, delayMinutes: 0, overtimeHours: 0 };
+                if (a.type === 'entry') attendanceSellerMap[name].entries += 1;
+                if (a.type === 'leave') attendanceSellerMap[name].leaves += 1;
+                attendanceSellerMap[name].delayMinutes += Number(a.delay_minutes) || 0;
+                attendanceSellerMap[name].overtimeHours += Number(a.overtime_hours) || 0;
+            });
+
+            const takeoutSellerMap = {};
+            takeouts.forEach(t => {
+                const name = t.seller_name || 'نامشخص';
+                if (!takeoutSellerMap[name]) takeoutSellerMap[name] = { sum: 0, count: 0 };
+                takeoutSellerMap[name].sum += Number(t.amount) || 0;
+                takeoutSellerMap[name].count += 1;
+            });
+
+            // اسم همه‌ی پرسنلی که توی این هفته یا فروش داشتن، یا کارکردشون ثبت شده، یا برداشت داشتن
+            const allSellerNames = new Set([
+                ...Object.keys(sellerMap), ...Object.keys(attendanceSellerMap), ...Object.keys(takeoutSellerMap)
+            ]);
+
+            return {
+                startISODate, endISODate, jalaliRangeLabel,
+                sales, expenses, attendance, takeouts, nameByCode,
+                totalSales, totalExpenses, totalTakeouts,
+                sellerMap, productMap, attendanceSellerMap, takeoutSellerMap, allSellerNames
+            };
+        }
+
+        // ---------- فایل «کلی» — یک برگه‌ی داشبوردی رنگی ----------
+        function buildGeneralReportWorkbook(ctx) {
             const wb = new ExcelJS.Workbook();
             wb.creator = 'سیستم مدیریت غرفه فامیلی';
             wb.created = new Date();
 
-            // ---------- برگه‌ی خلاصه ----------
-            const wsSummary = wb.addWorksheet('خلاصه هفتگی', { views: [{ rightToLeft: true }] });
-            wsSummary.mergeCells('A1:D1');
-            const titleCell = wsSummary.getCell('A1');
-            titleCell.value = `📊 گزارش هفتگی — غرفه فامیلی (دره میرکی)`;
+            const ws = wb.addWorksheet('گزارش کلی هفتگی', { views: [{ rightToLeft: true }] });
+
+            ws.mergeCells('A1:E1');
+            const titleCell = ws.getCell('A1');
+            titleCell.value = '📊 گزارش کلی هفتگی — غرفه فامیلی (دره میرکی)';
             titleCell.font = { bold: true, size: 15, color: { argb: 'FFFFFFFF' } };
             titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: WEEKLY_REPORT_COLORS.titleFill } };
             titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
-            wsSummary.getRow(1).height = 30;
+            ws.getRow(1).height = 30;
 
-            wsSummary.mergeCells('A2:D2');
-            const rangeCell = wsSummary.getCell('A2');
-            rangeCell.value = `📅 از تاریخ ${jalaliLabelForISODate(startISODate)} تا تاریخ ${jalaliLabelForISODate(endISODate)}`;
+            ws.mergeCells('A2:E2');
+            const rangeCell = ws.getCell('A2');
+            rangeCell.value = `📅 از تاریخ ${jalaliLabelForISODate(ctx.startISODate)} تا تاریخ ${jalaliLabelForISODate(ctx.endISODate)}`;
             rangeCell.font = { bold: true, size: 12, color: { argb: 'FF0369A1' } };
             rangeCell.alignment = { horizontal: 'center', vertical: 'middle' };
-            wsSummary.getRow(2).height = 22;
+            ws.getRow(2).height = 22;
 
-            wsSummary.addRow([]);
-            const kpiHeaderRow = wsSummary.addRow(['شاخص', 'مقدار', '', '']);
-            styleHeaderRow(kpiHeaderRow);
+            ws.addRow([]);
+            styleHeaderRow(ws.addRow(['شاخص', 'مقدار', '', '', '']));
             const kpiRows = [
-                ['🧾 تعداد کل فاکتورهای فروش', sales.length],
-                ['💰 مجموع کل فروش (تومان)', totalSales],
-                ['🧺 تعداد ردیف‌های هزینه', expenses.length],
-                ['💸 مجموع کل هزینه‌ها (تومان)', totalExpenses],
-                ['📈 سود ناخالص تخمینی (فروش − هزینه)', totalSales - totalExpenses]
+                ['🧾 تعداد کل فاکتورهای فروش', ctx.sales.length],
+                ['💰 مجموع کل فروش (تومان)', ctx.totalSales],
+                ['🧺 تعداد ردیف‌های هزینه', ctx.expenses.length],
+                ['💸 مجموع کل هزینه‌ها (تومان)', ctx.totalExpenses],
+                ['🛒 مجموع برداشتی‌های حساب‌نشده پرسنل (تومان)', ctx.totalTakeouts],
+                ['📈 سود ناخالص تخمینی (فروش − هزینه)', ctx.totalSales - ctx.totalExpenses]
             ];
             kpiRows.forEach((r, idx) => {
-                const row = wsSummary.addRow(r);
+                const row = ws.addRow(r);
                 styleDataRow(row, idx % 2 === 0);
                 row.getCell(2).numFmt = '#,##0';
                 row.getCell(1).alignment = { horizontal: 'right', vertical: 'middle' };
             });
-            const totalRow = wsSummary.lastRow;
-            totalRow.eachCell(c => { c.font = { bold: true }; c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: WEEKLY_REPORT_COLORS.totalFill } }; c.font = { bold: true, color: { argb: 'FFFFFFFF' } }; });
+            ws.lastRow.eachCell(c => {
+                c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: WEEKLY_REPORT_COLORS.totalFill } };
+                c.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+            });
 
-            wsSummary.addRow([]);
-            const sellerHeaderRow = wsSummary.addRow(['فروشنده', 'مجموع فروش (تومان)', 'تعداد فاکتور', 'مجموع مقدار (کیلو)']);
-            styleHeaderRow(sellerHeaderRow);
-            Object.entries(sellerMap).sort((a, b) => b[1].sum - a[1].sum).forEach(([name, s], idx) => {
-                const row = wsSummary.addRow([name, s.sum, s.count, Number(s.qty.toFixed(3))]);
+            ws.addRow([]);
+            ws.mergeCells(`A${ws.rowCount + 1}:E${ws.rowCount + 1}`);
+            const perfTitle = ws.addRow(['👥 عملکرد و کارکرد هر پرسنل در این هفته', '', '', '', '']).getCell(1);
+            perfTitle.font = { bold: true, size: 12 };
+
+            styleHeaderRow(ws.addRow(['پرسنل', 'مجموع فروش (تومان)', 'تعداد فاکتور', 'روز کارکرد ثبت‌شده', 'مجموع تاخیر/اضافه‌کار (دقیقه/ساعت)', 'مجموع برداشتی (تومان)']));
+            Array.from(ctx.allSellerNames).sort((a, b) => (ctx.sellerMap[b]?.sum || 0) - (ctx.sellerMap[a]?.sum || 0)).forEach((name, idx) => {
+                const s = ctx.sellerMap[name] || { sum: 0, count: 0 };
+                const a = ctx.attendanceSellerMap[name] || { entries: 0, delayMinutes: 0, overtimeHours: 0, leaves: 0 };
+                const t = ctx.takeoutSellerMap[name] || { sum: 0 };
+                const row = ws.addRow([
+                    name,
+                    s.sum,
+                    s.count,
+                    `${a.entries.toLocaleString('fa-IR')} روز${a.leaves ? ' (' + a.leaves.toLocaleString('fa-IR') + ' مرخصی)' : ''}`,
+                    `تاخیر: ${Math.round(a.delayMinutes).toLocaleString('fa-IR')} د | اضافه‌کار: ${a.overtimeHours.toFixed(1)} س`,
+                    t.sum
+                ]);
+                styleDataRow(row, idx % 2 === 0);
+                row.getCell(2).numFmt = '#,##0';
+                row.getCell(6).numFmt = '#,##0';
+            });
+            ws.getColumn(1).width = 20;
+            ws.getColumn(2).width = 20;
+            ws.getColumn(3).width = 14;
+            ws.getColumn(4).width = 20;
+            ws.getColumn(5).width = 30;
+            ws.getColumn(6).width = 18;
+
+            ws.addRow([]);
+            styleHeaderRow(ws.addRow(['کالا', 'مجموع فروش (تومان)', 'مجموع مقدار (کیلو)', '', '']));
+            Object.entries(ctx.productMap).sort((a, b) => b[1].sum - a[1].sum).forEach(([name, p], idx) => {
+                const row = ws.addRow([name, p.sum, Number(p.qty.toFixed(3))]);
                 styleDataRow(row, idx % 2 === 0);
                 row.getCell(2).numFmt = '#,##0';
             });
-            wsSummary.columns = [{ width: 32 }, { width: 22 }, { width: 16 }, { width: 20 }];
 
-            // ---------- برگه‌ی فروش‌ها ----------
+            const fileName = `گزارش-کلی-هفتگی_${ctx.startISODate}_تا_${ctx.endISODate}.xlsx`;
+            return { workbook: wb, fileName };
+        }
+
+        // ---------- فایل «جزئیات» — چند برگه با ریز اطلاعات ----------
+        function buildDetailedReportWorkbook(ctx) {
+            const wb = new ExcelJS.Workbook();
+            wb.creator = 'سیستم مدیریت غرفه فامیلی';
+            wb.created = new Date();
+
+            // برگه فروش‌ها
             const wsSales = wb.addWorksheet('فروش‌ها', { views: [{ rightToLeft: true, state: 'frozen', ySplit: 1 }] });
-            const salesHeaderRow = wsSales.addRow(['تاریخ و ساعت', 'نوع فروش', 'کالا', 'فروشنده', 'مشتری', 'مقدار (کیلو)', 'مبلغ (تومان)']);
-            styleHeaderRow(salesHeaderRow);
-            sales.forEach((s, idx) => {
+            styleHeaderRow(wsSales.addRow(['تاریخ و ساعت', 'نوع فروش', 'کالا', 'فروشنده', 'مشتری', 'مقدار (کیلو)', 'مبلغ (تومان)']));
+            ctx.sales.forEach((s, idx) => {
                 const row = wsSales.addRow([
                     getTehranFullDateTimeString(new Date(s.created_at)),
                     s.sale_type || '',
-                    nameByCode[s.product_code] || s.product_code,
+                    ctx.nameByCode[s.product_code] || s.product_code,
                     s.seller_name || '',
                     s.customer_name || '',
                     Number(s.quantity) || 0,
@@ -9696,13 +9799,12 @@
                 row.getCell(7).numFmt = '#,##0';
             });
             wsSales.columns = [{ width: 20 }, { width: 14 }, { width: 26 }, { width: 18 }, { width: 20 }, { width: 14 }, { width: 16 }];
-            if (sales.length) wsSales.autoFilter = { from: 'A1', to: `G${sales.length + 1}` };
+            if (ctx.sales.length) wsSales.autoFilter = { from: 'A1', to: `G${ctx.sales.length + 1}` };
 
-            // ---------- برگه‌ی هزینه‌ها ----------
+            // برگه هزینه‌ها
             const wsExp = wb.addWorksheet('هزینه‌ها', { views: [{ rightToLeft: true, state: 'frozen', ySplit: 1 }] });
-            const expHeaderRow = wsExp.addRow(['تاریخ', 'دسته‌بندی', 'مبلغ (تومان)', 'ثبت‌کننده', 'توضیحات', 'پرداخت‌شده توسط']);
-            styleHeaderRow(expHeaderRow, WEEKLY_REPORT_COLORS.expenseHeaderFill);
-            expenses.forEach((e, idx) => {
+            styleHeaderRow(wsExp.addRow(['تاریخ', 'دسته‌بندی', 'مبلغ (تومان)', 'ثبت‌کننده', 'توضیحات', 'پرداخت‌شده توسط']), WEEKLY_REPORT_COLORS.expenseHeaderFill);
+            ctx.expenses.forEach((e, idx) => {
                 const row = wsExp.addRow([
                     e.expense_date || getTehranISODate(new Date(e.created_at)),
                     e.category || '',
@@ -9715,47 +9817,116 @@
                 row.getCell(3).numFmt = '#,##0';
             });
             wsExp.columns = [{ width: 16 }, { width: 18 }, { width: 16 }, { width: 18 }, { width: 34 }, { width: 22 }];
-            if (expenses.length) wsExp.autoFilter = { from: 'A1', to: `F${expenses.length + 1}` };
+            if (ctx.expenses.length) wsExp.autoFilter = { from: 'A1', to: `F${ctx.expenses.length + 1}` };
 
-            const buffer = await wb.xlsx.writeBuffer();
-            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-            const fileName = `گزارش-هفتگی_${startISODate}_تا_${endISODate}.xlsx`;
+            // برگه کارکرد پرسنل
+            const wsAtt = wb.addWorksheet('کارکرد پرسنل', { views: [{ rightToLeft: true, state: 'frozen', ySplit: 1 }] });
+            styleHeaderRow(wsAtt.addRow(['تاریخ و ساعت', 'پرسنل', 'نوع', 'تاخیر (دقیقه)', 'اختلاف خروج (دقیقه)', 'اضافه‌کار (ساعت)', 'توضیحات']), WEEKLY_REPORT_COLORS.attendanceHeaderFill);
+            ctx.attendance.forEach((a, idx) => {
+                const row = wsAtt.addRow([
+                    getTehranFullDateTimeString(new Date(a.created_at)),
+                    a.seller_name || '',
+                    attendanceTypeLabel(a.type),
+                    a.delay_minutes || 0,
+                    a.exit_diff_minutes || 0,
+                    a.overtime_hours || 0,
+                    a.note || ''
+                ]);
+                styleDataRow(row, idx % 2 === 0);
+            });
+            wsAtt.columns = [{ width: 20 }, { width: 18 }, { width: 12 }, { width: 14 }, { width: 16 }, { width: 14 }, { width: 30 }];
+            if (ctx.attendance.length) wsAtt.autoFilter = { from: 'A1', to: `G${ctx.attendance.length + 1}` };
 
-            return { blob, fileName, jalaliRangeLabel, totalSales, totalExpenses, salesCount: sales.length, expensesCount: expenses.length };
+            // برگه برداشتی‌های پرسنل
+            const wsTake = wb.addWorksheet('برداشتی‌های پرسنل', { views: [{ rightToLeft: true, state: 'frozen', ySplit: 1 }] });
+            styleHeaderRow(wsTake.addRow(['تاریخ و ساعت', 'پرسنل', 'کالا', 'وزن (کیلو)', 'مبلغ (تومان)', 'توضیحات']), WEEKLY_REPORT_COLORS.takeoutHeaderFill);
+            ctx.takeouts.forEach((t, idx) => {
+                const row = wsTake.addRow([
+                    getTehranFullDateTimeString(new Date(t.created_at)),
+                    t.seller_name || '',
+                    t.item_name || '',
+                    Number(t.weight) || 0,
+                    Number(t.amount) || 0,
+                    t.note || ''
+                ]);
+                styleDataRow(row, idx % 2 === 0);
+                row.getCell(5).numFmt = '#,##0';
+            });
+            wsTake.columns = [{ width: 20 }, { width: 18 }, { width: 22 }, { width: 12 }, { width: 16 }, { width: 30 }];
+            if (ctx.takeouts.length) wsTake.autoFilter = { from: 'A1', to: `F${ctx.takeouts.length + 1}` };
+
+            const fileName = `گزارش-جزئیات-هفتگی_${ctx.startISODate}_تا_${ctx.endISODate}.xlsx`;
+            return { workbook: wb, fileName };
         }
 
-        // تولید کامل، آپلود توی Supabase Storage، ثبت توی جدول weekly_reports، و ارسال به تلگرام
-        async function buildStoreAndSendWeeklyReport(startISODate, endISODate) {
-            const result = await generateWeeklyReportExcelBlob(startISODate, endISODate);
+        // ساخت هر دو فایل (کلی + جزئیات) برای یک بازه، به‌صورت بلاب آماده‌ی دانلود/آپلود
+        async function generateWeeklyReportFiles(startISODate, endISODate) {
+            const ok = await ensureExcelJsLoaded();
+            if (!ok || typeof ExcelJS === 'undefined') {
+                throw new Error('کتابخانه ExcelJS بارگذاری نشد. اتصال اینترنت را بررسی کنید.');
+            }
 
-            const storagePath = `${startISODate}_${endISODate}.xlsx`;
-            const { error: uploadErr } = await _supabase.storage.from(WEEKLY_REPORTS_BUCKET)
-                .upload(storagePath, result.blob, {
-                    contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                    upsert: true
-                });
-            if (uploadErr) throw new Error('خطا در آپلود فایل به Supabase Storage: ' + uploadErr.message + '\n\nمطمئن شوید باکت weekly-reports در Supabase ساخته شده و public است.');
+            const ctx = await fetchWeeklyReportRawData(startISODate, endISODate);
 
-            const { data: urlData } = _supabase.storage.from(WEEKLY_REPORTS_BUCKET).getPublicUrl(storagePath);
-            const fileUrl = urlData ? urlData.publicUrl : null;
+            const generalBuilt = buildGeneralReportWorkbook(ctx);
+            const detailedBuilt = buildDetailedReportWorkbook(ctx);
+
+            const [generalBuffer, detailedBuffer] = await Promise.all([
+                generalBuilt.workbook.xlsx.writeBuffer(),
+                detailedBuilt.workbook.xlsx.writeBuffer()
+            ]);
+
+            const xlsxType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+            return {
+                ctx,
+                general: { blob: new Blob([generalBuffer], { type: xlsxType }), fileName: generalBuilt.fileName },
+                detailed: { blob: new Blob([detailedBuffer], { type: xlsxType }), fileName: detailedBuilt.fileName }
+            };
+        }
+
+        // تولید کامل هر دو فایل، آپلود توی Supabase Storage، ثبت توی جدول weekly_reports، و ارسال هر دو به تلگرام
+        async function buildStoreAndSendWeeklyReport(startISODate, endISODate, isInProgress) {
+            const { ctx, general, detailed } = await generateWeeklyReportFiles(startISODate, endISODate);
+
+            const generalPath = `${startISODate}_${endISODate}_general.xlsx`;
+            const detailedPath = `${startISODate}_${endISODate}_detailed.xlsx`;
+            const xlsxType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+            const [uploadGeneral, uploadDetailed] = await Promise.all([
+                _supabase.storage.from(WEEKLY_REPORTS_BUCKET).upload(generalPath, general.blob, { contentType: xlsxType, upsert: true }),
+                _supabase.storage.from(WEEKLY_REPORTS_BUCKET).upload(detailedPath, detailed.blob, { contentType: xlsxType, upsert: true })
+            ]);
+            if (uploadGeneral.error) throw new Error('خطا در آپلود فایل کلی: ' + uploadGeneral.error.message + '\n\nمطمئن شوید باکت weekly-reports در Supabase ساخته شده و public است.');
+            if (uploadDetailed.error) throw new Error('خطا در آپلود فایل جزئیات: ' + uploadDetailed.error.message);
+
+            const generalUrl = _supabase.storage.from(WEEKLY_REPORTS_BUCKET).getPublicUrl(generalPath).data?.publicUrl || null;
+            const detailedUrl = _supabase.storage.from(WEEKLY_REPORTS_BUCKET).getPublicUrl(detailedPath).data?.publicUrl || null;
 
             await _supabase.from('weekly_reports').upsert([{
                 week_start_date: startISODate,
                 week_end_date: endISODate,
-                jalali_range_label: result.jalaliRangeLabel,
-                file_url: fileUrl,
-                file_name: result.fileName,
-                total_sales: result.totalSales,
-                sales_count: result.salesCount,
-                total_expenses: result.totalExpenses,
-                expenses_count: result.expensesCount,
+                jalali_range_label: ctx.jalaliRangeLabel,
+                file_url: generalUrl,
+                file_name: general.fileName,
+                general_file_url: generalUrl,
+                general_file_name: general.fileName,
+                detailed_file_url: detailedUrl,
+                detailed_file_name: detailed.fileName,
+                total_sales: ctx.totalSales,
+                sales_count: ctx.sales.length,
+                total_expenses: ctx.totalExpenses,
+                expenses_count: ctx.expenses.length,
+                total_takeouts: ctx.totalTakeouts,
+                is_in_progress: !!isInProgress,
                 created_at: new Date().toISOString()
             }], { onConflict: 'week_start_date' });
 
-            const caption = `📊 گزارش هفتگی غرفه فامیلی\n📅 از ${jalaliLabelForISODate(startISODate)} تا ${jalaliLabelForISODate(endISODate)}\n\n🧾 تعداد فاکتور فروش: ${result.salesCount.toLocaleString('fa-IR')}\n💰 مجموع فروش: ${result.totalSales.toLocaleString('fa-IR')} تومان\n💸 مجموع هزینه‌ها: ${result.totalExpenses.toLocaleString('fa-IR')} تومان`;
-            await sendTelegramDocument(result.blob, result.fileName, caption);
+            const baseCaption = `📅 از ${jalaliLabelForISODate(startISODate)} تا ${jalaliLabelForISODate(endISODate)}${isInProgress ? '\n⏳ توجه: این هفته هنوز تمام نشده — این گزارش تا همین لحظه‌ست' : ''}\n\n🧾 تعداد فاکتور فروش: ${ctx.sales.length.toLocaleString('fa-IR')}\n💰 مجموع فروش: ${ctx.totalSales.toLocaleString('fa-IR')} تومان\n💸 مجموع هزینه‌ها: ${ctx.totalExpenses.toLocaleString('fa-IR')} تومان\n🛒 مجموع برداشتی پرسنل: ${ctx.totalTakeouts.toLocaleString('fa-IR')} تومان`;
 
-            return result;
+            await sendTelegramDocument(general.blob, general.fileName, `📊 گزارش کلی هفتگی غرفه فامیلی\n${baseCaption}`);
+            await sendTelegramDocument(detailed.blob, detailed.fileName, `📋 گزارش با جزئیات هفتگی غرفه فامیلی\n${baseCaption}`);
+
+            return { jalaliRangeLabel: ctx.jalaliRangeLabel, totalSales: ctx.totalSales, totalExpenses: ctx.totalExpenses, totalTakeouts: ctx.totalTakeouts, salesCount: ctx.sales.length, expensesCount: ctx.expenses.length };
         }
 
         // وقتی مدیر وارد برنامه می‌شه صدا زده می‌شه — اگه برای «آخرین هفته‌ی کامل‌شده» هنوز
@@ -9766,8 +9937,8 @@
                 const { data: existing } = await _supabase.from('weekly_reports').select('id').eq('week_start_date', startISODate).maybeSingle();
                 if (existing) return; // قبلاً برای این هفته ساخته شده
 
-                const result = await buildStoreAndSendWeeklyReport(startISODate, endISODate);
-                showToast(`📊 گزارش هفتگی (${result.jalaliRangeLabel}) به‌صورت خودکار ساخته و به تلگرام ارسال شد. از تب «گزارش‌های هفتگی» هم قابل دانلوده.`);
+                const result = await buildStoreAndSendWeeklyReport(startISODate, endISODate, false);
+                showToast(`📊 گزارش‌های هفتگی (${result.jalaliRangeLabel}) به‌صورت خودکار ساخته و به تلگرام ارسال شد. از تب «گزارش‌های هفتگی» هم قابل دانلوده.`);
                 const tab = document.getElementById('weeklyReportsTab');
                 if (tab && tab.classList.contains('active')) loadWeeklyReportsList();
             } catch (e) {
@@ -9775,23 +9946,39 @@
             }
         }
 
-        // دکمه‌ی دستی توی تب گزارش‌های هفتگی — برای ساخت/بازساخت فوری هفته‌ی گذشته
-        async function manualGenerateLastWeekReport() {
+        // ---------- انتخاب بازه‌ی هفته توسط مدیر (هفته جاری / هفته قبل / دو هفته قبل) ----------
+        let selectedWeeklyReportOffset = 1;
+
+        function selectWeeklyReportOffset(offset) {
+            selectedWeeklyReportOffset = offset;
+            [0, 1, 2].forEach(o => {
+                const btn = document.getElementById('wrOffsetBtn_' + o);
+                if (btn) btn.classList.toggle('active', o === offset);
+            });
+            const { startISODate, endISODate, isInProgress } = getTehranWeekRangeByOffset(offset);
+            const preview = document.getElementById('weeklyReportRangePreview');
+            if (preview) {
+                preview.innerHTML = `📅 از تاریخ <b>${jalaliLabelForISODate(startISODate)}</b> تا تاریخ <b>${jalaliLabelForISODate(endISODate)}</b>${isInProgress ? ' <span style="color:#fbbf24;">(هنوز تمام نشده)</span>' : ''}`;
+            }
+        }
+
+        async function manualGenerateWeeklyReport() {
             const btn = document.getElementById('manualWeeklyReportBtn');
-            if (btn) { btn.disabled = true; btn.textContent = '⏳ در حال ساخت گزارش...'; }
+            if (btn) { btn.disabled = true; btn.textContent = '⏳ در حال ساخت هر دو گزارش...'; }
             try {
-                const { startISODate, endISODate } = getLastCompletedTehranWeekRange();
-                const result = await buildStoreAndSendWeeklyReport(startISODate, endISODate);
-                showToast(`✅ گزارش هفته‌ی ${result.jalaliRangeLabel} ساخته شد، توی سایت ذخیره شد و به تلگرام ارسال شد.`);
+                const { startISODate, endISODate, isInProgress } = getTehranWeekRangeByOffset(selectedWeeklyReportOffset);
+                const result = await buildStoreAndSendWeeklyReport(startISODate, endISODate, isInProgress);
+                showToast(`✅ گزارش کلی و جزئیات هفته‌ی ${result.jalaliRangeLabel} ساخته شد، توی سایت ذخیره شد و هر دو به تلگرام ارسال شدن.`);
                 loadWeeklyReportsList();
             } catch (e) {
                 showToast('❌ خطا در ساخت گزارش هفتگی: ' + e.message);
             } finally {
-                if (btn) { btn.disabled = false; btn.textContent = '🔄 ساخت/بازساخت گزارش هفته‌ی گذشته'; }
+                if (btn) { btn.disabled = false; btn.textContent = '📊 ساخت و ارسال گزارش‌های این بازه'; }
             }
         }
 
         async function loadWeeklyReportsList() {
+            selectWeeklyReportOffset(selectedWeeklyReportOffset); // برای به‌روز نگه‌داشتن پیش‌نمایش تاریخ هر بار که وارد تب می‌شی
             const box = document.getElementById('weeklyReportsList');
             if (!box) return;
             box.innerHTML = '<div class="skeleton-block skeleton-card"></div>';
@@ -9809,28 +9996,32 @@
 
             box.innerHTML = data.map(r => `
                 <div class="report-card">
-                    <h3>📅 ${r.jalali_range_label || (r.week_start_date + ' تا ' + r.week_end_date)}</h3>
+                    <h3>📅 ${r.jalali_range_label || (r.week_start_date + ' تا ' + r.week_end_date)} ${r.is_in_progress ? '<span style="font-size:10px; color:#fbbf24;">(تا همین لحظه)</span>' : ''}</h3>
                     <p>🧾 ${Number(r.sales_count || 0).toLocaleString('fa-IR')} فاکتور فروش — 💰 ${Number(r.total_sales || 0).toLocaleString('fa-IR')} تومان</p>
                     <p>💸 ${Number(r.expenses_count || 0).toLocaleString('fa-IR')} ردیف هزینه — ${Number(r.total_expenses || 0).toLocaleString('fa-IR')} تومان</p>
-                    <div style="display:flex; gap:6px; margin-top:6px;">
-                        ${r.file_url ? `<a href="${r.file_url}" target="_blank" class="row-btn confirm-btn" style="flex:1; padding:5px 8px; font-size:11px; text-align:center; text-decoration:none;">⬇️ دانلود اکسل</a>` : ''}
-                        <button class="row-btn fill-btn" style="flex:1; padding:5px 8px; font-size:11px;" onclick="resendWeeklyReportToTelegram('${r.week_start_date}', '${r.week_end_date}')">📨 ارسال دوباره به تلگرام</button>
+                    ${r.total_takeouts ? `<p>🛒 برداشتی پرسنل: ${Number(r.total_takeouts).toLocaleString('fa-IR')} تومان</p>` : ''}
+                    <div style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;">
+                        ${r.general_file_url || r.file_url ? `<a href="${r.general_file_url || r.file_url}" target="_blank" class="row-btn confirm-btn" style="flex:1; min-width:110px; padding:5px 8px; font-size:11px; text-align:center; text-decoration:none;">⬇️ دانلود گزارش کلی</a>` : ''}
+                        ${r.detailed_file_url ? `<a href="${r.detailed_file_url}" target="_blank" class="row-btn edit-btn" style="flex:1; min-width:110px; padding:5px 8px; font-size:11px; text-align:center; text-decoration:none;">⬇️ دانلود جزئیات</a>` : ''}
+                        <button class="row-btn fill-btn" style="flex:1; min-width:110px; padding:5px 8px; font-size:11px;" onclick="resendWeeklyReportToTelegram('${r.week_start_date}', '${r.week_end_date}')">📨 ارسال دوباره به تلگرام</button>
                     </div>
                 </div>
             `).join('');
         }
 
         async function resendWeeklyReportToTelegram(startISODate, endISODate) {
-            showToast('⏳ در حال ساخت دوباره‌ی فایل و ارسال به تلگرام...');
+            showToast('⏳ در حال ساخت دوباره‌ی فایل‌ها و ارسال به تلگرام...');
             try {
-                const result = await generateWeeklyReportExcelBlob(startISODate, endISODate);
-                const caption = `📊 گزارش هفتگی غرفه فامیلی (ارسال مجدد)\n📅 از ${jalaliLabelForISODate(startISODate)} تا ${jalaliLabelForISODate(endISODate)}\n\n🧾 تعداد فاکتور فروش: ${result.salesCount.toLocaleString('fa-IR')}\n💰 مجموع فروش: ${result.totalSales.toLocaleString('fa-IR')} تومان\n💸 مجموع هزینه‌ها: ${result.totalExpenses.toLocaleString('fa-IR')} تومان`;
-                const ok = await sendTelegramDocument(result.blob, result.fileName, caption);
-                showToast(ok ? '✅ دوباره به تلگرام ارسال شد.' : '❌ ارسال به تلگرام انجام نشد — تنظیمات تلگرام رو توی تب «تنظیمات تلگرام» بررسی کن.');
+                const { ctx, general, detailed } = await generateWeeklyReportFiles(startISODate, endISODate);
+                const baseCaption = `📅 از ${jalaliLabelForISODate(startISODate)} تا ${jalaliLabelForISODate(endISODate)} (ارسال مجدد)\n\n🧾 تعداد فاکتور فروش: ${ctx.sales.length.toLocaleString('fa-IR')}\n💰 مجموع فروش: ${ctx.totalSales.toLocaleString('fa-IR')} تومان\n💸 مجموع هزینه‌ها: ${ctx.totalExpenses.toLocaleString('fa-IR')} تومان\n🛒 مجموع برداشتی پرسنل: ${ctx.totalTakeouts.toLocaleString('fa-IR')} تومان`;
+                const ok1 = await sendTelegramDocument(general.blob, general.fileName, `📊 گزارش کلی هفتگی\n${baseCaption}`);
+                const ok2 = await sendTelegramDocument(detailed.blob, detailed.fileName, `📋 گزارش جزئیات هفتگی\n${baseCaption}`);
+                showToast((ok1 && ok2) ? '✅ هر دو فایل دوباره به تلگرام ارسال شد.' : '❌ ارسال به تلگرام کامل انجام نشد — تنظیمات تلگرام رو توی تب «تنظیمات تلگرام» بررسی کن.');
             } catch (e) {
                 showToast('❌ خطا: ' + e.message);
             }
         }
+
 
         function switchReportMode(key, mode) {
             const singleBox = document.getElementById('singleDateBox_' + key);
