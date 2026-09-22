@@ -12,7 +12,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v58 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v59 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="icon" href="icon-192.png">
@@ -529,6 +529,17 @@
             border: 2px solid #ef4444;
             color: #fecaca;
             animation: escalatedPulse 1.1s ease-in-out infinite;
+        }
+        #trialGuideBanner {
+            background: rgba(34, 211, 238, 0.12);
+            border: 1px solid rgba(34, 211, 238, 0.45);
+            color: #a5f3fc;
+            border-radius: 12px;
+            padding: 11px;
+            font-size: 12px;
+            margin-bottom: 10px;
+            text-align: right;
+            line-height: 1.9;
         }
         @keyframes escalatedPulse {
             0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.55); }
@@ -1148,6 +1159,9 @@
 
     <!-- یادآوری خودکار ورود/خروج فراموش‌شده -->
     <div class="reminder-banner" id="attendanceReminderBanner"></div>
+
+    <!-- راهنمای مخصوص حساب آزمایشی: توضیح هر بخش، مخصوص نیروی تازه‌کاری که دارد یاد می‌گیرد -->
+    <div id="trialGuideBanner" style="display:none;"></div>
 
     <!-- مرکز هشدار موجودی مخصوص مدیر -->
     <div id="adminAlertPanel" style="display:none;"></div>
@@ -2164,7 +2178,7 @@
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v58 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v59 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
 
     <script>
         function toggleLoginPasswordVisibility() {
@@ -2702,6 +2716,14 @@
         let currentRole = "";
         let currentUserLabel = "";
         let currentSessionUser = null;
+
+        // --- تشخیص حساب آزمایشی (نیروی تازه‌استخدام در دوره‌ی آموزشی) ---
+        // برای این حساب‌ها، محدودیت‌های سخت‌گیرانه‌ی ورود/خروج (مثل مسدودشدن ثبت، اجبار به نوشتن
+        // دلیل تاخیر، یا گزارش خودکار به مدیر) اعمال نمی‌شود؛ چون هدف فقط یادگیری و تمرین کار با
+        // برنامه است، نه ارزیابی واقعی عملکرد.
+        function isTrialAccount() {
+            return !!(currentSessionUser && currentSessionUser.trial_expires_at);
+        }
 
         // --- بارکدخوان با دوربین (تشخیص خودکار کالا + وزن مثل صندوق فروشگاهی) ---
         // فرمت بارکد لیبل ترازوهای فروشگاه: ۷ رقم اول = کد کالا، ۵ رقم بعدی = وزن به گرم، رقم آخر = چک‌دیجیت
@@ -4202,6 +4224,8 @@
             const reminderPanel = document.getElementById('attendanceReminderBanner');
             reminderPanel.style.display = 'none';
             reminderPanel.innerHTML = '';
+            const trialBanner = document.getElementById('trialGuideBanner');
+            if (trialBanner) { trialBanner.style.display = 'none'; trialBanner.innerHTML = ''; }
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.style.display = 'none';
                 btn.classList.remove('active');
@@ -4243,6 +4267,40 @@
             if (tab === 'saleEkala') { renderQuickPickButtons('ekala'); loadRecentCustomers(); }
             if (tab === 'saleSausage') { renderQuickPickButtons('sausage'); loadRecentCustomers(); }
             if (tab === 'attendance') { syncAttendanceTypeSelector(); loadMyLeaveRecords(); checkAttendanceReminders(); }
+
+            updateTrialGuideBanner(tab);
+        }
+
+        // --- راهنمای مخصوص حساب آزمایشی: توضیح مختصر هر بخش، فقط برای نیروی تازه‌کاری که دارد یاد می‌گیرد ---
+        const TRIAL_TAB_GUIDES = {
+            sale: '🧀 اینجا فروش لبنیات رو ثبت می‌کنی: کالا رو انتخاب کن، وزن/تعداد و قیمت رو وارد کن و بزن «ثبت فروش». با خیال راحت چند تا فروش آزمایشی بزن تا دستت بیاد؛ اینجا هیچ‌چیزی برای مدیر «اشتباه» حساب نمی‌شه.',
+            saleEkala: '🛒 همینجا فروش‌های اکالا (فروش آنلاین/ارسالی) رو جدا از فروش حضوری ثبت می‌کنی. روال دقیقاً مثل فروش عادیه، فقط برای اینکه گزارش‌ها قاطی نشن جداست.',
+            saleSausage: '🌭 اینجا مخصوص ثبت فروش سوسیس و کالباسه. همون روال فروش لبنیات رو اینجا هم امتحان کن.',
+            attendance: '⏰ اینجا ورود و خروج شیفتت رو ثبت می‌کنی. چون حساب تو آزمایشیه، هر ساعتی که بزنی مشکلی نداره و به مدیر گزارش نمی‌شه — فقط تمرین کن که بلد باشی سر وقت واقعی درست انجامش بدی.',
+            message: '📩 اگه سوالی داشتی یا چیزی کم بود (مثلاً کسری یه کالا)، از همینجا برای مدیر پیام بفرست. همین الان یه پیام آزمایشی بفرست تا ببینی چطوریه.',
+            inbox: '📥 پیام‌هایی که مدیر مخصوص خودت (یا برای همه) فرستاده اینجا میاد. هر پیام جدیدی بیاد، همینجا می‌بینیش.',
+            booth: '🧊 اینجا موجودی یخچال/غرفه رو می‌بینی — چقدر از هر کالا الان جلوی دستته.',
+            purchaseOrders: '🧾 اگه کالایی کم داشتی و باید از انبار اصلی سفارش بدی، از همینجا سفارش خرید ثبت کن.',
+            product: '➕ از اینجا می‌تونی کالای جدید تعریف کنی (اسم، قیمت خرید/فروش و واحد اندازه‌گیری).',
+            inventory: '📦 اینجا کل موجودی انبار اصلی (نه فقط غرفه) رو می‌بینی.',
+            report: '📊 گزارش فروش خودت (امروز، این هفته یا هر بازه‌ای که بخوای) اینجا نشون داده می‌شه.',
+            debtLedger: '📒 اگه به مشتری‌ای نسیه دادی، اینجا ثبتش کن تا بدهی‌ها یادت نره.',
+            personalTakeout: '🛒 اگه از موجودی غرفه چیزی برای خودت برداشتی (نه فروش)، از همینجا ثبتش کن تا حساب‌ها درست بمونه.',
+            salary: '💰 تاریخچه‌ی واریزی‌های حقوقی که مدیر برات ثبت کرده، فقط مال خودت رو اینجا می‌بینی.',
+            expenses: '📒 اگه از جیب خودت یه چیزی برای غرفه خریدی (مثلاً دستکش یا ظرف)، اینجا ثبتش کن تا مدیر بدونه باید بهت پس بده.',
+            myAccount: '⚙️ اطلاعات حساب کاربری خودت (رمز عبور و مشخصات) رو از همینجا مدیریت می‌کنی.'
+        };
+
+        function updateTrialGuideBanner(tab) {
+            const banner = document.getElementById('trialGuideBanner');
+            if (!banner) return;
+            if (!isTrialAccount() || !TRIAL_TAB_GUIDES[tab]) {
+                banner.style.display = 'none';
+                banner.innerHTML = '';
+                return;
+            }
+            banner.style.display = 'block';
+            banner.innerHTML = `🧪 <b>راهنمای حساب آزمایشی</b> — ${TRIAL_TAB_GUIDES[tab]}`;
         }
 
         // =========================================================================
@@ -5803,9 +5861,10 @@
 
             if (!hasEntry && nowMinutes >= (startMinutes + reminderAfter)) {
                 const lateBy = nowMinutes - startMinutes;
-                const isEscalated = lateBy > settings.maxDelay; // یعنی از حد مجاز مدیر هم گذشته — هشدار شدیدتر لازم است
+                const trialMode = isTrialAccount();
+                const isEscalated = lateBy > settings.maxDelay && !trialMode; // یعنی از حد مجاز مدیر هم گذشته — هشدار شدیدتر لازم است (حساب آزمایشی هیچ‌وقت تشدید نمی‌شود)
                 panel.classList.toggle('escalated', isEscalated);
-                panel.innerHTML = `${isEscalated ? '🚨 <b>هشدار جدی تاخیر!</b>' : '⛔ <b>هشدار تاخیر:</b>'} شیفت شما از ساعت ${shiftStart} شروع شده و شما حدود ${lateBy} دقیقه تاخیر دارید و هنوز ورودتان را ثبت نکرده‌اید!${isEscalated ? ` این مقدار از حداکثر تاخیر مجاز (${settings.maxDelay} دقیقه) هم گذشته و به مدیر گزارش خواهد شد.` : ''} هرچه دیرتر ثبت کنید، تاخیر بیشتری برای مدیر گزارش می‌شود — همین الان این کار را انجام دهید:
+                panel.innerHTML = `${isEscalated ? '🚨 <b>هشدار جدی تاخیر!</b>' : '⛔ <b>هشدار تاخیر:</b>'} شیفت شما از ساعت ${shiftStart} شروع شده و شما حدود ${lateBy} دقیقه تاخیر دارید و هنوز ورودتان را ثبت نکرده‌اید!${isEscalated ? ` این مقدار از حداکثر تاخیر مجاز (${settings.maxDelay} دقیقه) هم گذشته و به مدیر گزارش خواهد شد.` : (trialMode ? ' این فقط یک حساب تمرینی است، پس نگران نباشید — هر وقت آماده بودید ثبت کنید تا یاد بگیرید:' : '')} ${trialMode ? '' : 'هرچه دیرتر ثبت کنید، تاخیر بیشتری برای مدیر گزارش می\u200cشود — همین الان این کار را انجام دهید:'}
                     <br>۱) روی تب «⏰ حضور و غیاب» بزنید
                     <br>۲) در «نوع ثبت»، گزینه «🟢 ثبت ورود به شیفت» را انتخاب کنید
                     <br>۳) یک عکس از خودتان یا داخل غرفه بگیرید (اگر عکس نشد، از دکمه «📍 استفاده از موقعیت مکانی» استفاده کنید)
@@ -5849,9 +5908,10 @@
 
             if (hasEntry && !hasExit && nowMinutes >= (endMinutes + reminderAfter)) {
                 const lateBy = nowMinutes - endMinutes;
-                const isEscalated = lateBy > settings.maxDelay;
+                const trialMode2 = isTrialAccount();
+                const isEscalated = lateBy > settings.maxDelay && !trialMode2;
                 panel.classList.toggle('escalated', isEscalated);
-                panel.innerHTML = `${isEscalated ? '🚨 <b>هشدار جدی!</b>' : '⏰ <b>یادآوری:</b>'} ساعت پایان شیفت شما (${shiftEnd}) گذشته (حدود ${lateBy} دقیقه) و هنوز خروجتان را ثبت نکرده‌اید!${isEscalated ? ` این مقدار از حد مجاز (${settings.maxDelay} دقیقه) هم گذشته و به مدیر گزارش خواهد شد.` : ''} لطفاً همین الان:
+                panel.innerHTML = `${isEscalated ? '🚨 <b>هشدار جدی!</b>' : '⏰ <b>یادآوری:</b>'} ساعت پایان شیفت شما (${shiftEnd}) گذشته (حدود ${lateBy} دقیقه) و هنوز خروجتان را ثبت نکرده‌اید!${isEscalated ? ` این مقدار از حد مجاز (${settings.maxDelay} دقیقه) هم گذشته و به مدیر گزارش خواهد شد.` : (trialMode2 ? ' این فقط یک حساب تمرینی است — نگران نباشید، فقط برای یادگیری ثبت کنید.' : '')} لطفاً همین الان:
                     <br>۱) روی تب «⏰ حضور و غیاب» بزنید
                     <br>۲) در «نوع ثبت»، گزینه «🔴 ثبت خروج از شیفت» را انتخاب کنید
                     <br>۳) عکس یا موقعیت مکانی را ثبت کنید و روی دکمه «ثبت در سیستم حضور و غیاب» بزنید
@@ -6706,7 +6766,7 @@
             // --- محدوده‌ی مجاز زمانی برای ثبت ورود/خروج (تنظیم‌شده توسط مدیر) ---
             // خارج از این محدوده، اصلاً ثبت انجام نمی‌شود؛ فقط یک پیام هشدار برای مدیر می‌رود
             // که فلان فروشنده در فلان ساعت خواسته این کار را انجام دهد.
-            if (appliesShiftTiming && (type === 'entry' || type === 'exit') && !isMakeupExit) {
+            if (appliesShiftTiming && (type === 'entry' || type === 'exit') && !isMakeupExit && !isTrialAccount()) {
                 const [hNowB, mNowB] = timeStrNow.split(':').map(Number);
                 const nowMinutesB = hNowB * 60 + mNowB;
 
@@ -6831,7 +6891,7 @@
             // ثبت داره، پس بلاک نشده)، حتماً باید دلیلش رو بنویسه — این دلیل هم داخل توضیحات خود
             // ثبت ذخیره می‌شه و هم عیناً برای مدیر می‌ره، تا مدیر همیشه دلیل واقعی رو داشته باشه
             let lateReasonText = null;
-            if (type === 'entry' && delayMinutes !== null && delayMinutes > settings.maxDelay) {
+            if (type === 'entry' && delayMinutes !== null && delayMinutes > settings.maxDelay && !isTrialAccount()) {
                 do {
                     lateReasonText = window.prompt(`⛔ شما ${delayMinutes} دقیقه از حد مجاز (${settings.maxDelay} دقیقه) تاخیر دارید.\n\nلطفاً دلیل تاخیر را بنویسید (این پیام عیناً برای مدیر ارسال می‌شود) — نوشتن دلیل الزامی است:`);
                     if (lateReasonText === null) {
@@ -6877,7 +6937,7 @@
                 if (submitBtn) { submitBtn.innerText = '⏳ در حال ثبت...'; }
             }
 
-            if (type === 'entry' && delayMinutes !== null && delayMinutes > settings.maxDelay) {
+            if (type === 'entry' && delayMinutes !== null && delayMinutes > settings.maxDelay && !isTrialAccount()) {
                 const overBy = delayMinutes - settings.maxDelay;
                 await _supabase.from('messages').insert([{
                     sender: "سیستم خودکار تاخیر",
@@ -6889,7 +6949,7 @@
                 sendPushNotificationToRole('⚠️ هشدار تاخیر', `${currentUserLabel} با ${delayMinutes} دقیقه تاخیر (${overBy} دقیقه بیش از حد مجاز) وارد شد. دلیل: ${lateReasonText || '—'}`, 'admin');
             }
 
-            if (type === 'exit' && exitDiffMinutes !== null && exitDiffMinutes < -settings.maxDelay) {
+            if (type === 'exit' && exitDiffMinutes !== null && exitDiffMinutes < -settings.maxDelay && !isTrialAccount()) {
                 const earlyBy = Math.abs(exitDiffMinutes) - settings.maxDelay;
                 await _supabase.from('messages').insert([{
                     sender: "سیستم خودکار خروج زودهنگام",
@@ -6946,10 +7006,19 @@
                     sendPushNotificationToRole('🏖️ درخواست مرخصی', `${currentUserLabel}: ${leaveReason}`, 'admin');
                 }
 
+                const trialMode = isTrialAccount();
+
                 if (type === 'entry' && delayMinutes !== null) {
                     successMsg += `\n🕗 ساعت مقرر شروع شیفت شما: ${targetStartTime}`;
                     const ENTRY_EARLY_SANITY_CAP = 60; // بیش از این زودتر بودن، دیگه "زودتر اومدن خوب" نیست، احتمالاً اشتباه ثبت شده
-                    if (delayMinutes > settings.maxDelay) {
+                    if (trialMode) {
+                        // حساب آزمایشی: فقط برای یادگیری، هیچ هشدار یا گزارشی به مدیر نمی‌رود
+                        if (delayMinutes === 0) {
+                            successMsg += `\n\n🎉 دقیقاً سر ساعت مقرر (${targetStartTime}) ثبت کردید. آفرین!`;
+                        } else {
+                            successMsg += `\n\n🧪 این یک حساب تمرینی/آزمایشی است، پس تاخیر یا زودتر آمدن اصلاً برای مدیر گزارش نمی‌شود و مهم نیست — فقط برای تمرین ثبت ورود/خروج است.`;
+                        }
+                    } else if (delayMinutes > settings.maxDelay) {
                         const overBy2 = delayMinutes - settings.maxDelay;
                         const lateCount = await countRecentAttendanceIssues('entry', settings.maxDelay);
                         successMsg += `\n\n⛔ هشدار تاخیر: امروز شما دقیقاً ${delayMinutes} دقیقه تاخیر داشتید (${overBy2} دقیقه بیشتر از حد مجاز ${settings.maxDelay} دقیقه‌ای که مدیر تعیین کرده).\nلطفاً دیگر تکرار نشود؛ این تاخیر برای مدیر گزارش شد.${lateCount > 1 ? `\n📊 این ${lateCount.toLocaleString('fa-IR')}اُمین باری است که این ماه دیر رسیده‌اید.` : ''}`;
@@ -6977,7 +7046,13 @@
                 if (type === 'exit' && exitDiffMinutes !== null) {
                     successMsg += `\n🕗 ساعت مقرر پایان شیفت شما: ${targetEndTime}`;
                     const EXIT_LATE_SANITY_CAP = 240; // بیش از ۴ ساعت دیرتر از پایان شیفت، دیگه "اضافه‌کاری خوب" نیست، احتمالاً اشتباه ثبت شده
-                    if (exitDiffMinutes < -settings.maxDelay) {
+                    if (trialMode) {
+                        if (exitDiffMinutes === 0) {
+                            successMsg += `\n\n🎉 دقیقاً سر ساعت مقرر (${targetEndTime}) ثبت کردید. آفرین!`;
+                        } else {
+                            successMsg += `\n\n🧪 این یک حساب تمرینی/آزمایشی است، پس زودتر یا دیرتر رفتن اصلاً برای مدیر گزارش نمی‌شود و مهم نیست — فقط برای تمرین ثبت ورود/خروج است.`;
+                        }
+                    } else if (exitDiffMinutes < -settings.maxDelay) {
                         const earlyBy2 = Math.abs(exitDiffMinutes) - settings.maxDelay;
                         const earlyCount = await countRecentAttendanceIssues('exit', settings.maxDelay);
                         successMsg += `\n\n⛔ هشدار خروج زودهنگام: شما دقیقاً ${Math.abs(exitDiffMinutes)} دقیقه زودتر از ساعت مقرر خارج شدید (${earlyBy2} دقیقه بیشتر از حد مجاز ${settings.maxDelay} دقیقه‌ای که مدیر تعیین کرده). لطفاً دیگر تکرار نشود؛ این موضوع برای مدیر گزارش شد.${earlyCount > 1 ? `\n📊 این ${earlyCount.toLocaleString('fa-IR')}اُمین باری است که این ماه زودتر رفته‌اید.` : ''}`;
