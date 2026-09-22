@@ -12,7 +12,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v57 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v58 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="icon" href="icon-192.png">
@@ -2068,8 +2068,7 @@
         <div id="salaryAdminForm" style="display:none;">
             <label>انتخاب فروشنده:</label>
             <select id="salaryTargetSeller">
-                <option value="فروشنده صبح">فروشنده صبح</option>
-                <option value="فروشنده شب">فروشنده شب</option>
+                <option value="">در حال دریافت لیست پرسنل...</option>
             </select>
             <label>مبلغ واریزی (تومان):</label>
             <input type="number" id="salaryAmount" placeholder="مثلاً 15000000">
@@ -2165,7 +2164,7 @@
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v57 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v58 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
 
     <script>
         function toggleLoginPasswordVisibility() {
@@ -4141,12 +4140,10 @@
                     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
                         const msg = payload.new;
                         if (!msg) return;
-                        const myLabel = roleLabels[currentRole];
                         const myUsername = currentSessionUser ? currentSessionUser.username : null;
                         const isForMe = (currentRole === 'admin' && msg.recipient === 'admin')
                             || (currentRole !== 'admin' && (
                                 msg.recipient === 'all'
-                                || msg.recipient === myLabel // سازگاری با پیام‌های قدیمی که با لیبل شیفت ارسال شده بودند
                                 || (myUsername && msg.recipient === myUsername)
                             ));
                         if (!isForMe) return;
@@ -5312,11 +5309,11 @@
                 query = query.eq('recipient', 'admin');
             } else {
                 // فیلتر دقیق بر اساس username همین فرد (نه لیبل شیفت)، تا وقتی چند نفر یک شیفت را دارند
-                // پیام‌های اختصاصی فقط به همان یک نفر برسد. برای سازگاری با پیام‌های قدیمی‌تر که با
-                // لیبل شیفت (مثلاً «فروشنده صبح») ارسال شده بودند، آن حالت هم به‌عنوان fallback چک می‌شود.
+                // (مثلاً یک فروشنده اصلی و یک حساب آزمایشی)، پیام‌های اختصاصی فقط به همان یک نفر برسد.
+                // توجه: دیگر لیبل شیفت (مثلاً «فروشنده صبح») به‌عنوان fallback چک نمی‌شود، چون باعث
+                // می‌شد پیام‌های ارسالی برای یک نفر، برای همه‌ی افراد همان شیفت هم نمایش داده شود.
                 const myUsername = currentSessionUser ? currentSessionUser.username : null;
-                const myRoleLabel = roleLabels[currentRole];
-                const orParts = ['recipient.eq.all', `recipient.eq.${myRoleLabel}`];
+                const orParts = ['recipient.eq.all'];
                 if (myUsername) orParts.push(`recipient.eq.${myUsername}`);
                 query = query.or(orParts.join(','));
             }
@@ -11501,11 +11498,54 @@
         }
 
         // ================== واریز حقوق ==================
+        // لیست گیرنده‌های ممکن برای واریز حقوق: هر فرد جداگانه (نه فقط بر اساس شیفت)، دقیقاً به همان
+        // شیوه‌ی «ارسال پیام به پرسنل»، چون ممکن است چند نفر (مثلاً یک فروشنده اصلی و یک حساب آزمایشی)
+        // هم‌زمان یک شیفت را داشته باشند و نباید واریزی یکی، توی تاریخچه‌ی آن یکی دیگر هم دیده شود.
+        async function loadSalaryTargets() {
+            const select = document.getElementById('salaryTargetSeller');
+            if (!select) return;
+
+            const previousValue = select.value;
+            select.innerHTML = '';
+
+            const { data: sellers, error } = await _supabase.rpc('admin_list_sellers');
+            if (error || !sellers) {
+                select.innerHTML = '<option value="">❌ خطا در دریافت لیست پرسنل</option>';
+                return;
+            }
+
+            sellers
+                .filter(s => !s.is_terminated)
+                .forEach(s => {
+                    const roleLabel = (s.role === 'evening_seller') ? 'فروشنده شب' : 'فروشنده صبح';
+                    const trialTag = s.trial_expires_at ? ' 🧪 آزمایشی' : '';
+                    // مقدار واقعی که ذخیره می‌شود، دقیقاً همان برچسب اختصاصی این یک نفر است
+                    // (همان قالبی که در فروش/حضور و غیاب هم برای این فرد استفاده می‌شود)
+                    const uniqueLabel = roleLabel + ' - ' + (s.full_name || s.username);
+                    const opt = document.createElement('option');
+                    opt.value = uniqueLabel;
+                    opt.textContent = `👤 ${s.full_name || s.username} (${roleLabel}${trialTag})`;
+                    select.appendChild(opt);
+                });
+
+            if (select.options.length === 0) {
+                select.innerHTML = '<option value="">هیچ پرسنلی ثبت‌نام نکرده</option>';
+                return;
+            }
+
+            if (previousValue && Array.from(select.options).some(o => o.value === previousValue)) {
+                select.value = previousValue;
+            }
+        }
+
         async function submitSalaryPayment() {
             const target = document.getElementById('salaryTargetSeller').value;
             const amount = parseFloat(document.getElementById('salaryAmount').value);
             const note = document.getElementById('salaryNote').value.trim();
 
+            if (!target) {
+                return showToast('لطفاً یک نفر مشخص را از لیست پرسنل انتخاب کنید.');
+            }
             if (isNaN(amount) || amount <= 0) {
                 return showToast('لطفاً مبلغ معتبری وارد کنید.');
             }
@@ -11803,11 +11843,16 @@
             const box = document.getElementById('salaryList');
             box.innerHTML = skeletonCards(2);
 
+            if (currentRole === 'admin') {
+                loadSalaryTargets();
+            }
+
             let query = _supabase.from('salary_payments').select('*').order('paid_at', { ascending: false });
 
             if (currentRole !== 'admin') {
-                const myPrefix = roleLabels[currentRole];
-                query = query.eq('seller_name', myPrefix);
+                // فیلتر دقیق بر اساس برچسب اختصاصی همین یک فرد (نه فقط لیبل شیفت)، تا وقتی چند نفر
+                // یک شیفت را دارند، واریزی هرکس فقط در تاریخچه‌ی خودش دیده شود
+                query = query.eq('seller_name', currentUserLabel);
             }
 
             const { data, error } = await query;
