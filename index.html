@@ -12,7 +12,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v56 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v57 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="icon" href="icon-192.png">
@@ -2009,7 +2009,8 @@
 
         <label>توضیحات (اختیاری):</label>
         <textarea id="ptNote"></textarea>
-        <button class="submit-btn" onclick="submitPersonalTakeout()">✅ تایید برداشت</button>
+        <button class="submit-btn" id="ptSubmitBtn" onclick="submitPersonalTakeout()">✅ تایید برداشت</button>
+        <button class="row-btn edit-btn" id="ptCancelEditBtn" style="width:100%; margin-top:8px; display:none; background:#475569;" onclick="cancelTakeoutEdit()">✖️ انصراف از ویرایش</button>
 
         <div class="report-card" style="margin-top:16px;">
             <h3>📋 برداشت‌های ثبت‌شده شما</h3>
@@ -2144,10 +2145,12 @@
         <div class="hint" style="margin-top:0;">برای هر بازه‌ای که انتخاب کنی، دو فایل اکسل ساخته می‌شه: یکی «کلی» (خلاصه و عملکرد هر پرسنل) و یکی «جزئیات» (ریز فروش، هزینه، کارکرد و برداشتی پرسنل). هر دو همینجا برای دانلود دائمی ذخیره می‌شن و به تلگرام هم فرستاده می‌شن. هر بار وارد برنامه بشی، برای هفته‌ی گذشته هم خودش (بی‌سروصدا) همین کار رو می‌کنه.</div>
 
         <label style="margin-top:14px;">بازه‌ی گزارش را انتخاب کن:</label>
-        <div class="mode-selector" style="margin-top:6px;">
+        <div class="mode-selector" style="margin-top:6px; flex-wrap:wrap;">
             <button type="button" class="mode-btn" id="wrOffsetBtn_0" onclick="selectWeeklyReportOffset(0)">هفته جاری (تا امروز)</button>
             <button type="button" class="mode-btn" id="wrOffsetBtn_1" onclick="selectWeeklyReportOffset(1)">هفته‌ی قبل</button>
             <button type="button" class="mode-btn" id="wrOffsetBtn_2" onclick="selectWeeklyReportOffset(2)">دو هفته‌ی قبل</button>
+            <button type="button" class="mode-btn" id="wrOffsetBtn_3" onclick="selectWeeklyReportOffset(3)">سه هفته‌ی قبل</button>
+            <button type="button" class="mode-btn" id="wrOffsetBtn_4" onclick="selectWeeklyReportOffset(4)">چهار هفته‌ی قبل</button>
         </div>
         <div class="price-display" id="weeklyReportRangePreview" style="margin-top:10px;"></div>
 
@@ -2162,7 +2165,7 @@
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v56 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v57 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
 
     <script>
         function toggleLoginPasswordVisibility() {
@@ -9951,7 +9954,7 @@
 
         function selectWeeklyReportOffset(offset) {
             selectedWeeklyReportOffset = offset;
-            [0, 1, 2].forEach(o => {
+            [0, 1, 2, 3, 4].forEach(o => {
                 const btn = document.getElementById('wrOffsetBtn_' + o);
                 if (btn) btn.classList.toggle('active', o === offset);
             });
@@ -10003,10 +10006,27 @@
                     <div style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;">
                         ${r.general_file_url || r.file_url ? `<a href="${r.general_file_url || r.file_url}" target="_blank" class="row-btn confirm-btn" style="flex:1; min-width:110px; padding:5px 8px; font-size:11px; text-align:center; text-decoration:none;">⬇️ دانلود گزارش کلی</a>` : ''}
                         ${r.detailed_file_url ? `<a href="${r.detailed_file_url}" target="_blank" class="row-btn edit-btn" style="flex:1; min-width:110px; padding:5px 8px; font-size:11px; text-align:center; text-decoration:none;">⬇️ دانلود جزئیات</a>` : ''}
-                        <button class="row-btn fill-btn" style="flex:1; min-width:110px; padding:5px 8px; font-size:11px;" onclick="resendWeeklyReportToTelegram('${r.week_start_date}', '${r.week_end_date}')">📨 ارسال دوباره به تلگرام</button>
+                    </div>
+                    <div style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;">
+                        <button class="row-btn fill-btn" style="flex:1; min-width:110px; padding:5px 8px; font-size:11px;" onclick="regenerateWeeklyReportRow('${r.week_start_date}', '${r.week_end_date}', ${!!r.is_in_progress})">🔁 بازسازی کامل هر دو فایل${!r.detailed_file_url ? ' (فایل جزئیات نداره)' : ''}</button>
+                        <button class="row-btn edit-btn" style="flex:1; min-width:110px; padding:5px 8px; font-size:11px;" onclick="resendWeeklyReportToTelegram('${r.week_start_date}', '${r.week_end_date}')">📨 فقط ارسال دوباره به تلگرام</button>
                     </div>
                 </div>
             `).join('');
+        }
+
+        // بازسازی کامل یه هفته‌ی مشخص: هر دو فایل رو از نو می‌سازه، دوباره آپلود می‌کنه، ردیف
+        // جدول رو کامل به‌روز می‌کنه (برای رفع مشکل ردیف‌های قدیمی که فایل جزئیات ندارن)، و
+        // هر دو فایل رو دوباره به تلگرام می‌فرسته
+        async function regenerateWeeklyReportRow(startISODate, endISODate, isInProgress) {
+            showToast('⏳ در حال بازسازی کامل گزارش‌های این هفته...');
+            try {
+                const result = await buildStoreAndSendWeeklyReport(startISODate, endISODate, isInProgress);
+                showToast(`✅ هر دو فایل هفته‌ی ${result.jalaliRangeLabel} از نو ساخته، ذخیره و به تلگرام ارسال شد.`);
+                loadWeeklyReportsList();
+            } catch (e) {
+                showToast('❌ خطا در بازسازی: ' + e.message);
+            }
         }
 
         async function resendWeeklyReportToTelegram(startISODate, endISODate) {
@@ -11156,23 +11176,34 @@
             if (product) {
                 const originalPrice = Math.round(weight * (product.sell_price || 0));
                 const discountedPrice = Math.round(originalPrice * TAKEOUT_DISCOUNT);
-                display.innerText = `مبلغ قابل کسر (با ۱۰٪ تخفیف): ${discountedPrice.toLocaleString('fa-IR')} تومان (قیمت بدون تخفیف: ${originalPrice.toLocaleString('fa-IR')} تومان)`;
+                const boothStock = product.booth_stock || 0;
+                if (weight > boothStock) {
+                    display.innerHTML = `⛔ فقط ${boothStock.toLocaleString('fa-IR')} کیلو از «${product.name}» توی غرفه هست — نمی‌تونی بیشتر از موجودی غرفه بزنی.`;
+                    display.style.color = '#f87171';
+                } else {
+                    display.innerHTML = `مبلغ قابل کسر (با ۱۰٪ تخفیف): ${discountedPrice.toLocaleString('fa-IR')} تومان (قیمت بدون تخفیف: ${originalPrice.toLocaleString('fa-IR')} تومان)<br><span style="font-size:11px; color:var(--text-hint);">موجودی غرفه: ${boothStock.toLocaleString('fa-IR')} کیلو</span>`;
+                    display.style.color = '';
+                }
             } else {
                 display.innerText = '⚠️ کالا یافت نشد؛ قیمت تعریف‌نشده است';
+                display.style.color = '';
             }
         }
+
+        let editingTakeoutId = null;
 
         async function submitPersonalTakeout() {
             const itemName = document.getElementById('ptItemName').value.trim();
             const weight = parseFloat(document.getElementById('ptWeight').value);
             const note = document.getElementById('ptNote').value.trim();
-            const submitBtn = document.querySelector('#personalTakeoutTab .submit-btn');
+            const submitBtn = document.getElementById('ptSubmitBtn');
+            const isEditing = !!editingTakeoutId;
 
             if (!itemName || isNaN(weight) || weight <= 0) {
                 return showToast('لطفاً نام کالا و وزن معتبر را وارد کنید.');
             }
 
-            if (!selectedTakeoutPhotoDataUrl) {
+            if (!isEditing && !selectedTakeoutPhotoDataUrl) {
                 return showToast('⛔ عکس بارکد کالای وزن‌شده الزامی است. لطفاً ابتدا عکس را آپلود کنید.');
             }
 
@@ -11186,62 +11217,148 @@
                 return showToast('❌ کالایی با این اسم در انبار یافت نشد! لطفاً از لیست پیشنهادی انتخاب کنید.');
             }
 
+            // هیچ‌وقت نباید بیشتر از موجودی فعلی غرفه ثبت بشه — نه برداشت تازه، نه ویرایش‌شده
+            const boothStock = product.booth_stock || 0;
+            if (weight > boothStock) {
+                return showToast(`⛔ فقط ${boothStock.toLocaleString('fa-IR')} کیلو از «${product.name}» توی غرفه هست — نمی‌تونی بیشتر از موجودی غرفه ثبت کنی.`);
+            }
+
             const originalPrice = Math.round(weight * (product.sell_price || 0));
             const discountedPrice = Math.round(originalPrice * TAKEOUT_DISCOUNT);
 
-            if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = '⏳ در حال آپلود عکس...'; }
+            if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = isEditing ? '⏳ در حال به‌روزرسانی...' : '⏳ در حال آپلود عکس...'; }
 
-            let photoUrl = null;
-            try {
-                const compressedBlob = await compressDataUrl(selectedTakeoutPhotoDataUrl);
-                const safeName = (currentRole || 'user').replace(/[^a-zA-Z0-9_-]+/g, '_');
-                const fileName = `${safeName}_${Date.now()}.jpg`;
+            // موقع ویرایش، اگه عکس جدیدی آپلود نکرده باشه، همون عکس قبلی حفظ می‌شه
+            const existingRecord = isEditing ? cachedTakeoutList.find(x => String(x.id) === String(editingTakeoutId)) : null;
+            let photoUrl = existingRecord ? (existingRecord.photo_url || null) : null;
 
-                const { error: uploadError } = await _supabase.storage
-                    .from(TAKEOUT_BUCKET)
-                    .upload(fileName, compressedBlob, { contentType: 'image/jpeg', upsert: true });
+            if (selectedTakeoutPhotoDataUrl) {
+                try {
+                    const compressedBlob = await compressDataUrl(selectedTakeoutPhotoDataUrl);
+                    const safeName = (currentRole || 'user').replace(/[^a-zA-Z0-9_-]+/g, '_');
+                    const fileName = `${safeName}_${Date.now()}.jpg`;
 
-                if (uploadError) throw uploadError;
+                    const { error: uploadError } = await _supabase.storage
+                        .from(TAKEOUT_BUCKET)
+                        .upload(fileName, compressedBlob, { contentType: 'image/jpeg', upsert: true });
 
-                const { data: publicUrlData } = _supabase.storage
-                    .from(TAKEOUT_BUCKET)
-                    .getPublicUrl(fileName);
+                    if (uploadError) throw uploadError;
 
-                photoUrl = publicUrlData ? publicUrlData.publicUrl : null;
-            } catch (uploadErr) {
-                showToast('❌ خطا در آپلود عکس بارکد: ' + uploadErr.message + '\n\nمطمئن شوید باکت "takeout-photos" در Supabase Storage ساخته شده و عمومی (Public) است.');
-                if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = '✅ تایید برداشت'; }
-                return;
+                    const { data: publicUrlData } = _supabase.storage
+                        .from(TAKEOUT_BUCKET)
+                        .getPublicUrl(fileName);
+
+                    photoUrl = publicUrlData ? publicUrlData.publicUrl : null;
+                } catch (uploadErr) {
+                    showToast('❌ خطا در آپلود عکس بارکد: ' + uploadErr.message + '\n\nمطمئن شوید باکت "takeout-photos" در Supabase Storage ساخته شده و عمومی (Public) است.');
+                    if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = isEditing ? '🔄 به‌روزرسانی برداشت' : '✅ تایید برداشت'; }
+                    return;
+                }
             }
 
             if (submitBtn) { submitBtn.innerText = '⏳ در حال ثبت...'; }
 
-            const now = new Date();
-            const { error } = await _supabase.from('personal_takeouts').insert([{
-                seller_name: currentUserLabel,
-                item_name: product.name,
-                weight: weight,
-                amount: discountedPrice,
-                photo_url: photoUrl,
-                note: note,
-                created_at: now.toISOString()
-            }]);
+            let error;
+            if (isEditing) {
+                let q = _supabase.from('personal_takeouts').update({
+                    item_name: product.name, weight, amount: discountedPrice, photo_url: photoUrl, note
+                }).eq('id', editingTakeoutId);
+                if (currentRole !== 'admin') q = q.eq('seller_name', currentUserLabel);
+                const res = await q;
+                error = res.error;
+            } else {
+                const now = new Date();
+                const res = await _supabase.from('personal_takeouts').insert([{
+                    seller_name: currentUserLabel,
+                    item_name: product.name,
+                    weight: weight,
+                    amount: discountedPrice,
+                    photo_url: photoUrl,
+                    note: note,
+                    created_at: now.toISOString()
+                }]);
+                error = res.error;
+            }
 
-            if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = '✅ تایید برداشت'; }
+            if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = isEditing ? '🔄 به‌روزرسانی برداشت' : '✅ تایید برداشت'; }
 
             if (!error) {
-                showToast(`✅ برداشت شما ثبت شد.\n💰 مبلغ قابل کسر (با ۱۰٪ تخفیف): ${discountedPrice.toLocaleString('fa-IR')} تومان\nاین مبلغ برای مدیر قابل مشاهده است و از حقوقتان کسر خواهد شد.`);
-                document.getElementById('ptItemName').value = '';
-                document.getElementById('ptWeight').value = '';
-                document.getElementById('ptNote').value = '';
-                document.getElementById('ptPhoto').value = '';
-                document.getElementById('ptPhotoPreview').style.display = 'none';
-                selectedTakeoutPhotoDataUrl = null;
-                document.getElementById('ptCalcDisplay').innerText = 'مبلغ قابل کسر (با ۱۰٪ تخفیف): ۰ تومان';
+                showToast(isEditing
+                    ? `✅ برداشت ویرایش شد.\n💰 مبلغ قابل کسر (با ۱۰٪ تخفیف): ${discountedPrice.toLocaleString('fa-IR')} تومان`
+                    : `✅ برداشت شما ثبت شد.\n💰 مبلغ قابل کسر (با ۱۰٪ تخفیف): ${discountedPrice.toLocaleString('fa-IR')} تومان\nاین مبلغ برای مدیر قابل مشاهده است و از حقوقتان کسر خواهد شد.`);
+                if (isEditing) {
+                    cancelTakeoutEdit();
+                } else {
+                    document.getElementById('ptItemName').value = '';
+                    document.getElementById('ptWeight').value = '';
+                    document.getElementById('ptNote').value = '';
+                    document.getElementById('ptPhoto').value = '';
+                    document.getElementById('ptPhotoPreview').style.display = 'none';
+                    selectedTakeoutPhotoDataUrl = null;
+                    document.getElementById('ptCalcDisplay').innerText = 'مبلغ قابل کسر (با ۱۰٪ تخفیف): ۰ تومان';
+                }
                 loadMyTakeouts();
             } else {
                 showToast('❌ خطا در ثبت برداشت: ' + error.message + '\n\nمطمئن شوید جدول personal_takeouts در Supabase ستون photo_url را دارد.');
             }
+        }
+
+        // یه برداشت ثبت‌شده رو برای ویرایش توی همون فرم بالا باز می‌کنه
+        function editTakeout(takeoutId) {
+            const t = cachedTakeoutList.find(x => String(x.id) === String(takeoutId));
+            if (!t) return;
+            if (t.seller_name !== currentUserLabel && currentRole !== 'admin') {
+                showToast('⛔ فقط می‌توانید برداشت‌های خودتان را ویرایش کنید.');
+                return;
+            }
+
+            editingTakeoutId = t.id;
+            document.getElementById('ptItemName').value = t.item_name;
+            document.getElementById('ptWeight').value = t.weight;
+            document.getElementById('ptNote').value = t.note || '';
+            selectedTakeoutPhotoDataUrl = null; // یعنی اگه عکس جدید آپلود نکنه، همون عکس قبلی حفظ می‌شه
+            document.getElementById('ptPhoto').value = '';
+            const preview = document.getElementById('ptPhotoPreview');
+            if (t.photo_url) { preview.src = t.photo_url; preview.style.display = 'block'; } else { preview.style.display = 'none'; }
+            calculatePersonalTakeoutPrice();
+
+            document.getElementById('ptSubmitBtn').innerText = '🔄 به‌روزرسانی برداشت';
+            document.getElementById('ptCancelEditBtn').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function cancelTakeoutEdit() {
+            editingTakeoutId = null;
+            document.getElementById('ptItemName').value = '';
+            document.getElementById('ptWeight').value = '';
+            document.getElementById('ptNote').value = '';
+            document.getElementById('ptPhoto').value = '';
+            document.getElementById('ptPhotoPreview').style.display = 'none';
+            selectedTakeoutPhotoDataUrl = null;
+            document.getElementById('ptCalcDisplay').innerText = 'مبلغ قابل کسر (با ۱۰٪ تخفیف): ۰ تومان';
+            document.getElementById('ptSubmitBtn').innerText = '✅ تایید برداشت';
+            document.getElementById('ptCancelEditBtn').style.display = 'none';
+        }
+
+        async function deleteTakeout(takeoutId) {
+            const t = cachedTakeoutList.find(x => String(x.id) === String(takeoutId));
+            if (!t) return;
+            if (t.seller_name !== currentUserLabel && currentRole !== 'admin') {
+                showToast('⛔ فقط می‌توانید برداشت‌های خودتان را حذف کنید.');
+                return;
+            }
+
+            const sure = await showConfirm(`آیا از حذف برداشت «${t.item_name}» به مبلغ ${Number(t.amount).toLocaleString('fa-IR')} تومان مطمئن هستید؟`);
+            if (!sure) return;
+
+            let q = _supabase.from('personal_takeouts').delete().eq('id', takeoutId);
+            if (currentRole !== 'admin') q = q.eq('seller_name', currentUserLabel);
+            const { error } = await q;
+            if (error) { showToast('❌ خطا در حذف: ' + error.message); return; }
+
+            showToast('✅ برداشت حذف شد.');
+            if (String(editingTakeoutId) === String(takeoutId)) cancelTakeoutEdit();
+            loadMyTakeouts();
         }
 
         async function loadMyTakeouts() {
@@ -11286,9 +11403,15 @@
 
             box.innerHTML = `<p style="color:#fbbf24; font-weight:bold; margin-bottom:8px;">مجموع کل برداشت‌های شما (با ۱۰٪ تخفیف): ${totalAmount.toLocaleString('fa-IR')} تومان</p>` +
                 pageItems.map(t => `
-                    <div class="summary-mini">
-                        <span>🛒 <b>${t.item_name}</b>${t.weight ? ' (' + Number(t.weight).toLocaleString('fa-IR') + ' کیلو)' : ''}${t.note ? ' — ' + t.note : ''}<br><span style="font-size:10px; color:#94a3b8;">${getTehranFullDateTimeString(new Date(t.created_at))}</span>${t.photo_url ? ` — <a href="${t.photo_url}" target="_blank" style="color:#38bdf8;">👁️ عکس بارکد</a>` : ''}</span>
-                        <b style="color:#f87171;">${Number(t.amount).toLocaleString('fa-IR')} تومان</b>
+                    <div class="summary-mini" style="flex-direction:column; align-items:stretch; gap:8px;">
+                        <div style="display:flex; justify-content:space-between; gap:8px;">
+                            <span>🛒 <b>${t.item_name}</b>${t.weight ? ' (' + Number(t.weight).toLocaleString('fa-IR') + ' کیلو)' : ''}${t.note ? ' — ' + escapeHtmlForToast(t.note) : ''}<br><span style="font-size:10px; color:#94a3b8;">${getTehranFullDateTimeString(new Date(t.created_at))}</span>${t.photo_url ? ` — <a href="${t.photo_url}" target="_blank" style="color:#38bdf8;">👁️ عکس بارکد</a>` : ''}</span>
+                            <b style="color:#f87171; white-space:nowrap;">${Number(t.amount).toLocaleString('fa-IR')} تومان</b>
+                        </div>
+                        <div style="display:flex; gap:6px;">
+                            <button class="row-btn edit-btn" style="flex:1; padding:5px 8px; font-size:11px;" onclick="editTakeout('${t.id}')">✏️ ویرایش</button>
+                            <button class="row-btn delete-btn" style="flex:1; padding:5px 8px; font-size:11px;" onclick="deleteTakeout('${t.id}')">🗑️ حذف</button>
+                        </div>
                     </div>
                 `).join('');
 
