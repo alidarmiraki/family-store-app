@@ -5446,11 +5446,16 @@
             }
         }
 
-        // ارسال یک فایل (مثلاً اکسل گزارش هفتگی) مستقیم به تلگرام، همراه یک کپشن توضیحی
-        async function sendTelegramDocument(blob, filename, caption) {
+        // ارسال یک فایل (مثلاً اکسل گزارش هفتگی) مستقیم به تلگرام، همراه یک کپشن توضیحی.
+        // برخلاف پیام متنی ساده (sendMessage)، ارسال فایل (sendDocument) حجمش بیشتره و به
+        // فیلترینگ/کندی اینترنت حساس‌تره؛ برای همین اینجا: ۱) زمان بیشتری می‌دیم، ۲) اگه بار
+        // اول شکست خورد یک‌بار دیگه هم امتحان می‌کنیم، و ۳) دلیل دقیق شکست رو برمی‌گردونیم
+        // (نه فقط true/false) تا کاربر بفهمه واقعاً چی شده.
+        async function sendTelegramDocumentAttempt(blob, filename, caption, timeoutMs) {
             try {
-                const s = await getTelegramSettings();
-                if (!s.enabled || !s.botToken || !s.chatId) return false;
+                const s = await getTelegramSettings(true); // همیشه آخرین تنظیمات ذخیره‌شده رو بخون، نه نسخه‌ی کش‌شده
+                if (!s.enabled) return { ok: false, error: 'ارسال پیام‌های تلگرام غیرفعاله (توی تب «تنظیمات تلگرام» فعالش کن).' };
+                if (!s.botToken || !s.chatId) return { ok: false, error: 'توکن ربات یا شناسه چت هنوز ثبت نشده.' };
 
                 const form = new FormData();
                 form.append('chat_id', s.chatId);
@@ -5458,7 +5463,7 @@
                 form.append('document', blob, filename);
 
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 20000); // فایل اکسل ممکنه ارسالش کمی طول بکشه
+                const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
                 try {
                     const res = await fetch(`https://api.telegram.org/bot${s.botToken}/sendDocument`, {
                         method: 'POST',
@@ -5466,14 +5471,25 @@
                         signal: controller.signal
                     });
                     const json = await res.json().catch(() => null);
-                    return !!(json && json.ok);
+                    if (json && json.ok) return { ok: true };
+                    return { ok: false, error: (json && json.description) ? json.description : `پاسخ نامعتبر از تلگرام (کد ${res.status})` };
                 } finally {
                     clearTimeout(timeoutId);
                 }
             } catch (e) {
-                console.warn('خطا در ارسال فایل به تلگرام (بدون اشکال برای کارکرد اصلی برنامه)', e);
-                return false;
+                const isAbort = e && e.name === 'AbortError';
+                return { ok: false, error: isAbort ? 'اتصال به تلگرام طول کشید و قطع شد (احتمالاً به‌خاطر فیلترینگ/کندی اینترنت).' : ('خطای شبکه: ' + (e.message || e)) };
             }
+        }
+
+        async function sendTelegramDocument(blob, filename, caption) {
+            let result = await sendTelegramDocumentAttempt(blob, filename, caption, 45000);
+            if (!result.ok) {
+                // بار دوم، بعد از یه مکث کوتاه، دوباره امتحان کن — روی اینترنت فیلترشده معمولاً بار دوم جواب می‌ده
+                await new Promise(r => setTimeout(r, 2500));
+                result = await sendTelegramDocumentAttempt(blob, filename, caption, 45000);
+            }
+            return result; // { ok: true } یا { ok: false, error: '...' }
         }
 
         async function loadTelegramSettings() {
@@ -9775,7 +9791,7 @@
                 row.getCell(2).numFmt = '#,##0';
             });
 
-            const fileName = `گزارش-کلی-هفتگی_${ctx.startISODate}_تا_${ctx.endISODate}.xlsx`;
+            const fileName = `general-report_${ctx.startISODate}_to_${ctx.endISODate}.xlsx`;
             return { workbook: wb, fileName };
         }
 
@@ -9858,7 +9874,7 @@
             wsTake.columns = [{ width: 20 }, { width: 18 }, { width: 22 }, { width: 12 }, { width: 16 }, { width: 30 }];
             if (ctx.takeouts.length) wsTake.autoFilter = { from: 'A1', to: `F${ctx.takeouts.length + 1}` };
 
-            const fileName = `گزارش-جزئیات-هفتگی_${ctx.startISODate}_تا_${ctx.endISODate}.xlsx`;
+            const fileName = `detailed-report_${ctx.startISODate}_to_${ctx.endISODate}.xlsx`;
             return { workbook: wb, fileName };
         }
 
@@ -9926,10 +9942,17 @@
 
             const baseCaption = `📅 از ${jalaliLabelForISODate(startISODate)} تا ${jalaliLabelForISODate(endISODate)}${isInProgress ? '\n⏳ توجه: این هفته هنوز تمام نشده — این گزارش تا همین لحظه‌ست' : ''}\n\n🧾 تعداد فاکتور فروش: ${ctx.sales.length.toLocaleString('fa-IR')}\n💰 مجموع فروش: ${ctx.totalSales.toLocaleString('fa-IR')} تومان\n💸 مجموع هزینه‌ها: ${ctx.totalExpenses.toLocaleString('fa-IR')} تومان\n🛒 مجموع برداشتی پرسنل: ${ctx.totalTakeouts.toLocaleString('fa-IR')} تومان`;
 
-            await sendTelegramDocument(general.blob, general.fileName, `📊 گزارش کلی هفتگی غرفه فامیلی\n${baseCaption}`);
-            await sendTelegramDocument(detailed.blob, detailed.fileName, `📋 گزارش با جزئیات هفتگی غرفه فامیلی\n${baseCaption}`);
+            const generalSendResult = await sendTelegramDocument(general.blob, general.fileName, `📊 گزارش کلی هفتگی غرفه فامیلی\n${baseCaption}`);
+            const detailedSendResult = await sendTelegramDocument(detailed.blob, detailed.fileName, `📋 گزارش با جزئیات هفتگی غرفه فامیلی\n${baseCaption}`);
+            const telegramErrors = [];
+            if (!generalSendResult.ok) telegramErrors.push('گزارش کلی: ' + generalSendResult.error);
+            if (!detailedSendResult.ok) telegramErrors.push('گزارش جزئیات: ' + detailedSendResult.error);
 
-            return { jalaliRangeLabel: ctx.jalaliRangeLabel, totalSales: ctx.totalSales, totalExpenses: ctx.totalExpenses, totalTakeouts: ctx.totalTakeouts, salesCount: ctx.sales.length, expensesCount: ctx.expenses.length };
+            return {
+                jalaliRangeLabel: ctx.jalaliRangeLabel, totalSales: ctx.totalSales, totalExpenses: ctx.totalExpenses,
+                totalTakeouts: ctx.totalTakeouts, salesCount: ctx.sales.length, expensesCount: ctx.expenses.length,
+                telegramOk: telegramErrors.length === 0, telegramErrors
+            };
         }
 
         // وقتی مدیر وارد برنامه می‌شه صدا زده می‌شه — اگه برای «آخرین هفته‌ی کامل‌شده» هنوز
@@ -9941,7 +9964,7 @@
                 if (existing) return; // قبلاً برای این هفته ساخته شده
 
                 const result = await buildStoreAndSendWeeklyReport(startISODate, endISODate, false);
-                showToast(`📊 گزارش‌های هفتگی (${result.jalaliRangeLabel}) به‌صورت خودکار ساخته و به تلگرام ارسال شد. از تب «گزارش‌های هفتگی» هم قابل دانلوده.`);
+                showToast(`📊 گزارش‌های هفتگی (${result.jalaliRangeLabel}) ساخته و ذخیره شد. از تب «گزارش‌های هفتگی» قابل دانلوده.` + (result.telegramOk ? ' به تلگرام هم ارسال شد.' : `\n⚠️ ارسال به تلگرام ناموفق بود: ${result.telegramErrors.join(' | ')}`));
                 const tab = document.getElementById('weeklyReportsTab');
                 if (tab && tab.classList.contains('active')) loadWeeklyReportsList();
             } catch (e) {
@@ -9971,7 +9994,7 @@
             try {
                 const { startISODate, endISODate, isInProgress } = getTehranWeekRangeByOffset(selectedWeeklyReportOffset);
                 const result = await buildStoreAndSendWeeklyReport(startISODate, endISODate, isInProgress);
-                showToast(`✅ گزارش کلی و جزئیات هفته‌ی ${result.jalaliRangeLabel} ساخته شد، توی سایت ذخیره شد و هر دو به تلگرام ارسال شدن.`);
+                showToast(`✅ گزارش کلی و جزئیات هفته‌ی ${result.jalaliRangeLabel} ساخته و توی سایت ذخیره شد.` + (result.telegramOk ? ' هر دو به تلگرام هم ارسال شدن.' : `\n⚠️ ارسال به تلگرام ناموفق بود: ${result.telegramErrors.join(' | ')}`));
                 loadWeeklyReportsList();
             } catch (e) {
                 showToast('❌ خطا در ساخت گزارش هفتگی: ' + e.message);
@@ -10022,7 +10045,7 @@
             showToast('⏳ در حال بازسازی کامل گزارش‌های این هفته...');
             try {
                 const result = await buildStoreAndSendWeeklyReport(startISODate, endISODate, isInProgress);
-                showToast(`✅ هر دو فایل هفته‌ی ${result.jalaliRangeLabel} از نو ساخته، ذخیره و به تلگرام ارسال شد.`);
+                showToast(`✅ هر دو فایل هفته‌ی ${result.jalaliRangeLabel} از نو ساخته و ذخیره شد.` + (result.telegramOk ? ' به تلگرام هم ارسال شد.' : `\n⚠️ ارسال به تلگرام ناموفق بود: ${result.telegramErrors.join(' | ')}`));
                 loadWeeklyReportsList();
             } catch (e) {
                 showToast('❌ خطا در بازسازی: ' + e.message);
@@ -10034,9 +10057,16 @@
             try {
                 const { ctx, general, detailed } = await generateWeeklyReportFiles(startISODate, endISODate);
                 const baseCaption = `📅 از ${jalaliLabelForISODate(startISODate)} تا ${jalaliLabelForISODate(endISODate)} (ارسال مجدد)\n\n🧾 تعداد فاکتور فروش: ${ctx.sales.length.toLocaleString('fa-IR')}\n💰 مجموع فروش: ${ctx.totalSales.toLocaleString('fa-IR')} تومان\n💸 مجموع هزینه‌ها: ${ctx.totalExpenses.toLocaleString('fa-IR')} تومان\n🛒 مجموع برداشتی پرسنل: ${ctx.totalTakeouts.toLocaleString('fa-IR')} تومان`;
-                const ok1 = await sendTelegramDocument(general.blob, general.fileName, `📊 گزارش کلی هفتگی\n${baseCaption}`);
-                const ok2 = await sendTelegramDocument(detailed.blob, detailed.fileName, `📋 گزارش جزئیات هفتگی\n${baseCaption}`);
-                showToast((ok1 && ok2) ? '✅ هر دو فایل دوباره به تلگرام ارسال شد.' : '❌ ارسال به تلگرام کامل انجام نشد — تنظیمات تلگرام رو توی تب «تنظیمات تلگرام» بررسی کن.');
+                const res1 = await sendTelegramDocument(general.blob, general.fileName, `📊 گزارش کلی هفتگی\n${baseCaption}`);
+                const res2 = await sendTelegramDocument(detailed.blob, detailed.fileName, `📋 گزارش جزئیات هفتگی\n${baseCaption}`);
+                if (res1.ok && res2.ok) {
+                    showToast('✅ هر دو فایل دوباره به تلگرام ارسال شد.');
+                } else {
+                    const errs = [];
+                    if (!res1.ok) errs.push('گزارش کلی: ' + res1.error);
+                    if (!res2.ok) errs.push('گزارش جزئیات: ' + res2.error);
+                    showToast('❌ ارسال به تلگرام ناموفق بود:\n' + errs.join('\n'));
+                }
             } catch (e) {
                 showToast('❌ خطا: ' + e.message);
             }
