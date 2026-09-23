@@ -12,7 +12,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v60 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v62 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="icon" href="icon-192.png">
@@ -1100,7 +1100,7 @@
             <button type="button" onclick="toggleLoginPasswordVisibility()" style="position:absolute; left:6px; top:50%; transform:translateY(-40%); background:none; border:none; font-size:16px; cursor:pointer; padding:6px;">👁️</button>
         </div>
         <div class="error-msg" id="loginError">❌ نام کاربری یا رمز عبور اشتباه است!</div>
-        <button class="submit-btn" onclick="checkLogin()">ورود</button>
+        <button class="submit-btn" id="loginSubmitBtn" onclick="checkLogin()">ورود</button>
         <button class="range-toggle-btn" onclick="showRegistrationScreen('new')">🆕 ثبت‌نام نیروی جدید (فروشنده صبح/شب)</button>
     </div>
 
@@ -2178,7 +2178,7 @@
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v60 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v62 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
 
     <script>
         function toggleLoginPasswordVisibility() {
@@ -2352,8 +2352,9 @@
         const SUPABASE_REAL_URL = "https://kinjpmvoyioaslpdzujg.supabase.co";
         const PROXY_ENDPOINTS = [
             SUPABASE_REAL_URL, // همیشه اول همین آدرس مستقیم امتحان می‌شود
-            "https://shop-proxy-1.adarmiraki.workers.dev", // پروکسی Cloudflare Worker (برای وقتی آدرس اصلی فیلتر باشد)
-            // اگه یه پروکسی دوم هم ساختی (برای اطمینان بیشتر)، آدرسش رو همینجا اضافه کن:
+            "https://proxy.ali8001.ir/supabase", // پروکسی روی دامنه‌ی خودمان (ali8001.ir) — معمولاً از workers.dev قابل‌اعتمادتره چون فیلترکردنش هزینه‌ی بیشتری داره
+            "https://shop-proxy-1.adarmiraki.workers.dev", // پروکسی قبلی روی Cloudflare Workers، به‌عنوان پشتیبان دوم نگه داشته شده
+            // اگه یه پروکسی دیگه هم ساختی، آدرسش رو همینجا اضافه کن:
             // "https://shop-proxy-2.adarmiraki.workers.dev",
         ];
 
@@ -4030,6 +4031,7 @@
             const username = document.getElementById('accessUser').value.trim();
             const password = document.getElementById('accessPin').value;
             const errBox = document.getElementById('loginError');
+            const loginBtn = document.getElementById('loginSubmitBtn');
             errBox.style.display = 'none';
 
             if (!_supabase) {
@@ -4046,13 +4048,20 @@
 
             let user = null;
 
+            // بازخورد فوری روی دکمه، تا معلوم باشه چیزی در حال انجامه (نه اینکه قفل کرده)،
+            // و اگه سرور به‌خاطر فیلترینگ/قطعی اینترنت جواب ندهد، بعد از مدتی به‌جای معلق
+            // ماندنِ بی‌پایان، خطای روشن (با پیشنهاد روشن‌کردن فیلترشکن) نشان داده می‌شود.
+            if (loginBtn) { loginBtn.disabled = true; loginBtn.innerText = '⏳ در حال بررسی...'; }
+
+            try {
+
             // روش امن: بررسی نام‌کاربری/رمز از طریق تابع دیتابیس login_user
             // که رمز عبور را به‌صورت هش‌شده (pgcrypto) مقایسه می‌کند و هرگز رمز خام
             // یا هش رمز به مرورگر برنمی‌گردد.
-            const { data: secureResult, error: secureError } = await _supabase.rpc('login_user', {
-                p_username: username,
-                p_password: password
-            });
+            const { data: secureResult, error: secureError } = await withTimeout(
+                _supabase.rpc('login_user', { p_username: username, p_password: password }),
+                12000, 'ورود به سیستم'
+            );
 
             if (!secureError && secureResult && secureResult.length > 0) {
                 user = secureResult[0];
@@ -4061,12 +4070,12 @@
                 // موقتاً با روش قدیمی وارد می‌شویم تا ورود کاربران قطع نشود.
                 // توصیه اکید: هرچه سریع‌تر آن فایل را اجرا کنید تا امنیت واقعی برقرار شود.
                 console.warn('تابع امن login_user یافت نشد؛ در حال استفاده موقت از روش قدیمی ورود.');
-                const { data: legacyUser, error: legacyErr } = await _supabase
+                const { data: legacyUser, error: legacyErr } = await withTimeout(_supabase
                     .from('users')
                     .select('*')
                     .eq('username', username)
                     .eq('password', password)
-                    .maybeSingle();
+                    .maybeSingle(), 12000, 'ورود به سیستم');
                 if (!legacyErr && legacyUser) {
                     user = legacyUser;
                 }
@@ -4098,6 +4107,16 @@
             }
 
             proceedToDashboardAfterLogin(user);
+
+            } catch (loginErr) {
+                console.error('خطای غیرمنتظره هنگام ورود:', loginErr);
+                errBox.innerText = '❌ ' + ((loginErr && loginErr.message) ? loginErr.message : 'خطای غیرمنتظره‌ای هنگام ورود رخ داد. دوباره امتحان کنید.');
+                errBox.style.display = 'block';
+            } finally {
+                // مهم: صرف‌نظر از اینکه از کجای تابع خارج شدیم، دکمه هیچ‌وقت برای همیشه
+                // غیرفعال/یخ‌زده باقی نمی‌ماند.
+                if (loginBtn) { loginBtn.disabled = false; loginBtn.innerText = 'ورود'; }
+            }
         }
 
         function proceedToDashboardAfterLogin(user) {
@@ -5476,26 +5495,47 @@
             return cachedTelegramSettings;
         }
 
+        // آدرس پایه‌ی تلگرام که همین الان باید استفاده بشه — دقیقاً مثل Supabase، اول مستقیم
+        // امتحان می‌شه و اگه جواب نداد (فیلتر بود)، خودش سوییچ می‌کنه به پروکسی روی دامنه‌ی خودمون.
+        const TELEGRAM_REAL_BASE = "https://api.telegram.org";
+        const TELEGRAM_PROXY_ENDPOINTS = [
+            TELEGRAM_REAL_BASE,
+            "https://proxy.ali8001.ir/telegram", // همون Worker مشترکی که Supabase رو هم پروکسی می‌کند
+        ];
+        let activeTelegramBase = TELEGRAM_PROXY_ENDPOINTS[0];
+
+        // درخواست به تلگرام رو از آدرس فعال فعلی امتحان می‌کنه؛ اگه شکست خورد (فیلتر/قطعی)،
+        // بقیه‌ی آدرس‌های پروکسی رو هم امتحان می‌کنه و اولین موردی که جواب داد رو برای
+        // درخواست‌های بعدی «فعال» نگه می‌داره — بدون نیاز به رفرش یا کار دستی کاربر.
+        async function telegramFetch(path, init, timeoutMs) {
+            try {
+                return await fetchWithTimeout(activeTelegramBase + path, init, timeoutMs || 6000);
+            } catch (firstErr) {
+                for (const candidate of TELEGRAM_PROXY_ENDPOINTS) {
+                    if (candidate === activeTelegramBase) continue;
+                    try {
+                        const res = await fetchWithTimeout(candidate + path, init, Math.max(timeoutMs || 6000, 7000));
+                        activeTelegramBase = candidate;
+                        console.warn('📡 اتصال مستقیم به تلگرام برقرار نشد؛ سوییچ خودکار به پروکسی:', candidate);
+                        return res;
+                    } catch (e) { /* برو سراغ پروکسی بعدی */ }
+                }
+                throw firstErr;
+            }
+        }
+
         async function sendTelegramNotification(text) {
             try {
                 const s = await getTelegramSettings();
                 if (!s.enabled || !s.botToken || !s.chatId) return;
-                // این درخواست به سرور تلگرام (api.telegram.org) می‌رود که ممکن است بدون فیلترشکن
-                // در دسترس نباشد؛ با AbortController یک سقف زمانی ۶ ثانیه‌ای می‌گذاریم تا در صورت
-                // قطع/فیلتر بودن، به‌جای معطل ماندن طولانی (که می‌تواند بقیه‌ی برنامه را کند کند)،
-                // به‌سرعت شکست بخورد و بی‌صدا رد شود — کارکرد اصلی برنامه هیچ وابستگی به این ندارد.
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 6000);
-                try {
-                    await fetch(`https://api.telegram.org/bot${s.botToken}/sendMessage`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ chat_id: s.chatId, text: text }),
-                        signal: controller.signal
-                    });
-                } finally {
-                    clearTimeout(timeoutId);
-                }
+                // این درخواست به سرور تلگرام می‌رود که ممکن است بدون فیلترشکن در دسترس نباشد؛
+                // telegramFetch خودش هم سقف زمانی می‌گذارد و هم در صورت شکست به‌طور خودکار
+                // پروکسی را امتحان می‌کند — کارکرد اصلی برنامه هیچ وابستگی به موفقیت این ندارد.
+                await telegramFetch(`/bot${s.botToken}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: s.chatId, text: text })
+                }, 6000);
             } catch (e) {
                 console.warn('خطا در ارسال پیام تلگرام (بدون اشکال برای کارکرد اصلی برنامه) — احتمالاً بدون فیلترشکن قابل دسترس نیست', e);
             }
@@ -5517,20 +5557,13 @@
                 form.append('caption', caption || '');
                 form.append('document', blob, filename);
 
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-                try {
-                    const res = await fetch(`https://api.telegram.org/bot${s.botToken}/sendDocument`, {
-                        method: 'POST',
-                        body: form,
-                        signal: controller.signal
-                    });
-                    const json = await res.json().catch(() => null);
-                    if (json && json.ok) return { ok: true };
-                    return { ok: false, error: (json && json.description) ? json.description : `پاسخ نامعتبر از تلگرام (کد ${res.status})` };
-                } finally {
-                    clearTimeout(timeoutId);
-                }
+                const res = await telegramFetch(`/bot${s.botToken}/sendDocument`, {
+                    method: 'POST',
+                    body: form
+                }, timeoutMs);
+                const json = await res.json().catch(() => null);
+                if (json && json.ok) return { ok: true };
+                return { ok: false, error: (json && json.description) ? json.description : `پاسخ نامعتبر از تلگرام (کد ${res.status})` };
             } catch (e) {
                 const isAbort = e && e.name === 'AbortError';
                 return { ok: false, error: isAbort ? 'اتصال به تلگرام طول کشید و قطع شد (احتمالاً به‌خاطر فیلترینگ/کندی اینترنت).' : ('خطای شبکه: ' + (e.message || e)) };
@@ -5655,12 +5688,31 @@
         }
 
         // پیدا کردن آخرین ورودی که خروج نداره و مال امروز هم نیست — یعنی دفعه‌ی قبل یادش رفته خروج بزنه
+        // --- محافظ در برابر «قفل شدن» دکمه‌ها وقتی اینترنت قطع/فیلتر است ---
+        // بعضی گوشی‌ها (به‌خصوص بدون فیلترشکن) وقتی به Supabase وصل نمی‌شوند، درخواست شبکه نه
+        // موفق می‌شود و نه خطا می‌دهد — فقط برای همیشه معلق می‌ماند. بدون این محافظ، دکمه برای
+        // همیشه در حالت «در حال بررسی...» می‌ماند و کاربر فکر می‌کند برنامه قفل کرده. با این تابع،
+        // بعد از مدت مشخصی (پیش‌فرض ۱۲ ثانیه) اگر پاسخی نیامد، به‌جای معلق ماندن، با یک خطای
+        // روشن (که پیشنهاد روشن‌کردن فیلترشکن را هم می‌دهد) رد می‌شود تا دکمه دوباره فعال شود.
+        function withTimeout(promise, ms, label) {
+            ms = ms || 12000;
+            return new Promise((resolve, reject) => {
+                const timer = setTimeout(() => {
+                    reject(new Error(`اتصال به سرور خیلی طول کشید${label ? ' (' + label + ')' : ''} — احتمالاً اینترنت شما قطع یا فیلتر است. فیلترشکن را روشن کنید و دوباره امتحان کنید.`));
+                }, ms);
+                Promise.resolve(promise).then(
+                    (val) => { clearTimeout(timer); resolve(val); },
+                    (err) => { clearTimeout(timer); reject(err); }
+                );
+            });
+        }
+
         async function getUnclosedPreviousShift() {
-            const { data } = await _supabase.from('attendance')
+            const { data } = await withTimeout(_supabase.from('attendance')
                 .select('type, created_at')
                 .eq('seller_name', currentUserLabel)
                 .order('created_at', { ascending: false })
-                .limit(10);
+                .limit(10), 12000, 'بررسی شیفت قبلی');
             if (!data || data.length === 0) return null;
             const mostRecent = data[0];
             if (mostRecent.type !== 'entry') return null; // آخرین رکورد خروج/مرخصی بوده، یعنی چیزی باز نمونده
@@ -5714,10 +5766,10 @@
 
         async function getTodayAttendanceStatus() {
             const todayISO = getTehranISODate(new Date());
-            const { data } = await _supabase.from('attendance')
+            const { data } = await withTimeout(_supabase.from('attendance')
                 .select('type, created_at, note')
                 .eq('seller_name', currentUserLabel)
-                .order('created_at', { ascending: true });
+                .order('created_at', { ascending: true }), 12000, 'بررسی وضعیت امروز');
             const todayRecords = (data || []).filter(r => getTehranISODate(new Date(r.created_at)) === todayISO);
             // خروج جاافتاده (مال یه شیفت قبلی که همین امروز داره جبران/ثبت می‌شه) نباید به‌عنوان
             // «خروج امروز» حساب بشه — وگرنه بلافاصله بعد از ثبت ورود واقعی امروز، سیستم فکر می‌کنه
@@ -6464,10 +6516,10 @@
 
             // اول چک می‌کنیم این حساب دقیقاً کدام روش(ها) رو ثبت کرده — تا مستقیم و خودکار
             // سراغ همون بریم، بدون این‌که یک روش ثبت‌نشده رو امتحان کنیم یا از کاربر اضافه بپرسیم
-            const [deviceResult, faceResult] = await Promise.all([
+            const [deviceResult, faceResult] = await withTimeout(Promise.all([
                 _supabase.from('staff_devices').select('*').eq('username', currentSessionUser.username).maybeSingle(),
                 _supabase.from('staff_face_data').select('username').eq('username', currentSessionUser.username).maybeSingle()
-            ]);
+            ]), 12000, 'بررسی اثر انگشت ثبت‌شده');
             const deviceRow = deviceResult.data;
             const deviceErr = deviceResult.error;
             const hasCustomFace = !!(faceResult.data);
@@ -6661,6 +6713,11 @@
             const unit = document.getElementById('attOvertimeUnit').value;
             const note = document.getElementById('attNote').value.trim();
             const submitBtn = document.querySelector('#attendanceTab .submit-btn');
+
+            // بازخورد فوری: همین لحظه‌ی اول که دکمه زده می‌شود، دکمه غیرفعال و متنش عوض می‌شود
+            // تا کاربر مطمئن شود چیزی در حال انجام است (نه اینکه فکر کند برنامه قفل کرده)،
+            // حتی قبل از اینکه هر درخواست شبکه‌ای شروع شود.
+            if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = '⏳ در حال بررسی...'; }
 
             // --- محافظ کلی: اگر هر خطای پیش‌بینی‌نشده‌ای در هر مرحله از این تابع رخ بدهد
             // (قطعی اینترنت وسط کار، خطای بیومتریک، خطای دوربین/موقعیت مکانی و ...)، دیگر
@@ -6913,9 +6970,9 @@
                     const safeName = (currentRole || 'user').replace(/[^a-zA-Z0-9_-]+/g, '_');
                     const fileName = `${safeName}_${Date.now()}.jpg`;
 
-                    const { error: uploadError } = await _supabase.storage
+                    const { error: uploadError } = await withTimeout(_supabase.storage
                         .from(ATTENDANCE_BUCKET)
-                        .upload(fileName, compressedBlob, { contentType: 'image/jpeg', upsert: true });
+                        .upload(fileName, compressedBlob, { contentType: 'image/jpeg', upsert: true }), 20000, 'آپلود عکس');
 
                     if (uploadError) throw uploadError;
 
@@ -6961,7 +7018,7 @@
                 sendPushNotificationToRole('⚠️ خروج زودهنگام', `${currentUserLabel} با ${Math.abs(exitDiffMinutes)} دقیقه زودتر از موعد خارج شد (${earlyBy} دقیقه بیش از حد مجاز).`, 'admin');
             }
 
-            const { error } = await _supabase.from('attendance').insert([{
+            const { error } = await withTimeout(_supabase.from('attendance').insert([{
                 seller_name: currentUserLabel,
                 type: type,
                 overtime_hours: overtimeHours,
@@ -6970,7 +7027,7 @@
                 photo_url: photoUrl,
                 note: (note ? note + " | " : "") + (leaveReason ? `🏖️ دلیل مرخصی: ${leaveReason} | ` : "") + (selectedLocationText ? selectedLocationText + " | " : "") + (biometricFallbackReason ? `⚠️ بدون تایید بیومتریک (${biometricFallbackReason}) | ` : "") + (biometricMethodLabel ? biometricMethodLabel + " | " : "") + (lateReasonText ? `📝 دلیل تاخیر: ${lateReasonText} | ` : "") + (isMakeupExit ? `⏮️ خروج جاافتاده (فراموش‌شده از شیفت قبل) | ` : "") + `زمان ثبت: ${fullDateTimeStr}`,
                 created_at: now.toISOString()
-            }]);
+            }]), 15000, 'ذخیره‌ی ثبت حضور');
 
             if (!error && biometricFallbackReason) {
                 const typeLabelFa = type === 'entry' ? 'ورود' : 'خروج';
@@ -7117,8 +7174,16 @@
                 // داده — مثلاً قطع ناگهانی اینترنت وسط کار، خطای دوربین/موقعیت مکانی، یا خطای
                 // بیومتریک. دکمه را از حالت یخ‌زده خارج می‌کنیم تا کاربر گیر نکند.
                 console.error('خطای غیرمنتظره در ثبت حضور و غیاب:', unexpectedErr);
+                const msg = (unexpectedErr && unexpectedErr.message) ? unexpectedErr.message : String(unexpectedErr);
+                const looksLikeNetworkTimeout = /خیلی طول کشید|فیلتر|فیلترشکن/.test(msg);
+                showToast(looksLikeNetworkTimeout
+                    ? `❌ ${msg}`
+                    : '❌ یک خطای غیرمنتظره باعث شد ثبت انجام نشود (دکمه دوباره فعال شد).\n\nلطفاً دوباره روی دکمه بزنید. اگر باز هم همین اتفاق افتاد، اینترنت گوشی را چک کنید یا برنامه را کامل ببندید و دوباره باز کنید.\n\n(جزئیات فنی: ' + msg + ')');
+            } finally {
+                // مهم: این بخش، صرف‌نظر از اینکه تابع از کجا خارج شد (موفقیت، خطا، یا یکی از
+                // بازگشت‌های زودهنگام بالا)، همیشه اجرا می‌شود — یعنی دکمه هیچ‌وقت برای همیشه
+                // غیرفعال/یخ‌زده باقی نمی‌ماند.
                 if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'ثبت در سیستم حضور و غیاب'; }
-                showToast('❌ یک خطای غیرمنتظره باعث شد ثبت انجام نشود (دکمه دوباره فعال شد).\n\nلطفاً دوباره روی دکمه بزنید. اگر باز هم همین اتفاق افتاد، اینترنت گوشی را چک کنید یا برنامه را کامل ببندید و دوباره باز کنید.\n\n(جزئیات فنی: ' + (unexpectedErr && unexpectedErr.message ? unexpectedErr.message : unexpectedErr) + ')');
             }
         }
 
