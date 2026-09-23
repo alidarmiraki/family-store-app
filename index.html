@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v63 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v66 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="icon" href="icon-192.png">
@@ -2183,7 +2183,7 @@
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v63 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v66 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
 
     <script>
         function toggleLoginPasswordVisibility() {
@@ -2380,6 +2380,18 @@
             const timeoutId = setTimeout(() => controller.abort(), timeoutMs || 5000);
             return fetch(url, combinedInit).finally(() => clearTimeout(timeoutId));
         }
+        // نشون‌دادن وضعیت اتصال با یه دایره‌ی رنگی کنار نام کاربر:
+        // 🟢 سبز = مستقیم به سرور اصلی وصله | 🟡 زرد = از طریق پروکسی وصله (یعنی اینترنت فیلتر بوده) | 🔴 قرمز = هیچ‌کدام جواب نمی‌دهند
+        let connectionStatus = 'direct'; // 'direct' | 'proxy' | 'error'
+        function updateConnectionStatusIndicator() {
+            const dot = document.getElementById('connStatusDot');
+            if (!dot) return;
+            const colors = { direct: '#22c55e', proxy: '#eab308', error: '#ef4444' };
+            const titles = { direct: 'وضعیت اتصال: مستقیم و سالم', proxy: 'وضعیت اتصال: از طریق پروکسی (اینترنت مستقیم فیلتر/کند است)', error: 'وضعیت اتصال: قطع — نه مستقیم و نه پروکسی جواب نمی‌دهند' };
+            dot.style.background = colors[connectionStatus] || colors.direct;
+            dot.title = titles[connectionStatus] || '';
+        }
+
         async function proxiedFetch(input, init) {
             const originalUrl = (typeof input === 'string') ? input : input.url;
             if (originalUrl.indexOf(SUPABASE_REAL_URL) !== 0) {
@@ -2388,7 +2400,10 @@
             const path = originalUrl.slice(SUPABASE_REAL_URL.length);
 
             try {
-                return await fetchWithTimeout(activeBaseUrl + path, init, 5000);
+                const res = await fetchWithTimeout(activeBaseUrl + path, init, 5000);
+                connectionStatus = (activeBaseUrl === SUPABASE_REAL_URL) ? 'direct' : 'proxy';
+                updateConnectionStatusIndicator();
+                return res;
             } catch (firstErr) {
                 for (const candidate of PROXY_ENDPOINTS) {
                     if (candidate === activeBaseUrl) continue;
@@ -2396,9 +2411,13 @@
                         const res = await fetchWithTimeout(candidate + path, init, 7000);
                         activeBaseUrl = candidate;
                         console.warn('📡 اتصال مستقیم برقرار نشد؛ سوییچ خودکار به پروکسی:', candidate);
+                        connectionStatus = (candidate === SUPABASE_REAL_URL) ? 'direct' : 'proxy';
+                        updateConnectionStatusIndicator();
                         return res;
                     } catch (e) { /* برو سراغ پروکسی بعدی */ }
                 }
+                connectionStatus = 'error';
+                updateConnectionStatusIndicator();
                 throw firstErr; // هیچ‌کدام از آدرس‌ها جواب ندادند
             }
         }
@@ -3455,6 +3474,22 @@
             }
         }
 
+        // متن دقیقِ همین لحظه‌ی امضا رو ذخیره می‌کنه، جدا از register_user/complete_user_registration
+        // (که نیازی به دست‌کاری اون توابع موجود نباشه). اگه تابع SQL مربوطه هنوز ساخته نشده باشه
+        // یا هر خطای دیگه‌ای پیش بیاد، کاملاً بی‌صدا رد می‌شه — چون این فقط یک بایگانی اضافه‌ست
+        // و نباید هیچ‌وقت جلوی تکمیل‌شدن ثبت‌نام رو بگیره.
+        async function saveSignedContractTextSilently(username, contractText) {
+            if (!username || !contractText) return;
+            try {
+                await _supabase.rpc('save_signed_contract_text', {
+                    p_username: username,
+                    p_contract_text: contractText
+                });
+            } catch (e) {
+                console.warn('ذخیره‌ی بایگانی متن دقیق قرارداد ناموفق بود (بدون اشکال برای ثبت‌نام):', e);
+            }
+        }
+
         async function submitRegistration() {
             const errBox = document.getElementById('registrationError');
             errBox.style.display = 'none';
@@ -3470,6 +3505,10 @@
             const phone = document.getElementById('regPhone').value.trim();
             const acceptedContract = document.getElementById('regAcceptContract').checked;
             const submitBtn = document.getElementById('registrationSubmitBtn');
+
+            // همین متنی که همین الان جلوی چشم فرد بوده و با تیک‌زدن تاییدش کرده رو نگه می‌داریم،
+            // تا بعداً دقیقاً همین متن (نه نسخه‌ی احتمالاً ویرایش‌شده‌ی بعدی) روی برگه‌ی رسمی چاپ بشه.
+            const exactContractTextShown = (document.getElementById('contractPreviewText') || {}).innerText || null;
 
             if (!fullName || !nationalId || !phone) {
                 errBox.innerText = '❌ لطفاً نام و نام خانوادگی، کد ملی و شماره موبایل را کامل وارد کنید.';
@@ -3585,6 +3624,7 @@
                 }
 
                 await notifyAdminAboutNewRegistration(fullName, nationalId, phone, roleValue, nationalIdPhotoUrl, signatureUrl, false);
+                saveSignedContractTextSilently(username, exactContractTextShown);
                 showToast('✅ ثبت‌نام شما با موفقیت انجام شد!\nحالا می‌توانید با همین نام کاربری و رمز عبور وارد شوید.');
                 document.getElementById('accessUser').value = username;
                 document.getElementById('accessPin').value = '';
@@ -3613,6 +3653,7 @@
                 }
 
                 await notifyAdminAboutNewRegistration(fullName, nationalId, phone, pendingCompleteUser.role, nationalIdPhotoUrl, signatureUrl, true);
+                saveSignedContractTextSilently(pendingCompleteUser.username, exactContractTextShown);
                 showToast('✅ اطلاعات و قرارداد شما با موفقیت ثبت شد.');
 
                 document.getElementById('registrationScreen').style.display = 'none';
@@ -4139,8 +4180,9 @@
             if (user.trial_expires_at) {
                 trialTag = ' <span style="color:#38bdf8; font-size:10px;">🧪 آزمایشی تا ' + getTehranDateString(new Date(user.trial_expires_at)) + '</span>';
             }
-            badge.innerHTML = '👤 <b>' + displayName + '</b> <span style="color:#94a3b8; font-size:11px;">(' + roleLabelText + ')</span>' + trialTag + ' <button class="logout-btn" onclick="logout()">خروج</button>';
+            badge.innerHTML = '<span id="connStatusDot" title="وضعیت اتصال" style="display:inline-block; width:9px; height:9px; border-radius:50%; background:#22c55e; margin-left:6px; vertical-align:middle;"></span>👤 <b>' + displayName + '</b> <span style="color:#94a3b8; font-size:11px;">(' + roleLabelText + ')</span>' + trialTag + ' <button class="logout-btn" onclick="logout()">خروج</button>';
             badge.style.display = 'block';
+            updateConnectionStatusIndicator();
 
             document.getElementById('buyPriceField').style.display = (currentRole === 'admin') ? 'block' : 'none';
 
@@ -11866,6 +11908,7 @@
         }
 
         // اطلاعات پرسنل — مستقیم از جدول users، جدا از صندوقچه پیام
+        let lastPersonnelData = [];
         async function loadPersonnelTab() {
             const box = document.getElementById('personnelList');
             box.innerHTML = skeletonCards(3);
@@ -11878,6 +11921,7 @@
                 box.innerHTML = '<p class="hint">هنوز کسی ثبت‌نام نکرده.</p>';
                 return;
             }
+            lastPersonnelData = data;
             const roleLabels = { admin: '👑 مدیر', morning_seller: '🌅 فروشنده صبح', evening_seller: '🌙 فروشنده شب' };
             box.innerHTML = data.map(u => {
                 const idPhoto = u.national_id_photo_url || u.id_photo_url || u.national_id_photo;
@@ -11893,8 +11937,83 @@
                     ${u.created_at ? `<p>📅 تاریخ ثبت‌نام: ${getTehranFullDateTimeString(new Date(u.created_at))}</p>` : ''}
                     ${idPhoto ? `<a href="${idPhoto}" target="_blank" style="color:#38bdf8;">👁️ مشاهده عکس کارت ملی</a>` : '<span class="hint">بدون عکس کارت ملی</span>'}
                     ${sig ? ` | <a href="${sig}" target="_blank" style="color:#38bdf8;">✍️ مشاهده امضا</a>` : ''}
+                    ${(idPhoto && sig) ? `<br><button class="submit-btn" style="margin-top:8px; padding:8px 14px; font-size:13px; width:auto;" onclick="viewSignedContract('${u.username}')">🖨️ مشاهده و پرینت برگه‌ی قرارداد رسمی</button>` : ''}
                 </div>`;
             }).join('');
+        }
+
+        // برگه‌ی رسمیِ قرارداد امضاشده: متن کامل قرارداد + عکس کارت ملی + امضای دیجیتال،
+        // همه در یک صفحه، آماده برای پرینت — دقیقاً شبیه یک قرارداد کاغذی واقعی.
+        // توجه: چون فعلاً متن دقیقِ لحظه‌ی امضا ذخیره نمی‌شود، این متن با آخرین نسخه‌ی
+        // قرارداد (اختصاصی این فرد یا پیش‌فرض) بازسازی می‌شود؛ اگر بعداً متن قرارداد را
+        // برای این فرد عوض کنی، این برگه هم متن جدید را نشان می‌دهد نه متنِ زمان امضا.
+        async function viewSignedContract(username) {
+            const u = lastPersonnelData.find(x => x.username === username);
+            if (!u) { showToast('❌ اطلاعات این فرد پیدا نشد. دوباره تب پرسنل را باز کن.'); return; }
+
+            const idPhoto = u.national_id_photo_url || u.id_photo_url || u.national_id_photo;
+            const sig = u.signature_url || u.signature;
+            const phone = u.phone || u.phone_number || u.mobile || '-';
+            const nationalId = u.national_id || u.national_id_code || '-';
+            const shiftKey = (u.role === 'evening_seller') ? 'evening' : 'morning';
+            const roleLabel = (u.role === 'evening_seller') ? 'فروشنده شب' : 'فروشنده صبح';
+
+            const contractText = (u.signed_contract_text && u.signed_contract_text.trim())
+                ? u.signed_contract_text
+                : await buildContractText(u.full_name || u.username, shiftKey, nationalId, u.contract_body || null);
+            const isExactSnapshot = !!(u.signed_contract_text && u.signed_contract_text.trim());
+            const signDate = u.created_at ? getTehranDateString(new Date(u.created_at)) : '-';
+
+            const win = window.open('', '_blank');
+            if (!win) { showToast('❌ مرورگر اجازه‌ی باز کردن پنجره‌ی جدید را نداد. لطفاً پنجره‌های Popup را برای این سایت فعال کن.'); return; }
+
+            const html = `<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head>
+<meta charset="UTF-8">
+<title>قرارداد همکاری — ${(u.full_name || u.username).replace(/</g, '')}</title>
+<style>
+    body { font-family: Tahoma, Vazirmatn, sans-serif; padding: 24px; color: #111; max-width: 780px; margin: 0 auto; line-height: 2; }
+    h1 { font-size: 18px; text-align: center; border-bottom: 2px solid #111; padding-bottom: 12px; }
+    .meta { display: flex; flex-wrap: wrap; gap: 6px 24px; background: #f3f4f6; border-radius: 8px; padding: 10px 14px; margin: 16px 0; font-size: 13px; }
+    .contract-body { white-space: pre-wrap; font-size: 13.5px; border: 1px solid #d1d5db; border-radius: 8px; padding: 16px; margin: 16px 0; }
+    .docs { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 20px; }
+    .doc-box { flex: 1; min-width: 220px; text-align: center; }
+    .doc-box img { max-width: 100%; max-height: 260px; border: 1px solid #999; border-radius: 6px; object-fit: contain; }
+    .doc-box p { font-size: 12px; margin: 6px 0 0; }
+    .print-bar { text-align: center; margin-bottom: 18px; }
+    .print-bar button { padding: 10px 22px; font-size: 14px; border-radius: 8px; border: none; background: #2563eb; color: #fff; cursor: pointer; }
+    @media print { .print-bar { display: none; } body { padding: 0; } }
+</style>
+</head>
+<body>
+    <div class="print-bar"><button onclick="window.print()">🖨️ پرینت این برگه</button></div>
+    <h1>قرارداد همکاری — فروشگاه فامیلی (بیرجند)</h1>
+    <div class="meta">
+        <span>👤 نام: <b>${(u.full_name || u.username).replace(/</g, '')}</b></span>
+        <span>🪪 کد ملی: <b>${nationalId}</b></span>
+        <span>📱 شماره تماس: <b>${phone}</b></span>
+        <span>🕐 شیفت: <b>${roleLabel}</b></span>
+        <span>📅 تاریخ ثبت/امضا: <b>${signDate}</b></span>
+    </div>
+    <div class="contract-body">${contractText.replace(/</g, '&lt;')}</div>
+    ${!isExactSnapshot ? `<p style="font-size:11px; color:#b45309; background:#fffbeb; border:1px solid #fde68a; border-radius:6px; padding:6px 10px;">⚠️ این بایگانیِ ثبت‌نام قدیمی است و متن دقیق لحظه‌ی امضا ذخیره نشده؛ متن بالا با آخرین نسخه‌ی فعلی قرارداد بازسازی شده است.</p>` : ''}
+    <div class="docs">
+        <div class="doc-box">
+            <img src="${idPhoto}" alt="عکس کارت ملی">
+            <p>📸 عکس کارت ملی</p>
+        </div>
+        <div class="doc-box">
+            <img src="${sig}" alt="امضای دیجیتال">
+            <p>✍️ امضای دیجیتال</p>
+        </div>
+    </div>
+</body>
+</html>`;
+
+            win.document.open();
+            win.document.write(html);
+            win.document.close();
         }
 
         async function loadExpensesTab() {
