@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v66 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v67 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="icon" href="icon-192.png">
@@ -987,6 +987,250 @@
             50% { top: 88%; opacity: 1; }
             100% { top: 8%; opacity: 0.2; }
         }
+
+        /* ========== v67 UI UPGRADE ========== */
+        body { padding-bottom: 78px; }
+        .empty-state {
+            text-align: center;
+            padding: 36px 18px;
+            color: var(--text-secondary);
+        }
+        .empty-state .empty-ico {
+            font-size: 48px;
+            display: block;
+            margin-bottom: 12px;
+            filter: drop-shadow(0 6px 16px rgba(56,189,248,0.25));
+            animation: emptyFloat 3s ease-in-out infinite;
+        }
+        @keyframes emptyFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        .empty-state h3 { color: var(--text-primary); margin: 0 0 6px; font-size: 15px; }
+        .empty-state p { margin: 0; font-size: 12px; line-height: 1.8; }
+
+        .status-bar {
+            position: sticky;
+            top: 0;
+            z-index: 900;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            background: var(--bg-card-solid);
+            backdrop-filter: blur(14px);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 8px 12px;
+            margin-bottom: 10px;
+            box-shadow: var(--shadow-soft);
+            font-size: 11px;
+        }
+        .status-bar .sb-clock { color: var(--accent); font-weight: bold; letter-spacing: 0.3px; }
+        .status-bar .sb-pills { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 999px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 10px;
+            font-weight: bold;
+        }
+        .status-pill.ok { color: #34d399; border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.1); }
+        .status-pill.warn { color: #fbbf24; border-color: rgba(245,158,11,0.45); background: rgba(245,158,11,0.12); }
+        .status-pill.err { color: #f87171; border-color: rgba(239,68,68,0.45); background: rgba(239,68,68,0.12); }
+
+        /* Bottom navigation */
+        #bottomNav {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            z-index: 9500;
+            display: none;
+            background: var(--bg-card-solid);
+            backdrop-filter: blur(18px);
+            border-top: 1px solid var(--border-color);
+            padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
+            box-shadow: 0 -8px 28px rgba(2,6,23,0.35);
+            justify-content: space-around;
+            align-items: stretch;
+        }
+        #bottomNav.show { display: flex; }
+        .bn-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 9.5px;
+            font-weight: bold;
+            padding: 6px 2px;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: color 0.2s, transform 0.15s, background 0.2s;
+            min-width: 0;
+        }
+        .bn-item .bn-ico { font-size: 20px; line-height: 1; filter: grayscale(0.3); transition: filter 0.2s, transform 0.2s; }
+        .bn-item.active {
+            color: var(--accent);
+            background: var(--grad-glow-1);
+        }
+        .bn-item.active .bn-ico {
+            filter: none;
+            transform: translateY(-2px) scale(1.08);
+        }
+        .bn-item:active { transform: scale(0.94); }
+        .bn-item .bn-badge {
+            position: absolute;
+            top: 2px;
+            left: 50%;
+            transform: translateX(8px);
+            min-width: 16px;
+            height: 16px;
+            border-radius: 8px;
+            background: #ef4444;
+            color: #fff;
+            font-size: 9px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+        }
+        .bn-item { position: relative; }
+
+        /* Confetti canvas */
+        #confettiCanvas {
+            position: fixed;
+            inset: 0;
+            z-index: 10020;
+            pointer-events: none;
+            display: none;
+        }
+
+        /* Stronger card hover/active polish */
+        .card.active {
+            animation: cardSlideIn 0.34s cubic-bezier(.22,1,.36,1);
+        }
+        @keyframes cardSlideIn {
+            from { opacity: 0; transform: translateX(18px) scale(0.985); }
+            to { opacity: 1; transform: translateX(0) scale(1); }
+        }
+        html[dir="rtl"] .card.active {
+            animation-name: cardSlideInRtl;
+        }
+        @keyframes cardSlideInRtl {
+            from { opacity: 0; transform: translateX(-18px) scale(0.985); }
+            to { opacity: 1; transform: translateX(0) scale(1); }
+        }
+
+        /* Streak badge */
+        .streak-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(100deg, rgba(251,146,60,0.18), rgba(239,68,68,0.14));
+            border: 1px solid rgba(251,146,60,0.45);
+            color: #fdba74;
+            border-radius: 999px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 8px 0;
+        }
+
+        /* Theme color chips */
+        .theme-chips {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+        .theme-chip {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+        }
+        .theme-chip.active { border-color: #fff; box-shadow: 0 0 0 3px var(--accent); }
+
+        /* Accent theme variants */
+        html.theme-emerald {
+            --accent: #34d399;
+            --accent-2: #10b981;
+            --grad-glow-1: rgba(52, 211, 153, 0.18);
+            --grad-glow-2: rgba(16, 185, 129, 0.14);
+        }
+        html.theme-rose {
+            --accent: #fb7185;
+            --accent-2: #e11d48;
+            --grad-glow-1: rgba(251, 113, 133, 0.18);
+            --grad-glow-2: rgba(225, 29, 72, 0.14);
+        }
+        html.theme-amber {
+            --accent: #fbbf24;
+            --accent-2: #f59e0b;
+            --grad-glow-1: rgba(251, 191, 36, 0.18);
+            --grad-glow-2: rgba(245, 158, 11, 0.14);
+        }
+
+        /* FAB quick sale (mobile) */
+        #fabQuickSale {
+            position: fixed;
+            bottom: 88px;
+            left: 16px;
+            z-index: 9400;
+            width: 56px; height: 56px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, #0ea5e9, #a78bfa 55%, #10b981);
+            color: #fff;
+            font-size: 26px;
+            box-shadow: 0 10px 28px rgba(14,165,233,0.45);
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.15s ease;
+        }
+        #fabQuickSale.show { display: flex; }
+        #fabQuickSale:active { transform: scale(0.9); }
+
+        /* Hide top tabs scroll on very small screens when bottom nav is on — keep accessible via More */
+        @media (max-width: 720px) {
+            .tabs { scrollbar-width: thin; }
+        }
+
+        /* Loyalty mini card */
+        .loyalty-card {
+            background: linear-gradient(135deg, rgba(167,139,250,0.15), rgba(56,189,248,0.12));
+            border: 1px solid rgba(167,139,250,0.35);
+            border-radius: 14px;
+            padding: 12px;
+            margin: 10px 0;
+            text-align: right;
+        }
+        .loyalty-card h4 { margin: 0 0 6px; color: var(--accent-2); font-size: 13px; }
+
+        /* Keyboard hint */
+        .kbd-hint {
+            font-size: 10px;
+            color: var(--text-hint);
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 2px 6px;
+            margin-right: 4px;
+        }
+
 </style>
 </head>
 <body>
@@ -1000,7 +1244,7 @@
         <div class="splash-logo-wrap">🧀</div>
         <div class="splash-ring"></div>
         <div class="splash-title">غرفه فامیلی — دره میرکی</div>
-        <div class="splash-sub" id="splashSubText">در حال آماده‌سازی سیستم...</div>
+        <div class="splash-sub" id="splashSubText">در حال آماده‌سازی سیستم v67...</div>
         <div class="splash-progress-track"><div class="splash-progress-fill" id="splashProgressFill"></div></div>
     </div>
 
@@ -2067,6 +2311,18 @@
 
         <div class="error-msg" id="myAccError"></div>
         <button class="submit-btn" id="myAccSubmitBtn" onclick="submitMyAccountChanges()">💾 ذخیره تغییرات</button>
+
+        <div class="tare-box" style="margin-top:18px;">
+            <label style="margin-top:0; color:#38bdf8;">🎨 رنگ تم برنامه:</label>
+            <div class="hint" style="margin-top:0;">علاوه بر حالت روشن/تاریک، رنگ اصلی رابط را هم می‌توانید عوض کنید.</div>
+            <div class="theme-chips">
+                <button type="button" class="theme-chip active" data-theme="default" title="آبی پیش‌فرض" style="background:linear-gradient(135deg,#0ea5e9,#a78bfa);" onclick="applyAccentTheme('default')"></button>
+                <button type="button" class="theme-chip" data-theme="emerald" title="زمردی" style="background:linear-gradient(135deg,#34d399,#059669);" onclick="applyAccentTheme('emerald')"></button>
+                <button type="button" class="theme-chip" data-theme="rose" title="صورتی" style="background:linear-gradient(135deg,#fb7185,#e11d48);" onclick="applyAccentTheme('rose')"></button>
+                <button type="button" class="theme-chip" data-theme="amber" title="کهربایی" style="background:linear-gradient(135deg,#fbbf24,#f59e0b);" onclick="applyAccentTheme('amber')"></button>
+            </div>
+            <div class="hint" style="margin-top:10px;">⌨️ میانبرهای کیبورد (دسکتاپ): <span class="kbd-hint">Ctrl+S</span> ثبت فاکتور · <span class="kbd-hint">Ctrl+1</span> فروش · <span class="kbd-hint">Ctrl+2</span> حضور · <span class="kbd-hint">Ctrl+3</span> یخچال · <span class="kbd-hint">Ctrl+4</span> پیام‌ها</div>
+        </div>
     </div>
 
     <!-- تب مدیریت برداشت‌های حساب‌نشده پرسنل (مدیر) -->
@@ -2183,7 +2439,34 @@
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v66 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+
+    <!-- canvas confetti -->
+    <canvas id="confettiCanvas"></canvas>
+
+    <!-- FAB فروش سریع -->
+    <button id="fabQuickSale" title="ثبت فروش سریع" onclick="switchTab('sale'); loadProductDatalist(); loadRecentSales('instore');">🧀</button>
+
+    <!-- نوار پایین (Bottom Navigation) -->
+    <nav id="bottomNav" aria-label="منوی اصلی">
+        <button type="button" class="bn-item" data-bn="sale" onclick="bnNavigate('sale')">
+            <span class="bn-ico">🧀</span><span>فروش</span>
+        </button>
+        <button type="button" class="bn-item" data-bn="attendance" onclick="bnNavigate('attendance')">
+            <span class="bn-ico">⏰</span><span>حضور</span>
+        </button>
+        <button type="button" class="bn-item" data-bn="booth" onclick="bnNavigate('booth')">
+            <span class="bn-ico">🧊</span><span>یخچال</span>
+        </button>
+        <button type="button" class="bn-item" data-bn="inbox" onclick="bnNavigate('inbox')">
+            <span class="bn-ico">📥</span><span>پیام‌ها</span>
+            <span class="bn-badge" id="bnInboxBadge">0</span>
+        </button>
+        <button type="button" class="bn-item" data-bn="more" onclick="bnNavigate('more')">
+            <span class="bn-ico">☰</span><span>بیشتر</span>
+        </button>
+    </nav>
+
+    <div class="build-tag">v67 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی ) — ارتقای UI</div>
 
     <script>
         function toggleLoginPasswordVisibility() {
@@ -2206,6 +2489,178 @@
             btn.innerText = document.documentElement.classList.contains('light-theme') ? '☀️' : '🌙';
         }
         updateThemeToggleIcon();
+
+        // ================== v67 UI / UX enhancements ==================
+        function fireConfetti(durationMs) {
+            const canvas = document.getElementById('confettiCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = window.innerWidth * dpr;
+            canvas.height = window.innerHeight * dpr;
+            canvas.style.width = window.innerWidth + 'px';
+            canvas.style.height = window.innerHeight + 'px';
+            canvas.style.display = 'block';
+            ctx.scale(dpr, dpr);
+            const colors = ['#22d3ee', '#a78bfa', '#34d399', '#fb923c', '#f472b6', '#fbbf24'];
+            const pieces = Array.from({ length: 90 }, () => ({
+                x: Math.random() * window.innerWidth,
+                y: -20 - Math.random() * 80,
+                w: 6 + Math.random() * 8,
+                h: 8 + Math.random() * 10,
+                vx: -3 + Math.random() * 6,
+                vy: 2 + Math.random() * 4,
+                rot: Math.random() * Math.PI,
+                vr: -0.2 + Math.random() * 0.4,
+                color: colors[Math.floor(Math.random() * colors.length)]
+            }));
+            const start = performance.now();
+            function frame(t) {
+                const elapsed = t - start;
+                ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+                pieces.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.06;
+                    p.rot += p.vr;
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(p.rot);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+                    ctx.restore();
+                });
+                if (elapsed < (durationMs || 1600)) requestAnimationFrame(frame);
+                else { ctx.clearRect(0, 0, window.innerWidth, window.innerHeight); canvas.style.display = 'none'; }
+            }
+            requestAnimationFrame(frame);
+            try { if (navigator.vibrate) navigator.vibrate([18, 40, 18]); } catch (e) {}
+        }
+
+
+        function renderEmptyState(icon, title, subtitle) {
+            return `<div class="empty-state"><span class="empty-ico">${icon || '📭'}</span><h3>${title || 'چیزی اینجا نیست'}</h3><p>${subtitle || ''}</p></div>`;
+        }
+
+        function bnNavigate(key) {
+            const map = {
+                sale: () => { switchTab('sale'); loadProductDatalist(); loadRecentSales('instore'); },
+                attendance: () => { switchTab('attendance'); loadFingerprintStatus(); },
+                booth: () => { switchTab('booth'); loadBoothInventory(); },
+                inbox: () => { switchTab('inbox'); loadInbox(); },
+                more: () => {
+                    // باز کردن نوار تب‌های بالا و اسکرول به آن
+                    const tabs = document.getElementById('tabContainer');
+                    if (tabs) {
+                        tabs.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        tabs.style.outline = '2px solid var(--accent)';
+                        setTimeout(() => { tabs.style.outline = ''; }, 1200);
+                    }
+                    showToast('☰ از نوار تب‌های بالا، بخش موردنظر را انتخاب کنید.');
+                }
+            };
+            if (map[key]) map[key]();
+            updateBottomNavActive(key === 'more' ? null : key);
+        }
+
+        function updateBottomNavActive(key) {
+            document.querySelectorAll('#bottomNav .bn-item').forEach(el => {
+                el.classList.toggle('active', key && el.getAttribute('data-bn') === key);
+            });
+        }
+
+        function showBottomNav(show) {
+            const nav = document.getElementById('bottomNav');
+            const fab = document.getElementById('fabQuickSale');
+            if (nav) nav.classList.toggle('show', !!show);
+            if (fab) fab.classList.toggle('show', !!show);
+        }
+
+        // رنگ تم اضافی
+        function applyAccentTheme(name) {
+            document.documentElement.classList.remove('theme-emerald', 'theme-rose', 'theme-amber');
+            if (name && name !== 'default') document.documentElement.classList.add('theme-' + name);
+            try { localStorage.setItem('boothAccentTheme', name || 'default'); } catch (e) {}
+            document.querySelectorAll('.theme-chip').forEach(c => {
+                c.classList.toggle('active', c.getAttribute('data-theme') === (name || 'default'));
+            });
+        }
+        try {
+            const savedAccent = localStorage.getItem('boothAccentTheme');
+            if (savedAccent) applyAccentTheme(savedAccent);
+        } catch (e) {}
+
+        // میانبر کیبورد دسکتاپ
+        document.addEventListener('keydown', (e) => {
+            if (!document.getElementById('userBadge') || document.getElementById('userBadge').style.display === 'none') return;
+            const tag = (e.target && e.target.tagName) || '';
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target.isContentEditable) return;
+            if (e.ctrlKey || e.metaKey) {
+                if (e.key === 's' || e.key === 'S') {
+                    e.preventDefault();
+                    const active = document.querySelector('.card.active');
+                    if (active && active.id === 'saleTab') document.getElementById('saleSubmitBtn')?.click();
+                    else if (active && active.id === 'saleEkalaTab') document.getElementById('saleEkalaSubmitBtn')?.click();
+                    else if (active && active.id === 'saleSausageTab') document.getElementById('saleSausageSubmitBtn')?.click();
+                }
+                if (e.key === '1') { e.preventDefault(); bnNavigate('sale'); }
+                if (e.key === '2') { e.preventDefault(); bnNavigate('attendance'); }
+                if (e.key === '3') { e.preventDefault(); bnNavigate('booth'); }
+                if (e.key === '4') { e.preventDefault(); bnNavigate('inbox'); }
+            }
+        });
+
+        // همگام‌سازی bottom nav با switchTab — با تاخیر تا همه function declarationها آماده باشند
+        function _installV67TabHooks() {
+            if (typeof switchTab !== 'function' || switchTab.__v67) return;
+            const _origSwitchTab = switchTab;
+            function switchTabWrapped(tab) {
+                _origSwitchTab(tab);
+                const bnMap = { sale: 'sale', saleEkala: 'sale', saleSausage: 'sale', attendance: 'attendance', booth: 'booth', inbox: 'inbox', message: 'inbox', staffMessage: 'inbox' };
+                updateBottomNavActive(bnMap[tab] || null);
+            }
+            switchTabWrapped.__v67 = true;
+            switchTab = switchTabWrapped;
+
+            if (typeof showToast === 'function' && !showToast.__v67) {
+                const _origShowToast = showToast;
+                function showToastWrapped(message, type) {
+                    _origShowToast(message, type);
+                    const text = String(message || '');
+                    if (text.indexOf('✅') === 0 && /ثبت|ویرایش|ذخیره|واریز|امضا|بازگردانی|ساخت/.test(text)) {
+                        fireConfetti(1400);
+                    }
+                }
+                showToastWrapped.__v67 = true;
+                showToast = showToastWrapped;
+            }
+        }
+        // حذف double-wrap قبلی showToast اگر بود
+        setTimeout(_installV67TabHooks, 0);
+        setTimeout(_installV67TabHooks, 500);
+
+        // بعد از لاگین موفق، bottom nav را نشان بده
+        const _loginObserver = setInterval(() => {
+            const badge = document.getElementById('userBadge');
+            if (badge && badge.style.display !== 'none' && badge.innerText.trim()) {
+                showBottomNav(true);
+            } else {
+                showBottomNav(false);
+            }
+        }, 800);
+
+        function setBnInboxCount(n) {
+            const b = document.getElementById('bnInboxBadge');
+            if (!b) return;
+            if (n > 0) { b.style.display = 'flex'; b.innerText = n > 99 ? '99+' : String(n); }
+            else { b.style.display = 'none'; }
+        }
+
+        // استریک حضور ساده (بر اساس رکوردهای امروز/دیروز از DOM اگر موجود باشد)
+        function renderAttendanceStreak(days) {
+            if (!days || days < 2) return '';
+            return `<div class="streak-badge">🔥 استریک حضور: ${Number(days).toLocaleString('fa-IR')} روز متوالی بدون تاخیر</div>`;
+        }
 
         // ================== بنر آفلاین/آنلاین ==================
         function updateConnectionBanner() {
