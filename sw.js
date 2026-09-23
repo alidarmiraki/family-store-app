@@ -1,5 +1,4 @@
-// Service Worker: هم برای قابلیت نصب (Install) روی صفحه اصلی گوشی، هم برای
-// نمایش اعلان‌های فوری (Push) حتی وقتی مرورگر/برنامه کاملاً بسته است.
+// Service Worker ساده فقط برای قابلیت نصب (Install) روی صفحه اصلی گوشی.
 // عمداً کش تهاجمی نمی‌کند تا همیشه آخرین نسخه‌ی زنده از Supabase لود شود
 // و داده‌ها هیچ‌وقت قدیمی (Stale) نمایش داده نشوند.
 
@@ -11,42 +10,18 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim());
 });
 
-// هیچ کشی انجام نمی‌دهیم؛ فقط وجود این فایل برای معیارهای نصب (installability) کافی است.
+// نکته‌ی مهم: فقط درخواست‌های هم‌مبدأ (خود همین سایت) را لمس می‌کنیم.
+// درخواست‌های برون‌مبدأ (Supabase، تلگرام، پروکسی روی ali8001.ir) را کاملاً
+// دست‌نخورده می‌گذاریم — یعنی اصلاً respondWith صدا زده نمی‌شود — تا مرورگر
+// مستقیماً خودش آن‌ها را مدیریت کند. اگر این درخواست‌ها از داخل fetch()
+// سرویس‌ورکر رد شوند، سیگنال قطع (AbortController) که برای جلوگیری از
+// قفل‌شدن دکمه‌ها روی اینترنت فیلتر/کند استفاده شده درست کار نمی‌کند و
+// درخواست ممکن است برای همیشه معلق بماند — دقیقاً همان چیزی که باعث
+// «قفل‌شدن» دکمه‌ی ثبت ورود/خروج در نسخه‌ی نصب‌شده می‌شد.
 self.addEventListener('fetch', (event) => {
-  event.respondWith(fetch(event.request));
-});
-
-// وقتی یک پیام Push از سرور می‌رسد (حتی اگر هیچ تب بازی از برنامه وجود نداشته باشد)،
-// یک اعلان سیستمی (مثل اعلان تلگرام/واتساپ) روی گوشی نمایش می‌دهیم.
-self.addEventListener('push', (event) => {
-  let data = { title: 'غرفه فامیلی', body: 'یک اعلان جدید دارید.' };
-  try {
-    if (event.data) data = event.data.json();
-  } catch (e) {
-    if (event.data) data.body = event.data.text();
+  const url = new URL(event.request.url);
+  if (url.origin !== self.location.origin) {
+    return; // برون‌مبدأ: کاری نکن، بگذار مرورگر مستقیم خودش هندلش کند
   }
-  const options = {
-    body: data.body || '',
-    icon: 'icon-192.png',
-    badge: 'icon-192.png',
-    dir: 'rtl',
-    lang: 'fa',
-    vibrate: [120, 60, 120],
-    tag: 'family-shop-alert',
-    renotify: true
-  };
-  event.waitUntil(self.registration.showNotification(data.title || 'غرفه فامیلی', options));
-});
-
-// وقتی کاربر روی خود اعلان تپ می‌کند، برنامه را باز کن (یا اگر باز است، همان تب را جلو بیاور)
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
-  event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientsArr) => {
-      for (const client of clientsArr) {
-        if ('focus' in client) return client.focus();
-      }
-      if (self.clients.openWindow) return self.clients.openWindow('./');
-    })
-  );
+  event.respondWith(fetch(event.request));
 });
