@@ -6374,6 +6374,9 @@
             if (name === 'AbortError') {
                 return 'عملیات نیمه‌کاره متوقف شد (مثلاً صفحه را ترک کردید یا برنامه به پس‌زمینه رفت). دوباره تلاش کنید و تا پایان روی همین صفحه بمانید.';
             }
+            if (name === 'TimeoutError') {
+                return 'سنسور اثر انگشت/چهره‌ی گوشی بیش از ۲۰ ثانیه جواب نداد. معمولاً یعنی روی این مرورگر یا این حالت باز کردن صفحه (مثلاً PWA) کار نمی‌کند؛ از Chrome/Safari مستقیم (نه از آیکون روی صفحه اصلی) امتحان کنید.';
+            }
             return 'خطای غیرمنتظره: ' + (e && e.message ? e.message : String(e));
         }
         // =========================================================================
@@ -6591,7 +6594,7 @@
                 const challenge = crypto.getRandomValues(new Uint8Array(32));
                 const userIdBytes = new TextEncoder().encode(currentSessionUser.username);
 
-                const credential = await navigator.credentials.create({
+                const credentialPromise = navigator.credentials.create({
                     publicKey: {
                         challenge,
                         rp: { name: 'سیستم مدیریت غرفه فامیلی (دره میرکی)' },
@@ -6602,6 +6605,13 @@
                         attestation: 'none'
                     }
                 });
+                // همون مشکل ثبت ورود/خروج: بعضی مرورگرها/PWA گیر می‌کنن و این Promise هیچ‌وقت
+                // جواب نمی‌ده؛ یه سقف زمانی ۲۰ ثانیه‌ای می‌ذاریم تا کاربر به‌جای گیر کردن ابدی،
+                // خطای روشن ببینه و بتونه دوباره تلاش کنه یا از چهره اختصاصی استفاده کنه.
+                const credential = await Promise.race([
+                    credentialPromise,
+                    new Promise((_, reject) => setTimeout(() => reject(new DOMException('سنسور گوشی بیش از ۲۰ ثانیه جواب نداد', 'TimeoutError')), 20000))
+                ]);
 
                 if (!credential) { showToast('⛔ ثبت اثر انگشت لغو شد.'); return; }
 
@@ -6708,7 +6718,7 @@
 
             try {
                 const challenge = crypto.getRandomValues(new Uint8Array(32));
-                const assertion = await navigator.credentials.get({
+                const credentialPromise = navigator.credentials.get({
                     publicKey: {
                         challenge,
                         allowCredentials: [{ id: base64ToArrayBuffer(deviceRow.credential_id), type: 'public-key' }],
@@ -6716,6 +6726,15 @@
                         timeout: 60000
                     }
                 });
+                // خیلی از مرورگرها/حالت PWA به گزینه‌ی timeout بالا پایبند نیستن؛ اگه سنسور گیر کنه
+                // (مثلاً داخل PWA یا بعضی نسخه‌های کروم/سافاری)، این Promise ممکنه هیچ‌وقت نه resolve
+                // بشه نه reject، و دکمه برای همیشه روی «در حال تایید اثر انگشت...» می‌مونه.
+                // این سقف زمانی ۲۰ ثانیه‌ای تضمین می‌کنه که همیشه یا جواب می‌گیریم یا فوراً می‌ریم
+                // سراغ روش جایگزین (تشخیص چهره اختصاصی یا ادامه با عکس/موقعیت مکانی).
+                const assertion = await Promise.race([
+                    credentialPromise,
+                    new Promise((_, reject) => setTimeout(() => reject(new DOMException('سنسور گوشی بیش از ۲۰ ثانیه جواب نداد', 'TimeoutError')), 20000))
+                ]);
 
                 if (!assertion) {
                     return await resolveBiometricFailure('تایید اثر انگشت انجام نشد.', hasCustomFace);
@@ -6732,6 +6751,9 @@
                 return { ok: true, method: 'webauthn' };
             } catch (e) {
                 console.error('خطای تایید بیومتریک هنگام ثبت حضور:', e);
+                if (e && e.name === 'TimeoutError') {
+                    return await resolveBiometricFailure('سنسور اثر انگشت/چهره‌ی گوشی بیش از ۲۰ ثانیه جواب نداد (معمولاً یعنی روی این مرورگر یا این حالت باز کردن صفحه کار نمی‌کند).', hasCustomFace);
+                }
                 const detail = describeWebAuthnError(e);
                 if (e && e.name === 'NotAllowedError' && !hasCustomFace) {
                     const wantsRetry = await showConfirm('⛔ تایید بیومتریک انجام نشد.\n\n' + detail + '\n\nهمین الان دوباره تلاش کنید؟');
@@ -8802,6 +8824,11 @@
             }
 
             const needItems = products.filter(p => {
+                // کالاهای «فقط غرفه‌ای» اصلاً انبار مرکزی ندارن که ازش شارژ بشن؛ چک‌لیست شارژ
+                // صبحگاهی (که می‌گفت «انبار خالیه، سریع سفارش بده») براشون معنی نداشت و باعث
+                // هشدار الکی می‌شد. هشدار درست این کالاها با حد «حداقل موجودی غرفه» خودشون،
+                // جای دیگه (checkLowStockAlertNoWeight) به مدیر داده می‌شود.
+                if (p.booth_only) return false;
                 const capacity = p.container_capacity || 7.0;
                 const currentBooth = p.booth_stock || 0;
                 return Number((capacity - currentBooth).toFixed(3)) > 0;
@@ -10775,7 +10802,12 @@
             }
 
             await _supabase.from('deleted_sales_backup').delete().eq('id', backupId);
-            showToast('✅ فاکتور با موفقیت به لیست فروش‌ها بازگردانده شد.');
+            const { data: stillThereAfterRestore } = await _supabase.from('deleted_sales_backup').select('id').eq('id', backupId).maybeSingle();
+            if (stillThereAfterRestore) {
+                showToast('⚠️ فاکتور با موفقیت بازگردانده شد، ولی ردیف بک‌آپش پاک نشد (احتمالاً Policy مربوط به DELETE روی جدول deleted_sales_backup در Supabase تعریف نشده). می‌توانید با دکمه «حذف همیشگی از این لیست» دوباره امتحان کنید.');
+            } else {
+                showToast('✅ فاکتور با موفقیت به لیست فروش‌ها بازگردانده شد.');
+            }
             loadDeletedSalesBackup();
         }
 
@@ -10787,6 +10819,18 @@
 
             const { error } = await _supabase.from('deleted_sales_backup').delete().eq('id', backupId);
             if (error) { showToast('❌ خطا: ' + error.message); return; }
+
+            // سوپابیس وقتی روی جدول Row Level Security فعاله ولی policy برای DELETE تعریف
+            // نشده، هیچ خطایی برنمی‌گردونه ولی هیچ ردیفی هم واقعاً پاک نمی‌شه (0 ردیف حذف شد).
+            // همین باعث می‌شد ردیف «پاک شد» نشون داده بشه ولی با رفرش دوباره برگرده.
+            // اینجا با یک select دوباره مطمئن می‌شیم واقعاً حذف شده.
+            const { data: stillThere } = await _supabase.from('deleted_sales_backup').select('id').eq('id', backupId).maybeSingle();
+            if (stillThere) {
+                showToast('⚠️ درخواست حذف بدون خطا برگشت ولی ردیف هنوز روی سرور هست — احتمالاً روی جدول deleted_sales_backup در Supabase، Policy مربوط به DELETE تعریف نشده (RLS). از بخش Authentication > Policies توی Supabase یک Policy برای DELETE به این جدول اضافه کنید.');
+                loadDeletedSalesBackup();
+                return;
+            }
+
             showToast('✅ از لیست پاک شد.');
             loadDeletedSalesBackup();
         }
