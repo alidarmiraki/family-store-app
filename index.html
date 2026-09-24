@@ -6671,13 +6671,26 @@
 
             // اول چک می‌کنیم این حساب دقیقاً کدام روش(ها) رو ثبت کرده — تا مستقیم و خودکار
             // سراغ همون بریم، بدون این‌که یک روش ثبت‌نشده رو امتحان کنیم یا از کاربر اضافه بپرسیم
-            const [deviceResult, faceResult] = await withTimeout(Promise.all([
-                _supabase.from('staff_devices').select('*').eq('username', currentSessionUser.username).maybeSingle(),
-                _supabase.from('staff_face_data').select('username').eq('username', currentSessionUser.username).maybeSingle()
-            ]), 12000, 'بررسی اثر انگشت ثبت‌شده');
-            const deviceRow = deviceResult.data;
-            const deviceErr = deviceResult.error;
-            const hasCustomFace = !!(faceResult.data);
+            let deviceRow = null;
+            let deviceErr = null;
+            let hasCustomFace = false;
+            try {
+                const [deviceResult, faceResult] = await withTimeout(Promise.all([
+                    _supabase.from('staff_devices').select('*').eq('username', currentSessionUser.username).maybeSingle(),
+                    _supabase.from('staff_face_data').select('username').eq('username', currentSessionUser.username).maybeSingle()
+                ]), 12000, 'بررسی اثر انگشت ثبت‌شده');
+                deviceRow = deviceResult.data;
+                deviceErr = deviceResult.error;
+                hasCustomFace = !!(faceResult.data);
+            } catch (netErr) {
+                // اگر اینترنت/فیلتر مشکل داشت، باز هم سعی می‌کنیم چهره اختصاصی را باز کنیم
+                // (چهره از cache/local ممکن است قبلاً لود شده باشد یا حداقل کاربر گیر نکند)
+                console.warn('بررسی بیومتریک از سرور ناموفق:', netErr);
+                return await resolveBiometricFailure(
+                    'بررسی وضعیت بیومتریک از سرور ممکن نشد (اینترنت/فیلتر). اگر چهره اختصاصی ثبت کرده‌اید الان امتحان می‌شود.',
+                    true // فرض می‌کنیم ممکن است چهره داشته باشد و امتحان می‌کنیم
+                );
+            }
 
             if (deviceErr) {
                 return await resolveBiometricFailure('خطا در بررسی اثر انگشت ثبت‌شده: ' + deviceErr.message, hasCustomFace);
@@ -6701,21 +6714,68 @@
                 return await resolveBiometricFailure('تشخیص چهره اختصاصی تایید نشد.', true);
             }
 
+            // اگر WebAuthn اصلاً در دسترس نیست، مستقیم برو سراغ چهره اختصاصی (یا fallback)
             if (!window.PublicKeyCredential || !navigator.credentials) {
+                if (hasCustomFace) {
+                    showToast('⚠️ این مرورگر از اثر انگشت/Face ID پشتیبانی نمی‌کند — در حال باز کردن تشخیص چهره اختصاصی...');
+                    const faceOk = await verifyCustomFace();
+                    if (faceOk) return { ok: true, method: 'custom_face' };
+                    return await resolveBiometricFailure('تشخیص چهره اختصاصی تایید نشد.', true);
+                }
                 showToast('⚠️ این دستگاه از تایید اثر انگشت پشتیبانی نمی‌کند؛ ثبت بدون تایید اثر انگشت انجام شد (لطفاً از مدیر بخواهید این مورد را بررسی کند).');
                 return { ok: true, method: 'unsupported' };
             }
 
+            // در حالت PWA (آیکون صفحه اصلی) یا وقتی سنسور بیومتریک شناسایی نمی‌شود،
+            // WebAuthn خیلی وقت‌ها بدون هیچ پیغامی معلق می‌ماند. در این حالت اگر چهره
+            // اختصاصی ثبت شده باشد، مستقیم همان را باز می‌کنیم تا کاربر گیر نکند.
+            const isStandalonePwa = (window.navigator.standalone === true) ||
+                (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+            let platformAuthAvailable = true;
+            try {
+                if (PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
+                    platformAuthAvailable = await Promise.race([
+                        PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable(),
+                        new Promise(resolve => setTimeout(() => resolve(false), 2500))
+                    ]);
+                }
+            } catch (e) { platformAuthAvailable = false; }
+
+            if ((!platformAuthAvailable || isStandalonePwa) && hasCustomFace) {
+                showToast(isStandalonePwa
+                    ? '📱 حالت نصب‌شده (PWA): اثر انگشت/Face ID رسمی گاهی کار نمی‌کند — در حال باز کردن تشخیص چهره اختصاصی...'
+                    : '⚠️ سنسور بیومتریک گوشی در دسترس نیست — در حال باز کردن تشخیص چهره اختصاصی...');
+                const faceOk = await verifyCustomFace();
+                if (faceOk) return { ok: true, method: 'custom_face' };
+                // اگر چهره هم نشد، یک‌بار WebAuthn را با timeout کوتاه امتحان می‌کنیم (پایین‌تر)
+            }
+
             try {
                 const challenge = crypto.getRandomValues(new Uint8Array(32));
-                const assertion = await navigator.credentials.get({
-                    publicKey: {
-                        challenge,
-                        allowCredentials: [{ id: base64ToArrayBuffer(deviceRow.credential_id), type: 'public-key' }],
-                        userVerification: 'required',
-                        timeout: 60000
-                    }
-                });
+                // timeout کوتاه (۱۰ ثانیه) + AbortController تا اگر گوشی/مرورگر معلق ماند
+                // (مخصوصاً در PWA/Safari/Chrome standalone)، بلافاصله به چهره اختصاصی سوئیچ کنیم
+                // نه اینکه دکمه برای همیشه روی «در حال تایید اثر انگشت...» بماند.
+                const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+                const WEBAUTHN_TIMEOUT_MS = 10000;
+                const timeoutId = setTimeout(() => {
+                    try { if (controller) controller.abort(); } catch (e) {}
+                }, WEBAUTHN_TIMEOUT_MS);
+
+                let assertion;
+                try {
+                    const getOpts = {
+                        publicKey: {
+                            challenge,
+                            allowCredentials: [{ id: base64ToArrayBuffer(deviceRow.credential_id), type: 'public-key' }],
+                            userVerification: 'required',
+                            timeout: WEBAUTHN_TIMEOUT_MS
+                        }
+                    };
+                    if (controller) getOpts.signal = controller.signal;
+                    assertion = await navigator.credentials.get(getOpts);
+                } finally {
+                    clearTimeout(timeoutId);
+                }
 
                 if (!assertion) {
                     return await resolveBiometricFailure('تایید اثر انگشت انجام نشد.', hasCustomFace);
@@ -6732,7 +6792,17 @@
                 return { ok: true, method: 'webauthn' };
             } catch (e) {
                 console.error('خطای تایید بیومتریک هنگام ثبت حضور:', e);
-                const detail = describeWebAuthnError(e);
+                // AbortError یعنی timeout ما قطع کرده — مستقیم برو سراغ چهره اختصاصی
+                const isTimeoutOrAbort = e && (e.name === 'AbortError' || /abort|timeout|timed out/i.test(e.message || ''));
+                if (isTimeoutOrAbort && hasCustomFace) {
+                    showToast('⏳ اثر انگشت/Face ID در ۱۰ ثانیه جواب نداد — در حال باز کردن تشخیص چهره اختصاصی...');
+                    const faceOk = await verifyCustomFace();
+                    if (faceOk) return { ok: true, method: 'custom_face' };
+                    return await resolveBiometricFailure('اثر انگشت/Face ID timeout شد و تشخیص چهره اختصاصی هم تایید نشد.', true);
+                }
+                const detail = isTimeoutOrAbort
+                    ? 'تایید اثر انگشت/Face ID بیش از ۱۰ ثانیه طول کشید و قطع شد (احتمالاً در حالت PWA یا مرورگر پشتیبانی کامل ندارد).'
+                    : describeWebAuthnError(e);
                 if (e && e.name === 'NotAllowedError' && !hasCustomFace) {
                     const wantsRetry = await showConfirm('⛔ تایید بیومتریک انجام نشد.\n\n' + detail + '\n\nهمین الان دوباره تلاش کنید؟');
                     if (wantsRetry) return await verifyFingerprintForAttendance();
@@ -7047,7 +7117,7 @@
             let biometricFallbackReason = null;
             let biometricMethodLabel = null; // برای ثبت شفاف در گزارش مدیر که دقیقاً با چه روشی تایید شد
             if (type === 'entry' || type === 'exit') {
-                if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = '👆 در حال تایید اثر انگشت...'; }
+                if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = '👆 در حال تایید بیومتریک...'; }
                 const fpResult = await verifyFingerprintForAttendance();
                 if (!fpResult.ok) {
                     if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'ثبت در سیستم حضور و غیاب'; }
@@ -10727,18 +10797,20 @@
             const nameByCode = {};
             (products || []).forEach(p => { nameByCode[p.code] = p.name; });
 
-            listBox.innerHTML = cachedDeletedSalesList.map(d => `
-                <div class="report-card">
+            listBox.innerHTML = cachedDeletedSalesList.map(d => {
+                const safeId = String(d.id || '').replace(/'/g, "\\'");
+                return `
+                <div class="report-card" data-backup-id="${escapeHtmlForToast(String(d.id || ''))}">
                     <h3>${nameByCode[d.product_code] || d.product_code} — ${(Number(d.sell_price) || 0).toLocaleString('fa-IR')} تومان</h3>
                     <p>📦 مقدار: ${Number(d.quantity).toLocaleString('fa-IR')} کیلو ${d.customer_name ? '| 🙋 مشتری: ' + escapeHtmlForToast(d.customer_name) : ''}</p>
                     <p>📅 تاریخ فروش اصلی: ${getTehranFullDateTimeString(new Date(d.original_created_at))}</p>
                     <p>🗑️ حذف‌شده توسط: ${escapeHtmlForToast(d.deleted_by || '-')} در ${getTehranFullDateTimeString(new Date(d.deleted_at))}</p>
                     <div style="display:flex; gap:6px; margin-top:6px;">
-                        <button class="row-btn confirm-btn" style="flex:1; padding:5px 8px; font-size:11px;" onclick="restoreDeletedSale('${d.id}')">↩️ بازگردانی فاکتور</button>
-                        <button class="row-btn delete-btn" style="flex:1; padding:5px 8px; font-size:11px;" onclick="permanentlyRemoveBackupRow('${d.id}')">🗑️ حذف همیشگی از این لیست</button>
+                        <button class="row-btn confirm-btn" style="flex:1; padding:5px 8px; font-size:11px;" data-backup-id="${escapeHtmlForToast(String(d.id || ''))}" onclick="restoreDeletedSale('${safeId}')">↩️ بازگردانی فاکتور</button>
+                        <button class="row-btn delete-btn" style="flex:1; padding:5px 8px; font-size:11px;" data-backup-id="${escapeHtmlForToast(String(d.id || ''))}" onclick="permanentlyRemoveBackupRow('${safeId}')">🗑️ حذف همیشگی از این لیست</button>
                     </div>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
         }
 
         // یه فاکتور حذف‌شده رو دوباره به جدول sales برمی‌گردونه و به همون اندازه از موجودی غرفه کم می‌کنه
@@ -10782,13 +10854,50 @@
         // فقط از خودِ لیست بک‌آپ پاکش می‌کنه (فاکتور همچنان توی sales حذف‌شده باقی می‌مونه) —
         // برای وقتی که مدیر مطمئنه این حذف درست بوده و دیگه لازم نیست نگهش داره
         async function permanentlyRemoveBackupRow(backupId) {
+            if (!backupId) {
+                showToast('❌ شناسه ردیف نامعتبر است.');
+                return;
+            }
+            const idStr = String(backupId).trim();
             const sure = await showConfirm('این فقط ردیف رو از لیست «فاکتورهای حذف‌شده» پاک می‌کنه (نه از فروش‌ها، چون قبلاً از اونجا حذف شده). مطمئنید؟');
             if (!sure) return;
 
-            const { error } = await _supabase.from('deleted_sales_backup').delete().eq('id', backupId);
-            if (error) { showToast('❌ خطا: ' + error.message); return; }
-            showToast('✅ از لیست پاک شد.');
-            loadDeletedSalesBackup();
+            // حذف خوش‌بینانه از UI تا کاربر فوراً ببینه ردیف رفته (اگر سرور خطا داد، لیست دوباره لود می‌شه)
+            const prevList = cachedDeletedSalesList.slice();
+            cachedDeletedSalesList = cachedDeletedSalesList.filter(x => String(x.id) !== idStr);
+            const listBox = document.getElementById('deletedSalesList');
+            if (listBox && cachedDeletedSalesList.length === 0) {
+                listBox.innerHTML = '<div class="report-card"><p>تا الان هیچ فاکتور فروشی حذف نشده. 👍</p></div>';
+            } else if (listBox) {
+                // فقط همان کارت را از DOM حذف کن تا کل لیست دوباره اسکلت نشود
+                try {
+                    const cards = listBox.querySelectorAll('.report-card');
+                    cards.forEach(card => {
+                        const btn = card.querySelector(`button[onclick*="permanentlyRemoveBackupRow('${idStr}')"]`);
+                        if (btn) card.remove();
+                    });
+                } catch (e) { /* نادیده */ }
+            }
+
+            try {
+                const { error, count } = await _supabase
+                    .from('deleted_sales_backup')
+                    .delete({ count: 'exact' })
+                    .eq('id', idStr);
+                if (error) {
+                    cachedDeletedSalesList = prevList;
+                    showToast('❌ خطا در حذف همیشگی: ' + error.message + '\n\nاگر پیام «permission» یا «RLS» می‌بینید، در Supabase برای جدول deleted_sales_backup سیاست DELETE را برای نقش authenticated/anon فعال کنید.');
+                    loadDeletedSalesBackup();
+                    return;
+                }
+                showToast('✅ از لیست پاک شد.' + (count === 0 ? '\n(توجه: ردیفی با این شناسه در سرور پیدا نشد — شاید قبلاً پاک شده بود.)' : ''));
+                // یک‌بار هم از سرور همگام کن تا مطمئن شویم
+                loadDeletedSalesBackup();
+            } catch (netErr) {
+                cachedDeletedSalesList = prevList;
+                showToast('❌ خطا در ارتباط با سرور: ' + (netErr.message || netErr));
+                loadDeletedSalesBackup();
+            }
         }
 
         // ================== گزارش رشد/افت فروش (فقط مدیر) ==================
