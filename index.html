@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v66 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v68 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="icon" href="icon-192.png">
@@ -345,6 +345,44 @@
         .tab-btn:active, button:active, .row-btn:active {
             transform: scale(0.95);
         }
+
+        /* --- نوار پایین صفحه: میانبر به پرکاربردترین بخش‌ها، مخصوص لمس با شست روی گوشی --- */
+        .bottom-nav {
+            position: fixed;
+            left: 0; right: 0; bottom: 0;
+            z-index: 500;
+            display: none;
+            justify-content: space-around;
+            align-items: stretch;
+            background: var(--bg-card-solid);
+            border-top: 1px solid var(--border-color);
+            backdrop-filter: blur(16px);
+            padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
+            box-shadow: 0 -6px 24px rgba(0,0,0,0.25);
+        }
+        .bottom-nav.show { display: flex; }
+        .bottom-nav-btn {
+            flex: 1 1 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            padding: 6px 2px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: color 0.2s ease, transform 0.15s ease;
+        }
+        .bottom-nav-btn .bn-ico { font-size: 19px; line-height: 1; }
+        .bottom-nav-btn.active { color: var(--accent, #6366f1); transform: translateY(-2px); }
+        .bottom-nav-btn:active { transform: scale(0.92); }
+        /* وقتی نوار پایین فعاله، محتوا زیرش گم نشه */
+        body.has-bottom-nav { padding-bottom: 74px; }
         .card {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
@@ -1186,7 +1224,7 @@
         <button class="tab-btn" id="btnInventory" onclick="switchTab('inventory'); loadInventory();"><span class="tab-ico">📦</span><span class="tab-label">موجودی انبار</span></button>
         <button class="tab-btn" id="btnReport" onclick="switchTab('report'); loadSalesReport();"><span class="tab-ico">📊</span><span class="tab-label">گزارش فروش</span></button>
         <button class="tab-btn" id="btnWorkReport" onclick="openWorkReportTab()"><span class="tab-ico">🗓️</span><span class="tab-label">کارکرد پرسنل</span></button>
-        <button class="tab-btn" id="btnDashboard" onclick="switchTab('dashboard'); loadAdminDashboard();"><span class="tab-ico">🏠</span><span class="tab-label">خلاصه روز</span></button>
+        <button class="tab-btn" id="btnDashboard" onclick="switchTab('dashboard');"><span class="tab-ico">🏠</span><span class="tab-label">خلاصه روز</span></button>
         <button class="tab-btn" id="btnShiftSettings" onclick="switchTab('shiftSettings'); loadShiftSettings();"><span class="tab-ico">⚙️</span><span class="tab-label">تنظیمات شیفت‌ها</span></button>
         <button class="tab-btn" id="btnTelegramSettings" onclick="switchTab('telegramSettings'); loadTelegramSettings();"><span class="tab-ico">📲</span><span class="tab-label">اتصال تلگرام</span></button>
         <button class="tab-btn" id="btnDebtLedger" onclick="switchTab('debtLedger'); loadDebtLedger();"><span class="tab-ico">📒</span><span class="tab-label">دفتر بدهی مشتریان</span></button>
@@ -2183,7 +2221,7 @@
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v66 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v68 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
 
     <script>
         function toggleLoginPasswordVisibility() {
@@ -4192,12 +4230,14 @@
                 document.getElementById('salaryAdminForm').style.display = 'block';
                 checkLowStockAlertNoWeight();
             } else if (currentRole === 'morning_seller') {
-                setupView(['btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnDebtLedger', 'btnPersonalTakeout', 'btnSalary', 'btnExpenses', 'btnMyAccount'], 'saleTab');
+                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnDebtLedger', 'btnPersonalTakeout', 'btnSalary', 'btnExpenses', 'btnMyAccount'], 'dashboardTab');
                 document.getElementById('salaryAdminForm').style.display = 'none';
             } else {
-                setupView(['btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnReport', 'btnDebtLedger', 'btnPersonalTakeout', 'btnSalary', 'btnExpenses', 'btnMyAccount'], 'saleTab');
+                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnReport', 'btnDebtLedger', 'btnPersonalTakeout', 'btnSalary', 'btnExpenses', 'btnMyAccount'], 'dashboardTab');
                 document.getElementById('salaryAdminForm').style.display = 'none';
             }
+
+            renderBottomNav();
 
             loadProductDatalist();
             loadRecentSales('instore');
@@ -4266,6 +4306,7 @@
 
         function logout() {
             teardownRealtimeSubscriptions();
+            hideBottomNav();
             if (typeof idleWarningTimer !== 'undefined') { clearTimeout(idleWarningTimer); clearTimeout(idleLogoutTimer); }
             hideForceEntryLock();
             currentRole = "";
@@ -4318,6 +4359,60 @@
             document.getElementById(displayId).innerText = formatted + ' تومان';
         }
 
+        // --- نوار پایین صفحه: بر اساس نقش کاربر، میانبر به ۴-۵ بخش پرکاربرد رو می‌سازه ---
+        const BOTTOM_NAV_ITEMS = {
+            admin: [
+                { tab: 'dashboard', icon: '🏠', label: 'خلاصه روز' },
+                { tab: 'sale', icon: '🧀', label: 'فروش' },
+                { tab: 'report', icon: '📊', label: 'گزارش' },
+                { tab: 'personnel', icon: '👥', label: 'پرسنل' },
+            ],
+            morning_seller: [
+                { tab: 'dashboard', icon: '🏠', label: 'خلاصه روز' },
+                { tab: 'sale', icon: '🧀', label: 'فروش' },
+                { tab: 'attendance', icon: '⏰', label: 'حضور و غیاب' },
+                { tab: 'inbox', icon: '📥', label: 'صندوقچه' },
+                { tab: 'myAccount', icon: '👤', label: 'حساب من' },
+            ],
+            evening_seller: [
+                { tab: 'dashboard', icon: '🏠', label: 'خلاصه روز' },
+                { tab: 'sale', icon: '🧀', label: 'فروش' },
+                { tab: 'attendance', icon: '⏰', label: 'حضور و غیاب' },
+                { tab: 'inbox', icon: '📥', label: 'صندوقچه' },
+                { tab: 'myAccount', icon: '👤', label: 'حساب من' },
+            ],
+        };
+
+        function renderBottomNav() {
+            const nav = document.getElementById('bottomNav');
+            if (!nav) return;
+            const items = BOTTOM_NAV_ITEMS[currentRole];
+            if (!items) { nav.classList.remove('show'); document.body.classList.remove('has-bottom-nav'); return; }
+            nav.innerHTML = items.map(it => `
+                <button class="bottom-nav-btn" data-bn-tab="${it.tab}" onclick="switchTab('${it.tab}')">
+                    <span class="bn-ico">${it.icon}</span>
+                    <span>${it.label}</span>
+                </button>
+            `).join('');
+            nav.classList.add('show');
+            document.body.classList.add('has-bottom-nav');
+            syncBottomNavActiveState(document.getElementById('dashboardTab') && document.getElementById('dashboardTab').classList.contains('active') ? 'dashboard' : null);
+        }
+
+        function syncBottomNavActiveState(tab) {
+            const nav = document.getElementById('bottomNav');
+            if (!nav) return;
+            nav.querySelectorAll('.bottom-nav-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-bn-tab') === tab);
+            });
+        }
+
+        function hideBottomNav() {
+            const nav = document.getElementById('bottomNav');
+            if (nav) { nav.classList.remove('show'); nav.innerHTML = ''; }
+            document.body.classList.remove('has-bottom-nav');
+        }
+
         function switchTab(tab) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.card').forEach(card => card.classList.remove('active'));
@@ -4333,12 +4428,15 @@
             if (tab === 'saleEkala') { renderQuickPickButtons('ekala'); loadRecentCustomers(); }
             if (tab === 'saleSausage') { renderQuickPickButtons('sausage'); loadRecentCustomers(); }
             if (tab === 'attendance') { syncAttendanceTypeSelector(); loadMyLeaveRecords(); checkAttendanceReminders(); }
+            if (tab === 'dashboard') { loadAdminDashboard(); }
 
             updateTrialGuideBanner(tab);
+            syncBottomNavActiveState(tab);
         }
 
         // --- راهنمای مخصوص حساب آزمایشی: توضیح مختصر هر بخش، فقط برای نیروی تازه‌کاری که دارد یاد می‌گیرد ---
         const TRIAL_TAB_GUIDES = {
+            dashboard: '🏠 این خلاصه‌ی روز توئه: فروش امروزت، وضعیت ورود/خروجت، آخرین پیام‌ها و هدف فروش، همه یه‌جا. هر بار وارد شی همینجا میای.',
             sale: '🧀 اینجا فروش لبنیات رو ثبت می‌کنی: کالا رو انتخاب کن، وزن/تعداد و قیمت رو وارد کن و بزن «ثبت فروش». این حساب آزمایشیه ولی فروش‌هایی که اینجا می‌زنی واقعی ثبت می‌شه (دقیقاً مثل حساب اصلی)، پس با دقت انجامش بده تا یاد بگیری.',
             saleEkala: '🛒 همینجا فروش‌های اکالا (فروش آنلاین/ارسالی) رو جدا از فروش حضوری ثبت می‌کنی. این ثبت‌ها هم واقعی و در موجودی و گزارش اثر داره، پس دقیق وارد کن.',
             saleSausage: '🌭 اینجا مخصوص ثبت فروش سوسیس و کالباسه. همون روال فروش لبنیات رو اینجا هم انجام بده؛ این ثبت هم واقعیه.',
@@ -4620,18 +4718,25 @@
             const todayStartTehranOffsetMs = 3.5 * 60 * 60 * 1000;
             const todayStartUTC = new Date(Date.parse(todayISO + 'T00:00:00.000Z') - todayStartTehranOffsetMs);
 
-            const [salesRes, attendanceRes, messagesRes, productsRes, handoverRes, monthSalesRes, monthAttRes, bonusRes] = await Promise.all([
-                _supabase.from('sales').select('sell_price, quantity, created_at, seller_name, sale_type')
-                    .gte('created_at', todayStartUTC.toISOString())
-                    .order('created_at', { ascending: false }).limit(1000),
+            const myUsernameForMsgQuery = currentSessionUser ? currentSessionUser.username : null;
+            const messagesQuery = (currentRole === 'admin')
+                ? _supabase.from('messages').select('id, title, sender, created_at, recipient').eq('recipient', 'admin').order('created_at', { ascending: false }).limit(5)
+                : _supabase.from('messages').select('id, title, sender, created_at, recipient').or(['recipient.eq.all', myUsernameForMsgQuery ? `recipient.eq.${myUsernameForMsgQuery}` : 'recipient.eq.all'].join(',')).order('created_at', { ascending: false }).limit(5);
+
+            const [salesRes, attendanceRes, messagesRes, productsRes, handoverRes, shiftMonthStatsRes, bonusRes] = await Promise.all([
+                (currentRole === 'admin'
+                    ? _supabase.from('sales').select('sell_price, quantity, created_at, seller_name, sale_type')
+                    : _supabase.from('sales').select('sell_price, quantity, created_at, seller_name, sale_type').eq('seller_name', currentUserLabel)
+                ).gte('created_at', todayStartUTC.toISOString()).order('created_at', { ascending: false }).limit(1000),
                 _supabase.from('attendance').select('seller_name, type, created_at')
                     .gte('created_at', todayStartUTC.toISOString())
                     .order('created_at', { ascending: false }).limit(500),
-                _supabase.from('messages').select('id, title, sender, created_at, recipient').eq('recipient', 'admin').order('created_at', { ascending: false }).limit(5),
+                messagesQuery,
                 _supabase.from('products').select('id, name, stock, min_stock, booth_stock'),
                 _supabase.from('shift_handover_notes').select('*').is('read_at', null).order('created_at', { ascending: false }).limit(5),
-                _supabase.from('sales').select('sell_price, seller_name, created_at').gte('created_at', new Date(now.getFullYear(), now.getMonth(), 1).toISOString()).limit(3000),
-                _supabase.from('attendance').select('seller_name, type, delay_minutes, created_at').gte('created_at', new Date(now.getFullYear(), now.getMonth(), 1).toISOString()).limit(2000),
+                // این تابع فقط جمعِ کل هر شیفت رو برمی‌گردونه (نه ردیف‌های خام)، تا فروشنده‌ها
+                // نتونن فروش/تاخیر دقیقِ یک فرد خاص رو ببینن — حتی از طریق Developer Tools.
+                _supabase.rpc('get_shift_month_stats'),
                 _supabase.from('bonus_targets').select('*').eq('id', 1).maybeSingle()
             ]);
 
@@ -4739,15 +4844,15 @@
                 </div>` : '';
 
             // --- رقابت دوستانه این ماه: فروش و تاخیر هر شیفت (فقط برای انگیزه، بدون قضاوت) ---
-            const monthSales = monthSalesRes.data || [];
-            const monthAtt = monthAttRes.data || [];
-            const shiftStats = (prefix) => {
-                const sum = monthSales.filter(s => s.seller_name && s.seller_name.indexOf(prefix) === 0).reduce((a, s) => a + (Number(s.sell_price) || 0), 0);
-                const lateCount = monthAtt.filter(a => a.seller_name && a.seller_name.indexOf(prefix) === 0 && a.type === 'entry' && a.delay_minutes > 0).length;
-                return { sum, lateCount };
+            // از یک تابع سمت سرور (get_shift_month_stats) که فقط جمع کل هر شیفت رو برمی‌گردونه،
+            // نه ردیف‌های خام — یعنی فروش/تاخیر دقیق یک فرد خاص هیچ‌وقت به مرورگر نمی‌رسه.
+            const shiftMonthStats = shiftMonthStatsRes.data || [];
+            const shiftStats = (key) => {
+                const row = shiftMonthStats.find(r => r.shift_key === key);
+                return { sum: row ? Number(row.sales_sum) || 0 : 0, lateCount: row ? Number(row.late_count) || 0 : 0 };
             };
-            const mStats = shiftStats('فروشنده صبح');
-            const eStats = shiftStats('فروشنده شب');
+            const mStats = shiftStats('morning');
+            const eStats = shiftStats('evening');
             const leaderboardCard = `
                 <div class="report-card">
                     <h3>🏆 رقابت دوستانه این ماه</h3>
@@ -4761,11 +4866,13 @@
                 ${handoverCard}
                 ${bonusCard}
                 <div class="report-card">
-                    <h3>💰 فروش امروز (مجموع کل)</h3>
+                    <h3>💰 ${currentRole === 'admin' ? 'فروش امروز (مجموع کل)' : 'فروش امروز شما'}</h3>
                     <p style="font-size:20px; font-weight:bold; color:#38bdf8;" id="dashTodayRevenueNum">۰ تومان</p>
-                    <p style="font-size:12px; color:#94a3b8;">${todayCount.toLocaleString('fa-IR')} فاکتور ثبت شده</p>
+                    <p style="font-size:12px; color:#94a3b8;">${(currentRole === 'admin' ? todayCount : (perPersonToday[currentUserLabel] ? perPersonToday[currentUserLabel].count : 0)).toLocaleString('fa-IR')} فاکتور ثبت شده</p>
+                    ${currentRole === 'admin' ? `
                     <h4 style="color:#cbd5e1; margin-top:12px; margin-bottom:6px; font-size:13px;">👥 تفکیک دقیق به‌ازای هر فروشنده:</h4>
                     ${perPersonRows || '<p style="color:#94a3b8; font-size:12px;">هنوز امروز فروشی ثبت نشده است.</p>'}
+                    ` : ''}
                 </div>
                 <div class="report-card">
                     <h3>⏰ وضعیت حضور امروز</h3>
@@ -4775,7 +4882,7 @@
                 <div class="report-card">
                     <h3>📦 وضعیت موجودی</h3>
                     ${lowStockItems.length > 0
-                        ? `<p style="color:#ef4444; font-weight:bold;">⚠️ ${lowStockItems.length.toLocaleString('fa-IR')} کالا به نقطه سفارش رسیده یا تمام شده</p><button class="row-btn edit-btn" onclick="switchTab('inventory'); loadInventory();">مشاهده در موجودی انبار</button>`
+                        ? `<p style="color:#ef4444; font-weight:bold;">⚠️ ${lowStockItems.length.toLocaleString('fa-IR')} کالا به نقطه سفارش رسیده یا تمام شده</p>${(currentRole === 'admin' || currentRole === 'morning_seller') ? `<button class="row-btn edit-btn" onclick="switchTab('inventory'); loadInventory();">مشاهده در موجودی انبار</button>` : ''}`
                         : `<p style="color:#34d399;">✅ همه‌چیز مرتب است</p>`}
                 </div>
                 <div class="report-card">
@@ -4795,10 +4902,11 @@
                     <textarea id="handoverNoteInput" rows="2" placeholder="یادداشتت رو اینجا بنویس..."></textarea>
                     <button class="row-btn edit-btn" style="width:100%; margin-top:8px;" onclick="submitHandoverNote()">📤 ارسال برای شیفت بعد</button>
                 </div>` : ''}
-                <canvas id="dashboardTrendChart" height="180" style="margin-top:10px;"></canvas>
+                ${currentRole === 'admin' ? '<canvas id="dashboardTrendChart" height="180" style="margin-top:10px;"></canvas>' : ''}
             `;
 
-            animateCounterElement('dashTodayRevenueNum', todayRevenue, ' تومان');
+            animateCounterElement('dashTodayRevenueNum', (currentRole === 'admin') ? todayRevenue : (perPersonToday[currentUserLabel] ? perPersonToday[currentUserLabel].sum : 0), ' تومان');
+            if (currentRole === 'admin') renderSalesTrendChart('dashboardTrendChart', salesRes.data || []);
             renderSalesTrendChart('dashboardTrendChart', salesRes.data || []);
         }
 
@@ -12139,5 +12247,8 @@
             `).join('');
         }
     </script>
+
+    <!-- نوار پایین صفحه: میانبر پرکاربردترین بخش‌ها (محتوایش با نقش کاربر توسط JS پر می‌شه) -->
+    <div class="bottom-nav" id="bottomNav"></div>
 </body>
 </html>
