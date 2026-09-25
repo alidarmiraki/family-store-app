@@ -4775,7 +4775,7 @@
                     .gte('created_at', todayStartUTC.toISOString())
                     .order('created_at', { ascending: false }).limit(500),
                 messagesQuery,
-                _supabase.from('products').select('id, name, stock, min_stock, booth_stock, no_restock'),
+                _supabase.from('products').select('id, name, stock, min_stock, booth_stock, booth_min_stock, no_restock, booth_only'),
                 _supabase.from('shift_handover_notes').select('*').is('read_at', null).order('created_at', { ascending: false }).limit(5),
                 // این تابع فقط جمعِ کل هر شیفت رو برمی‌گردونه (نه ردیف‌های خام)، تا فروشنده‌ها
                 // نتونن فروش/تاخیر دقیقِ یک فرد خاص رو ببینن — حتی از طریق Developer Tools.
@@ -4817,7 +4817,14 @@
                 return `<span style="color:#ef4444; font-weight:bold;">⛔ ${label}: هنوز ورود نزده</span>`;
             };
 
-            const lowStockItems = (productsRes.data || []).filter(p => (p.stock || 0) <= (p.min_stock || 0) && !p.no_restock);
+            // کالاهایی که «فقط غرفه‌ای» هستن اصلاً انبار مرکزی ندارن (همیشه stock=0 و min_stock=0
+            // براشونه)، پس مقایسه‌ی stock<=min_stock همیشه true می‌شد و هشدار الکی «انبار خالیه»
+            // می‌ساخت. برای این‌ها باید فقط موجودی خودِ غرفه با حد خودش مقایسه بشه.
+            const lowStockItems = (productsRes.data || []).filter(p => {
+                if (p.no_restock) return false;
+                if (p.booth_only) return (p.booth_stock || 0) <= (p.booth_min_stock || 0);
+                return (p.stock || 0) <= (p.min_stock || 0);
+            });
 
             const recentMessages = messagesRes.data || [];
 
@@ -5189,8 +5196,12 @@
         // --- بررسی بحران موجودی بلافاصله بعد از یک فروش (وقتی انبار اصلی خالی است) ---
         async function checkCriticalAfterSale(product, newBoothStock) {
             try {
+                if (product.no_restock) return;
                 const mainStock = product.stock || 0;
-                if (mainStock > 0) return;
+                // برای کالای «فقط غرفه‌ای» اصلاً قرار نیست انبار اصلی چیزی داشته باشه، پس
+                // شرط «انبار اصلی خالیه» براش همیشه true و بی‌معنیه — باید بی‌قید و شرط
+                // فقط با حد موجودی غرفه‌اش سنجیده بشه.
+                if (!product.booth_only && mainStock > 0) return;
 
                 const threshold = product.booth_min_stock || 0;
                 if (newBoothStock > threshold) return;
@@ -5203,11 +5214,14 @@
                 }
 
                 await _supabase.from('products').update({ low_stock_alert_since: now.toISOString() }).eq('id', product.id);
+                const body = product.booth_only
+                    ? `موجودی «${product.name}» (کالای فقط غرفه‌ای) با این فروش به ${newBoothStock} کیلو رسید (حد هشدار: ${threshold} کیلو). لطفاً هرچه سریع‌تر تهیه/سفارش کنید.`
+                    : `انبار اصلی «${product.name}» خالی است و با این فروش، موجودی غرفه هم به ${newBoothStock} کیلو رسید (حد هشدار: ${threshold} کیلو).\nاین کالا دیگر در چک‌لیست شارژ صبحگاهی قابل پر کردن نیست چون انبار اصلی خالی است. لطفاً هرچه سریع‌تر سفارش دهید.`;
                 await _supabase.from('messages').insert([{
                     sender: "سیستم خودکار موجودی",
                     recipient: "admin",
                     title: `⛔ کاهش بحرانی موجودی: ${product.name}`,
-                    body: `انبار اصلی «${product.name}» خالی است و با این فروش، موجودی غرفه هم به ${newBoothStock} کیلو رسید (حد هشدار: ${threshold} کیلو).\nاین کالا دیگر در چک‌لیست شارژ صبحگاهی قابل پر کردن نیست چون انبار اصلی خالی است. لطفاً هرچه سریع‌تر سفارش دهید.`,
+                    body,
                     created_at: now.toISOString()
                 }]);
             } catch (e) {
@@ -9369,7 +9383,7 @@
         async function loadInventory() {
             const { data: products } = await _supabase
                 .from('products')
-                .select('id, code, name, stock, booth_stock, min_stock, booth_min_stock, sell_price, buy_price, container_capacity, category, no_restock');
+                .select('id, code, name, stock, booth_stock, min_stock, booth_min_stock, sell_price, buy_price, container_capacity, category, no_restock, booth_only');
 
             cachedProductsList = sortProductsAlpha(products || []);
             cachedInventoryFull = cachedProductsList;
@@ -9441,10 +9455,16 @@
             const banner = document.getElementById('lowStockBanner');
             // کالاهایی که مدیر یا فروشنده صبح تیک «دیگه نمیارم» رو براشون زده، دیگه جزو
             // هشدارهای کمبود موجودی حساب نمی‌شن — چون قراره اصلاً سفارش داده نشن.
-            const lowStockItems = byCategory.filter(p => p.stock <= p.min_stock && !p.no_restock);
+            // کالاهای «فقط غرفه‌ای» هم انبار مرکزی ندارن (stock و min_stock همیشه صفره)، پس
+            // باید با حد موجودی خودِ غرفه سنجیده بشن، نه با انبار اصلی که اصلاً معنی نداره.
+            const lowStockItems = byCategory.filter(p => {
+                if (p.no_restock) return false;
+                if (p.booth_only) return (p.booth_stock || 0) <= (p.booth_min_stock || 0);
+                return p.stock <= p.min_stock;
+            });
             if (currentRole === 'admin' && lowStockItems.length > 0) {
                 banner.innerHTML = '⚠️ ' + lowStockItems.length + ' کالا به نقطه سفارش رسیده یا تمام شده:<br>' +
-                    lowStockItems.map(p => '• ' + p.name + ' (موجودی انبار: ' + p.stock + ' کیلو)').join('<br>');
+                    lowStockItems.map(p => '• ' + p.name + (p.booth_only ? ' (موجودی غرفه: ' + (p.booth_stock || 0) + ' کیلو)' : ' (موجودی انبار: ' + p.stock + ' کیلو)')).join('<br>');
                 banner.style.display = 'block';
             } else {
                 banner.style.display = 'none';
@@ -9480,15 +9500,18 @@
             products.forEach(p => {
                 const tr = document.createElement('tr');
                 const categoryTag = (p.category === 'sausage') ? ' 🌭' : '';
-                const stockLow = p.stock <= p.min_stock;
+                // برای کالای «فقط غرفه‌ای» ستون انبار اصلی اصلاً معنی نداره (همیشه صفره)، پس نباید
+                // قرمز نشون داده بشه؛ کمبودش فقط با موجودی خودِ غرفه سنجیده می‌شه.
+                const stockLow = p.booth_only ? (p.booth_stock || 0) <= (p.booth_min_stock || 0) : (p.stock <= p.min_stock);
+                const boothOnlyTag = p.booth_only ? ' <span style="font-size:9px; color:#fbbf24; border:1px solid #fbbf24; border-radius:6px; padding:1px 4px;">فقط غرفه</span>' : '';
                 const nameCell = p.no_restock
-                    ? `${p.name || ''}${categoryTag}<br><span style="background:#64748b; color:#fff; font-size:9px; border-radius:5px; padding:2px 5px;">🚫 دیگه سفارش داده نمی‌شود</span>`
-                    : `${p.name || ''}${categoryTag}`;
+                    ? `${p.name || ''}${categoryTag}${boothOnlyTag}<br><span style="background:#64748b; color:#fff; font-size:9px; border-radius:5px; padding:2px 5px;">🚫 دیگه سفارش داده نمی‌شود</span>`
+                    : `${p.name || ''}${categoryTag}${boothOnlyTag}`;
                 let rowHtml = `
                     <td>${p.code || ''}</td>
                     <td>${nameCell}</td>
-                    <td style="color: ${(stockLow && !p.no_restock) ? '#ef4444' : '#10b981'}; font-weight: bold;">${Number(p.stock).toLocaleString('fa-IR', { maximumFractionDigits: 3 })} کیلو</td>
-                    <td>${Number(p.booth_stock || 0).toLocaleString('fa-IR', { maximumFractionDigits: 3 })} کیلو</td>
+                    <td style="color: ${p.booth_only ? '#94a3b8' : ((stockLow && !p.no_restock) ? '#ef4444' : '#10b981')}; font-weight: bold;">${p.booth_only ? '—' : Number(p.stock).toLocaleString('fa-IR', { maximumFractionDigits: 3 })} ${p.booth_only ? '' : 'کیلو'}</td>
+                    <td style="color: ${(p.booth_only && stockLow && !p.no_restock) ? '#ef4444' : 'inherit'}; font-weight: ${(p.booth_only && stockLow && !p.no_restock) ? 'bold' : 'normal'};">${Number(p.booth_stock || 0).toLocaleString('fa-IR', { maximumFractionDigits: 3 })} کیلو</td>
                     <td>${Number(p.sell_price || 0).toLocaleString('fa-IR')} تومان</td>
                 `;
                 if (showBuyPrice) {
