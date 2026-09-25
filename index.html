@@ -1234,6 +1234,7 @@
         <button class="tab-btn" id="btnTakeoutAdmin" onclick="switchTab('takeoutAdmin'); loadTakeoutAdminSummary();"><span class="tab-ico">🧺</span><span class="tab-label">برداشت‌های حساب‌نشده</span></button>
         <button class="tab-btn" id="btnSalary" onclick="switchTab('salary'); loadSalaryTab();"><span class="tab-ico">💰</span><span class="tab-label">واریز حقوق</span></button>
         <button class="tab-btn" id="btnExpenses" onclick="switchTab('expenses'); loadExpensesTab();"><span class="tab-ico">📒</span><span class="tab-label">دفترچه هزینه‌ها</span></button>
+        <button class="tab-btn" id="btnWaste" onclick="switchTab('waste'); loadWasteTab();"><span class="tab-ico">🗑️</span><span class="tab-label">ضایعات</span></button>
         <button class="tab-btn" id="btnDeletedSales" onclick="switchTab('deletedSales'); loadDeletedSalesBackup();"><span class="tab-ico">🗑️</span><span class="tab-label">فاکتورهای حذف‌شده</span></button>
         <button class="tab-btn" id="btnWeeklyReports" onclick="switchTab('weeklyReports'); loadWeeklyReportsList();"><span class="tab-ico">📅</span><span class="tab-label">گزارش‌های هفتگی</span></button>
         <button class="tab-btn" id="btnPersonnel" onclick="switchTab('personnel'); loadPersonnelTab();"><span class="tab-ico">🪪</span><span class="tab-label">اطلاعات پرسنل</span></button>
@@ -1487,6 +1488,7 @@
         </div>
 
         <div id="attendanceFormBox">
+        <div id="unclosedShiftHint" class="hint" style="display:none; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.4); border-radius:8px; padding:8px; color:#fca5a5; font-weight:bold;"></div>
         <label>نوع ثبت:</label>
         <select id="attType" onchange="toggleAttendanceFields()">
             <option value="entry">🟢 ثبت ورود به شیفت</option>
@@ -2188,7 +2190,48 @@
         </div>
     </div>
 
-    <!-- تب فاکتورهای فروش حذف‌شده (فقط مدیر) — از جدول بک‌آپ می‌خونه، برای شفافیت و بازیابی احتمالی -->
+    <!-- تب ضایعات: ثبت کالایی که خراب شده/تاریخش گذشته و باید از موجودی کم بشه -->
+    <div id="wasteTab" class="card">
+        <h2>🗑️ ثبت ضایعات</h2>
+        <div class="hint" style="margin-top:0;">وقتی کالایی خراب شده، تاریخش گذشته یا هر دلیل دیگه‌ای دور ریخته شده، اینجا ثبتش کن. مقدارش خودکار از موجودی کم می‌شه تا عدد انبار درست بمونه.</div>
+
+        <label>نام یا کد کالا:</label>
+        <input type="text" id="wasteProductName" list="productDatalist" placeholder="شروع به تایپ کن...">
+
+        <label>مقدار (کیلوگرم):</label>
+        <input type="number" id="wasteQty" step="0.05" placeholder="مثلاً 1.2">
+
+        <label>از کجا کم بشه؟</label>
+        <select id="wasteSource">
+            <option value="booth">🧊 موجودی غرفه</option>
+            <option value="warehouse">📦 انبار اصلی</option>
+        </select>
+
+        <label>دلیل ضایع‌شدن:</label>
+        <select id="wasteReason">
+            <option value="تاریخ گذشته">📅 تاریخ گذشته</option>
+            <option value="خراب/فاسد شده">🦠 خراب یا فاسد شده</option>
+            <option value="افتاده/خرد شده">💥 افتاده یا خرد شده</option>
+            <option value="سایر">📌 سایر</option>
+        </select>
+
+        <label>توضیحات (اختیاری):</label>
+        <textarea id="wasteNote" placeholder="توضیح اضافه در صورت نیاز..."></textarea>
+
+        <button class="submit-btn" onclick="submitWaste()">🗑️ ثبت ضایعات</button>
+
+        <div class="report-card" style="margin-top:16px;" id="wasteMonthTotalBox">
+            <h3>📊 جمع ضایعات این ماه</h3>
+            <p id="wasteMonthTotal" style="font-size:18px; font-weight:bold; color:#f87171;">در حال محاسبه...</p>
+        </div>
+
+        <div class="report-card" style="margin-top:10px;">
+            <h3>📋 آخرین ضایعات ثبت‌شده</h3>
+            <div id="wasteList"><div class="skeleton-block skeleton-card"></div></div>
+        </div>
+    </div>
+
+
     <div id="deletedSalesTab" class="card">
         <h2>🗑️ فاکتورهای فروش حذف‌شده</h2>
         <div class="hint" style="margin-top:0;">هر فاکتور فروشی که (چه توسط فروشنده چه توسط مدیر) حذف بشه، قبل از حذف یه نسخه کامل ازش اینجا نگه داشته می‌شه. اگه فاکتوری اشتباهی حذف شده، از همینجا قابل بازگردوندنه.</div>
@@ -4225,15 +4268,15 @@
             document.getElementById('buyPriceField').style.display = (currentRole === 'admin') ? 'block' : 'none';
 
             if (currentRole === 'admin') {
-                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnInbox', 'btnStaffMessage', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnShiftSettings', 'btnTelegramSettings', 'btnDebtLedger', 'btnContractAdmin', 'btnGrowthReport', 'btnPurchaseInvoices', 'btnTakeoutAdmin', 'btnSalary', 'btnExpenses', 'btnDeletedSales', 'btnWeeklyReports', 'btnPersonnel', 'btnMyAccount'], 'dashboardTab');
+                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnInbox', 'btnStaffMessage', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnShiftSettings', 'btnTelegramSettings', 'btnDebtLedger', 'btnContractAdmin', 'btnGrowthReport', 'btnPurchaseInvoices', 'btnTakeoutAdmin', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnDeletedSales', 'btnWeeklyReports', 'btnPersonnel', 'btnMyAccount'], 'dashboardTab');
                 checkAndGenerateWeeklyReport();
                 document.getElementById('salaryAdminForm').style.display = 'block';
                 checkLowStockAlertNoWeight();
             } else if (currentRole === 'morning_seller') {
-                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnDebtLedger', 'btnPersonalTakeout', 'btnSalary', 'btnExpenses', 'btnMyAccount'], 'dashboardTab');
+                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnDebtLedger', 'btnPersonalTakeout', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnMyAccount'], 'dashboardTab');
                 document.getElementById('salaryAdminForm').style.display = 'none';
             } else {
-                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnReport', 'btnDebtLedger', 'btnPersonalTakeout', 'btnSalary', 'btnExpenses', 'btnMyAccount'], 'dashboardTab');
+                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnReport', 'btnDebtLedger', 'btnPersonalTakeout', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnMyAccount'], 'dashboardTab');
                 document.getElementById('salaryAdminForm').style.display = 'none';
             }
 
@@ -4732,7 +4775,7 @@
                     .gte('created_at', todayStartUTC.toISOString())
                     .order('created_at', { ascending: false }).limit(500),
                 messagesQuery,
-                _supabase.from('products').select('id, name, stock, min_stock, booth_stock'),
+                _supabase.from('products').select('id, name, stock, min_stock, booth_stock, no_restock'),
                 _supabase.from('shift_handover_notes').select('*').is('read_at', null).order('created_at', { ascending: false }).limit(5),
                 // این تابع فقط جمعِ کل هر شیفت رو برمی‌گردونه (نه ردیف‌های خام)، تا فروشنده‌ها
                 // نتونن فروش/تاخیر دقیقِ یک فرد خاص رو ببینن — حتی از طریق Developer Tools.
@@ -4774,7 +4817,7 @@
                 return `<span style="color:#ef4444; font-weight:bold;">⛔ ${label}: هنوز ورود نزده</span>`;
             };
 
-            const lowStockItems = (productsRes.data || []).filter(p => (p.stock || 0) <= (p.min_stock || 0));
+            const lowStockItems = (productsRes.data || []).filter(p => (p.stock || 0) <= (p.min_stock || 0) && !p.no_restock);
 
             const recentMessages = messagesRes.data || [];
 
@@ -5046,7 +5089,7 @@
 
             const { data: products } = await _supabase
                 .from('products')
-                .select('id, code, name, stock, min_stock, booth_stock, booth_min_stock, low_stock_alert_since, stock_confirmed_empty, booth_only');
+                .select('id, code, name, stock, min_stock, booth_stock, booth_min_stock, low_stock_alert_since, stock_confirmed_empty, booth_only, no_restock');
             const btn = document.getElementById('btnInventory');
             if (!products) return;
 
@@ -5059,6 +5102,9 @@
             const pendingUpdates = [];
 
             products.forEach(p => {
+                // کالایی که با تیک «دیگه نمیارم» علامت خورده، اصلاً وارد هیچ‌کدام از منطق‌های
+                // هشدار زیر نمی‌شود — نه پیام فوری، نه یادآوری آرام، نه چک‌لیست شارژ.
+                if (p.no_restock) return;
                 // کالاهایی که اصلاً انبار مرکزی ندارن (فقط داخل غرفه نگهداری میشن) — منطق انبار
                 // اصلی/شارژ کردن براشون معنی نداره؛ فقط وقتی خود غرفه کم بشه، پیام «وقت خریدنه» میره
                 if (p.booth_only) {
@@ -5942,11 +5988,37 @@
             if (currentRole !== 'morning_seller' && currentRole !== 'evening_seller') return;
             const select = document.getElementById('attType');
             if (!select) return;
-            const status = await getTodayAttendanceStatus();
             const entryOption = select.querySelector('option[value="entry"]');
             const exitOption = select.querySelector('option[value="exit"]');
+            const leaveOption = select.querySelector('option[value="leave"]');
             const formBox = document.getElementById('attendanceFormBox');
             const completeBox = document.getElementById('attendanceDayCompleteBox');
+            const unclosedHint = document.getElementById('unclosedShiftHint');
+
+            // مهم‌ترین چک: اول ببین شیفت یه روز قبل بدون خروج مونده یا نه — اگه مونده،
+            // باید همون رو ببندیم (این ربطی به «وضعیت امروز» نداره)، وگرنه قبلاً این تابع
+            // چون فقط وضعیت «امروز» رو می‌دید، گزینه‌ی «ورود» رو پیش‌فرض می‌ذاشت و «خروج»
+            // رو غیرفعال می‌کرد؛ در نتیجه کاربر هیچ‌وقت نمی‌تونست خروجِ جاافتاده رو بزنه و
+            // برای همیشه از ثبت ورود جدید هم قفل می‌موند.
+            const unclosed = await getUnclosedPreviousShift();
+            if (unclosed) {
+                if (formBox) formBox.style.display = 'block';
+                if (completeBox) completeBox.style.display = 'none';
+                select.value = 'exit';
+                if (entryOption) entryOption.disabled = true;
+                if (exitOption) exitOption.disabled = false;
+                if (leaveOption) leaveOption.disabled = true;
+                if (unclosedHint) {
+                    unclosedHint.style.display = 'block';
+                    unclosedHint.innerText = `⏮️ دفعه قبل (${getTehranFullDateTimeString(new Date(unclosed.created_at))}) یادت رفت خروج بزنی! اول باید همین «خروج» جاافتاده رو ثبت کنی، بعد می‌تونی ورود امروزت رو بزنی.`;
+                }
+                toggleAttendanceFields();
+                return;
+            }
+            if (unclosedHint) { unclosedHint.style.display = 'none'; unclosedHint.innerText = ''; }
+            if (leaveOption) leaveOption.disabled = false;
+
+            const status = await getTodayAttendanceStatus();
 
             if (status.hasEntry && status.hasExit) {
                 // شیفت امروز کامل شده — به‌جای اینکه خودکار روی «مرخصی» بره (که خطرناکه، ممکنه
@@ -8824,6 +8896,9 @@
             }
 
             const needItems = products.filter(p => {
+                // کالاهایی که مدیر یا فروشنده صبح تیک «دیگه نمیارم» را زده، دیگر نباید توی
+                // چک‌لیست شارژ صبحگاهی هم بیاید و بابتش نگرانی/هشدار ساخته شود.
+                if (p.no_restock) return false;
                 // کالاهای «فقط غرفه‌ای» اصلاً انبار مرکزی ندارن که ازش شارژ بشن؛ چک‌لیست شارژ
                 // صبحگاهی (که می‌گفت «انبار خالیه، سریع سفارش بده») براشون معنی نداشت و باعث
                 // هشدار الکی می‌شد. هشدار درست این کالاها با حد «حداقل موجودی غرفه» خودشون،
@@ -9294,7 +9369,7 @@
         async function loadInventory() {
             const { data: products } = await _supabase
                 .from('products')
-                .select('id, code, name, stock, booth_stock, min_stock, booth_min_stock, sell_price, buy_price, container_capacity, category');
+                .select('id, code, name, stock, booth_stock, min_stock, booth_min_stock, sell_price, buy_price, container_capacity, category, no_restock');
 
             cachedProductsList = sortProductsAlpha(products || []);
             cachedInventoryFull = cachedProductsList;
@@ -9330,6 +9405,7 @@
 
             const risky = cachedInventoryFull
                 .filter(p => (inventoryCategoryFilter === 'sausage') ? (p.category === 'sausage') : (p.category !== 'sausage'))
+                .filter(p => !p.no_restock)
                 .map(p => {
                     const avg = dailyAvg[p.code] || 0;
                     const totalStock = (p.stock || 0) + (p.booth_stock || 0);
@@ -9363,7 +9439,9 @@
             const byCategory = cachedInventoryFull.filter(p => (inventoryCategoryFilter === 'sausage') ? (p.category === 'sausage') : (p.category !== 'sausage'));
 
             const banner = document.getElementById('lowStockBanner');
-            const lowStockItems = byCategory.filter(p => p.stock <= p.min_stock);
+            // کالاهایی که مدیر یا فروشنده صبح تیک «دیگه نمیارم» رو براشون زده، دیگه جزو
+            // هشدارهای کمبود موجودی حساب نمی‌شن — چون قراره اصلاً سفارش داده نشن.
+            const lowStockItems = byCategory.filter(p => p.stock <= p.min_stock && !p.no_restock);
             if (currentRole === 'admin' && lowStockItems.length > 0) {
                 banner.innerHTML = '⚠️ ' + lowStockItems.length + ' کالا به نقطه سفارش رسیده یا تمام شده:<br>' +
                     lowStockItems.map(p => '• ' + p.name + ' (موجودی انبار: ' + p.stock + ' کیلو)').join('<br>');
@@ -9402,10 +9480,14 @@
             products.forEach(p => {
                 const tr = document.createElement('tr');
                 const categoryTag = (p.category === 'sausage') ? ' 🌭' : '';
+                const stockLow = p.stock <= p.min_stock;
+                const nameCell = p.no_restock
+                    ? `${p.name || ''}${categoryTag}<br><span style="background:#64748b; color:#fff; font-size:9px; border-radius:5px; padding:2px 5px;">🚫 دیگه سفارش داده نمی‌شود</span>`
+                    : `${p.name || ''}${categoryTag}`;
                 let rowHtml = `
                     <td>${p.code || ''}</td>
-                    <td>${p.name || ''}${categoryTag}</td>
-                    <td style="color: ${p.stock <= p.min_stock ? '#ef4444' : '#10b981'}; font-weight: bold;">${Number(p.stock).toLocaleString('fa-IR', { maximumFractionDigits: 3 })} کیلو</td>
+                    <td>${nameCell}</td>
+                    <td style="color: ${(stockLow && !p.no_restock) ? '#ef4444' : '#10b981'}; font-weight: bold;">${Number(p.stock).toLocaleString('fa-IR', { maximumFractionDigits: 3 })} کیلو</td>
                     <td>${Number(p.booth_stock || 0).toLocaleString('fa-IR', { maximumFractionDigits: 3 })} کیلو</td>
                     <td>${Number(p.sell_price || 0).toLocaleString('fa-IR')} تومان</td>
                 `;
@@ -9416,11 +9498,31 @@
                     rowHtml += `<td>
                         <button class="row-btn edit-btn" onclick="editProductById('${p.id}')">ویرایش</button>
                         <button class="row-btn delete-btn" onclick="deleteProduct('${p.id}', '${(p.name || '').replace(/'/g, "\\'")}')">حذف</button>
+                        <label style="display:flex; align-items:center; gap:4px; margin-top:6px; font-size:10px; color:#94a3b8; white-space:nowrap;">
+                            <input type="checkbox" style="width:auto; margin:0;" ${p.no_restock ? 'checked' : ''} onchange="toggleNoRestock('${p.id}', this.checked)">
+                            دیگه نمیارم (بی‌خیال هشدار)
+                        </label>
                     </td>`;
                 }
                 tr.innerHTML = rowHtml;
                 tbody.appendChild(tr);
             });
+        }
+
+        // --- تیک «دیگه نمیارم»: وقتی یک کالا تمام شده ولی مدیر یا فروشنده صبح می‌داند که
+        // قرار نیست دوباره سفارش داده شود، این تیک همه‌ی هشدارهای «کمبود موجودی» مربوط به
+        // همین کالا را (هم توی داشبورد، هم توی تب موجودی، هم توی پیام‌های خودکار به مدیر و
+        // هم توی چک‌لیست شارژ صبحگاهی) خاموش می‌کند، بدون اینکه چیزی از خود کالا حذف شود.
+        async function toggleNoRestock(productId, checked) {
+            const { error } = await _supabase.from('products').update({ no_restock: checked }).eq('id', productId);
+            if (error) {
+                showToast('❌ خطا در ذخیره: ' + error.message + '\n\nمطمئن شوید ستون no_restock (نوع boolean، پیش‌فرض false) در جدول products در Supabase ساخته شده است.');
+                loadInventory();
+                return;
+            }
+            showToast(checked ? '🚫 باشه، دیگه برای این کالا هشدار کمبود موجودی نمیاد.' : '✅ دوباره هشدار کمبود موجودی برای این کالا فعال شد.');
+            loadInventory();
+            if (currentRole === 'admin') checkLowStockAlertNoWeight();
         }
 
         function saleTypeTag(saleType) {
@@ -12253,6 +12355,132 @@
                     </div>
                 </div>
             `).join('');
+        }
+
+        // --- ثبت ضایعات: کالای خراب/تاریخ‌گذشته رو از موجودی کم می‌کنه و توی جدول waste_log
+        // یه لاگ نگه می‌داره تا بعداً قابل بررسی و گزارش‌گیری باشه ---
+        async function submitWaste() {
+            const nameVal = document.getElementById('wasteProductName').value.trim();
+            const qty = parseFloat(document.getElementById('wasteQty').value);
+            const source = document.getElementById('wasteSource').value;
+            const reason = document.getElementById('wasteReason').value;
+            const note = document.getElementById('wasteNote').value.trim();
+
+            if (!nameVal || isNaN(qty) || qty <= 0) {
+                showToast('لطفاً نام کالا و مقدار معتبر را وارد کنید.');
+                return;
+            }
+
+            let { data: product } = await _supabase.from('products').select('*').ilike('name', nameVal).maybeSingle();
+            if (!product) {
+                const { data: byCode } = await _supabase.from('products').select('*').eq('code', nameVal).maybeSingle();
+                product = byCode;
+            }
+            if (!product) {
+                showToast('❌ کالایی با این اسم یا کد در انبار یافت نشد!');
+                return;
+            }
+
+            const currentAmount = source === 'booth' ? (product.booth_stock || 0) : (product.stock || 0);
+            if (currentAmount < qty) {
+                showToast(`⛔ این مقدار قابل ثبت نیست! موجودی فعلی «${product.name}» در ${source === 'booth' ? 'غرفه' : 'انبار اصلی'}: ${currentAmount.toLocaleString('fa-IR')} کیلوگرم — بیشتر از این نمی‌شه ضایعات زد.`);
+                return;
+            }
+
+            const rpcName = source === 'booth' ? 'adjust_booth_stock' : 'adjust_main_stock';
+            const { data: newAmount, error: adjustErr } = await _supabase.rpc(rpcName, { p_product_id: product.id, p_delta: -qty });
+            if (adjustErr) {
+                showToast('❌ خطا در کم‌کردن موجودی: ' + adjustErr.message + `\n\nمطمئن شوید تابع ${rpcName} در Supabase ساخته شده است.`);
+                return;
+            }
+
+            const now = new Date();
+            const { error: logErr } = await _supabase.from('waste_log').insert([{
+                product_code: product.code,
+                product_name: product.name,
+                quantity: qty,
+                source,
+                reason,
+                note: note || null,
+                seller_name: currentUserLabel,
+                created_at: now.toISOString()
+            }]);
+            if (logErr) {
+                showToast('⚠️ موجودی کم شد ولی لاگ ضایعات ذخیره نشد: ' + logErr.message + '\n\nمطمئن شوید جدول waste_log در Supabase ساخته شده است.');
+            } else {
+                showToast(`✅ ${qty.toLocaleString('fa-IR')} کیلوگرم «${product.name}» به‌عنوان ضایعات ثبت شد.\nموجودی جدید (${source === 'booth' ? 'غرفه' : 'انبار اصلی'}): ${Number(newAmount).toLocaleString('fa-IR')} کیلوگرم`);
+            }
+
+            document.getElementById('wasteProductName').value = '';
+            document.getElementById('wasteQty').value = '';
+            document.getElementById('wasteNote').value = '';
+            loadProductDatalist();
+            loadWasteTab();
+            if (currentRole === 'admin') checkLowStockAlertNoWeight();
+        }
+
+        async function loadWasteTab() {
+            const listBox = document.getElementById('wasteList');
+            const totalBox = document.getElementById('wasteMonthTotal');
+            listBox.innerHTML = skeletonCards(3);
+            loadProductDatalist();
+
+            const isAdmin = currentRole === 'admin';
+            const { data, error } = await _supabase.from('waste_log').select('*').order('created_at', { ascending: false }).limit(150);
+            if (error || !data) {
+                listBox.innerHTML = '<p style="color:#ef4444;">خطا در بارگذاری ضایعات — مطمئن شوید جدول waste_log در Supabase ساخته شده است.</p>';
+                totalBox.innerText = '—';
+                return;
+            }
+
+            const visibleData = isAdmin ? data : data.filter(w => w.seller_name === currentUserLabel);
+
+            const nowMonth = getTehranISODate(new Date()).slice(0, 7);
+            const thisMonthAll = data.filter(w => getTehranISODate(new Date(w.created_at)).slice(0, 7) === nowMonth);
+            const monthTotalKg = thisMonthAll.reduce((sum, w) => sum + (Number(w.quantity) || 0), 0);
+            totalBox.innerText = `${monthTotalKg.toLocaleString('fa-IR', { maximumFractionDigits: 2 })} کیلوگرم (${thisMonthAll.length.toLocaleString('fa-IR')} مورد، کل فروشگاه)`;
+
+            if (visibleData.length === 0) {
+                listBox.innerHTML = '<p class="hint">هنوز هیچ ضایعاتی ثبت نشده.</p>';
+                return;
+            }
+
+            listBox.innerHTML = visibleData.map(w => `
+                <div class="report-card">
+                    <h3>${w.product_name} — ${Number(w.quantity).toLocaleString('fa-IR', { maximumFractionDigits: 2 })} کیلوگرم</h3>
+                    <p>📌 ${w.reason || '-'} | از: ${w.source === 'booth' ? '🧊 غرفه' : '📦 انبار اصلی'}</p>
+                    <p>👤 ${w.seller_name || '-'} — ⏱️ ${getTehranFullDateTimeString(new Date(w.created_at))}</p>
+                    ${w.note ? `<p>📝 ${escapeHtmlForToast(w.note)}</p>` : ''}
+                    ${(isAdmin || w.seller_name === currentUserLabel) ? `<button class="row-btn delete-btn" style="width:100%; margin-top:6px; padding:5px 8px; font-size:11px;" onclick="deleteWaste('${w.id}')">🗑️ حذف (و بازگرداندن موجودی)</button>` : ''}
+                </div>
+            `).join('');
+        }
+
+        async function deleteWaste(wasteId) {
+            const record = (await _supabase.from('waste_log').select('*').eq('id', wasteId).maybeSingle()).data;
+            if (!record) return;
+
+            if (currentRole !== 'admin' && record.seller_name !== currentUserLabel) {
+                showToast('⛔ شما فقط می‌توانید ضایعات ثبت‌شده توسط خودتان را حذف کنید.');
+                return;
+            }
+
+            const sure = await showConfirm(`آیا از حذف این ثبت ضایعات مطمئن هستید؟ ${Number(record.quantity).toLocaleString('fa-IR')} کیلوگرم «${record.product_name}» دوباره به موجودی ${record.source === 'booth' ? 'غرفه' : 'انبار اصلی'} برگردانده می‌شود.`);
+            if (!sure) return;
+
+            const { data: product } = await _supabase.from('products').select('id').eq('code', record.product_code).maybeSingle();
+            if (product) {
+                const rpcName = record.source === 'booth' ? 'adjust_booth_stock' : 'adjust_main_stock';
+                await _supabase.rpc(rpcName, { p_product_id: product.id, p_delta: Number(record.quantity) });
+            }
+
+            const { error } = await _supabase.from('waste_log').delete().eq('id', wasteId);
+            if (error) {
+                showToast('❌ خطا در حذف: ' + error.message);
+                return;
+            }
+            showToast('✅ حذف شد و موجودی بازگردانده شد.');
+            loadWasteTab();
         }
 
         async function loadSalaryTab() {
