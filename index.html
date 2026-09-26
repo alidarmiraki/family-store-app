@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v68 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v69 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="icon" href="icon-192.png">
@@ -925,6 +925,35 @@
             display: flex;
             gap: 8px;
         }
+        /* اتوکامپلیت سفارشی برای انتخاب نام کالا: به‌جای دیتالیست پیش‌فرض HTML که روی موبایل
+           پیشنهادها رو به‌صورت یه نوار کوچیک بالای کیبورد نشون می‌ده و به‌سختی قابل لمسه،
+           این یه لیست واقعی زیر همون فیلده که با تپ‌کردن بلافاصله باز می‌شه */
+        .product-autocomplete-wrap { position: relative; }
+        .product-autocomplete-list {
+            position: absolute;
+            top: 100%;
+            left: 0; right: 0;
+            max-height: 240px;
+            overflow-y: auto;
+            background: var(--bg-card-solid);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            z-index: 500;
+            display: none;
+            box-shadow: var(--shadow-strong);
+            margin-top: 4px;
+        }
+        .product-autocomplete-list.active { display: block; }
+        .product-autocomplete-item {
+            padding: 11px 12px;
+            font-size: 13px;
+            color: var(--text-primary);
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .product-autocomplete-item:last-child { border-bottom: none; }
+        .product-autocomplete-item:active { background: rgba(56,189,248,0.18); }
+
         .confirm-actions button {
             flex: 1;
             padding: 12px;
@@ -1494,7 +1523,22 @@
             <option value="entry">🟢 ثبت ورود به شیفت</option>
             <option value="exit">🔴 ثبت خروج از شیفت</option>
             <option value="leave">🏖️ اعلام مرخصی روزانه</option>
+            <option value="leave_hourly">🕐 مرخصی ساعتی (چند ساعت از شیفت)</option>
         </select>
+
+        <div id="leaveHourlyFields" style="display:none;">
+            <div class="hint" style="margin-top:0;">برای وقتی که فقط چند ساعت از شیفتت رو مرخصی می‌ری، نه کل روز رو. بعدش هنوز باید ورود/خروج عادی رو هم بزنی.</div>
+            <div class="grid-2">
+                <div>
+                    <label>از ساعت:</label>
+                    <input type="time" id="leaveHourlyStart">
+                </div>
+                <div>
+                    <label>تا ساعت:</label>
+                    <input type="time" id="leaveHourlyEnd">
+                </div>
+            </div>
+        </div>
 
         <div id="attTimeFields">
             <label>اضافه‌کاری (در صورت حضور بیشتر):</label>
@@ -1762,9 +1806,26 @@
 
         <div class="report-card" style="margin-top:14px; border-color:#10b981;">
             <h3>🌴 ثبت مرخصی برای این فروشنده</h3>
-            <div class="hint" style="margin-top:0;">یک تاریخ انتخاب کن و مرخصی رو برای «فروشنده‌ی انتخاب‌شده بالا» ثبت کن. اون روز دیگه لازم نیست ورود/خروج بزنه؛ ولی اگه خودش وارد برنامه بشه، بهش نوشته می‌شه «مدیر براتون مرخصی ثبت کرده، استراحت کنید» و دیگه هشدار/قفل تاخیر براش نمیاد.</div>
+            <div class="hint" style="margin-top:0;">یک تاریخ انتخاب کن و مرخصی رو برای «فروشنده‌ی انتخاب‌شده بالا» ثبت کن. برای مرخصی روزانه، اون روز دیگه لازم نیست ورود/خروج بزنه؛ ولی اگه خودش وارد برنامه بشه، بهش نوشته می‌شه «مدیر براتون مرخصی ثبت کرده، استراحت کنید» و دیگه هشدار/قفل تاخیر براش نمیاد. برای مرخصی ساعتی، فقط همون بازه ثبت می‌شه و باید ورود/خروج عادی رو هم بزنه.</div>
+            <label>نوع مرخصی:</label>
+            <select id="adminLeaveType" onchange="toggleAdminLeaveType()">
+                <option value="leave">🏖️ روزانه (کل روز)</option>
+                <option value="leave_hourly">🕐 ساعتی (چند ساعت از روز)</option>
+            </select>
             <label>تاریخ مرخصی:</label>
             <input type="date" id="adminLeaveDate">
+            <div id="adminLeaveHourlyFields" style="display:none;">
+                <div class="grid-2">
+                    <div>
+                        <label>از ساعت:</label>
+                        <input type="time" id="adminLeaveHourlyStart">
+                    </div>
+                    <div>
+                        <label>تا ساعت:</label>
+                        <input type="time" id="adminLeaveHourlyEnd">
+                    </div>
+                </div>
+            </div>
             <label>توضیح (اختیاری - فقط برای خودت، مثلاً دلیل مرخصی):</label>
             <input type="text" id="adminLeaveNote" dir="auto" placeholder="مثلاً مرخصی استعلاجی">
             <button class="submit-btn" style="background:#10b981;" onclick="submitAdminLeave()">🌴 ثبت مرخصی</button>
@@ -2264,7 +2325,7 @@
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v68 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v69 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
 
     <script>
         function toggleLoginPasswordVisibility() {
@@ -5965,7 +6026,7 @@
             const { data, error } = await _supabase.from('attendance')
                 .select('*')
                 .eq('seller_name', currentUserLabel)
-                .eq('type', 'leave')
+                .in('type', ['leave', 'leave_hourly'])
                 .order('created_at', { ascending: false })
                 .limit(20);
             if (error) { box.innerHTML = '<p style="color:#ef4444;">خطا در بارگذاری مرخصی‌ها.</p>'; return; }
@@ -5973,7 +6034,7 @@
 
             box.innerHTML = data.map(r => `
                 <div class="report-card">
-                    <h3>🏖️ مرخصی — ${getTehranFullDateTimeString(new Date(r.created_at))}</h3>
+                    <h3>${r.type === 'leave_hourly' ? '🕐 مرخصی ساعتی' : '🏖️ مرخصی روزانه'} — ${getTehranFullDateTimeString(new Date(r.created_at))}</h3>
                     ${r.note ? `<p>📝 ${escapeHtmlForToast(r.note)}</p>` : ''}
                     <button class="row-btn edit-btn" style="padding:4px 8px; font-size:11px;" onclick="editMyLeaveRecord('${r.id}', ${JSON.stringify(r.note || '').replace(/'/g, "\\'")})">✏️ ویرایش توضیح</button>
                     <button class="row-btn edit-btn" style="padding:4px 8px; font-size:11px; background:#ef4444;" onclick="deleteMyLeaveRecord('${r.id}')">🗑️ حذف</button>
@@ -5984,7 +6045,7 @@
         async function editMyLeaveRecord(recordId, currentNote) {
             const newNote = window.prompt('توضیح مرخصی رو ویرایش کن:', currentNote || '');
             if (newNote === null) return; // انصراف
-            const { error } = await _supabase.from('attendance').update({ note: newNote }).eq('id', recordId).eq('seller_name', currentUserLabel).eq('type', 'leave');
+            const { error } = await _supabase.from('attendance').update({ note: newNote }).eq('id', recordId).eq('seller_name', currentUserLabel).in('type', ['leave', 'leave_hourly']);
             if (error) { showToast('❌ خطا در ویرایش: ' + error.message); return; }
             showToast('✅ توضیح مرخصی ویرایش شد.');
             loadMyLeaveRecords();
@@ -5993,7 +6054,7 @@
         async function deleteMyLeaveRecord(recordId) {
             const sure = await showConfirm('⚠️ این مرخصی حذف بشه؟ این کار قابل بازگشت نیست.');
             if (!sure) return;
-            const { error } = await _supabase.from('attendance').delete().eq('id', recordId).eq('seller_name', currentUserLabel).eq('type', 'leave');
+            const { error } = await _supabase.from('attendance').delete().eq('id', recordId).eq('seller_name', currentUserLabel).in('type', ['leave', 'leave_hourly']);
             if (error) { showToast('❌ خطا در حذف: ' + error.message); return; }
             const stillThereMsg = await confirmRowGone('attendance', { id: recordId });
             if (stillThereMsg) { showToast(stillThereMsg); return; }
@@ -6081,7 +6142,8 @@
 
         function toggleAttendanceFields() {
             const type = document.getElementById('attType').value;
-            document.getElementById('attTimeFields').style.display = (type === 'leave') ? 'none' : 'block';
+            document.getElementById('attTimeFields').style.display = (type === 'leave' || type === 'leave_hourly') ? 'none' : 'block';
+            document.getElementById('leaveHourlyFields').style.display = (type === 'leave_hourly') ? 'block' : 'none';
         }
 
         // --- یادآوری خودکار ثبت ورود/خروج فراموش‌شده (فقط برای فروشنده‌ها) ---
@@ -7012,15 +7074,46 @@
             // کاربر پیام خطا نشان داده می‌شود و دکمه دوباره فعال می‌شود تا بتواند امتحان کند.
             try {
 
-            if (type !== 'leave' && !selectedPhotoDataUrl && !selectedLocationText) {
+            if (type !== 'leave' && type !== 'leave_hourly' && !selectedPhotoDataUrl && !selectedLocationText) {
                 showToast('⛔ خطا: جهت ثبت ورود و خروج ارسال عکس یا موقعیت مکانی **الزامی** می‌باشد!');
                 return;
             }
 
-            // مرخصی یه تصمیم حساسه (روی حقوق/گزارش اثر می‌ذاره) — قبل از ثبت واقعی، حتماً تایید
-            // می‌گیریم تا یه تپ اشتباهی (دست‌خوردن) باعث یه مرخصی الکی نشه
+            // مرخصی (چه روزانه چه ساعتی) یه تصمیم حساسه (روی حقوق/گزارش اثر می‌ذاره) — قبل از
+            // ثبت واقعی، حتماً تایید می‌گیریم تا یه تپ اشتباهی (دست‌خوردن) باعث یه مرخصی الکی نشه
             let leaveReason = null;
-            if (type === 'leave') {
+            let leaveHourlyRangeText = null;
+            if (type === 'leave_hourly') {
+                const startVal = document.getElementById('leaveHourlyStart').value;
+                const endVal = document.getElementById('leaveHourlyEnd').value;
+                if (!startVal || !endVal) {
+                    showToast('⛔ لطفاً ساعت شروع و پایان مرخصی ساعتی رو مشخص کن.');
+                    return;
+                }
+                if (endVal <= startVal) {
+                    showToast('⛔ ساعت پایان باید بعد از ساعت شروع باشه.');
+                    return;
+                }
+                leaveHourlyRangeText = `از ساعت ${startVal} تا ${endVal}`;
+                const reallyWantsLeave = await showConfirm(`🕐 می‌خوای برای امروز، ${leaveHourlyRangeText} مرخصی ساعتی ثبت کنی؟\n\nاگه اشتباهی این گزینه انتخاب شده (دستت خورده)، «انصراف» رو بزن — چیزی ثبت نمی‌شه.`);
+                if (!reallyWantsLeave) {
+                    showToast('باشه، چیزی ثبت نشد 🙂');
+                    syncAttendanceTypeSelector();
+                    return;
+                }
+                while (leaveReason === null || leaveReason.trim() === '') {
+                    leaveReason = window.prompt('دلیل مرخصی ساعتی رو بنویس (این برای مدیر فرستاده می‌شه):');
+                    if (leaveReason === null) {
+                        const stillCancel = await showConfirm('بدون نوشتن دلیل، مرخصی ثبت نمی‌شه.\n\nمی‌خوای کامل انصراف بدی؟');
+                        if (stillCancel) {
+                            showToast('باشه، چیزی ثبت نشد 🙂');
+                            syncAttendanceTypeSelector();
+                            return;
+                        }
+                    }
+                }
+                leaveReason = leaveReason.trim();
+            } else if (type === 'leave') {
                 const reallyWantsLeave = await showConfirm('🏖️ می‌خوای برای امروز مرخصی ثبت کنی؟\n\nاگه اشتباهی این گزینه انتخاب شده (دستت خورده)، «انصراف» رو بزن — چیزی ثبت نمی‌شه.');
                 if (!reallyWantsLeave) {
                     showToast('باشه، چیزی ثبت نشد 🙂');
@@ -7250,7 +7343,7 @@
             }
 
             let photoUrl = null;
-            if (type !== 'leave' && selectedPhotoDataUrl) {
+            if (type !== 'leave' && type !== 'leave_hourly' && selectedPhotoDataUrl) {
                 if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = '⏳ در حال آپلود عکس...'; }
                 try {
                     const compressedBlob = await compressDataUrl(selectedPhotoDataUrl);
@@ -7312,7 +7405,7 @@
                 delay_minutes: delayMinutes,
                 exit_diff_minutes: exitDiffMinutes,
                 photo_url: photoUrl,
-                note: (note ? note + " | " : "") + (leaveReason ? `🏖️ دلیل مرخصی: ${leaveReason} | ` : "") + (selectedLocationText ? selectedLocationText + " | " : "") + (biometricFallbackReason ? `⚠️ بدون تایید بیومتریک (${biometricFallbackReason}) | ` : "") + (biometricMethodLabel ? biometricMethodLabel + " | " : "") + (lateReasonText ? `📝 دلیل تاخیر: ${lateReasonText} | ` : "") + (isMakeupExit ? `⏮️ خروج جاافتاده (فراموش‌شده از شیفت قبل) | ` : "") + `زمان ثبت: ${fullDateTimeStr}`,
+                note: (note ? note + " | " : "") + (leaveReason && type === 'leave' ? `🏖️ دلیل مرخصی: ${leaveReason} | ` : "") + (leaveReason && type === 'leave_hourly' ? `🕐 مرخصی ساعتی ${leaveHourlyRangeText} | دلیل: ${leaveReason} | ` : "") + (selectedLocationText ? selectedLocationText + " | " : "") + (biometricFallbackReason ? `⚠️ بدون تایید بیومتریک (${biometricFallbackReason}) | ` : "") + (biometricMethodLabel ? biometricMethodLabel + " | " : "") + (lateReasonText ? `📝 دلیل تاخیر: ${lateReasonText} | ` : "") + (isMakeupExit ? `⏮️ خروج جاافتاده (فراموش‌شده از شیفت قبل) | ` : "") + `زمان ثبت: ${fullDateTimeStr}`,
                 created_at: now.toISOString()
             }]), 15000, 'ذخیره‌ی ثبت حضور');
 
@@ -7348,6 +7441,17 @@
                         created_at: now.toISOString()
                     }]).then(() => {});
                     sendPushNotificationToRole('🏖️ درخواست مرخصی', `${currentUserLabel}: ${leaveReason}`, 'admin');
+                }
+                if (type === 'leave_hourly' && leaveReason) {
+                    successMsg += `\n\n🕐 مرخصی ساعتی امروزت (${leaveHourlyRangeText}) با دلیل «${leaveReason}» برای مدیر ارسال شد. یادت نره ورود/خروج عادی امروزت رو هم بزنی.`;
+                    _supabase.from('messages').insert([{
+                        sender: "سیستم خودکار مرخصی",
+                        recipient: "admin",
+                        title: `🕐 درخواست مرخصی ساعتی: ${currentUserLabel}`,
+                        body: `${currentUserLabel} برای تاریخ ${getTehranDateString(now)}، ${leaveHourlyRangeText} مرخصی ساعتی ثبت کرد.\nدلیل: ${leaveReason}`,
+                        created_at: now.toISOString()
+                    }]).then(() => {});
+                    sendPushNotificationToRole('🕐 درخواست مرخصی ساعتی', `${currentUserLabel}: ${leaveHourlyRangeText} — ${leaveReason}`, 'admin');
                 }
 
                 const trialMode = isTrialAccount();
@@ -7500,6 +7604,7 @@
             let typeTitle = '🟢 ورود';
             if (r.type === 'exit') typeTitle = '🔴 خروج';
             if (r.type === 'leave') typeTitle = '🏖️ مرخصی';
+            if (r.type === 'leave_hourly') typeTitle = '🕐 مرخصی ساعتی';
 
             let delayCell = '—';
             if (r.type === 'entry') {
@@ -7668,9 +7773,15 @@
         // براتون مرخصی ثبت کرده» بهش نشون داده بشه
         const ADMIN_LEAVE_MARKER = '🌴 مرخصی توسط مدیر ثبت شده';
 
+        function toggleAdminLeaveType() {
+            const type = document.getElementById('adminLeaveType').value;
+            document.getElementById('adminLeaveHourlyFields').style.display = (type === 'leave_hourly') ? 'block' : 'none';
+        }
+
         async function submitAdminLeave() {
             const sellerLabel = document.getElementById('workSellerSelect').value;
             const dateStr = document.getElementById('adminLeaveDate').value;
+            const leaveType = document.getElementById('adminLeaveType').value;
             const customNote = document.getElementById('adminLeaveNote').value.trim();
             const resultBox = document.getElementById('adminLeaveResult');
 
@@ -7683,6 +7794,21 @@
                 return;
             }
 
+            let hourlyRangeText = null;
+            if (leaveType === 'leave_hourly') {
+                const startVal = document.getElementById('adminLeaveHourlyStart').value;
+                const endVal = document.getElementById('adminLeaveHourlyEnd').value;
+                if (!startVal || !endVal) {
+                    showToast('❌ لطفاً ساعت شروع و پایان مرخصی ساعتی را مشخص کنید.');
+                    return;
+                }
+                if (endVal <= startVal) {
+                    showToast('❌ ساعت پایان باید بعد از ساعت شروع باشد.');
+                    return;
+                }
+                hourlyRangeText = `از ساعت ${startVal} تا ${endVal}`;
+            }
+
             // چک کنیم برای همین فروشنده و همین روز قبلاً چیزی ثبت نشده باشه (مرخصی یا ورود/خروج)
             const { data: existing } = await _supabase
                 .from('attendance')
@@ -7690,7 +7816,7 @@
                 .eq('seller_name', sellerLabel);
             const existingOnDate = (existing || []).filter(r => getTehranISODate(new Date(r.created_at)) === dateStr);
             if (existingOnDate.length > 0) {
-                const alreadyLeave = existingOnDate.some(r => r.type === 'leave');
+                const alreadyLeave = existingOnDate.some(r => r.type === 'leave' || r.type === 'leave_hourly');
                 const msg = alreadyLeave
                     ? 'برای این فروشنده در این تاریخ قبلاً مرخصی ثبت شده. می‌خوای یک مرخصی دیگه هم اضافه کنی؟'
                     : 'برای این فروشنده در این تاریخ قبلاً ورود/خروج ثبت شده. مطمئنی می‌خوای مرخصی هم براش ثبت کنی؟';
@@ -7698,14 +7824,14 @@
                 if (!confirmed) return;
             }
 
-            const friendlyNote = ADMIN_LEAVE_MARKER + (customNote ? (' | ' + customNote) : '');
+            const friendlyNote = ADMIN_LEAVE_MARKER + (leaveType === 'leave_hourly' ? ` | 🕐 مرخصی ساعتی ${hourlyRangeText}` : '') + (customNote ? (' | ' + customNote) : '');
             // ساعت ۱۲ ظهر به‌وقت تهران انتخاب شده تا مطمئناً همون روزِ انتخابی حساب بشه (نه
             // نیمه‌شب که با اختلاف منطقه زمانی ممکنه به روز قبل/بعد لیز بخوره)
             const isoDateTime = `${dateStr}T12:00:00+03:30`;
 
             const { error } = await _supabase.from('attendance').insert([{
                 seller_name: sellerLabel,
-                type: 'leave',
+                type: leaveType,
                 overtime_hours: null,
                 delay_minutes: null,
                 exit_diff_minutes: null,
@@ -7719,7 +7845,7 @@
                 return;
             }
 
-            resultBox.innerHTML = `<p style="color:#34d399;">✅ مرخصی برای ${sellerLabel} در تاریخ ${getTehranDateString(new Date(isoDateTime))} ثبت شد.</p>`;
+            resultBox.innerHTML = `<p style="color:#34d399;">✅ مرخصی ${leaveType === 'leave_hourly' ? 'ساعتی (' + hourlyRangeText + ')' : 'روزانه'} برای ${sellerLabel} در تاریخ ${getTehranDateString(new Date(isoDateTime))} ثبت شد.</p>`;
             showToast(`✅ مرخصی برای ${sellerLabel} ثبت شد.`);
             document.getElementById('adminLeaveNote').value = '';
             loadWorkReport();
@@ -8056,6 +8182,63 @@
             if (box) box.innerHTML = names.map(n => `<option value="${escapeHtmlForToast(n)}"></option>`).join('');
         }
 
+        // اتوکامپلیت سفارشی برای فیلدهای «نام کالا»: به‌جای دیتالیست پیش‌فرض HTML که روی گوشی
+        // اسم کالاها رو به‌صورت پیشنهاد بالای کیبورد نشون می‌ده (کوچیک و به‌سختی قابل استفاده)،
+        // با تپ‌روی فیلد یا تایپ‌کردن، یه لیست واقعی درست زیر همون فیلد باز می‌شه.
+        function setupProductAutocomplete(inputId, filterFn) {
+            const input = document.getElementById(inputId);
+            if (!input || input.dataset.autocompleteReady) return;
+            input.dataset.autocompleteReady = '1';
+            input.removeAttribute('list');
+            input.setAttribute('autocomplete', 'off');
+
+            const wrap = document.createElement('div');
+            wrap.className = 'product-autocomplete-wrap';
+            input.parentNode.insertBefore(wrap, input);
+            wrap.appendChild(input);
+            // اگه خودِ فیلد داخل یه ردیف flex بوده (مثلاً کنار دکمه‌ی اسکن بارکد)، اون فلکس رو
+            // به wrapper منتقل می‌کنیم تا چیدمان قبلی به‌هم نریزه
+            if (input.style.flex) {
+                wrap.style.flex = input.style.flex;
+                input.style.flex = '';
+            }
+            input.style.width = '100%';
+            input.style.boxSizing = 'border-box';
+
+            const list = document.createElement('div');
+            list.className = 'product-autocomplete-list';
+            wrap.appendChild(list);
+
+            function renderList() {
+                const q = (input.value || '').trim();
+                const source = (typeof filterFn === 'function') ? (filterFn() || []) : (cachedProductsList || []);
+                const matches = q ? source.filter(p => p.name && p.name.indexOf(q) !== -1) : source;
+                if (matches.length === 0) {
+                    list.innerHTML = '<div class="product-autocomplete-item" style="color:#64748b;">کالایی پیدا نشد</div>';
+                } else {
+                    list.innerHTML = matches.slice(0, 60).map(p =>
+                        `<div class="product-autocomplete-item" data-name="${(p.name || '').replace(/"/g, '&quot;')}">${p.name || ''}</div>`
+                    ).join('');
+                }
+                list.classList.add('active');
+            }
+
+            input.addEventListener('focus', renderList);
+            input.addEventListener('input', renderList);
+            list.addEventListener('mousedown', (e) => {
+                // mousedown نه click، تا قبل از blur شدن فیلد (که لیست رو می‌بنده) اجرا بشه
+                const item = e.target.closest('.product-autocomplete-item');
+                if (!item || !item.dataset.name) return;
+                input.value = item.dataset.name;
+                list.classList.remove('active');
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                input.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+            document.addEventListener('click', (e) => {
+                if (!wrap.contains(e.target)) list.classList.remove('active');
+            });
+        }
+
         async function loadProductDatalist() {
             const { data: products } = await _supabase.from('products').select('*');
             cachedProductsList = sortProductsAlpha(products || []);
@@ -8089,6 +8272,14 @@
                     dairyDatalist.appendChild(opt);
                 });
             }
+
+            // فیلدهای «نام کالا» رو به اتوکامپلیت سفارشی (لیست زیر فیلد) وصل می‌کنیم
+            setupProductAutocomplete('sName', () => cachedProductsList.filter(p => p.category !== 'sausage'));
+            setupProductAutocomplete('ssName', () => cachedProductsList.filter(p => p.category === 'sausage'));
+            setupProductAutocomplete('seName', () => cachedProductsList);
+            setupProductAutocomplete('poProductName', () => cachedProductsList);
+            setupProductAutocomplete('ptItemName', () => cachedProductsList);
+            setupProductAutocomplete('wasteProductName', () => cachedProductsList);
         }
 
         function toggleEntryMode() {
@@ -9928,11 +10119,13 @@
                             d === 0 ? '🎉 دقیقاً به‌موقع' : `🎉 ${d} دقیقه دیرتر (اضافه‌کاری)`;
                     } else if (a.type === 'leave') {
                         statusText = '🏖️ مرخصی';
+                    } else if (a.type === 'leave_hourly') {
+                        statusText = '🕐 مرخصی ساعتی';
                     }
                     return {
                         'تاریخ و ساعت': getTehranFullDateTimeString(new Date(a.created_at)),
                         'فروشنده': a.seller_name || 'نامشخص',
-                        'نوع ثبت': a.type === 'entry' ? 'ورود' : (a.type === 'exit' ? 'خروج' : 'مرخصی'),
+                        'نوع ثبت': a.type === 'entry' ? 'ورود' : (a.type === 'exit' ? 'خروج' : (a.type === 'leave_hourly' ? 'مرخصی ساعتی' : 'مرخصی')),
                         'وضعیت دقیق': statusText,
                         'اضافه‌کاری (ساعت)': Number(a.overtime_hours || 0),
                         'توضیحات': a.note || ''
@@ -10085,6 +10278,7 @@
             if (type === 'entry') return '🟢 ورود';
             if (type === 'exit') return '🔴 خروج';
             if (type === 'leave') return '🟡 مرخصی';
+            if (type === 'leave_hourly') return '🕐 مرخصی ساعتی';
             return type || '';
         }
 
@@ -11384,6 +11578,9 @@
                 </div>`;
             }
             container.innerHTML = html;
+            for (let i = 0; i < count; i++) {
+                setupProductAutocomplete(`piItemName_${i}`, () => cachedProductsList);
+            }
             calcInvoiceTotal();
         }
 
