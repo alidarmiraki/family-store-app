@@ -5087,6 +5087,8 @@
                 showToast('❌ خطا: ' + error.message);
                 return;
             }
+            const stillThereMsg = await confirmRowGone('customer_debts', { id });
+            if (stillThereMsg) { showToast(stillThereMsg); return; }
             showToast('✅ حذف شد.');
             loadDebtLedger();
         }
@@ -5922,6 +5924,20 @@
             });
         }
 
+        // بعد از حذف، دوباره چک می‌کنه که ردیف واقعاً از سرور پاک شده یا نه — چون وقتی RLS
+        // (Row Level Security) روی یک جدول فعاله ولی Policy مربوط به DELETE براش تعریف نشده،
+        // Supabase بدون هیچ خطایی برمی‌گرده در حالی که هیچ ردیفی واقعاً پاک نمی‌شه؛ بدون این
+        // چک، کاربر پیام «✅ حذف شد» می‌بینه ولی با رفرش دوباره همون ردیف برمی‌گرده.
+        async function confirmRowGone(table, matchObj) {
+            let q = _supabase.from(table).select('id').limit(1);
+            Object.entries(matchObj).forEach(([k, v]) => { q = q.eq(k, v); });
+            const { data } = await q.maybeSingle();
+            if (data) {
+                return `⚠️ درخواست حذف بدون خطا برگشت ولی ردیف هنوز روی سرور هست — احتمالاً روی جدول ${table} در Supabase، Policy مربوط به DELETE تعریف نشده (RLS). از بخش Authentication > Policies توی Supabase یک Policy برای DELETE به این جدول اضافه کنید.`;
+            }
+            return null;
+        }
+
         async function getUnclosedPreviousShift() {
             const { data } = await withTimeout(_supabase.from('attendance')
                 .select('type, created_at')
@@ -5929,8 +5945,12 @@
                 .order('created_at', { ascending: false })
                 .limit(10), 12000, 'بررسی شیفت قبلی');
             if (!data || data.length === 0) return null;
-            const mostRecent = data[0];
-            if (mostRecent.type !== 'entry') return null; // آخرین رکورد خروج/مرخصی بوده، یعنی چیزی باز نمونده
+            // «مرخصی» رو نادیده می‌گیریم و دنبال آخرین ورود/خروج واقعی می‌گردیم — وگرنه اگه
+            // فروشنده به‌جای ثبت خروجِ جاافتاده، مستقیم یه مرخصی بزنه، آخرین رکورد «مرخصی»
+            // می‌شد و شیفت باز مونده برای همیشه از دید سیستم قایم می‌شد.
+            const mostRecent = data.find(r => r.type === 'entry' || r.type === 'exit');
+            if (!mostRecent) return null;
+            if (mostRecent.type !== 'entry') return null; // آخرین رکورد واقعی خروج بوده، یعنی چیزی باز نمونده
             const entryDate = getTehranISODate(new Date(mostRecent.created_at));
             const todayDate = getTehranISODate(new Date());
             if (entryDate === todayDate) return null; // ورود امروزه، جای دیگه‌ای هندل میشه
@@ -5975,6 +5995,8 @@
             if (!sure) return;
             const { error } = await _supabase.from('attendance').delete().eq('id', recordId).eq('seller_name', currentUserLabel).eq('type', 'leave');
             if (error) { showToast('❌ خطا در حذف: ' + error.message); return; }
+            const stillThereMsg = await confirmRowGone('attendance', { id: recordId });
+            if (stillThereMsg) { showToast(stillThereMsg); return; }
             showToast('✅ مرخصی حذف شد.');
             loadMyLeaveRecords();
         }
@@ -6923,6 +6945,8 @@
                 showToast('❌ خطا در ریست کردن: ' + error.message);
                 return;
             }
+            const stillThereMsg = await confirmRowGone('staff_devices', { username });
+            if (stillThereMsg) { showToast(stillThereMsg); return; }
             showToast('✅ ثبت اثر انگشت این کاربر ریست شد؛ او می‌تواند دوباره روی گوشی جدید ثبت کند.');
             loadStaffDevicesAdmin();
         }
@@ -8265,6 +8289,8 @@
             if (error) {
                 showToast('❌ خطا در حذف: ' + error.message);
             } else {
+                const stillThereMsg = await confirmRowGone('products', { id });
+                if (stillThereMsg) { showToast(stillThereMsg); return; }
                 showToast('✅ کالا حذف شد');
                 loadInventory();
                 loadProductDatalist();
@@ -8722,6 +8748,8 @@
             const { error } = await _supabase.from('sales').delete().eq('id', saleId);
 
             if (!error) {
+                const stillThereMsg = await confirmRowGone('sales', { id: saleId });
+                if (stillThereMsg) { showToast(stillThereMsg); return; }
                 showToast('✅ فاکتور حذف شد و مقدار آن به موجودی ظرف غرفه بازگشت.');
                 if (String(editingSale[type].id) === String(saleId)) {
                     cancelSaleEdit(type);
@@ -10846,6 +10874,8 @@
                 showToast('❌ خطا در حذف فاکتور: ' + delErr.message);
                 return;
             }
+            const stillThereMsg = await confirmRowGone('sales', { id: saleId });
+            if (stillThereMsg) { showToast(stillThereMsg); return; }
 
             showToast('✅ فاکتور حذف شد و مقدار آن به موجودی غرفه بازگشت.');
             loadDetailReportV23(key);
@@ -11566,6 +11596,8 @@
             await _supabase.from('purchase_invoice_items').delete().eq('invoice_id', id);
             const { error } = await _supabase.from('purchase_invoices').delete().eq('id', id);
             if (!error) {
+                const stillThereMsg = await confirmRowGone('purchase_invoices', { id });
+                if (stillThereMsg) { showToast(stillThereMsg); return; }
                 loadPurchaseInvoices();
             } else {
                 showToast('❌ خطا در حذف: ' + error.message);
@@ -11846,6 +11878,8 @@
             if (currentRole !== 'admin') q = q.eq('seller_name', currentUserLabel);
             const { error } = await q;
             if (error) { showToast('❌ خطا در حذف: ' + error.message); return; }
+            const stillThereMsg = await confirmRowGone('personal_takeouts', { id: takeoutId });
+            if (stillThereMsg) { showToast(stillThereMsg); return; }
 
             showToast('✅ برداشت حذف شد.');
             if (String(editingTakeoutId) === String(takeoutId)) cancelTakeoutEdit();
@@ -12171,6 +12205,8 @@
             if (currentRole !== 'admin') q = q.eq('created_by', currentUserLabel);
             const { error } = await q;
             if (error) { showToast('❌ خطا در حذف: ' + error.message); return; }
+            const stillThereMsg = await confirmRowGone('expenses', { id: expenseId });
+            if (stillThereMsg) { showToast(stillThereMsg); return; }
 
             showToast('✅ هزینه حذف شد.');
             if (String(editingExpenseId) === String(expenseId)) cancelExpenseEdit();
@@ -12502,6 +12538,8 @@
                 showToast('❌ خطا در حذف: ' + error.message);
                 return;
             }
+            const stillThereMsg = await confirmRowGone('waste_log', { id: wasteId });
+            if (stillThereMsg) { showToast(stillThereMsg); return; }
             showToast('✅ حذف شد و موجودی بازگردانده شد.');
             loadWasteTab();
         }
