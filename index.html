@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v69 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v70 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="icon" href="icon-192.png">
@@ -1148,7 +1148,7 @@
             <h3 style="color:#38bdf8; margin:0 0 10px 0; font-size:14px;">🛠 ویرایش فاکتور فروش (مدیر)</h3>
             <p id="adminEditSaleInfo" class="hint" style="margin-top:0;"></p>
             <label>مقدار جدید (کیلوگرم):</label>
-            <input type="number" id="adminEditSaleQty" step="0.001">
+            <input type="text" inputmode="decimal" id="adminEditSaleQty" step="0.001">
             <div id="adminEditSaleCalc" class="price-display">مبلغ جدید: ۰ تومان</div>
             <button class="submit-btn" onclick="adminSaveEditedSale()">💾 ذخیره ویرایش</button>
             <button class="cancel-edit-btn" style="display:block;" onclick="closeAdminEditSale()">انصراف</button>
@@ -1301,7 +1301,7 @@
             <label><input type="radio" name="sQtyUnit" value="gram" onchange="onSaleUnitChange('instore')"> گرم (زیر یک کیلو)</label>
         </div>
         <label id="sQtyLabel">مقدار (کیلوگرم):</label>
-        <input type="number" id="sQty" step="0.001" placeholder="مثلاً 1.5" oninput="calculateSalePriceAuto('instore')">
+        <input type="text" inputmode="decimal" id="sQty" step="0.001" placeholder="مثلاً 1.5" oninput="calculateSalePriceAuto('instore')">
         <div class="hint">سیستم قیمت را بر اساس نرخ کالا در انبار خودکار محاسبه می‌کند. اگر مقدار زیر یک کیلوست، واحد «گرم» را انتخاب کنید و مثلاً 250 وارد کنید. این تب فقط برای فروش‌های حضوری داخل غرفه است.</div>
 
         <div id="sCalcDisplay" class="price-display">مبلغ کل فاکتور: ۰ تومان (قیمت واحد: ۰ تومان)</div>
@@ -1373,7 +1373,7 @@
             <label><input type="radio" name="seQtyUnit" value="gram" onchange="onSaleUnitChange('ekala')"> گرم (زیر یک کیلو)</label>
         </div>
         <label id="seQtyLabel">مقدار (کیلوگرم):</label>
-        <input type="number" id="seQty" step="0.001" placeholder="مثلاً 1.5" oninput="calculateSalePriceAuto('ekala')">
+        <input type="text" inputmode="decimal" id="seQty" step="0.001" placeholder="مثلاً 1.5" oninput="calculateSalePriceAuto('ekala')">
 
         <div id="seCalcDisplay" class="price-display">مبلغ کل فاکتور: ۰ تومان (قیمت واحد: ۰ تومان)</div>
 
@@ -1444,7 +1444,7 @@
             <label><input type="radio" name="ssQtyUnit" value="gram" onchange="onSaleUnitChange('sausage')"> گرم (زیر یک کیلو)</label>
         </div>
         <label id="ssQtyLabel">مقدار (کیلوگرم):</label>
-        <input type="number" id="ssQty" step="0.001" placeholder="مثلاً 1.5" oninput="calculateSalePriceAuto('sausage')">
+        <input type="text" inputmode="decimal" id="ssQty" step="0.001" placeholder="مثلاً 1.5" oninput="calculateSalePriceAuto('sausage')">
 
         <div id="ssCalcDisplay" class="price-display">مبلغ کل فاکتور: ۰ تومان (قیمت واحد: ۰ تومان)</div>
 
@@ -1549,7 +1549,7 @@
             <div class="grid-2">
                 <div>
                     <label>مقدار اضافه:</label>
-                    <input type="number" id="attOvertimeVal" step="0.1" value="0">
+                    <input type="text" inputmode="decimal" id="attOvertimeVal" step="0.1" value="0">
                 </div>
                 <div>
                     <label>واحد اضافه:</label>
@@ -1664,10 +1664,10 @@
                 <label><input type="radio" name="poUnit" value="count" onchange="togglePoUnit()"> تعداد (عدد/کارتن/بسته)</label>
             </div>
             <label id="poQtyLabel">مقدار سفارش (کیلوگرم):</label>
-            <input type="number" id="poQty" step="0.001" placeholder="مثلاً 20">
+            <input type="text" inputmode="decimal" id="poQty" step="0.001" placeholder="مثلاً 20">
             <div class="hint">دقیقاً مشخص کن این سفارش به کیلوگرم است یا به تعداد؛ وقتی سفارش دریافت شد، همین مقدار به‌طور خودکار به موجودی انبار اصلی اضافه می‌شود.</div>
             <label>تخمین تعداد روز تا رسیدن سفارش (اختیاری):</label>
-            <input type="number" id="poEtaDays" step="0.5" placeholder="مثلاً 3">
+            <input type="text" inputmode="decimal" id="poEtaDays" step="0.5" placeholder="مثلاً 3">
             <label>توضیحات سفارش (اختیاری):</label>
             <textarea id="poNote" placeholder="مثلاً نام تامین‌کننده یا توضیحات..."></textarea>
             <button class="submit-btn" id="poSubmitBtn" onclick="submitPurchaseOrder()">ثبت سفارش جدید</button>
@@ -1698,7 +1698,7 @@
         <div class="hint">کالاهایی که نوع آن‌ها «سوسیس و کالباس» انتخاب شود، فقط در تب مخصوص «ثبت فروش سوسیس و کالباس» به‌عنوان پیشنهاد نمایش داده می‌شوند.</div>
 
         <label>ظرفیت ظرف یخچال غرفه (کیلوگرم):</label>
-        <input type="number" id="pCapacity" step="0.1" value="7.0" placeholder="مثلاً 7 کیلو">
+        <input type="text" inputmode="decimal" id="pCapacity" step="0.1" value="7.0" placeholder="مثلاً 7 کیلو">
 
         <label>روش وارد کردن موجودی انبار اصلی:</label>
         <div class="unit-toggle">
@@ -1712,11 +1712,11 @@
                 <div class="grid-2">
                     <div>
                         <label>وزن ناخالص کل (با ظرف):</label>
-                        <input type="number" id="pGrossStock" step="0.001" placeholder="مثلاً 16.200" oninput="calcNetStockFromGross()">
+                        <input type="text" inputmode="decimal" id="pGrossStock" step="0.001" placeholder="مثلاً 16.200" oninput="calcNetStockFromGross()">
                     </div>
                     <div>
                         <label>وزن ظرف / تار:</label>
-                        <input type="number" id="pTareStock" step="0.001" placeholder="مثلاً 0.700" oninput="calcNetStockFromGross()">
+                        <input type="text" inputmode="decimal" id="pTareStock" step="0.001" placeholder="مثلاً 0.700" oninput="calcNetStockFromGross()">
                     </div>
                 </div>
             </div>
@@ -1724,9 +1724,9 @@
 
         <div id="countStockFields" style="display:none;">
             <label>تعداد کل واحد (مثلاً چند بسته/گونی/کارتن):</label>
-            <input type="number" id="pUnitCount" step="1" placeholder="مثلاً 20" oninput="calcTotalFromCount()">
+            <input type="text" inputmode="decimal" id="pUnitCount" step="1" placeholder="مثلاً 20" oninput="calcTotalFromCount()">
             <label>وزن هر واحد (کیلوگرم):</label>
-            <input type="number" id="pUnitWeight" step="0.001" placeholder="مثلاً 0.5" oninput="calcTotalFromCount()">
+            <input type="text" inputmode="decimal" id="pUnitWeight" step="0.001" placeholder="مثلاً 0.5" oninput="calcTotalFromCount()">
             <div class="price-display" id="calcTotalDisplay"></div>
         </div>
 
@@ -1740,26 +1740,26 @@
 
         <div id="mainStockFieldsBox">
             <label>موجودی خالص انبار اصلی (کیلوگرم):</label>
-            <input type="number" id="pStock" step="0.001" placeholder="مثلاً 15.5">
+            <input type="text" inputmode="decimal" id="pStock" step="0.001" placeholder="مثلاً 15.5">
 
             <label>حداقل موجودی انبار به کیلوگرم (نقطه سفارش انبار اصلی):</label>
-            <input type="number" id="pMinStock" step="0.001" placeholder="مثلاً 2">
+            <input type="text" inputmode="decimal" id="pMinStock" step="0.001" placeholder="مثلاً 2">
         </div>
 
         <label>موجودی فعلی ظرف غرفه (کیلوگرم):</label>
-        <input type="number" id="pBoothStock" step="0.001" placeholder="مثلاً 7">
+        <input type="text" inputmode="decimal" id="pBoothStock" step="0.001" placeholder="مثلاً 7">
 
         <label>حداقل موجودی غرفه برای هشدار خرید کالای کم‌فروش (کیلوگرم):</label>
-        <input type="number" id="pBoothMinStock" step="0.1" value="0" placeholder="مثلاً 1">
+        <input type="text" inputmode="decimal" id="pBoothMinStock" step="0.1" value="0" placeholder="مثلاً 1">
         <div class="hint">اگر این کالا پرفروش باشد، به محض تمام‌شدن انبار اصلی (حتی اگر هنوز مقداری در غرفه باشد) بلافاصله به مدیر هشدار داده می‌شود. اگر کم‌فروش باشد، وقتی انبار اصلی خالی شود ابتدا پیام «عجله‌ای نیست» ارسال می‌شود و اگر تا ۲ روز بعد هنوز انبار پر نشده باشد، هشدار فوری «دیگر شارژ کن» ارسال می‌شود. تشخیص پرفروش/کم‌فروش به‌صورت خودکار و بر اساس فروش ۳۰ روز اخیر انجام می‌شود.</div>
 
         <label>قیمت فروش هر کیلو/عدد (تومان):</label>
-        <input type="number" id="pSellPrice" placeholder="مثلاً 120000" oninput="formatPrice(this, 'pSellPriceFormatted')">
+        <input type="text" inputmode="decimal" id="pSellPrice" placeholder="مثلاً 120000" oninput="formatPrice(this, 'pSellPriceFormatted')">
         <div id="pSellPriceFormatted" class="price-display"></div>
 
         <div id="buyPriceField" style="display:none;">
             <label>قیمت خرید هر کیلو/عدد (تومان) - ویژه مدیر:</label>
-            <input type="number" id="pBuyPrice" placeholder="مثلاً 90000" oninput="formatPrice(this, 'pBuyPriceFormatted')">
+            <input type="text" inputmode="decimal" id="pBuyPrice" placeholder="مثلاً 90000" oninput="formatPrice(this, 'pBuyPriceFormatted')">
             <div id="pBuyPriceFormatted" class="price-display"></div>
         </div>
 
@@ -1899,16 +1899,16 @@
         </div>
 
         <label>حداکثر تاخیر/زودرفتن مجاز پرسنل (به دقیقه):</label>
-        <input type="number" id="maxDelayAllowed" value="15" placeholder="مثلاً 15 دقیقه">
+        <input type="text" inputmode="decimal" id="maxDelayAllowed" value="15" placeholder="مثلاً 15 دقیقه">
 
         <label>چند دقیقه بعد از شروع/پایان شیفت، در صورت فراموشی، به پرسنل یادآوری ثبت ورود/خروج نمایش داده شود؟</label>
-        <input type="number" id="reminderMinutes" value="10" placeholder="مثلاً 10 دقیقه">
+        <input type="text" inputmode="decimal" id="reminderMinutes" value="10" placeholder="مثلاً 10 دقیقه">
 
         <label>حداکثر چند دقیقه زودتر از شروع شیفت، اجازه‌ی ثبت «ورود» وجود دارد؟ (زودتر از این، اصلاً ثبت نمی‌شود و فقط به شما اطلاع داده می‌شود)</label>
-        <input type="number" id="earlyEntryWindow" value="30" placeholder="مثلاً 30 دقیقه">
+        <input type="text" inputmode="decimal" id="earlyEntryWindow" value="30" placeholder="مثلاً 30 دقیقه">
 
         <label>حداکثر چند دقیقه بعد از پایان شیفت، اجازه‌ی ثبت «خروج» وجود دارد؟ (دیرتر از این، اصلاً ثبت نمی‌شود و فقط به شما اطلاع داده می‌شود — برای اضافه‌کاری‌های معمول عددی مناسب و نه خیلی کم بگذارید)</label>
-        <input type="number" id="lateExitWindow" value="60" placeholder="مثلاً 60 دقیقه">
+        <input type="text" inputmode="decimal" id="lateExitWindow" value="60" placeholder="مثلاً 60 دقیقه">
 
         <button class="submit-btn" onclick="saveShiftSettings()">ذخیره تنظیمات شیفت‌ها</button>
 
@@ -1921,12 +1921,12 @@
         </select>
         <div id="bonusPeriodBox" style="display:none;">
             <label>چند روز اخیر؟</label>
-            <input type="number" id="bonusPeriodDays" value="7" placeholder="مثلاً 7">
+            <input type="text" inputmode="decimal" id="bonusPeriodDays" value="7" placeholder="مثلاً 7">
         </div>
         <label>مبلغ هدف (تومان):</label>
-        <input type="number" id="bonusTargetAmount" placeholder="مثلاً 5000000">
+        <input type="text" inputmode="decimal" id="bonusTargetAmount" placeholder="مثلاً 5000000">
         <label>درصد افزایش حقوق در صورت رسیدن به هدف:</label>
-        <input type="number" id="bonusPercent" placeholder="مثلاً 10">
+        <input type="text" inputmode="decimal" id="bonusPercent" placeholder="مثلاً 10">
         <label style="display:flex; align-items:center; gap:8px; margin-top:10px; cursor:pointer;">
             <input type="checkbox" id="bonusActive" style="width:auto;" checked>
             فعال باشد و به فروشنده‌ها نشون داده بشه
@@ -1973,7 +1973,7 @@
         <label>شماره تماس (اختیاری):</label>
         <input type="text" id="debtCustomerPhone" dir="auto" placeholder="۰۹xxxxxxxxx">
         <label>مبلغ بدهی (تومان):</label>
-        <input type="number" id="debtAmount" placeholder="مثلاً 250000">
+        <input type="text" inputmode="decimal" id="debtAmount" placeholder="مثلاً 250000">
         <label>توضیحات (اختیاری):</label>
         <textarea id="debtNote" placeholder="مثلاً بابت خرید پنیر و ماست"></textarea>
         <button class="submit-btn" onclick="submitCustomerDebt()">➕ ثبت بدهی جدید</button>
@@ -2004,7 +2004,7 @@
                 <option value="evening_seller">🌙 شیفت شب</option>
             </select>
             <label>تعداد روزهای آزمایشی:</label>
-            <input type="number" id="trialDays" value="3" min="1" max="30">
+            <input type="text" inputmode="decimal" id="trialDays" value="3" min="1" max="30">
             <div class="hint">مثلاً ۳ برای سه روز آزمایشی، یا ۷ برای یک هفته.</div>
             <button class="submit-btn" onclick="createTrialAccount()">🧪 ساخت حساب آزمایشی</button>
         </div>
@@ -2071,14 +2071,14 @@
         <input type="date" id="piDate">
 
         <label>تعداد اقلام فاکتور:</label>
-        <input type="number" id="piItemCount" min="1" value="1" onchange="renderInvoiceItemRows()">
+        <input type="text" inputmode="decimal" id="piItemCount" min="1" value="1" onchange="renderInvoiceItemRows()">
 
         <div id="piItemsContainer"></div>
 
         <div class="grid-2">
             <div>
                 <label>درصد تخفیف (اختیاری):</label>
-                <input type="number" id="piDiscountPercent" value="0" step="0.5" oninput="calcInvoiceTotal()">
+                <input type="text" inputmode="decimal" id="piDiscountPercent" value="0" step="0.5" oninput="calcInvoiceTotal()">
             </div>
             <div>
                 <label>نحوه پرداخت:</label>
@@ -2134,7 +2134,7 @@
         <label>نام کالا:</label>
         <input type="text" id="ptItemName" dir="auto" list="productDatalist" placeholder="نام کالا را انتخاب یا تایپ کنید" oninput="calculatePersonalTakeoutPrice()" onchange="calculatePersonalTakeoutPrice()">
         <label>وزن/مقدار (کیلوگرم):</label>
-        <input type="number" id="ptWeight" step="0.001" placeholder="مثلاً 0.5 کیلو" oninput="calculatePersonalTakeoutPrice()">
+        <input type="text" inputmode="decimal" id="ptWeight" step="0.001" placeholder="مثلاً 0.5 کیلو" oninput="calculatePersonalTakeoutPrice()">
 
         <div id="ptCalcDisplay" class="price-display">مبلغ قابل کسر (با ۱۰٪ تخفیف): ۰ تومان</div>
 
@@ -2206,7 +2206,7 @@
                 <option value="">در حال دریافت لیست پرسنل...</option>
             </select>
             <label>مبلغ واریزی (تومان):</label>
-            <input type="number" id="salaryAmount" placeholder="مثلاً 15000000">
+            <input type="text" inputmode="decimal" id="salaryAmount" placeholder="مثلاً 15000000">
             <label>بابت (توضیحات/دوره):</label>
             <input type="text" id="salaryNote" placeholder="مثلاً حقوق مرداد ماه">
             <button class="submit-btn" onclick="submitSalaryPayment()">ثبت واریز حقوق</button>
@@ -2233,7 +2233,7 @@
         </select>
 
         <label>مبلغ (تومان):</label>
-        <input type="number" id="expenseAmount" placeholder="مثلاً 250000" oninput="updateExpenseAmountPreview()">
+        <input type="text" inputmode="decimal" id="expenseAmount" placeholder="مثلاً 250000" oninput="updateExpenseAmountPreview()">
         <div class="hint" id="expenseAmountPreview" style="margin-top:3px; color:#38bdf8; font-weight:bold;"></div>
 
         <label>توضیحات:</label>
@@ -2275,7 +2275,7 @@
         <input type="text" id="wasteProductName" list="productDatalist" placeholder="شروع به تایپ کن...">
 
         <label>مقدار (کیلوگرم):</label>
-        <input type="number" id="wasteQty" step="0.05" placeholder="مثلاً 1.2">
+        <input type="text" inputmode="decimal" id="wasteQty" step="0.05" placeholder="مثلاً 1.2">
 
         <label>از کجا کم بشه؟</label>
         <select id="wasteSource">
@@ -2340,7 +2340,7 @@
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v69 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v70 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
 
     <script>
         function toggleLoginPasswordVisibility() {
@@ -2765,6 +2765,31 @@
                 return false;
             }
         }
+
+        // تبدیل خودکار عدد فارسی/عربی به انگلیسی توی همه‌ی فیلدهای عددی: قبلاً این فیلدها
+        // type="number" بودن که خیلی از گوشی‌ها وقتی کیبورد فارسیه، اصلاً اجازه نمی‌دادن
+        // رقم فارسی (۰۱۲۳...) توشون تایپ بشه. حالا همه‌شون type="text" با inputmode="decimal"
+        // هستن (که هنوز کیبورد عددی رو باز می‌کنه) و همین‌جا هر رقم فارسی/عربی که تایپ بشه،
+        // همون لحظه به رقم انگلیسی تبدیل می‌شه تا parseFloat/Number توی بقیه‌ی کد درست بخونتش.
+        function normalizePersianDigitsInString(str) {
+            if (!str) return str;
+            const persian = '۰۱۲۳۴۵۶۷۸۹';
+            const arabic = '٠١٢٣٤٥٦٧٨٩';
+            return str
+                .replace(/[۰-۹]/g, d => String(persian.indexOf(d)))
+                .replace(/[٠-٩]/g, d => String(arabic.indexOf(d)))
+                .replace(/٫/g, '.'); // ممیز اعشاری عربی/فارسی
+        }
+        document.addEventListener('input', function (e) {
+            const el = e.target;
+            if (!el || el.getAttribute('inputmode') !== 'decimal') return;
+            const converted = normalizePersianDigitsInString(el.value);
+            if (converted !== el.value) {
+                const pos = el.selectionStart;
+                el.value = converted;
+                try { el.setSelectionRange(pos, pos); } catch (err) {}
+            }
+        }, true);
 
         // راه‌اندازی امن اتصال به Supabase — اگر کتابخانه Supabase به هر دلیلی
         // (نت ضعیف، قطعی CDN، فیلترینگ) بارگذاری نشده باشد، به‌جای متوقف‌کردن
@@ -9380,7 +9405,7 @@
                                 <span class="checklist-need">کمبود: ${needed.toLocaleString('fa-IR')} کیلو (انبار: ${mainStock.toLocaleString('fa-IR')} کیلو)</span>
                             </div>
                             <div style="display:flex; gap:6px; align-items:center;">
-                                <input type="number" step="0.05" style="flex:1; margin-top:0;" id="checklistFillAmt_${p.id}" value="${suggested}" placeholder="مقداری که واقعاً پر کردی">
+                                <input type="text" inputmode="decimal" step="0.05" style="flex:1; margin-top:0;" id="checklistFillAmt_${p.id}" value="${suggested}" placeholder="مقداری که واقعاً پر کردی">
                                 <button class="row-btn fill-btn" style="white-space:nowrap;" onclick="applyChecklistFill('${p.id}')">✅ ثبت شارژ</button>
                             </div>
                         </div>
@@ -9527,7 +9552,7 @@
                     <td><b>${p.name}</b>${p.booth_only ? ' <span style="font-size:9px; color:#fbbf24; border:1px solid #fbbf24; border-radius:6px; padding:1px 4px;">فقط غرفه</span>' : ''}</td>
                     <td>
                         ${canEdit 
-                            ? `<input type="number" step="0.5" class="cap-input" id="cap_${p.id}" value="${capacity}"> 
+                            ? `<input type="text" inputmode="decimal" step="0.5" class="cap-input" id="cap_${p.id}" value="${capacity}"> 
                                <button class="row-btn edit-btn" style="padding:2px 5px;" onclick="updateContainerCapacity('${p.id}', document.getElementById('cap_${p.id}').value)">💾</button>`
                             : `${capacity} کیلو`
                         }
@@ -9539,14 +9564,14 @@
                     <td>
                         ${canEdit 
                             ? `<div style="display:flex; gap:4px; align-items:center; justify-content:center; margin-bottom:8px;">
-                                 <input type="number" step="0.1" class="cap-input" id="boothMin_${p.id}" value="${p.booth_min_stock || 0}" placeholder="حداقل غرفه">
+                                 <input type="text" inputmode="decimal" step="0.1" class="cap-input" id="boothMin_${p.id}" value="${p.booth_min_stock || 0}" placeholder="حداقل غرفه">
                                  <button class="row-btn edit-btn" title="ذخیره حداقل موجودی هشدار غرفه" onclick="updateBoothMinStock('${p.id}', document.getElementById('boothMin_${p.id}').value)">💾حد</button>
                                </div>
                                <div style="background:rgba(56,189,248,0.06); border:1px dashed rgba(56,189,248,0.35); border-radius:8px; padding:6px; margin-bottom:8px;">
                                  <div style="font-size:10px; color:#38bdf8; margin-bottom:4px;">⚖️ بخش ۱: اصلاح دستی با ترازو (وزن ظرف را جدا بزن)</div>
                                  <div style="display:flex; gap:4px; align-items:center; justify-content:center;">
-                                   <input type="number" step="0.01" class="cap-input" id="grossBooth_${p.id}" placeholder="وزن کل (ظرف+جنس)">
-                                   <input type="number" step="0.01" class="cap-input" id="tareBooth_${p.id}" placeholder="وزن خود ظرف (تار)">
+                                   <input type="text" inputmode="decimal" step="0.01" class="cap-input" id="grossBooth_${p.id}" placeholder="وزن کل (ظرف+جنس)">
+                                   <input type="text" inputmode="decimal" step="0.01" class="cap-input" id="tareBooth_${p.id}" placeholder="وزن خود ظرف (تار)">
                                    <button class="row-btn edit-btn" title="محاسبه خالص" onclick="updateDirectBoothStockWithTare('${p.id}')">💾</button>
                                  </div>
                                </div>
@@ -9629,7 +9654,7 @@
             if (canManage) {
                 actionsHtml += `
                     <div style="display:flex; gap:4px; align-items:center; margin-top:8px;">
-                        <input type="number" step="0.01" class="qty-inline-input" id="recvQty_${o.id}" value="${o.quantity}" placeholder="مقدار واقعی">
+                        <input type="text" inputmode="decimal" step="0.01" class="qty-inline-input" id="recvQty_${o.id}" value="${o.quantity}" placeholder="مقدار واقعی">
                         <button class="row-btn confirm-btn" style="flex:1;" onclick="markOrderReceived('${o.id}')">✅ تایید دریافت با این مقدار</button>
                     </div>`;
             }
@@ -11771,11 +11796,11 @@
                     <div class="grid-2">
                         <div>
                             <label>مقدار (کیلو/عدد):</label>
-                            <input type="number" step="0.001" id="piItemQty_${i}" placeholder="مثلاً 10" oninput="calcInvoiceTotal()">
+                            <input type="text" inputmode="decimal" step="0.001" id="piItemQty_${i}" placeholder="مثلاً 10" oninput="calcInvoiceTotal()">
                         </div>
                         <div>
                             <label>قیمت واحد به ریال:</label>
-                            <input type="number" step="1" id="piItemPriceRial_${i}" placeholder="مثلاً 1200000" oninput="calcInvoiceTotal()">
+                            <input type="text" inputmode="decimal" step="1" id="piItemPriceRial_${i}" placeholder="مثلاً 1200000" oninput="calcInvoiceTotal()">
                         </div>
                     </div>
                     <div class="hint" id="piItemLineDisplay_${i}">مبلغ این قلم: ۰ تومان (قیمت واحد: ۰ تومان)</div>
