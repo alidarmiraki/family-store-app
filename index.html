@@ -1527,7 +1527,7 @@
         </select>
 
         <div id="leaveHourlyFields" style="display:none;">
-            <div class="hint" style="margin-top:0;">برای وقتی که فقط چند ساعت از شیفتت رو مرخصی می‌ری، نه کل روز رو. بعدش هنوز باید ورود/خروج عادی رو هم بزنی.</div>
+            <div class="hint" style="margin-top:0;">برای وقتی که فقط چند ساعت از شیفتت رو مرخصی می‌ری، نه کل روز رو. اگه برمی‌گردی، بعدش هنوز باید ورود/خروج عادی رو هم بزنی.</div>
             <div class="grid-2">
                 <div>
                     <label>از ساعت:</label>
@@ -1538,6 +1538,10 @@
                     <input type="time" id="leaveHourlyEnd">
                 </div>
             </div>
+            <label style="display:flex; align-items:center; gap:6px; margin-top:8px; font-size:13px;">
+                <input type="checkbox" id="leaveHourlyTillEndOfShift" style="width:auto;">
+                این تا آخر شیفتمه، دیگه برنمی‌گردم — خروج جداگانه لازم نیست
+            </label>
         </div>
 
         <div id="attTimeFields">
@@ -1825,11 +1829,22 @@
                         <input type="time" id="adminLeaveHourlyEnd">
                     </div>
                 </div>
+                <label style="display:flex; align-items:center; gap:6px; margin-top:8px; font-size:13px;">
+                    <input type="checkbox" id="adminLeaveTillEndOfShift" style="width:auto;">
+                    این مرخصی تا آخر شیفتش بود (دیگه برنگشته) — پس خروج جداگانه لازم نیست
+                </label>
             </div>
             <label>توضیح (اختیاری - فقط برای خودت، مثلاً دلیل مرخصی):</label>
             <input type="text" id="adminLeaveNote" dir="auto" placeholder="مثلاً مرخصی استعلاجی">
-            <button class="submit-btn" style="background:#10b981;" onclick="submitAdminLeave()">🌴 ثبت مرخصی</button>
+            <button class="submit-btn" style="background:#10b981;" id="adminLeaveSubmitBtn" onclick="submitAdminLeave()">🌴 ثبت مرخصی</button>
+            <button class="range-toggle-btn" id="adminLeaveCancelEditBtn" style="display:none;" onclick="cancelAdminLeaveEdit()">✖️ انصراف از ویرایش</button>
             <div id="adminLeaveResult" style="margin-top:8px;"></div>
+        </div>
+
+        <div class="report-card" style="margin-top:10px;">
+            <h3>📋 مرخصی‌هایی که خودتان برای این فروشنده ثبت کرده‌اید</h3>
+            <div class="hint" style="margin-top:0;">فقط مرخصی‌هایی که از همین پنل بالا ثبت کردید اینجا قابل ویرایش/حذف هستن؛ مرخصی‌هایی که خودِ فروشنده برای خودش ثبت کرده، فقط توسط خودش قابل ویرایش/حذفه.</div>
+            <div id="adminLeaveListBox"><div class="skeleton-block skeleton-card"></div></div>
         </div>
 
         <div id="workReportTodayContent" style="margin-top:15px;"></div>
@@ -7083,6 +7098,8 @@
             // ثبت واقعی، حتماً تایید می‌گیریم تا یه تپ اشتباهی (دست‌خوردن) باعث یه مرخصی الکی نشه
             let leaveReason = null;
             let leaveHourlyRangeText = null;
+            let leaveHourlyEndVal = null;
+            let leaveHourlyTillEndOfShift = false;
             if (type === 'leave_hourly') {
                 const startVal = document.getElementById('leaveHourlyStart').value;
                 const endVal = document.getElementById('leaveHourlyEnd').value;
@@ -7094,6 +7111,8 @@
                     showToast('⛔ ساعت پایان باید بعد از ساعت شروع باشه.');
                     return;
                 }
+                leaveHourlyEndVal = endVal;
+                leaveHourlyTillEndOfShift = document.getElementById('leaveHourlyTillEndOfShift').checked;
                 leaveHourlyRangeText = `از ساعت ${startVal} تا ${endVal}`;
                 const reallyWantsLeave = await showConfirm(`🕐 می‌خوای برای امروز، ${leaveHourlyRangeText} مرخصی ساعتی ثبت کنی؟\n\nاگه اشتباهی این گزینه انتخاب شده (دستت خورده)، «انصراف» رو بزن — چیزی ثبت نمی‌شه.`);
                 if (!reallyWantsLeave) {
@@ -7405,7 +7424,7 @@
                 delay_minutes: delayMinutes,
                 exit_diff_minutes: exitDiffMinutes,
                 photo_url: photoUrl,
-                note: (note ? note + " | " : "") + (leaveReason && type === 'leave' ? `🏖️ دلیل مرخصی: ${leaveReason} | ` : "") + (leaveReason && type === 'leave_hourly' ? `🕐 مرخصی ساعتی ${leaveHourlyRangeText} | دلیل: ${leaveReason} | ` : "") + (selectedLocationText ? selectedLocationText + " | " : "") + (biometricFallbackReason ? `⚠️ بدون تایید بیومتریک (${biometricFallbackReason}) | ` : "") + (biometricMethodLabel ? biometricMethodLabel + " | " : "") + (lateReasonText ? `📝 دلیل تاخیر: ${lateReasonText} | ` : "") + (isMakeupExit ? `⏮️ خروج جاافتاده (فراموش‌شده از شیفت قبل) | ` : "") + `زمان ثبت: ${fullDateTimeStr}`,
+                note: (note ? note + " | " : "") + (leaveReason && type === 'leave' ? `🏖️ دلیل مرخصی: ${leaveReason} | ` : "") + (leaveReason && type === 'leave_hourly' ? `🕐 مرخصی ساعتی ${leaveHourlyRangeText}${leaveHourlyTillEndOfShift ? ' (تا آخر شیفت، دیگه برنگشته)' : ''} | دلیل: ${leaveReason} | ` : "") + (selectedLocationText ? selectedLocationText + " | " : "") + (biometricFallbackReason ? `⚠️ بدون تایید بیومتریک (${biometricFallbackReason}) | ` : "") + (biometricMethodLabel ? biometricMethodLabel + " | " : "") + (lateReasonText ? `📝 دلیل تاخیر: ${lateReasonText} | ` : "") + (isMakeupExit ? `⏮️ خروج جاافتاده (فراموش‌شده از شیفت قبل) | ` : "") + `زمان ثبت: ${fullDateTimeStr}`,
                 created_at: now.toISOString()
             }]), 15000, 'ذخیره‌ی ثبت حضور');
 
@@ -7443,15 +7462,35 @@
                     sendPushNotificationToRole('🏖️ درخواست مرخصی', `${currentUserLabel}: ${leaveReason}`, 'admin');
                 }
                 if (type === 'leave_hourly' && leaveReason) {
-                    successMsg += `\n\n🕐 مرخصی ساعتی امروزت (${leaveHourlyRangeText}) با دلیل «${leaveReason}» برای مدیر ارسال شد. یادت نره ورود/خروج عادی امروزت رو هم بزنی.`;
+                    successMsg += `\n\n🕐 مرخصی ساعتی امروزت (${leaveHourlyRangeText}) با دلیل «${leaveReason}» برای مدیر ارسال شد.`;
+                    successMsg += leaveHourlyTillEndOfShift ? ` چون گفتی تا آخر شیفت برنمی‌گردی، خروج امروزت هم خودکار ثبت شد؛ نیازی به زدن خروج جدا نیست.` : ` یادت نره ورود/خروج عادی امروزت رو هم بزنی.`;
                     _supabase.from('messages').insert([{
                         sender: "سیستم خودکار مرخصی",
                         recipient: "admin",
                         title: `🕐 درخواست مرخصی ساعتی: ${currentUserLabel}`,
-                        body: `${currentUserLabel} برای تاریخ ${getTehranDateString(now)}، ${leaveHourlyRangeText} مرخصی ساعتی ثبت کرد.\nدلیل: ${leaveReason}`,
+                        body: `${currentUserLabel} برای تاریخ ${getTehranDateString(now)}، ${leaveHourlyRangeText} مرخصی ساعتی ثبت کرد.\nدلیل: ${leaveReason}${leaveHourlyTillEndOfShift ? '\n(تا آخر شیفت — دیگه برنگشته، خروج خودکار ثبت شد)' : ''}`,
                         created_at: now.toISOString()
                     }]).then(() => {});
                     sendPushNotificationToRole('🕐 درخواست مرخصی ساعتی', `${currentUserLabel}: ${leaveHourlyRangeText} — ${leaveReason}`, 'admin');
+
+                    // اگه گفته دیگه برنمی‌گرده، همون لحظه‌ی پایان مرخصی رو به‌عنوان «خروج» هم ثبت
+                    // می‌کنیم — وگرنه فردا سیستم فکر می‌کرد شیفتش هنوز بازه و اول ازش می‌خواست
+                    // همین «خروج جاافتاده» رو ببنده
+                    if (leaveHourlyTillEndOfShift && leaveHourlyEndVal) {
+                        const [eh, em] = leaveHourlyEndVal.split(':').map(Number);
+                        const exitTime = new Date(now);
+                        exitTime.setHours(eh, em, 0, 0);
+                        _supabase.from('attendance').insert([{
+                            seller_name: currentUserLabel,
+                            type: 'exit',
+                            overtime_hours: null,
+                            delay_minutes: null,
+                            exit_diff_minutes: null,
+                            photo_url: null,
+                            note: `⏮️ خروج خودکار — چون مرخصی ساعتی تا آخر شیفت بود | زمان ثبت: ${getTehranFullDateTimeString(exitTime)}`,
+                            created_at: exitTime.toISOString()
+                        }]).then(() => {});
+                    }
                 }
 
                 const trialMode = isTrialAccount();
@@ -7772,10 +7811,127 @@
         // تشخیص داد این مرخصی خودِ فروشنده رو نبوده (مدیر براش زده)، هم پیام مخصوص «مدیر
         // براتون مرخصی ثبت کرده» بهش نشون داده بشه
         const ADMIN_LEAVE_MARKER = '🌴 مرخصی توسط مدیر ثبت شده';
+        let editingAdminLeaveId = null;
 
         function toggleAdminLeaveType() {
             const type = document.getElementById('adminLeaveType').value;
             document.getElementById('adminLeaveHourlyFields').style.display = (type === 'leave_hourly') ? 'block' : 'none';
+        }
+
+        // متن نوتِ خودمون رو (که با فرمت ثابتی می‌سازیم) برعکس تجزیه می‌کنه تا موقع ویرایش،
+        // فرم از قبل با مقادیر درست پر بشه
+        function parseAdminLeaveNote(note) {
+            const result = { type: 'leave', start: '', end: '', tillEnd: false, customNote: '' };
+            if (!note) return result;
+            const hourlyMatch = note.match(/🕐 مرخصی ساعتی از ساعت (\d{2}:\d{2}) تا (\d{2}:\d{2})/);
+            if (hourlyMatch) {
+                result.type = 'leave_hourly';
+                result.start = hourlyMatch[1];
+                result.end = hourlyMatch[2];
+            }
+            result.tillEnd = note.indexOf('تا آخر شیفت') !== -1;
+            const parts = note.split(' | ').map(p => p.trim());
+            const custom = parts.filter(p =>
+                p.indexOf(ADMIN_LEAVE_MARKER) === -1 &&
+                p.indexOf('🕐 مرخصی ساعتی') !== 0 &&
+                p !== 'تا آخر شیفت (دیگه برنگشته)'
+            );
+            result.customNote = custom.join(' | ');
+            return result;
+        }
+
+        // هر جا مرخصی ساعتی «تا آخر شیفت» ثبت شده باشه، یه رکورد «خروج» خودکار هم کنارش
+        // ساخته می‌شه (توی submitAdminLeave). موقع ویرایش یا حذف آن مرخصی، این تابع همون
+        // خروج خودکار مرتبط رو هم پیدا و پاک می‌کنه تا یتیم روی جدول نمونه
+        async function removeLinkedAutoExit(sellerName, dateStr) {
+            await _supabase.from('attendance').delete()
+                .eq('seller_name', sellerName)
+                .eq('type', 'exit')
+                .ilike('note', '%خروج خودکار — چون مرخصی ساعتی%')
+                .gte('created_at', `${dateStr}T00:00:00+03:30`)
+                .lte('created_at', `${dateStr}T23:59:59+03:30`);
+        }
+
+        async function loadAdminLeaveList() {
+            const box = document.getElementById('adminLeaveListBox');
+            if (!box) return;
+            const sellerLabel = document.getElementById('workSellerSelect').value;
+            box.innerHTML = skeletonCards(2);
+            const { data, error } = await _supabase.from('attendance')
+                .select('*')
+                .eq('seller_name', sellerLabel)
+                .in('type', ['leave', 'leave_hourly'])
+                .order('created_at', { ascending: false })
+                .limit(30);
+            if (error) { box.innerHTML = '<p style="color:#ef4444;">خطا در بارگذاری مرخصی‌ها.</p>'; return; }
+
+            // فقط مرخصی‌هایی که خودِ مدیر از همین پنل ثبت کرده (با مارکر مشخص) — مرخصی‌هایی
+            // که خودِ فروشنده برای خودش ثبت کرده، از اینجا قابل ویرایش/حذف نیست
+            const adminOnly = (data || []).filter(r => r.note && r.note.indexOf(ADMIN_LEAVE_MARKER) === 0);
+            if (adminOnly.length === 0) {
+                box.innerHTML = '<p class="hint">هنوز مرخصی‌ای برای این فروشنده از این پنل ثبت نکرده‌اید.</p>';
+                return;
+            }
+            box.innerHTML = adminOnly.map(r => `
+                <div class="report-card">
+                    <h3>${r.type === 'leave_hourly' ? '🕐 مرخصی ساعتی' : '🏖️ مرخصی روزانه'} — ${getTehranDateString(new Date(r.created_at))}</h3>
+                    ${r.note ? `<p>📝 ${escapeHtmlForToast(r.note.replace(ADMIN_LEAVE_MARKER, '').replace(/^\s*\|\s*/, ''))}</p>` : ''}
+                    <button class="row-btn edit-btn" style="padding:4px 8px; font-size:11px;" onclick="editAdminLeaveRecord('${r.id}')">✏️ ویرایش</button>
+                    <button class="row-btn edit-btn" style="padding:4px 8px; font-size:11px; background:#ef4444;" onclick="deleteAdminLeaveRecord('${r.id}')">🗑️ حذف</button>
+                </div>
+            `).join('');
+        }
+
+        async function editAdminLeaveRecord(id) {
+            const { data: r } = await _supabase.from('attendance').select('*').eq('id', id).maybeSingle();
+            if (!r) { showToast('❌ این مرخصی پیدا نشد — شاید قبلاً حذف شده.'); loadAdminLeaveList(); return; }
+            const parsed = parseAdminLeaveNote(r.note);
+            editingAdminLeaveId = id;
+            document.getElementById('adminLeaveType').value = parsed.type;
+            toggleAdminLeaveType();
+            document.getElementById('adminLeaveDate').value = getTehranISODate(new Date(r.created_at));
+            if (parsed.type === 'leave_hourly') {
+                document.getElementById('adminLeaveHourlyStart').value = parsed.start;
+                document.getElementById('adminLeaveHourlyEnd').value = parsed.end;
+                document.getElementById('adminLeaveTillEndOfShift').checked = parsed.tillEnd;
+            }
+            document.getElementById('adminLeaveNote').value = parsed.customNote;
+            document.getElementById('adminLeaveSubmitBtn').innerText = '🔄 ذخیره ویرایش مرخصی';
+            document.getElementById('adminLeaveCancelEditBtn').style.display = 'block';
+            document.getElementById('adminLeaveResult').innerHTML = '';
+            const panel = document.getElementById('workReportTab');
+            if (panel) window.scrollTo({ top: panel.offsetTop, behavior: 'smooth' });
+        }
+
+        function cancelAdminLeaveEdit() {
+            editingAdminLeaveId = null;
+            document.getElementById('adminLeaveType').value = 'leave';
+            toggleAdminLeaveType();
+            document.getElementById('adminLeaveDate').value = '';
+            document.getElementById('adminLeaveHourlyStart').value = '';
+            document.getElementById('adminLeaveHourlyEnd').value = '';
+            document.getElementById('adminLeaveTillEndOfShift').checked = false;
+            document.getElementById('adminLeaveNote').value = '';
+            document.getElementById('adminLeaveSubmitBtn').innerText = '🌴 ثبت مرخصی';
+            document.getElementById('adminLeaveCancelEditBtn').style.display = 'none';
+            document.getElementById('adminLeaveResult').innerHTML = '';
+        }
+
+        async function deleteAdminLeaveRecord(id) {
+            const sure = await showConfirm('⚠️ این مرخصی حذف بشه؟ اگه خروج خودکار مرتبطی هم داشته باشه، اونم پاک می‌شه. این کار قابل بازگشت نیست.');
+            if (!sure) return;
+            const { data: r } = await _supabase.from('attendance').select('*').eq('id', id).maybeSingle();
+            if (r) {
+                await removeLinkedAutoExit(r.seller_name, getTehranISODate(new Date(r.created_at)));
+            }
+            const { error } = await _supabase.from('attendance').delete().eq('id', id);
+            if (error) { showToast('❌ خطا در حذف: ' + error.message); return; }
+            const stillThereMsg = await confirmRowGone('attendance', { id });
+            if (stillThereMsg) { showToast(stillThereMsg); return; }
+            showToast('✅ مرخصی حذف شد.');
+            if (editingAdminLeaveId === id) cancelAdminLeaveEdit();
+            loadAdminLeaveList();
+            loadWorkReport();
         }
 
         async function submitAdminLeave() {
@@ -7784,6 +7940,7 @@
             const leaveType = document.getElementById('adminLeaveType').value;
             const customNote = document.getElementById('adminLeaveNote').value.trim();
             const resultBox = document.getElementById('adminLeaveResult');
+            const isEditing = !!editingAdminLeaveId;
 
             if (!sellerLabel || sellerLabel.indexOf(' - ') === -1) {
                 showToast('❌ لطفاً اول از لیست بالا یک فروشنده‌ی مشخص (با اسم) انتخاب کنید، نه فقط نقش کلی.');
@@ -7795,9 +7952,11 @@
             }
 
             let hourlyRangeText = null;
+            let startVal = null, endVal = null;
+            let tillEndOfShift = false;
             if (leaveType === 'leave_hourly') {
-                const startVal = document.getElementById('adminLeaveHourlyStart').value;
-                const endVal = document.getElementById('adminLeaveHourlyEnd').value;
+                startVal = document.getElementById('adminLeaveHourlyStart').value;
+                endVal = document.getElementById('adminLeaveHourlyEnd').value;
                 if (!startVal || !endVal) {
                     showToast('❌ لطفاً ساعت شروع و پایان مرخصی ساعتی را مشخص کنید.');
                     return;
@@ -7807,14 +7966,26 @@
                     return;
                 }
                 hourlyRangeText = `از ساعت ${startVal} تا ${endVal}`;
+                tillEndOfShift = document.getElementById('adminLeaveTillEndOfShift').checked;
             }
 
-            // چک کنیم برای همین فروشنده و همین روز قبلاً چیزی ثبت نشده باشه (مرخصی یا ورود/خروج)
+            // اگه در حال ویرایش یه مرخصی قبلی هستیم، خروجِ خودکار مرتبط قدیمی (اگه بود) رو از
+            // الان پاک می‌کنیم، ولی خودِ رکورد مرخصی رو پاک نمی‌کنیم — چون با UPDATE (نه
+            // حذف+ثبت‌دوباره) جایگزینش می‌کنیم، تا اگه یه‌جای کار خطا خورد، رکورد اصلی گم نشه
+            if (isEditing) {
+                const { data: oldRecord } = await _supabase.from('attendance').select('*').eq('id', editingAdminLeaveId).maybeSingle();
+                if (oldRecord) {
+                    await removeLinkedAutoExit(oldRecord.seller_name, getTehranISODate(new Date(oldRecord.created_at)));
+                }
+            }
+
+            // چک کنیم برای همین فروشنده و همین روز قبلاً چیزِ دیگه‌ای ثبت نشده باشه (مرخصی یا
+            // ورود/خروج) — خودِ رکوردی که داریم ویرایشش می‌کنیم از این چک مستثناست
             const { data: existing } = await _supabase
                 .from('attendance')
                 .select('id, type, created_at')
                 .eq('seller_name', sellerLabel);
-            const existingOnDate = (existing || []).filter(r => getTehranISODate(new Date(r.created_at)) === dateStr);
+            const existingOnDate = (existing || []).filter(r => r.id !== editingAdminLeaveId && getTehranISODate(new Date(r.created_at)) === dateStr);
             if (existingOnDate.length > 0) {
                 const alreadyLeave = existingOnDate.some(r => r.type === 'leave' || r.type === 'leave_hourly');
                 const msg = alreadyLeave
@@ -7824,12 +7995,14 @@
                 if (!confirmed) return;
             }
 
-            const friendlyNote = ADMIN_LEAVE_MARKER + (leaveType === 'leave_hourly' ? ` | 🕐 مرخصی ساعتی ${hourlyRangeText}` : '') + (customNote ? (' | ' + customNote) : '');
-            // ساعت ۱۲ ظهر به‌وقت تهران انتخاب شده تا مطمئناً همون روزِ انتخابی حساب بشه (نه
-            // نیمه‌شب که با اختلاف منطقه زمانی ممکنه به روز قبل/بعد لیز بخوره)
-            const isoDateTime = `${dateStr}T12:00:00+03:30`;
+            const friendlyNote = ADMIN_LEAVE_MARKER + (leaveType === 'leave_hourly' ? ` | 🕐 مرخصی ساعتی ${hourlyRangeText}` : '') + (tillEndOfShift ? ' | تا آخر شیفت (دیگه برنگشته)' : '') + (customNote ? (' | ' + customNote) : '');
+            // برای مرخصی روزانه، ساعت ۱۲ ظهر به‌وقت تهران انتخاب شده تا مطمئناً همون روزِ
+            // انتخابی حساب بشه (نه نیمه‌شب که با اختلاف منطقه زمانی ممکنه لیز بخوره)؛ برای
+            // مرخصی ساعتی، از همون «ساعت شروع» واقعی استفاده می‌کنیم تا توی جدول «تاریخ و ساعت
+            // دقیق ثبت» عدد درست و قابل‌فهم (نه یه ۱۲:۰۰:۰۰ گمراه‌کننده) نشون داده بشه.
+            const isoDateTime = (leaveType === 'leave_hourly') ? `${dateStr}T${startVal}:00+03:30` : `${dateStr}T12:00:00+03:30`;
 
-            const { error } = await _supabase.from('attendance').insert([{
+            const recordPayload = {
                 seller_name: sellerLabel,
                 type: leaveType,
                 overtime_hours: null,
@@ -7838,16 +8011,46 @@
                 photo_url: null,
                 note: friendlyNote,
                 created_at: isoDateTime
-            }]);
+            };
+            const { error } = isEditing
+                ? await _supabase.from('attendance').update(recordPayload).eq('id', editingAdminLeaveId)
+                : await _supabase.from('attendance').insert([recordPayload]);
 
             if (error) {
-                resultBox.innerHTML = `<p style="color:#ef4444;">❌ ثبت مرخصی با خطا مواجه شد: ${error.message}</p>`;
+                resultBox.innerHTML = `<p style="color:#ef4444;">❌ ${isEditing ? 'ویرایش' : 'ثبت'} مرخصی با خطا مواجه شد: ${error.message}</p>`;
                 return;
             }
 
-            resultBox.innerHTML = `<p style="color:#34d399;">✅ مرخصی ${leaveType === 'leave_hourly' ? 'ساعتی (' + hourlyRangeText + ')' : 'روزانه'} برای ${sellerLabel} در تاریخ ${getTehranDateString(new Date(isoDateTime))} ثبت شد.</p>`;
-            showToast(`✅ مرخصی برای ${sellerLabel} ثبت شد.`);
-            document.getElementById('adminLeaveNote').value = '';
+            // اگه مدیر گفته این مرخصی ساعتی تا آخر شیفت بوده (دیگه برنگشته)، یه رکورد «خروج» هم
+            // درست همون لحظه‌ی پایان مرخصی براش ثبت می‌کنیم — وگرنه سیستم فکر می‌کرد شیفتش هنوز
+            // بازه و فردا موقع ثبت ورود جدید، اول ازش می‌خواست همین «خروج جاافتاده» رو ببنده.
+            if (leaveType === 'leave_hourly' && tillEndOfShift) {
+                const exitIsoDateTime = `${dateStr}T${endVal}:00+03:30`;
+                const { error: exitErr } = await _supabase.from('attendance').insert([{
+                    seller_name: sellerLabel,
+                    type: 'exit',
+                    overtime_hours: null,
+                    delay_minutes: null,
+                    exit_diff_minutes: null,
+                    photo_url: null,
+                    note: `⏮️ خروج خودکار — چون مرخصی ساعتی ثبت‌شده توسط مدیر تا آخر شیفت بوده | زمان ثبت: ${getTehranFullDateTimeString(new Date(exitIsoDateTime))}`,
+                    created_at: exitIsoDateTime
+                }]);
+                if (exitErr) {
+                    resultBox.innerHTML = `<p style="color:#f59e0b;">⚠️ مرخصی ثبت شد ولی خروج خودکار پایان شیفت ثبت نشد: ${exitErr.message} — لازمه دستی یه خروج براش بزنید.</p>`;
+                    showToast('⚠️ مرخصی ثبت شد ولی خروج خودکار انجام نشد.');
+                    document.getElementById('adminLeaveNote').value = '';
+                    editingAdminLeaveId = null;
+                    document.getElementById('adminLeaveSubmitBtn').innerText = '🌴 ثبت مرخصی';
+                    document.getElementById('adminLeaveCancelEditBtn').style.display = 'none';
+                    loadWorkReport();
+                    return;
+                }
+            }
+
+            showToast(isEditing ? `✅ مرخصی ${sellerLabel} ویرایش شد.` : `✅ مرخصی برای ${sellerLabel} ثبت شد.`);
+            cancelAdminLeaveEdit();
+            resultBox.innerHTML = `<p style="color:#34d399;">✅ مرخصی ${leaveType === 'leave_hourly' ? 'ساعتی (' + hourlyRangeText + ')' : 'روزانه'} برای ${sellerLabel} در تاریخ ${getTehranDateString(new Date(isoDateTime))} ${isEditing ? 'ویرایش شد' : 'ثبت شد'}.${tillEndOfShift ? ' (خروج پایان شیفت هم خودکار ثبت شد، نیازی به ثبت دستی نیست)' : ''}</p>`;
             loadWorkReport();
         }
 
@@ -7916,6 +8119,7 @@
 
         async function loadWorkReport() {
             restoreLastViewedSeller();
+            loadAdminLeaveList();
             const sellerRole = document.getElementById('workSellerSelect').value;
             const container = document.getElementById('workReportTodayContent');
             container.innerHTML = 'در حال دریافت کارکرد امروز...';
