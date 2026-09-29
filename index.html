@@ -9663,6 +9663,7 @@
             }
             if (canEditOrder) {
                 actionsHtml += `<button class="row-btn edit-btn" style="width:100%; margin-top:6px;" onclick="editPurchaseOrder('${o.id}')">✏️ ویرایش سفارش</button>`;
+                actionsHtml += `<button class="row-btn delete-btn" style="width:100%; margin-top:6px;" onclick="deletePurchaseOrder('${o.id}')">🗑️ حذف سفارش</button>`;
             }
 
             return `
@@ -9771,6 +9772,27 @@
                 document.getElementById('cancelPoEditBtn').style.display = 'block';
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             });
+        }
+
+        async function deletePurchaseOrder(orderId) {
+            if (currentRole !== 'admin') return;
+            const { data: order } = await _supabase.from('purchase_orders').select('product_name, quantity, unit, status').eq('id', orderId).maybeSingle();
+            if (!order) return showToast('این سفارش پیدا نشد (شاید قبلاً حذف شده).');
+            if (order.status === 'received') return showToast('سفارش دریافت‌شده قابل حذف نیست چون مقدارش به موجودی انبار اضافه شده.');
+
+            const unitTxt = order.unit === 'count' ? 'عدد' : 'کیلوگرم';
+            const sure = await showConfirm(`🗑️ سفارش «${order.product_name}» (${Number(order.quantity).toLocaleString('fa-IR')} ${unitTxt}) حذف شود؟\n\nاین کار قابل بازگشت نیست.`);
+            if (!sure) return;
+
+            const { error } = await _supabase.from('purchase_orders').delete().eq('id', orderId);
+            if (error) {
+                showToast('❌ خطا در حذف سفارش: ' + error.message + '\n\nاگه خطا مربوط به دسترسی (RLS) بود، اجازه‌ی DELETE روی جدول purchase_orders رو در Supabase فعال کن.');
+                return;
+            }
+            if (String(editingPurchaseOrderId) === String(orderId)) cancelPoEdit();
+            showToast('✅ سفارش حذف شد');
+            logInventoryChange(order.product_name, 'حذف سفارش خرید', `سفارش ${order.quantity} ${unitTxt} حذف شد`);
+            loadPurchaseOrders();
         }
 
         function cancelPoEdit() {
