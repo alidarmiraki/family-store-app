@@ -8564,7 +8564,10 @@
             const capacity = parseFloat(document.getElementById('pCapacity').value) || 7.0;
             const booth_only = document.getElementById('pBoothOnly').checked;
             const stock = booth_only ? 0 : parseFloat(document.getElementById('pStock').value);
-            const boothStock = parseFloat(document.getElementById('pBoothStock').value) || capacity;
+            // فقط وقتی کادر کاملاً خالی است، ظرفیت ظرف پیش‌فرض می‌شود؛ عدد ۰ باید همان ۰ ذخیره شود
+            const boothStockRaw = document.getElementById('pBoothStock').value.trim();
+            const boothStockParsed = parseFloat(boothStockRaw);
+            const boothStock = (boothStockRaw === '' || isNaN(boothStockParsed)) ? capacity : Math.max(0, boothStockParsed);
             const min_stock = booth_only ? 0 : (parseFloat(document.getElementById('pMinStock').value) || 0);
             const booth_min_stock = parseFloat(document.getElementById('pBoothMinStock').value) || 0;
             const sell_price = parseFloat(document.getElementById('pSellPrice').value) || 0;
