@@ -9875,9 +9875,10 @@
                     const avg = dailyAvg[p.code] || 0;
                     const totalStock = (p.stock || 0) + (p.booth_stock || 0);
                     const daysLeft = avg > 0 ? (totalStock / avg) : null;
-                    return { name: p.name, daysLeft, avg };
+                    return { name: p.name, daysLeft, avg, totalStock };
                 })
-                .filter(p => p.daysLeft !== null && p.daysLeft <= 5 && p.avg > 0)
+                // کالایی که همین الان کلاً تمام شده پیش‌بینی نمی‌خواد (هشدارش تو بخش قرمز بالاست)
+                .filter(p => p.totalStock > 0 && p.daysLeft !== null && p.daysLeft <= 5 && p.avg > 0)
                 .sort((a, b) => a.daysLeft - b.daysLeft);
 
             if (risky.length === 0) {
