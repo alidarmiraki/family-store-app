@@ -2269,17 +2269,29 @@
     <!-- تب ضایعات: ثبت کالایی که خراب شده/تاریخش گذشته و باید از موجودی کم بشه -->
     <div id="wasteTab" class="card">
         <h2>🗑️ ثبت ضایعات</h2>
-        <div class="hint" style="margin-top:0;">وقتی کالایی خراب شده، تاریخش گذشته یا هر دلیل دیگه‌ای دور ریخته شده، اینجا ثبتش کن. مقدارش خودکار از موجودی کم می‌شه تا عدد انبار درست بمونه.</div>
+        <div class="hint" style="margin-top:0;">وقتی چیزی خراب شده، تاریخش گذشته یا دور ریخته شده، اینجا فقط «نوع کالا» رو انتخاب کن و مقدارش رو بنویس؛ نیازی به اسم دقیق کالا نیست. این بخش فقط برای ثبت و گزارش ضایعات هست و از موجودی انبار کم نمی‌کنه.</div>
 
-        <label>نام یا کد کالا:</label>
-        <input type="text" id="wasteProductName" list="productDatalist" placeholder="شروع به تایپ کن...">
+        <label>نوع کالا:</label>
+        <select id="wasteCategory">
+            <option value="پنیر">🧀 پنیر</option>
+            <option value="ماست">🥛 ماست</option>
+            <option value="ترشی">🥒 ترشی</option>
+            <option value="ترشک">🍑 ترشک</option>
+            <option value="لواشک">🍓 لواشک</option>
+            <option value="سوسیس">🌭 سوسیس</option>
+            <option value="هات داگ">🌭 هات داگ</option>
+            <option value="کوکتل">🍖 کوکتل</option>
+            <option value="کالباس رول">🥩 کالباس رول</option>
+            <option value="کالباس خانواده">🥩 کالباس خانواده</option>
+            <option value="سایر">📌 سایر (در توضیحات بنویس)</option>
+        </select>
 
         <label>مقدار (کیلوگرم):</label>
         <input type="text" inputmode="decimal" id="wasteQty" step="0.05" placeholder="مثلاً 1.2">
 
-        <label>از کجا کم بشه؟</label>
+        <label>ضایعات مربوط به کجاست؟</label>
         <select id="wasteSource">
-            <option value="booth">🧊 موجودی غرفه</option>
+            <option value="booth">🧊 غرفه</option>
             <option value="warehouse">📦 انبار اصلی</option>
         </select>
 
@@ -8508,7 +8520,6 @@
             setupProductAutocomplete('seName', () => cachedProductsList);
             setupProductAutocomplete('poProductName', () => cachedProductsList);
             setupProductAutocomplete('ptItemName', () => cachedProductsList);
-            setupProductAutocomplete('wasteProductName', () => cachedProductsList);
         }
 
         function toggleEntryMode() {
@@ -12871,63 +12882,41 @@
         // --- ثبت ضایعات: کالای خراب/تاریخ‌گذشته رو از موجودی کم می‌کنه و توی جدول waste_log
         // یه لاگ نگه می‌داره تا بعداً قابل بررسی و گزارش‌گیری باشه ---
         async function submitWaste() {
-            const nameVal = document.getElementById('wasteProductName').value.trim();
+            const category = document.getElementById('wasteCategory').value;
             const qty = parseFloat(document.getElementById('wasteQty').value);
             const source = document.getElementById('wasteSource').value;
             const reason = document.getElementById('wasteReason').value;
             const note = document.getElementById('wasteNote').value.trim();
 
-            if (!nameVal || isNaN(qty) || qty <= 0) {
-                showToast('لطفاً نام کالا و مقدار معتبر را وارد کنید.');
+            if (!category || isNaN(qty) || qty <= 0) {
+                showToast('لطفاً نوع کالا و مقدار معتبر را وارد کنید.');
+                return;
+            }
+            if (category === 'سایر' && !note) {
+                showToast('برای «سایر» لطفاً در توضیحات بنویسید چه چیزی ضایع شده.');
                 return;
             }
 
-            let { data: product } = await _supabase.from('products').select('*').ilike('name', nameVal).maybeSingle();
-            if (!product) {
-                const { data: byCode } = await _supabase.from('products').select('*').eq('code', nameVal).maybeSingle();
-                product = byCode;
-            }
-            if (!product) {
-                showToast('❌ کالایی با این اسم یا کد در انبار یافت نشد!');
-                return;
-            }
-
-            const currentAmount = source === 'booth' ? (product.booth_stock || 0) : (product.stock || 0);
-            if (currentAmount < qty) {
-                showToast(`⛔ این مقدار قابل ثبت نیست! موجودی فعلی «${product.name}» در ${source === 'booth' ? 'غرفه' : 'انبار اصلی'}: ${currentAmount.toLocaleString('fa-IR')} کیلوگرم — بیشتر از این نمی‌شه ضایعات زد.`);
-                return;
-            }
-
-            const rpcName = source === 'booth' ? 'adjust_booth_stock' : 'adjust_main_stock';
-            const { data: newAmount, error: adjustErr } = await _supabase.rpc(rpcName, { p_product_id: product.id, p_delta: -qty });
-            if (adjustErr) {
-                showToast('❌ خطا در کم‌کردن موجودی: ' + adjustErr.message + `\n\nمطمئن شوید تابع ${rpcName} در Supabase ساخته شده است.`);
-                return;
-            }
-
-            const now = new Date();
+            // ضایعات کلی: فقط ثبت در لاگ (بدون کم‌کردن از موجودی). کد با پیشوند cat: مشخص می‌شود.
             const { error: logErr } = await _supabase.from('waste_log').insert([{
-                product_code: product.code,
-                product_name: product.name,
+                product_code: 'cat:' + category,
+                product_name: category,
                 quantity: qty,
                 source,
                 reason,
                 note: note || null,
                 seller_name: currentUserLabel,
-                created_at: now.toISOString()
+                created_at: new Date().toISOString()
             }]);
             if (logErr) {
-                showToast('⚠️ موجودی کم شد ولی لاگ ضایعات ذخیره نشد: ' + logErr.message + '\n\nمطمئن شوید جدول waste_log در Supabase ساخته شده است.');
-            } else {
-                showToast(`✅ ${qty.toLocaleString('fa-IR')} کیلوگرم «${product.name}» به‌عنوان ضایعات ثبت شد.\nموجودی جدید (${source === 'booth' ? 'غرفه' : 'انبار اصلی'}): ${Number(newAmount).toLocaleString('fa-IR')} کیلوگرم`);
+                showToast('❌ خطا در ثبت ضایعات: ' + logErr.message + '\n\nمطمئن شوید جدول waste_log در Supabase ساخته شده است.');
+                return;
             }
+            showToast(`✅ ${qty.toLocaleString('fa-IR')} کیلوگرم ضایعات «${category}» ثبت شد.`);
 
-            document.getElementById('wasteProductName').value = '';
             document.getElementById('wasteQty').value = '';
             document.getElementById('wasteNote').value = '';
-            loadProductDatalist();
             loadWasteTab();
-            if (currentRole === 'admin') checkLowStockAlertNoWeight();
         }
 
         async function loadWasteTab() {
@@ -12962,7 +12951,7 @@
                     <p>📌 ${w.reason || '-'} | از: ${w.source === 'booth' ? '🧊 غرفه' : '📦 انبار اصلی'}</p>
                     <p>👤 ${w.seller_name || '-'} — ⏱️ ${getTehranFullDateTimeString(new Date(w.created_at))}</p>
                     ${w.note ? `<p>📝 ${escapeHtmlForToast(w.note)}</p>` : ''}
-                    ${(isAdmin || w.seller_name === currentUserLabel) ? `<button class="row-btn delete-btn" style="width:100%; margin-top:6px; padding:5px 8px; font-size:11px;" onclick="deleteWaste('${w.id}')">🗑️ حذف (و بازگرداندن موجودی)</button>` : ''}
+                    ${(isAdmin || w.seller_name === currentUserLabel) ? `<button class="row-btn delete-btn" style="width:100%; margin-top:6px; padding:5px 8px; font-size:11px;" onclick="deleteWaste('${w.id}')">🗑️ حذف${String(w.product_code || '').startsWith('cat:') ? '' : ' (و بازگرداندن موجودی)'}</button>` : ''}
                 </div>
             `).join('');
         }
@@ -12976,10 +12965,13 @@
                 return;
             }
 
-            const sure = await showConfirm(`آیا از حذف این ثبت ضایعات مطمئن هستید؟ ${Number(record.quantity).toLocaleString('fa-IR')} کیلوگرم «${record.product_name}» دوباره به موجودی ${record.source === 'booth' ? 'غرفه' : 'انبار اصلی'} برگردانده می‌شود.`);
+            const isCategoryWaste = String(record.product_code || '').startsWith('cat:');
+            const sure = await showConfirm(isCategoryWaste
+                ? `آیا از حذف این ثبت ضایعات «${record.product_name}» (${Number(record.quantity).toLocaleString('fa-IR')} کیلوگرم) مطمئن هستید؟`
+                : `آیا از حذف این ثبت ضایعات مطمئن هستید؟ ${Number(record.quantity).toLocaleString('fa-IR')} کیلوگرم «${record.product_name}» دوباره به موجودی ${record.source === 'booth' ? 'غرفه' : 'انبار اصلی'} برگردانده می‌شود.`);
             if (!sure) return;
 
-            const { data: product } = await _supabase.from('products').select('id').eq('code', record.product_code).maybeSingle();
+            const { data: product } = isCategoryWaste ? { data: null } : await _supabase.from('products').select('id').eq('code', record.product_code).maybeSingle();
             if (product) {
                 const rpcName = record.source === 'booth' ? 'adjust_booth_stock' : 'adjust_main_stock';
                 await _supabase.rpc(rpcName, { p_product_id: product.id, p_delta: Number(record.quantity) });
@@ -12992,7 +12984,7 @@
             }
             const stillThereMsg = await confirmRowGone('waste_log', { id: wasteId });
             if (stillThereMsg) { showToast(stillThereMsg); return; }
-            showToast('✅ حذف شد و موجودی بازگردانده شد.');
+            showToast(isCategoryWaste ? '✅ حذف شد.' : '✅ حذف شد و موجودی بازگردانده شد.');
             loadWasteTab();
         }
 
