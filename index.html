@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v70 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v73 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="icon" href="icon-192.png">
@@ -290,6 +290,41 @@
             z-index: 0;
         }
         .login-box > * { position: relative; z-index: 1; }
+        /* ---- صفحه ورود ---- */
+        .login-fancy { padding: 30px 22px 20px; }
+        .lg-aurora { position:absolute; inset:0; overflow:hidden; border-radius:22px; z-index:0 !important; pointer-events:none; }
+        .lg-aurora i { position:absolute; width:210px; height:210px; border-radius:50%; filter:blur(48px); opacity:0.45; animation: lgFloat 11s ease-in-out infinite alternate; }
+        .lg-aurora i:nth-child(1) { background:var(--accent); top:-70px; right:-60px; }
+        .lg-aurora i:nth-child(2) { background:var(--accent-2); bottom:-80px; left:-70px; animation-delay:-4s; }
+        .lg-aurora i:nth-child(3) { background:var(--accent-3); top:45%; left:35%; width:150px; height:150px; opacity:0.22; animation-delay:-7s; }
+        @keyframes lgFloat { from { transform:translate(0,0) scale(1); } to { transform:translate(-26px,30px) scale(1.18); } }
+        .lg-logo-wrap { position:relative; width:84px; height:84px; margin:0 auto 12px; }
+        .lg-logo { position:relative; width:84px; height:84px; border-radius:26px; background:linear-gradient(135deg,#0ea5e9,#a78bfa 55%,#10b981); display:flex; align-items:center; justify-content:center; font-size:40px; box-shadow:0 14px 34px rgba(56,132,199,0.45), 0 0 0 1px rgba(255,255,255,0.12) inset; animation: lgBob 4s ease-in-out infinite; }
+        .lg-ring { position:absolute; inset:0; border-radius:26px; border:2px solid var(--accent); opacity:0; animation: lgPulse 3s ease-out infinite; }
+        .lg-ring2 { animation-delay:1.5s; border-color:var(--accent-2); }
+        @keyframes lgPulse { 0% { transform:scale(1); opacity:0.55; } 100% { transform:scale(1.7); opacity:0; } }
+        @keyframes lgBob { 0%,100% { transform:translateY(0) rotate(-2deg); } 50% { transform:translateY(-5px) rotate(2deg); } }
+        .lg-greet { font-size:12px; color:var(--text-secondary); margin-bottom:2px; }
+        .lg-title { border:none !important; background:none !important; padding:0 !important; text-align:center; font-size:24px; margin:0 0 4px; background-image:linear-gradient(90deg,var(--accent),var(--accent-2),var(--accent-3)) !important; -webkit-background-clip:text !important; background-clip:text !important; -webkit-text-fill-color:transparent; color:transparent; border-image:none !important; }
+        .lg-sub { font-size:11px; color:var(--text-hint); margin-bottom:10px; }
+        .lg-chips { display:flex; justify-content:center; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
+        .lg-chips span { font-size:10px; padding:3px 9px; border-radius:20px; border:1px solid var(--border-color); background:var(--bg-input); color:var(--text-secondary); }
+        .lg-label { display:block; text-align:right; font-size:12px; margin:8px 2px 4px; color:var(--text-secondary); }
+        .lg-field { position:relative; }
+        .lg-field input { padding-right:42px; margin:0; }
+        .lg-ico { position:absolute; right:13px; top:50%; transform:translateY(-50%); font-size:15px; pointer-events:none; z-index:2; opacity:0.85; }
+        .lg-eye { position:absolute; left:6px; top:50%; transform:translateY(-50%); background:none !important; border:none; box-shadow:none !important; font-size:16px; cursor:pointer; padding:6px; width:auto !important; }
+        .lg-field:focus-within .lg-ico { opacity:1; filter:drop-shadow(0 0 6px var(--accent)); }
+        .lg-caps { display:none; font-size:11px; color:var(--accent-warm); text-align:right; margin-top:4px; }
+        .lg-remember { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text-secondary); margin:10px 2px 4px; cursor:pointer; }
+        .lg-remember input { margin:0; width:auto; }
+        #loginError { animation: lgShake 0.4s; }
+        @keyframes lgShake { 0%,100% { transform:translateX(0); } 20% { transform:translateX(-7px); } 40% { transform:translateX(7px); } 60% { transform:translateX(-5px); } 80% { transform:translateX(5px); } }
+        .lg-submit { position:relative; overflow:hidden; }
+        .lg-submit::after { content:''; position:absolute; top:0; left:-60%; width:40%; height:100%; background:linear-gradient(100deg,transparent,rgba(255,255,255,0.35),transparent); transform:skewX(-20deg); animation: lgShine 3.5s ease-in-out infinite; }
+        @keyframes lgShine { 0%,55% { left:-60%; } 100% { left:130%; } }
+        .lg-foot { font-size:10px; color:var(--text-hint); margin-top:12px; }
+        @media (prefers-reduced-motion: reduce) { .lg-aurora i, .lg-logo, .lg-ring, .lg-submit::after { animation:none; } }
         .tabs {
             display: flex;
             gap: 8px;
@@ -874,6 +909,10 @@
         .toast-item.success { border-right-color: #10b981; }
         .toast-item.error { border-right-color: #ef4444; }
         .toast-item.warning { border-right-color: #f59e0b; }
+        #msgNoticeContainer { position: fixed; top: 64px; right: 10px; z-index: 9990; display:flex; flex-direction:column; gap:8px; width:min(84vw,290px); pointer-events:none; }
+        .msg-notice { pointer-events:auto; background:var(--bg-card-solid); backdrop-filter:blur(16px); border:1px solid var(--border-color); border-right:4px solid var(--accent-warm); border-radius:14px; padding:11px 12px; font-size:12px; line-height:1.8; color:var(--text-primary); box-shadow:var(--shadow-strong); text-align:right; animation:toastIn 0.25s cubic-bezier(.22,1,.36,1); }
+        .msg-notice .msg-notice-actions { display:flex; gap:6px; margin-top:6px; }
+        .msg-notice .msg-notice-actions button { flex:1; padding:6px 4px; border:none; border-radius:9px; font-size:11px; font-weight:bold; cursor:pointer; color:#fff; }
         .toast-close {
             position: absolute;
             top: 8px;
@@ -1079,6 +1118,7 @@
 
     <!-- سیستم اعلان (Toast) و تاییدیه سفارشی، جایگزین alert()/confirm() پیش‌فرض مرورگر -->
     <div id="toastContainer"></div>
+    <div id="msgNoticeContainer"></div>
     <div id="confirmOverlay">
         <div class="confirm-box">
             <p id="confirmMessage"></p>
@@ -1160,20 +1200,33 @@
     <div class="header-clock" id="liveClock">در حال دریافت زمان دقیق ایران...</div>
 
     <!-- صفحه ورود -->
-    <div id="loginScreen" class="login-box" style="max-width:380px; margin:40px auto 0; animation: cardFadeIn 0.4s ease;">
-        <div style="width:76px; height:76px; border-radius:24px; background:linear-gradient(135deg, #0ea5e9, #a78bfa 55%, #10b981); display:flex; align-items:center; justify-content:center; font-size:36px; margin:0 auto 14px; box-shadow:0 14px 32px rgba(56,132,199,0.4), 0 0 0 1px rgba(255,255,255,0.08) inset;">🧀</div>
-        <h2 style="border:none; background:none; padding:0; text-align:center;">غرفه فامیلی</h2>
-        <div class="hint" style="text-align:center; margin-top:-6px; margin-bottom:12px;">سیستم مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس</div>
-        <label>👤 نام کاربری:</label>
-        <input type="text" id="accessUser" dir="auto" placeholder="نام کاربری خود را وارد کنید">
-        <label>🔑 رمز عبور:</label>
-        <div style="position:relative;">
-            <input type="password" id="accessPin" placeholder="رمز عبور خود را وارد کنید" style="padding-left:44px;">
-            <button type="button" onclick="toggleLoginPasswordVisibility()" style="position:absolute; left:6px; top:50%; transform:translateY(-40%); background:none; border:none; font-size:16px; cursor:pointer; padding:6px;">👁️</button>
+    <div id="loginScreen" class="login-box login-fancy" style="max-width:380px; margin:40px auto 0; animation: cardFadeIn 0.4s ease;">
+        <div class="lg-aurora"><i></i><i></i><i></i></div>
+        <div class="lg-logo-wrap">
+            <span class="lg-ring"></span><span class="lg-ring lg-ring2"></span>
+            <div class="lg-logo">🧀</div>
         </div>
+        <div class="lg-greet" id="loginGreeting">خوش آمدید 👋</div>
+        <h2 class="lg-title">غرفه فامیلی</h2>
+        <div class="lg-sub">سیستم مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس</div>
+        <div class="lg-chips"><span>🧀 لبنیات</span><span>🥒 ترشیجات</span><span>🌭 سوسیس‌وکالباس</span></div>
+        <label class="lg-label">نام کاربری</label>
+        <div class="lg-field">
+            <span class="lg-ico">👤</span>
+            <input type="text" id="accessUser" dir="auto" autocomplete="username" placeholder="نام کاربری خود را وارد کنید">
+        </div>
+        <label class="lg-label">رمز عبور</label>
+        <div class="lg-field">
+            <span class="lg-ico">🔑</span>
+            <input type="password" id="accessPin" autocomplete="current-password" placeholder="رمز عبور خود را وارد کنید" style="padding-left:44px;">
+            <button type="button" class="lg-eye" onclick="toggleLoginPasswordVisibility()">👁️</button>
+        </div>
+        <div class="lg-caps" id="loginCapsWarn">⚠️ Caps Lock روشن است</div>
+        <label class="lg-remember"><input type="checkbox" id="rememberLoginUser"> <span>مرا به خاطر بسپار (فقط نام کاربری)</span></label>
         <div class="error-msg" id="loginError">❌ نام کاربری یا رمز عبور اشتباه است!</div>
-        <button class="submit-btn" id="loginSubmitBtn" onclick="checkLogin()">ورود</button>
+        <button class="submit-btn lg-submit" id="loginSubmitBtn" onclick="checkLogin()">ورود به سیستم ←</button>
         <button class="range-toggle-btn" onclick="showRegistrationScreen('new')">🆕 ثبت‌نام نیروی جدید (فروشنده صبح/شب)</button>
+        <div class="lg-foot">🔒 اتصال امن • رمزها به‌صورت هش‌شده بررسی می‌شوند</div>
     </div>
 
     <!-- صفحه ثبت‌نام و امضای قرارداد همکاری (برای نیروی جدید یا تکمیل توسط نیروی قبلی) -->
@@ -1245,7 +1298,7 @@
         <button class="tab-btn" id="btnSaleSausage" onclick="switchTab('saleSausage'); loadProductDatalist(); loadRecentSales('sausage');"><span class="tab-ico">🌭</span><span class="tab-label">ثبت فروش سوسیس و کالباس</span></button>
         <button class="tab-btn" id="btnAttendance" onclick="switchTab('attendance'); loadFingerprintStatus();"><span class="tab-ico">⏰</span><span class="tab-label">حضور و غیاب</span></button>
         <button class="tab-btn" id="btnMessage" onclick="switchTab('message');"><span class="tab-ico">📩</span><span class="tab-label">ارسال پیام به مدیر</span></button>
-        <button class="tab-btn" id="btnStaffMessage" onclick="switchTab('staffMessage'); loadStaffMessageTargets();"><span class="tab-ico">📤</span><span class="tab-label">پیام به پرسنل</span></button>
+        <button class="tab-btn" id="btnStaffMessage" onclick="switchTab('staffMessage'); loadStaffMessageTargets(); loadSentMessageReadStatus();"><span class="tab-ico">📤</span><span class="tab-label">پیام به پرسنل</span></button>
         <button class="tab-btn" id="btnInbox" onclick="switchTab('inbox'); loadInbox();"><span class="tab-ico">📥</span><span class="tab-label">صندوقچه پیام‌ها</span></button>
         <button class="tab-btn" id="btnBooth" onclick="switchTab('booth'); loadBoothInventory();"><span class="tab-ico">🧊</span><span class="tab-label">وضعیت یخچال غرفه</span></button>
         <button class="tab-btn" id="btnPurchaseOrders" onclick="switchTab('purchaseOrders'); loadPurchaseOrders();"><span class="tab-ico">🧾</span><span class="tab-label">سفارشات خرید</span></button>
@@ -1607,6 +1660,9 @@
         <label>متن پیام:</label>
         <textarea id="staffMsgBody" placeholder="متن پیام را بنویسید..."></textarea>
         <button class="submit-btn" onclick="sendMessageToStaff()">ارسال پیام به فروشنده</button>
+
+        <h2 style="margin-top:22px;">✅ وضعیت خوانده‌شدن پیام‌های ارسالی</h2>
+        <div id="sentMsgReadStatus"><p class="hint">در حال دریافت...</p></div>
     </div>
 
     <!-- صندوقچه پیام‌ها -->
@@ -2352,7 +2408,7 @@
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v70 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v73 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
 
     <script>
         function toggleLoginPasswordVisibility() {
@@ -4267,6 +4323,30 @@
             }
         }
 
+        // ---- بهبودهای صفحه ورود: خوش‌آمد بر اساس ساعت، هشدار Caps Lock، یادآوری نام کاربری ----
+        (function initLoginExtras() {
+            try {
+                const h = parseInt(new Intl.DateTimeFormat('en-GB', { hour: '2-digit', hour12: false, timeZone: 'Asia/Tehran' }).format(new Date()), 10);
+                const g = h < 5 ? '🌙 شب بخیر' : h < 12 ? '☀️ صبح بخیر' : h < 17 ? '🌤️ ظهر بخیر' : h < 20 ? '🌇 عصر بخیر' : '🌙 شب بخیر';
+                const ge = document.getElementById('loginGreeting'); if (ge) ge.textContent = g + '، خوش آمدید';
+                const u = document.getElementById('accessUser'), p = document.getElementById('accessPin'), cb = document.getElementById('rememberLoginUser'), cw = document.getElementById('loginCapsWarn');
+                const saved = localStorage.getItem('rememberedLoginUser');
+                if (saved && u) { u.value = saved; if (cb) cb.checked = true; }
+                if (p) {
+                    p.addEventListener('keyup', e => { if (cw && e.getModifierState) cw.style.display = e.getModifierState('CapsLock') ? 'block' : 'none'; });
+                    p.addEventListener('blur', () => { if (cw) cw.style.display = 'none'; });
+                    p.addEventListener('keydown', e => { if (e.key === 'Enter') checkLogin(); });
+                }
+                if (u) u.addEventListener('keydown', e => { if (e.key === 'Enter' && p) p.focus(); });
+                if (cb) cb.addEventListener('change', () => {
+                    try { if (cb.checked && u.value.trim()) localStorage.setItem('rememberedLoginUser', u.value.trim()); else localStorage.removeItem('rememberedLoginUser'); } catch (e) {}
+                });
+                if (u) u.addEventListener('change', () => {
+                    try { if (cb && cb.checked) localStorage.setItem('rememberedLoginUser', u.value.trim()); } catch (e) {}
+                });
+            } catch (e) { /* اشکالی ندارد */ }
+        })();
+
         async function checkLogin() {
             const username = document.getElementById('accessUser').value.trim();
             const password = document.getElementById('accessPin').value;
@@ -4355,7 +4435,7 @@
             } finally {
                 // مهم: صرف‌نظر از اینکه از کجای تابع خارج شدیم، دکمه هیچ‌وقت برای همیشه
                 // غیرفعال/یخ‌زده باقی نمی‌ماند.
-                if (loginBtn) { loginBtn.disabled = false; loginBtn.innerText = 'ورود'; }
+                if (loginBtn) { loginBtn.disabled = false; loginBtn.innerText = 'ورود به سیستم ←'; }
             }
         }
 
@@ -4407,6 +4487,62 @@
             }
 
             setupRealtimeSubscriptions();
+            checkUnreadMessageNotices();
+        }
+
+        // --- اعلان شناور پیام‌های نخوانده (ذخیره‌ی وضعیت خوانده‌شدن برای هر کاربر در مرورگر) ---
+        function getReadMsgKey() {
+            return 'readMsgIds_' + (currentSessionUser ? currentSessionUser.username : 'x');
+        }
+        function getReadMsgIds() {
+            try { return JSON.parse(localStorage.getItem(getReadMsgKey()) || '[]'); } catch (e) { return []; }
+        }
+        function markMessagesRead(ids) {
+            try {
+                const set = new Set(getReadMsgIds().map(String));
+                ids.forEach(id => set.add(String(id)));
+                localStorage.setItem(getReadMsgKey(), JSON.stringify(Array.from(set).slice(-300)));
+            } catch (e) { /* اشکالی ندارد */ }
+            ids.forEach(id => {
+                const el = document.getElementById('msgNotice_' + id);
+                if (el) el.remove();
+            });
+        }
+        function dismissMessageNotice(id) { markMessagesRead([id]); }
+        function openMessageNotice(id) {
+            markMessagesRead([id]);
+            switchTab('inbox');
+            loadInbox();
+        }
+        function showMessageNotice(msg) {
+            const box = document.getElementById('msgNoticeContainer');
+            if (!box || !msg || getReadMsgIds().map(String).includes(String(msg.id))) return;
+            if (document.getElementById('msgNotice_' + msg.id)) return;
+            const div = document.createElement('div');
+            div.className = 'msg-notice';
+            div.id = 'msgNotice_' + msg.id;
+            div.innerHTML = `<div>📩 <b>پیام جدید</b> از <b>${escapeHtmlForToast(msg.sender || '')}</b></div>
+                <div style="color:var(--text-hint); font-size:11px;">${escapeHtmlForToast(msg.title || '')}</div>
+                <div class="msg-notice-actions">
+                    <button style="background:#0ea5e9;" onclick="openMessageNotice('${msg.id}')">باز کردن</button>
+                    <button style="background:#64748b;" onclick="dismissMessageNotice('${msg.id}')">بستن</button>
+                </div>`;
+            box.appendChild(div);
+        }
+        async function checkUnreadMessageNotices() {
+            try {
+                const since = new Date(Date.now() - 3 * 24 * 3600 * 1000).toISOString();
+                let q = _supabase.from('messages').select('*').gte('created_at', since).order('created_at', { ascending: true });
+                if (currentRole === 'admin') {
+                    q = q.eq('recipient', 'admin');
+                } else {
+                    const orParts = ['recipient.eq.all'];
+                    if (currentSessionUser && currentSessionUser.username) orParts.push(`recipient.eq.${currentSessionUser.username}`);
+                    q = q.or(orParts.join(','));
+                }
+                const { data } = await q;
+                (data || []).filter(m => m.sender !== currentUserLabel).forEach(showMessageNotice);
+            } catch (e) { console.warn('بررسی پیام‌های نخوانده انجام نشد', e); }
         }
 
         // --- به‌روزرسانی زنده: وقتی پیام جدید بیاید یا موجودی کالایی عوض شود، بدون نیاز به رفرش دستی مطلع می‌شویم ---
@@ -4432,10 +4568,12 @@
                             ));
                         if (!isForMe) return;
                         if (msg.sender === currentUserLabel) return; // پیام خودمان را دوباره به خودمان اطلاع نده
-                        showToast(`📩 پیام جدید از ${msg.sender}:\n${msg.title}`);
                         const inboxTab = document.getElementById('inboxTab');
                         if (inboxTab && inboxTab.classList.contains('active')) {
+                            markMessagesRead([msg.id]);
                             loadInbox();
+                        } else {
+                            showMessageNotice(msg);
                         }
                     })
                     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'products' }, () => {
@@ -4462,6 +4600,7 @@
 
         function logout() {
             teardownRealtimeSubscriptions();
+            const _mn = document.getElementById('msgNoticeContainer'); if (_mn) _mn.innerHTML = '';
             hideBottomNav();
             if (typeof idleWarningTimer !== 'undefined') { clearTimeout(idleWarningTimer); clearTimeout(idleLogoutTimer); }
             hideForceEntryLock();
@@ -5648,6 +5787,59 @@
         // --- بارگذاری لیست گیرنده‌های ممکن برای پیام مدیر به پرسنل (هر فرد به‌طور جداگانه، نه فقط بر اساس شیفت) ---
         // این تابع لازم است چون ممکن است چند نفر (مثلاً یک فروشنده اصلی و یک حساب آزمایشی) هم‌زمان یک شیفت را داشته باشند
         // و پیام باید فقط دقیقاً به همان یک نفر انتخاب‌شده برسد، نه به بقیه‌ی افرادی که شیفت مشابه دارند.
+        // ثبت «خوانده‌شدن» پیام در دیتابیس (جدول message_reads) تا مدیر ببیند چه کسی خوانده؛ در صورت نبودن جدول، بی‌صدا رد می‌شود
+        async function recordMessageReads(ids) {
+            if (!currentSessionUser || currentRole === 'admin' || !ids || !ids.length) return;
+            try {
+                const key = 'readSynced_' + currentSessionUser.username;
+                const synced = new Set(JSON.parse(localStorage.getItem(key) || '[]').map(String));
+                const fresh = ids.filter(id => !synced.has(String(id)));
+                if (!fresh.length) return;
+                const rows = fresh.map(id => ({
+                    message_id: String(id),
+                    reader_username: currentSessionUser.username,
+                    reader_label: currentSessionUser.full_name || currentSessionUser.username,
+                    read_at: new Date().toISOString()
+                }));
+                const { error } = await _supabase.from('message_reads').upsert(rows, { onConflict: 'message_id,reader_username', ignoreDuplicates: true });
+                if (error) { console.warn('ثبت خوانده‌شدن پیام انجام نشد', error.message); return; }
+                fresh.forEach(id => synced.add(String(id)));
+                localStorage.setItem(key, JSON.stringify(Array.from(synced).slice(-300)));
+            } catch (e) { console.warn('ثبت خوانده‌شدن پیام انجام نشد', e); }
+        }
+
+        // مدیر: وضعیت خوانده‌شدن پیام‌هایی که فرستاده
+        async function loadSentMessageReadStatus() {
+            const box = document.getElementById('sentMsgReadStatus');
+            if (!box || currentRole !== 'admin') return;
+            const { data: msgs, error } = await _supabase.from('messages').select('*').eq('sender', currentUserLabel).order('created_at', { ascending: false }).limit(15);
+            if (error) { box.innerHTML = `<p class="hint" style="color:#ef4444;">❌ ${escapeHtmlForToast(error.message)}</p>`; return; }
+            if (!msgs || msgs.length === 0) { box.innerHTML = '<p class="hint">هنوز پیامی نفرستاده‌اید.</p>'; return; }
+
+            const { data: reads, error: readErr } = await _supabase.from('message_reads').select('*').in('message_id', msgs.map(m => String(m.id)));
+            const { data: sellers } = await _supabase.rpc('admin_list_sellers');
+            const active = (sellers || []).filter(x => !x.is_terminated);
+            const nameOf = u => { const f = (sellers || []).find(x => x.username === u); return f ? (f.full_name || f.username) : u; };
+
+            let missingNote = '';
+            if (readErr) missingNote = '<p class="hint" style="color:#fbbf24;">⚠️ جدول message_reads در Supabase ساخته نشده؛ فایل SQL مربوطه را اجرا کنید تا وضعیت خوانده‌شدن ثبت شود.</p>';
+
+            box.innerHTML = missingNote + msgs.map(m => {
+                const rs = (reads || []).filter(r => String(r.message_id) === String(m.id));
+                const readUsers = rs.map(r => r.reader_username);
+                const targets = m.recipient === 'all' ? active.map(x => x.username) : [m.recipient];
+                const unread = targets.filter(u => !readUsers.includes(u));
+                const readHtml = rs.map(r => `<div style="font-size:11px; color:#34d399;">✅ ${escapeHtmlForToast(r.reader_label || nameOf(r.reader_username))} — ${getTehranFullDateTimeString(new Date(r.read_at))}</div>`).join('');
+                const unreadHtml = unread.map(u => `<div style="font-size:11px; color:#fbbf24;">⏳ ${escapeHtmlForToast(nameOf(u))} — هنوز نخوانده</div>`).join('');
+                const status = readErr ? '' : (unread.length === 0 && rs.length ? '<b style="color:#34d399;">همه خوانده‌اند</b>' : `<b style="color:#fbbf24;">${rs.length.toLocaleString('fa-IR')} از ${targets.length.toLocaleString('fa-IR')} خوانده‌اند</b>`);
+                return `<div class="msg-card">
+                    <h3>📤 ${escapeHtmlForToast(m.title)}</h3>
+                    <p style="font-size:11px; color:#38bdf8;">به: ${m.recipient === 'all' ? 'همه پرسنل' : escapeHtmlForToast(nameOf(m.recipient))} • ${getTehranFullDateTimeString(new Date(m.created_at))}</p>
+                    <p style="font-size:12px;">${status}</p>${readHtml}${unreadHtml}
+                </div>`;
+            }).join('');
+        }
+
         async function loadStaffMessageTargets() {
             const select = document.getElementById('staffMsgTarget');
             if (!select) return;
@@ -5700,6 +5892,7 @@
                 showToast('✅ پیام برای ' + targetLabel + ' ارسال شد.');
                 document.getElementById('staffMsgTitle').value = '';
                 document.getElementById('staffMsgBody').value = '';
+                loadSentMessageReadStatus();
             } else {
                 showToast('❌ خطا در ارسال پیام: ' + error.message + '\n\nاگر این خطا تکرار شد، مطمئن شوید ستون recipient در جدول messages داخل Supabase ساخته شده است.');
             }
@@ -5737,6 +5930,8 @@
                 return;
             }
 
+            markMessagesRead(msgs.map(m => m.id));
+            recordMessageReads(msgs.map(m => m.id));
             inbox.innerHTML = msgs.map(m => {
                 const timeStr = getTehranFullDateTimeString(new Date(m.created_at));
                 const recipientTag = (currentRole === 'admin')
@@ -10836,7 +11031,7 @@
         }
 
         // تولید کامل هر دو فایل، آپلود توی Supabase Storage، ثبت توی جدول weekly_reports، و ارسال هر دو به تلگرام
-        async function buildStoreAndSendWeeklyReport(startISODate, endISODate, isInProgress) {
+        async function buildStoreAndSendWeeklyReport(startISODate, endISODate, isInProgress, sendToTelegram = true) {
             const { ctx, general, detailed } = await generateWeeklyReportFiles(startISODate, endISODate);
 
             const generalPath = `${startISODate}_${endISODate}_general.xlsx`;
@@ -10874,6 +11069,13 @@
 
             const baseCaption = `📅 از ${jalaliLabelForISODate(startISODate)} تا ${jalaliLabelForISODate(endISODate)}${isInProgress ? '\n⏳ توجه: این هفته هنوز تمام نشده — این گزارش تا همین لحظه‌ست' : ''}\n\n🧾 تعداد فاکتور فروش: ${ctx.sales.length.toLocaleString('fa-IR')}\n💰 مجموع فروش: ${ctx.totalSales.toLocaleString('fa-IR')} تومان\n💸 مجموع هزینه‌ها: ${ctx.totalExpenses.toLocaleString('fa-IR')} تومان\n🛒 مجموع برداشتی پرسنل: ${ctx.totalTakeouts.toLocaleString('fa-IR')} تومان`;
 
+            if (!sendToTelegram) {
+                return {
+                    jalaliRangeLabel: ctx.jalaliRangeLabel, totalSales: ctx.totalSales, totalExpenses: ctx.totalExpenses,
+                    totalTakeouts: ctx.totalTakeouts, salesCount: ctx.sales.length, expensesCount: ctx.expenses.length,
+                    telegramOk: true, telegramErrors: []
+                };
+            }
             const generalSendResult = await sendTelegramDocument(general.blob, general.fileName, `📊 گزارش کلی هفتگی غرفه فامیلی\n${baseCaption}`);
             const detailedSendResult = await sendTelegramDocument(detailed.blob, detailed.fileName, `📋 گزارش با جزئیات هفتگی غرفه فامیلی\n${baseCaption}`);
             const telegramErrors = [];
@@ -12204,8 +12406,9 @@
             }
 
             // هیچ‌وقت نباید بیشتر از موجودی فعلی غرفه ثبت بشه — نه برداشت تازه، نه ویرایش‌شده
+            // (فقط برای ثبت جدید؛ موقع ویرایش، حتی اگر موجودی غرفه/انبار صفر باشد اجازه‌ی اصلاح هست)
             const boothStock = product.booth_stock || 0;
-            if (weight > boothStock) {
+            if (!isEditing && weight > boothStock) {
                 return showToast(`⛔ فقط ${boothStock.toLocaleString('fa-IR')} کیلو از «${product.name}» توی غرفه هست — نمی‌تونی بیشتر از موجودی غرفه ثبت کنی.`);
             }
 
@@ -12269,8 +12472,13 @@
             if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = isEditing ? '🔄 به‌روزرسانی برداشت' : '✅ تایید برداشت'; }
 
             if (!error) {
+                let editNote = '';
+                if (isEditing && existingRecord) {
+                    editNote = '\n' + describeTakeoutChange(existingRecord, { item_name: product.name, weight, amount: discountedPrice, note });
+                    refreshWeeklyReportsForTakeouts([existingRecord.created_at]);
+                }
                 showToast(isEditing
-                    ? `✅ برداشت ویرایش شد.\n💰 مبلغ قابل کسر (با ۱۰٪ تخفیف): ${discountedPrice.toLocaleString('fa-IR')} تومان`
+                    ? `✅ برداشت ویرایش شد.\n💰 مبلغ قابل کسر (با ۱۰٪ تخفیف): ${discountedPrice.toLocaleString('fa-IR')} تومان${editNote}`
                     : `✅ برداشت شما ثبت شد.\n💰 مبلغ قابل کسر (با ۱۰٪ تخفیف): ${discountedPrice.toLocaleString('fa-IR')} تومان\nاین مبلغ برای مدیر قابل مشاهده است و از حقوقتان کسر خواهد شد.`);
                 if (isEditing) {
                     cancelTakeoutEdit();
@@ -12345,8 +12553,88 @@
             if (stillThereMsg) { showToast(stillThereMsg); return; }
 
             showToast('✅ برداشت حذف شد.');
+            refreshWeeklyReportsForTakeouts([t.created_at]);
             if (String(editingTakeoutId) === String(takeoutId)) cancelTakeoutEdit();
-            loadMyTakeouts();
+            if (currentRole === 'admin') loadTakeoutAdminSummary(); else loadMyTakeouts();
+        }
+
+        function describeTakeoutChange(oldT, newT) {
+            const parts = [];
+            if (oldT.item_name !== newT.item_name) parts.push(`کالا: ${oldT.item_name} ← ${newT.item_name}`);
+            if (Number(oldT.weight) !== Number(newT.weight)) parts.push(`وزن: ${Number(oldT.weight || 0).toLocaleString('fa-IR')} ← ${Number(newT.weight).toLocaleString('fa-IR')} کیلو`);
+            if (Number(oldT.amount) !== Number(newT.amount)) parts.push(`مبلغ: ${Number(oldT.amount).toLocaleString('fa-IR')} ← ${Number(newT.amount).toLocaleString('fa-IR')} تومان`);
+            if ((oldT.note || '') !== (newT.note || '')) parts.push('توضیح تغییر کرد');
+            return parts.length ? '📝 تغییرات: ' + parts.join(' | ') : 'ℹ️ مقدار خاصی تغییر نکرد.';
+        }
+
+        // بازسازی گزارش‌های هفتگیِ (تا چهار هفته‌ی قبل) که تاریخ برداشت تغییرکرده در آن‌ها بوده؛ بدون ارسال دوباره به تلگرام
+        async function refreshWeeklyReportsForTakeouts(createdAtList) {
+            try {
+                const isoDates = createdAtList.map(c => getTehranISODate(new Date(c)));
+                const done = [];
+                for (let off = 0; off <= 4; off++) {
+                    const { startISODate, endISODate, isInProgress } = getTehranWeekRangeByOffset(off);
+                    if (!isoDates.some(d => d >= startISODate && d <= endISODate)) continue;
+                    const { data: existing } = await _supabase.from('weekly_reports').select('id').eq('week_start_date', startISODate).maybeSingle();
+                    if (!existing) continue;
+                    const r = await buildStoreAndSendWeeklyReport(startISODate, endISODate, isInProgress, false);
+                    done.push(r.jalaliRangeLabel);
+                }
+                if (done.length) {
+                    showToast('🔄 گزارش هفتگی به‌روز شد: ' + done.join('، '));
+                    const tab = document.getElementById('weeklyReportsTab');
+                    if (tab && tab.classList.contains('active')) loadWeeklyReportsList();
+                }
+            } catch (e) { console.warn('به‌روزرسانی گزارش هفتگی انجام نشد', e); }
+        }
+
+        // ویرایش برداشت توسط مدیر (بدون هیچ محدودیت موجودی)
+        function adminEditTakeout(takeoutId) {
+            const t = (window._adminTakeoutsCache || []).find(x => String(x.id) === String(takeoutId));
+            if (!t) return;
+            const old = document.getElementById('adminTakeoutEditOverlay'); if (old) old.remove();
+            const ov = document.createElement('div');
+            ov.id = 'adminTakeoutEditOverlay';
+            ov.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:10000; display:flex; align-items:center; justify-content:center; padding:16px;';
+            ov.innerHTML = `<div class="report-card" style="width:min(94vw,380px); background:var(--bg-card-solid);">
+                <h3>✏️ ویرایش برداشت — ${escapeHtmlForToast(t.seller_name)}</h3>
+                <label>نام کالا</label><input type="text" id="ateItem" value="${escapeHtmlForToast(t.item_name)}">
+                <label>وزن (کیلو)</label><input type="number" step="0.001" id="ateWeight" value="${t.weight || ''}">
+                <label>مبلغ قابل کسر (تومان)</label><input type="number" id="ateAmount" value="${t.amount}">
+                <label>توضیح</label><input type="text" id="ateNote" value="${escapeHtmlForToast(t.note || '')}">
+                <div style="display:flex; gap:8px; margin-top:10px;">
+                    <button class="row-btn edit-btn" style="flex:1;" onclick="saveAdminTakeoutEdit('${t.id}')">💾 ذخیره</button>
+                    <button class="row-btn delete-btn" style="flex:1;" onclick="document.getElementById('adminTakeoutEditOverlay').remove()">انصراف</button>
+                </div></div>`;
+            document.body.appendChild(ov);
+        }
+
+        async function saveAdminTakeoutEdit(takeoutId) {
+            const t = (window._adminTakeoutsCache || []).find(x => String(x.id) === String(takeoutId));
+            if (!t) return;
+            const itemName = document.getElementById('ateItem').value.trim();
+            const weight = parseFloat(document.getElementById('ateWeight').value);
+            let amount = parseFloat(document.getElementById('ateAmount').value);
+            const note = document.getElementById('ateNote').value.trim();
+            if (!itemName || isNaN(weight) || weight <= 0 || isNaN(amount) || amount < 0) return showToast('نام کالا، وزن و مبلغ معتبر وارد کنید.');
+
+            // اگر کالا یا وزن عوض شده و مبلغ دستی تغییر نکرده، مبلغ را با قیمت فعلی و ۱۰٪ تخفیف دوباره حساب کن
+            if ((itemName !== t.item_name || weight !== Number(t.weight)) && amount === Number(t.amount)) {
+                if (cachedProductsList.length === 0) {
+                    const { data } = await _supabase.from('products').select('*');
+                    cachedProductsList = sortProductsAlpha(data || []);
+                }
+                const prod = cachedProductsList.find(p => p.name === itemName || p.code === itemName);
+                if (prod) amount = Math.round(Math.round(weight * (prod.sell_price || 0)) * TAKEOUT_DISCOUNT);
+            }
+
+            const upd = { item_name: itemName, weight, amount, note };
+            const { error } = await _supabase.from('personal_takeouts').update(upd).eq('id', takeoutId);
+            if (error) return showToast('❌ خطا در ویرایش: ' + error.message);
+            const ov = document.getElementById('adminTakeoutEditOverlay'); if (ov) ov.remove();
+            showToast('✅ برداشت ویرایش شد.\n' + describeTakeoutChange(t, upd));
+            refreshWeeklyReportsForTakeouts([t.created_at]);
+            loadTakeoutAdminSummary();
         }
 
         async function loadMyTakeouts() {
@@ -12441,6 +12729,8 @@
                 perSeller[t.seller_name].items.push(t);
             });
 
+            window._adminTakeoutsCache = filtered;
+            cachedTakeoutList = data || [];
             let html = '';
             Object.entries(perSeller).forEach(([seller, info]) => {
                 html += `<div class="report-card">
@@ -12450,6 +12740,10 @@
                         <div class="summary-mini">
                             <span>🛒 ${t.item_name}${t.weight ? ' (' + Number(t.weight).toLocaleString('fa-IR') + ' کیلو)' : ''}${t.note ? ' — ' + t.note : ''}<br><span style="font-size:10px; color:#94a3b8;">${getTehranFullDateTimeString(new Date(t.created_at))}</span>${t.photo_url ? ` — <a href="${t.photo_url}" target="_blank" style="color:#38bdf8;">👁️ عکس بارکد</a>` : ' — <span style="color:#ef4444;">بدون عکس</span>'}</span>
                             <b style="color:#f87171;">${Number(t.amount).toLocaleString('fa-IR')} تومان</b>
+                        </div>
+                        <div style="display:flex; gap:6px; margin-bottom:6px;">
+                            <button class="row-btn edit-btn" style="flex:1; padding:5px 8px; font-size:11px;" onclick="adminEditTakeout('${t.id}')">✏️ ویرایش</button>
+                            <button class="row-btn delete-btn" style="flex:1; padding:5px 8px; font-size:11px;" onclick="deleteTakeout('${t.id}')">🗑️ حذف</button>
                         </div>
                     `).join('')}
                 </div>`;
