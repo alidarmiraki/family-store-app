@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v73 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v75 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="icon" href="icon-192.png">
@@ -909,10 +909,20 @@
         .toast-item.success { border-right-color: #10b981; }
         .toast-item.error { border-right-color: #ef4444; }
         .toast-item.warning { border-right-color: #f59e0b; }
-        #msgNoticeContainer { position: fixed; top: 64px; right: 10px; z-index: 9990; display:flex; flex-direction:column; gap:8px; width:min(84vw,290px); pointer-events:none; }
-        .msg-notice { pointer-events:auto; background:var(--bg-card-solid); backdrop-filter:blur(16px); border:1px solid var(--border-color); border-right:4px solid var(--accent-warm); border-radius:14px; padding:11px 12px; font-size:12px; line-height:1.8; color:var(--text-primary); box-shadow:var(--shadow-strong); text-align:right; animation:toastIn 0.25s cubic-bezier(.22,1,.36,1); }
-        .msg-notice .msg-notice-actions { display:flex; gap:6px; margin-top:6px; }
-        .msg-notice .msg-notice-actions button { flex:1; padding:6px 4px; border:none; border-radius:9px; font-size:11px; font-weight:bold; cursor:pointer; color:#fff; }
+        #msgNoticeContainer { position: fixed; left: 14px; bottom: 96px; z-index: 9990; }
+        .msg-fab { position:relative; width:56px; height:56px; border-radius:50%; border:none; cursor:pointer; font-size:24px; color:#fff; background:linear-gradient(135deg,#0ea5e9,#a78bfa 60%,#10b981); box-shadow:0 10px 26px rgba(56,132,199,0.5), 0 0 0 1px rgba(255,255,255,0.15) inset; animation: fabPulse 2.4s ease-in-out infinite; display:none; align-items:center; justify-content:center; }
+        .msg-fab.show { display:flex; }
+        .msg-fab .fab-badge { position:absolute; top:-4px; right:-4px; min-width:22px; height:22px; padding:0 5px; border-radius:11px; background:#ef4444; color:#fff; font-size:12px; font-weight:bold; display:flex; align-items:center; justify-content:center; border:2px solid var(--bg-primary); }
+        @keyframes fabPulse { 0%,100% { box-shadow:0 10px 26px rgba(56,132,199,0.5), 0 0 0 0 rgba(14,165,233,0.5); } 50% { box-shadow:0 10px 26px rgba(56,132,199,0.5), 0 0 0 12px rgba(14,165,233,0); } }
+        .msg-panel-overlay { position:fixed; inset:0; z-index:10001; background:rgba(2,6,23,0.6); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; padding:16px; }
+        .msg-panel { width:min(94vw,380px); max-height:80vh; overflow-y:auto; border-radius:22px; padding:20px 16px; color:#fff; text-align:right; background:linear-gradient(145deg,#0ea5e9,#7c3aed 60%,#059669); box-shadow:0 24px 60px rgba(0,0,0,0.5); animation: cardFadeIn 0.25s ease; }
+        .msg-panel h3 { margin:0 0 4px; font-size:17px; }
+        .msg-panel .mp-sub { font-size:12px; opacity:0.9; margin-bottom:12px; }
+        .msg-panel .mp-item { background:rgba(255,255,255,0.16); border:1px solid rgba(255,255,255,0.22); border-radius:14px; padding:9px 11px; margin-bottom:8px; font-size:12px; line-height:1.8; }
+        .msg-panel .mp-item small { opacity:0.85; }
+        .msg-panel .mp-actions { display:flex; gap:8px; margin-top:12px; }
+        .msg-panel .mp-actions button { flex:1; padding:10px; border:none; border-radius:12px; font-weight:bold; font-size:13px; cursor:pointer; }
+        .reply-box textarea { min-height:70px; margin:6px 0; }
         .toast-close {
             position: absolute;
             top: 8px;
@@ -2408,7 +2418,7 @@
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v73 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v75 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
 
     <script>
         function toggleLoginPasswordVisibility() {
@@ -4497,37 +4507,61 @@
         function getReadMsgIds() {
             try { return JSON.parse(localStorage.getItem(getReadMsgKey()) || '[]'); } catch (e) { return []; }
         }
+        window._unreadMsgs = window._unreadMsgs || {};
         function markMessagesRead(ids) {
             try {
                 const set = new Set(getReadMsgIds().map(String));
                 ids.forEach(id => set.add(String(id)));
                 localStorage.setItem(getReadMsgKey(), JSON.stringify(Array.from(set).slice(-300)));
             } catch (e) { /* اشکالی ندارد */ }
-            ids.forEach(id => {
-                const el = document.getElementById('msgNotice_' + id);
-                if (el) el.remove();
-            });
+            ids.forEach(id => { delete window._unreadMsgs[String(id)]; });
+            updateMessageFab();
         }
-        function dismissMessageNotice(id) { markMessagesRead([id]); }
-        function openMessageNotice(id) {
-            markMessagesRead([id]);
-            switchTab('inbox');
-            loadInbox();
+        function updateMessageFab() {
+            const box = document.getElementById('msgNoticeContainer');
+            if (!box) return;
+            const count = Object.keys(window._unreadMsgs).length;
+            let fab = document.getElementById('msgFab');
+            if (!fab) {
+                fab = document.createElement('button');
+                fab.id = 'msgFab';
+                fab.className = 'msg-fab';
+                fab.setAttribute('aria-label', 'پیام‌های خوانده‌نشده');
+                fab.onclick = openUnreadPanel;
+                box.appendChild(fab);
+            }
+            fab.innerHTML = '💬<span class="fab-badge">' + count.toLocaleString('fa-IR') + '</span>';
+            fab.classList.toggle('show', count > 0);
+            if (count === 0) closeUnreadPanel();
+        }
+        function closeUnreadPanel() { const o = document.getElementById('msgPanelOverlay'); if (o) o.remove(); }
+        function openUnreadPanel() {
+            closeUnreadPanel();
+            const msgs = Object.values(window._unreadMsgs);
+            if (!msgs.length) return;
+            const bySender = {};
+            msgs.forEach(m => { (bySender[m.sender] = bySender[m.sender] || []).push(m); });
+            const items = Object.entries(bySender).map(([sender, list]) => `
+                <div class="mp-item">👤 <b>${escapeHtmlForToast(sender)}</b> — ${list.length.toLocaleString('fa-IR')} پیام
+                    ${list.map(m => `<br><small>• ${escapeHtmlForToast(m.title || '')}</small>`).join('')}
+                </div>`).join('');
+            const ov = document.createElement('div');
+            ov.id = 'msgPanelOverlay';
+            ov.className = 'msg-panel-overlay';
+            ov.onclick = e => { if (e.target === ov) closeUnreadPanel(); };
+            ov.innerHTML = `<div class="msg-panel">
+                <h3>📩 ${msgs.length.toLocaleString('fa-IR')} پیام جدید دارید</h3>
+                <div class="mp-sub">فرستنده‌ها:</div>${items}
+                <div class="mp-actions">
+                    <button style="background:#fff; color:#4c1d95;" onclick="closeUnreadPanel(); switchTab('inbox'); loadInbox();">مشاهده</button>
+                    <button style="background:rgba(255,255,255,0.2); color:#fff;" onclick="closeUnreadPanel()">بعداً</button>
+                </div></div>`;
+            document.body.appendChild(ov);
         }
         function showMessageNotice(msg) {
-            const box = document.getElementById('msgNoticeContainer');
-            if (!box || !msg || getReadMsgIds().map(String).includes(String(msg.id))) return;
-            if (document.getElementById('msgNotice_' + msg.id)) return;
-            const div = document.createElement('div');
-            div.className = 'msg-notice';
-            div.id = 'msgNotice_' + msg.id;
-            div.innerHTML = `<div>📩 <b>پیام جدید</b> از <b>${escapeHtmlForToast(msg.sender || '')}</b></div>
-                <div style="color:var(--text-hint); font-size:11px;">${escapeHtmlForToast(msg.title || '')}</div>
-                <div class="msg-notice-actions">
-                    <button style="background:#0ea5e9;" onclick="openMessageNotice('${msg.id}')">باز کردن</button>
-                    <button style="background:#64748b;" onclick="dismissMessageNotice('${msg.id}')">بستن</button>
-                </div>`;
-            box.appendChild(div);
+            if (!msg || getReadMsgIds().map(String).includes(String(msg.id))) return;
+            window._unreadMsgs[String(msg.id)] = msg;
+            updateMessageFab();
         }
         async function checkUnreadMessageNotices() {
             try {
@@ -4600,7 +4634,7 @@
 
         function logout() {
             teardownRealtimeSubscriptions();
-            const _mn = document.getElementById('msgNoticeContainer'); if (_mn) _mn.innerHTML = '';
+            window._unreadMsgs = {}; closeUnreadPanel(); const _fab = document.getElementById('msgFab'); if (_fab) _fab.remove();
             hideBottomNav();
             if (typeof idleWarningTimer !== 'undefined') { clearTimeout(idleWarningTimer); clearTimeout(idleLogoutTimer); }
             hideForceEntryLock();
@@ -5757,6 +5791,16 @@
         }
 
         // --- ارسال پیام از فروشنده به مدیر ---
+        // درج پیام همراه با نام کاربری فرستنده (ستون sender_username)؛ اگر ستون هنوز ساخته نشده، بدون آن ارسال می‌شود
+        async function insertMessageWithUsername(row) {
+            const withUser = Object.assign({}, row, { sender_username: currentSessionUser ? currentSessionUser.username : null });
+            let res = await _supabase.from('messages').insert([withUser]);
+            if (res.error && /sender_username/i.test(res.error.message || '')) {
+                res = await _supabase.from('messages').insert([row]);
+            }
+            return res;
+        }
+
         async function sendMessageToAdmin() {
             const title = document.getElementById('msgTitle').value.trim();
             const body = document.getElementById('msgBody').value.trim();
@@ -5766,13 +5810,13 @@
                 return showToast('لطفاً عنوان و متن پیام را وارد کنید.');
             }
 
-            const { error } = await _supabase.from('messages').insert([{
+            const { error } = await insertMessageWithUsername({
                 sender: currentUserLabel,
                 recipient: "admin",
                 title: title,
                 body: body,
                 created_at: now.toISOString()
-            }]);
+            });
 
             if (!error) {
                 showToast('✅ پیام شما با موفقیت برای مدیر ارسال شد.');
@@ -5930,6 +5974,7 @@
                 return;
             }
 
+            window._inboxMsgs = msgs;
             markMessagesRead(msgs.map(m => m.id));
             recordMessageReads(msgs.map(m => m.id));
             inbox.innerHTML = msgs.map(m => {
@@ -5937,15 +5982,50 @@
                 const recipientTag = (currentRole === 'admin')
                     ? ''
                     : `<span class="msg-recipient-tag">${m.recipient === 'all' ? 'برای همه پرسنل' : 'برای شما به‌طور اختصاصی'}</span>`;
+                const canReply = currentRole !== 'admin'
+                    ? String(m.sender || '').startsWith(roleLabels.admin || 'مدیر')
+                    : !!m.sender_username;
                 return `
                     <div class="msg-card">
                         <h3>📩 ${m.title}</h3>
                         <p style="color:#38bdf8; font-size:11px;">ارسال‌کننده: ${m.sender} ${recipientTag}</p>
                         <p style="white-space:pre-line;">${linkify(m.body)}</p>
                         <span class="msg-time">⏱️ ${timeStr}</span>
+                        ${canReply ? `<div class="reply-box" id="replyBox_${m.id}"><button class="row-btn edit-btn" style="width:100%; margin-top:8px;" onclick="toggleReplyBox('${m.id}')">${currentRole === 'admin' ? '↩️ پاسخ به ' + escapeHtmlForToast(m.sender) : '↩️ پاسخ به مدیر'}</button></div>` : ''}
                     </div>
                 `;
             }).join('');
+        }
+
+        function toggleReplyBox(id) {
+            const box = document.getElementById('replyBox_' + id);
+            if (!box) return;
+            box.innerHTML = `<textarea id="replyText_${id}" placeholder="پاسخ خود را بنویسید..."></textarea>
+                <div style="display:flex; gap:6px;">
+                    <button class="row-btn edit-btn" style="flex:1;" onclick="sendInboxReply('${id}')">📨 ارسال پاسخ</button>
+                    <button class="row-btn delete-btn" style="flex:1;" onclick="loadInbox()">انصراف</button>
+                </div>`;
+            const ta = document.getElementById('replyText_' + id); if (ta) ta.focus();
+        }
+
+        async function sendInboxReply(id) {
+            const ta = document.getElementById('replyText_' + id);
+            const text = ta ? ta.value.trim() : '';
+            if (!text) return showToast('متن پاسخ را بنویسید.');
+            if (currentRole === 'admin' && !(((window._inboxMsgs || []).find(x => String(x.id) === String(id)) || {}).sender_username)) return showToast('⛔ نام کاربری فرستنده این پیام ثبت نشده؛ از «پیام به پرسنل» بفرستید.');
+            const orig = (window._inboxMsgs || []).find(x => String(x.id) === String(id));
+            const toAdmin = currentRole !== 'admin';
+            const { error } = await insertMessageWithUsername({
+                sender: currentUserLabel,
+                recipient: toAdmin ? 'admin' : (orig && orig.sender_username),
+                title: '↩️ پاسخ: ' + (orig ? orig.title : ''),
+                body: text,
+                created_at: new Date().toISOString()
+            });
+            if (error) return showToast('❌ خطا در ارسال پاسخ: ' + error.message);
+            showToast(currentRole === 'admin' ? '✅ پاسخ شما برای فروشنده ارسال شد.' : '✅ پاسخ شما برای مدیر ارسال شد.');
+            const box = document.getElementById('replyBox_' + id);
+            if (box) box.innerHTML = '<p style="color:#34d399; font-size:12px; margin:8px 0 0;">✅ پاسخ ارسال شد.</p>';
         }
 
         async function saveShiftSettings() {
