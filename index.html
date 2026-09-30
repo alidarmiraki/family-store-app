@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v75 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v76 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="icon" href="icon-192.png">
@@ -923,6 +923,33 @@
         .msg-panel .mp-actions { display:flex; gap:8px; margin-top:12px; }
         .msg-panel .mp-actions button { flex:1; padding:10px; border:none; border-radius:12px; font-weight:bold; font-size:13px; cursor:pointer; }
         .reply-box textarea { min-height:70px; margin:6px 0; }
+        /* ---- یخچال غرفه: کارت‌ها ---- */
+        .bs-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin:10px 0; }
+        .bs-tile { background:var(--bg-input); border:1px solid var(--border-color); border-radius:12px; padding:8px 4px; text-align:center; }
+        .bs-tile b { display:block; font-size:16px; }
+        .bs-tile span { font-size:10px; color:var(--text-hint); }
+        .bc-chips { display:flex; gap:6px; overflow-x:auto; padding:2px 0 8px; }
+        .bc-chip { flex:0 0 auto; padding:6px 12px; border-radius:20px; border:1px solid var(--border-color); background:var(--bg-input); color:var(--text-secondary); font-size:12px; cursor:pointer; font-family:inherit; }
+        .bc-chip.active { background:linear-gradient(100deg,#0284c7,#6366f1); color:#fff; border-color:transparent; font-weight:bold; }
+        .bc { background:var(--bg-card-solid); border:1px solid var(--border-color); border-radius:16px; margin-bottom:10px; overflow:hidden; }
+        .bc.open { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent) inset; }
+        .bc-head { padding:11px 12px; cursor:pointer; }
+        .bc-top { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px; }
+        .bc-bar { height:12px; border-radius:8px; background:rgba(148,163,255,0.14); overflow:hidden; }
+        .bc-bar i { display:block; height:100%; border-radius:8px; transition:width .4s; }
+        .bc-meta { display:flex; justify-content:space-between; flex-wrap:wrap; gap:4px 10px; margin-top:7px; font-size:11px; color:var(--text-secondary); }
+        .bc-body { display:none; padding:4px 12px 12px; border-top:1px dashed var(--border-color); }
+        .bc.open .bc-body { display:block; }
+        .bc-sec { border-radius:12px; padding:9px; margin-top:10px; border:1px dashed var(--border-color); }
+        .bc-sec-title { font-size:12px; font-weight:bold; margin-bottom:7px; }
+        .bc-row { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+        .bc-row input { flex:1; min-width:70px; margin:0; text-align:center; }
+        .bc-quick { display:flex; gap:5px; flex-wrap:wrap; margin-bottom:6px; }
+        .bc-quick button { flex:1; min-width:46px; padding:8px 4px; border-radius:10px; border:1px solid var(--border-color); background:var(--bg-input); color:var(--text-primary); font-size:12px; cursor:pointer; font-family:inherit; }
+        .bc-quick button.on { background:linear-gradient(100deg,#0284c7,#6366f1); color:#fff; border-color:transparent; font-weight:bold; }
+        .bc-net { font-size:12px; margin:6px 0 0; text-align:center; color:var(--accent); font-weight:bold; }
+        .bc-big { width:100%; padding:11px; border:none; border-radius:12px; font-weight:bold; font-size:14px; color:#fff; cursor:pointer; background:linear-gradient(100deg,#059669,#10b981); font-family:inherit; }
+        .bc-small { padding:9px 12px; border:none; border-radius:10px; font-weight:bold; font-size:12px; color:#fff; cursor:pointer; background:linear-gradient(100deg,#0284c7,#6366f1); font-family:inherit; white-space:nowrap; }
         .toast-close {
             position: absolute;
             top: 8px;
@@ -1685,7 +1712,7 @@
     <div id="boothTab" class="card">
         <h2>🧊 کنترل ظرف‌های یخچال غرفه</h2>
         <div class="hint">
-            💡 می‌توانید وزن کل (جنس + ظرف) و تار (وزن ظرف) را وارد کنید تا سیستم وزن خالص داخل غرفه را دقیق محاسبه و ثبت کند.
+            💡 روی هر کالا بزنید تا باز شود: پر کردن ظرف (کامل یا با مقدار دلخواه)، تعیین اندازه ظرف، اصلاح با ترازو (وزن کل و وزن ظرف؛ خالص همان لحظه حساب می‌شود) و حداقل هشدار.
             همچنین می‌توانید «حداقل موجودی غرفه» را برای هر کالا تعیین کنید؛ برای کالاهای کم‌فروش، وقتی موجودی غرفه به این حد برسد و انبار اصلی هم خالی باشد، به مدیر هشدار خرید ارسال می‌شود.
         </div>
 
@@ -1699,20 +1726,9 @@
 
         <div class="search-box"><input type="text" id="boothSearchInput" dir="auto" placeholder="🔎 جستجوی نام کالا در یخچال غرفه..." oninput="filterBoothTable()"></div>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>نام کالا</th>
-                    <th>ظرفیت</th>
-                    <th>موجودی فعلی غرفه</th>
-                    <th>وضعیت</th>
-                    <th>شارژ / محاسبه وزن خالص ظرف / حداقل هشدار</th>
-                </tr>
-            </thead>
-            <tbody id="boothTable">
-                <tr><td colspan="5">در حال دریافت اطلاعات...</td></tr>
-            </tbody>
-        </table>
+        <div id="boothSummary"></div>
+        <div id="boothFilterChips" class="bc-chips"></div>
+        <div id="boothCards"><div class="skeleton-block skeleton-card"></div><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
     <!-- تب سفارشات خرید -->
@@ -2418,7 +2434,7 @@
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v75 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v76 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
 
     <script>
         function toggleLoginPasswordVisibility() {
@@ -9512,6 +9528,7 @@
 
             const { error } = await _supabase.from('products').update({ booth_stock: netStock }).eq('id', productId);
             if (!error) {
+                try { if (tare > 0) localStorage.setItem('boothTare_' + productId, String(tare)); } catch (e) {}
                 showToast(`✅ موجودی خالص ظرف غرفه به مقدار ${netStock} کیلوگرم به‌روزرسانی شد.`);
                 logInventoryChange(prodRow ? prodRow.name : productId, 'اصلاح دستی با ترازو', `وزن کل: ${gross} - تار: ${tare} = خالص: ${netStock} کیلوگرم`);
                 loadBoothInventory();
@@ -9767,6 +9784,8 @@
         }
 
         let boothCategoryFilter = 'general';
+        let boothFilterMode = 'all';
+        let boothExpandedId = null;
 
         async function loadBoothInventory() {
             const { data: products } = await _supabase.from('products').select('*');
@@ -9784,96 +9803,167 @@
             document.getElementById('boothCatBtn_sausage').classList.toggle('active', cat === 'sausage');
             const searchInput = document.getElementById('boothSearchInput');
             if (searchInput) searchInput.value = '';
+            boothExpandedId = null;
             renderBoothCategoryView();
         }
 
+        function getBoothCategoryProducts() {
+            return cachedBoothFull.filter(p => (boothCategoryFilter === 'sausage') ? (p.category === 'sausage') : (p.category !== 'sausage'));
+        }
+
         function renderBoothCategoryView() {
-            const byCategory = cachedBoothFull.filter(p => (boothCategoryFilter === 'sausage') ? (p.category === 'sausage') : (p.category !== 'sausage'));
+            const byCategory = getBoothCategoryProducts();
             renderMorningChecklist(byCategory);
-            renderBoothRows(byCategory);
+            filterBoothTable();
         }
 
         function filterBoothTable() {
-            const term = (document.getElementById('boothSearchInput').value || '').trim();
-            const byCategory = cachedBoothFull.filter(p => (boothCategoryFilter === 'sausage') ? (p.category === 'sausage') : (p.category !== 'sausage'));
-            if (!term) {
-                renderBoothRows(byCategory);
-                return;
-            }
-            const filtered = byCategory.filter(p => (p.name || '').includes(term));
-            renderBoothRows(filtered);
+            const byCategory = getBoothCategoryProducts();
+            const term = ((document.getElementById('boothSearchInput') || {}).value || '').trim();
+            renderBoothRows(term ? byCategory.filter(p => (p.name || '').includes(term)) : byCategory);
+        }
+
+        function setBoothFilterMode(mode) { boothFilterMode = mode; filterBoothTable(); }
+
+        function toggleBoothCard(id) {
+            boothExpandedId = (String(boothExpandedId) === String(id)) ? null : id;
+            document.querySelectorAll('#boothCards .bc').forEach(el => el.classList.toggle('open', el.dataset.id === String(boothExpandedId)));
+        }
+
+        function boothLevelInfo(stock, capacity) {
+            const ratio = capacity > 0 ? stock / capacity : 0;
+            const color = stock <= 0 ? '#ef4444' : ratio < 0.35 ? '#f97316' : ratio < 0.65 ? '#f59e0b' : '#10b981';
+            return { ratio, pct: Math.max(0, Math.min(100, Math.round(ratio * 100))), color };
         }
 
         function renderBoothRows(products) {
-            const tbody = document.getElementById('boothTable');
-            tbody.innerHTML = '';
-
-            if (!products || products.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5">هیچ کالایی یافت نشد.</td></tr>';
-                return;
-            }
-
+            const box = document.getElementById('boothCards');
+            const sumBox = document.getElementById('boothSummary');
+            const chipBox = document.getElementById('boothFilterChips');
+            if (!box) return;
             const canEdit = (currentRole === 'admin' || currentRole === 'morning_seller');
+            const fa = n => Number(n).toLocaleString('fa-IR');
 
-            products.forEach(p => {
+            const list = (products || []).map(p => {
                 const capacity = p.container_capacity || 7.0;
-                const currentBooth = p.booth_stock || 0;
-                const mainStock = p.stock || 0;
-                const needed = Number((capacity - currentBooth).toFixed(3));
-                const status = getQualitativeStatus(currentBooth, capacity);
+                const cur = p.booth_stock || 0;
+                return { p, capacity, cur, needed: Number((capacity - cur).toFixed(3)), lv: boothLevelInfo(cur, capacity) };
+            });
 
-                let fillCell;
+            // خلاصه و شمارنده‌ها
+            const cntEmpty = list.filter(x => x.cur <= 0).length;
+            const cntLow = list.filter(x => x.cur > 0 && x.lv.ratio < 0.35).length;
+            const cntNeed = list.filter(x => x.needed > 0).length;
+            const cntFull = list.filter(x => x.needed <= 0.0001 || x.lv.ratio >= 0.98).length;
+            const totalKg = list.reduce((a, x) => a + x.cur, 0);
+            sumBox.innerHTML = `<div class="bs-grid">
+                <div class="bs-tile"><b style="color:#38bdf8;">${fa(Number(totalKg.toFixed(2)))}</b><span>کیلو در غرفه</span></div>
+                <div class="bs-tile"><b style="color:#ef4444;">${fa(cntEmpty)}</b><span>خالی</span></div>
+                <div class="bs-tile"><b style="color:#f97316;">${fa(cntLow)}</b><span>کم</span></div>
+                <div class="bs-tile"><b style="color:#10b981;">${fa(cntFull)}</b><span>پر</span></div>
+            </div>`;
+            const chips = [['all', 'همه', list.length], ['need', '🔄 نیاز به شارژ', cntNeed], ['empty', '🔴 خالی', cntEmpty], ['low', '⚠️ کم', cntLow]];
+            chipBox.innerHTML = chips.map(c => `<button class="bc-chip ${boothFilterMode === c[0] ? 'active' : ''}" onclick="setBoothFilterMode('${c[0]}')">${c[1]} (${fa(c[2])})</button>`).join('');
+
+            let shown = list;
+            if (boothFilterMode === 'need') shown = list.filter(x => x.needed > 0);
+            else if (boothFilterMode === 'empty') shown = list.filter(x => x.cur <= 0);
+            else if (boothFilterMode === 'low') shown = list.filter(x => x.cur > 0 && x.lv.ratio < 0.35);
+
+            if (shown.length === 0) { box.innerHTML = '<p style="text-align:center; color:#94a3b8;">هیچ کالایی یافت نشد.</p>'; return; }
+
+            box.innerHTML = shown.map(({ p, capacity, cur, needed, lv }) => {
+                const mainStock = p.stock || 0;
+                const status = getQualitativeStatus(cur, capacity);
+                const open = String(boothExpandedId) === String(p.id);
+                const id = p.id;
+
+                // بخش پر کردن
+                let fillSec;
                 if (p.booth_only) {
-                    fillCell = needed > 0
-                        ? `<span style="color:#fbbf24; font-weight:bold; font-size:11px;">🛒 نیاز به خرید ${needed.toLocaleString('fa-IR')} کیلو (انبار مرکزی نداره)</span>`
-                        : `<span style="color:#10b981; font-weight:bold; font-size:11px;">✨ ظرف پر است</span>`;
-                } else if (needed > 0 && mainStock > 0) {
-                    fillCell = `<button class="row-btn fill-btn" onclick="smartFillBooth('${p.id}')">🔄 پر کردن ظرف</button>
-                                <span class="need-charge-text">کمبود: ${needed} کیلو (انبار: ${mainStock} کیلو)</span>`;
-                } else if (needed > 0 && mainStock <= 0) {
-                    fillCell = `<span style="color:#fca5a5; font-weight:bold; font-size:11px;">⛔ نیاز به سفارش (انبار خالی)</span>`;
+                    fillSec = needed > 0
+                        ? `<div style="color:#fbbf24; font-size:12px; font-weight:bold;">🛒 نیاز به خرید ${fa(needed)} کیلو (انبار مرکزی ندارد)</div>`
+                        : `<div style="color:#10b981; font-size:12px; font-weight:bold;">✨ ظرف پر است</div>`;
+                } else if (needed <= 0) {
+                    fillSec = `<div style="color:#10b981; font-size:12px; font-weight:bold;">✨ ظرف پر است</div>`;
+                } else if (mainStock <= 0) {
+                    fillSec = `<div style="color:#fca5a5; font-size:12px; font-weight:bold;">⛔ انبار اصلی خالی است — نیاز به سفارش</div>`;
                 } else {
-                    fillCell = `<span style="color:#10b981; font-weight:bold; font-size:11px;">✨ ظرف پر است</span>`;
+                    const quick = [0.5, 1, 2, 5].filter(v => v < needed).map(v => `<button onclick="document.getElementById('fillAmt_${id}').value='${v}'">+${fa(v)}</button>`).join('');
+                    fillSec = `<button class="bc-big" onclick="smartFillBooth('${id}')">🔄 پر کردن کامل (+${fa(Math.min(needed, mainStock))} کیلو)</button>
+                        <div style="font-size:11px; color:var(--text-hint); margin:8px 0 5px;">یا مقدار دلخواهی که واقعاً ریختید:</div>
+                        <div class="bc-quick">${quick}</div>
+                        <div class="bc-row"><input type="text" inputmode="decimal" id="fillAmt_${id}" placeholder="مقدار (کیلو)"><button class="bc-small" onclick="fillBoothByAmount('${id}')">➕ افزودن</button></div>`;
                 }
 
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td><b>${p.name}</b>${p.booth_only ? ' <span style="font-size:9px; color:#fbbf24; border:1px solid #fbbf24; border-radius:6px; padding:1px 4px;">فقط غرفه</span>' : ''}</td>
-                    <td>
-                        ${canEdit 
-                            ? `<input type="text" inputmode="decimal" step="0.5" class="cap-input" id="cap_${p.id}" value="${capacity}"> 
-                               <button class="row-btn edit-btn" style="padding:2px 5px;" onclick="updateContainerCapacity('${p.id}', document.getElementById('cap_${p.id}').value)">💾</button>`
-                            : `${capacity} کیلو`
-                        }
-                    </td>
-                    <td>
-                        <span style="font-weight:bold; color:#38bdf8;">${Number(currentBooth).toLocaleString('fa-IR')} کیلو</span>
-                    </td>
-                    <td><span class="status-tag ${status.class}">${status.label}</span></td>
-                    <td>
-                        ${canEdit 
-                            ? `<div style="display:flex; gap:4px; align-items:center; justify-content:center; margin-bottom:8px;">
-                                 <input type="text" inputmode="decimal" step="0.1" class="cap-input" id="boothMin_${p.id}" value="${p.booth_min_stock || 0}" placeholder="حداقل غرفه">
-                                 <button class="row-btn edit-btn" title="ذخیره حداقل موجودی هشدار غرفه" onclick="updateBoothMinStock('${p.id}', document.getElementById('boothMin_${p.id}').value)">💾حد</button>
-                               </div>
-                               <div style="background:rgba(56,189,248,0.06); border:1px dashed rgba(56,189,248,0.35); border-radius:8px; padding:6px; margin-bottom:8px;">
-                                 <div style="font-size:10px; color:#38bdf8; margin-bottom:4px;">⚖️ بخش ۱: اصلاح دستی با ترازو (وزن ظرف را جدا بزن)</div>
-                                 <div style="display:flex; gap:4px; align-items:center; justify-content:center;">
-                                   <input type="text" inputmode="decimal" step="0.01" class="cap-input" id="grossBooth_${p.id}" placeholder="وزن کل (ظرف+جنس)">
-                                   <input type="text" inputmode="decimal" step="0.01" class="cap-input" id="tareBooth_${p.id}" placeholder="وزن خود ظرف (تار)">
-                                   <button class="row-btn edit-btn" title="محاسبه خالص" onclick="updateDirectBoothStockWithTare('${p.id}')">💾</button>
-                                 </div>
-                               </div>
-                               <div style="background:rgba(16,185,129,0.06); border:1px dashed rgba(16,185,129,0.35); border-radius:8px; padding:6px;">
-                                 <div style="font-size:10px; color:#10b981; margin-bottom:4px;">🔄 بخش ۲: پر کردن خودکار از انبار اصلی</div>
-                                 ${fillCell}
-                               </div>`
-                            : `<div style="background:rgba(16,185,129,0.06); border:1px dashed rgba(16,185,129,0.35); border-radius:8px; padding:6px;">${fillCell}</div>`
-                        }
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
+                let editSecs = '';
+                if (canEdit) {
+                    const sizes = [3, 5, 7, 10, 15, 20];
+                    const savedTare = (() => { try { return localStorage.getItem('boothTare_' + id) || ''; } catch (e) { return ''; } })();
+                    editSecs = `
+                    <div class="bc-sec" style="border-color:rgba(167,139,250,0.4);">
+                        <div class="bc-sec-title" style="color:#a78bfa;">📏 اندازه (ظرفیت) ظرف — الان ${fa(capacity)} کیلو</div>
+                        <div class="bc-quick">${sizes.map(v => `<button class="${v === Number(capacity) ? 'on' : ''}" onclick="updateContainerCapacity('${id}', ${v})">${fa(v)}</button>`).join('')}</div>
+                        <div class="bc-row"><input type="text" inputmode="decimal" id="cap_${id}" placeholder="عدد دلخواه (کیلو)" value="${capacity}"><button class="bc-small" onclick="updateContainerCapacity('${id}', document.getElementById('cap_${id}').value)">💾 ذخیره</button></div>
+                    </div>
+                    <div class="bc-sec" style="border-color:rgba(56,189,248,0.4);">
+                        <div class="bc-sec-title" style="color:#38bdf8;">⚖️ اصلاح با ترازو</div>
+                        <div class="bc-row">
+                            <input type="text" inputmode="decimal" id="grossBooth_${id}" placeholder="وزن کل (ظرف+جنس)" oninput="calcBoothNet('${id}')">
+                            <input type="text" inputmode="decimal" id="tareBooth_${id}" placeholder="وزن خود ظرف" value="${savedTare}" oninput="calcBoothNet('${id}')">
+                        </div>
+                        <div class="bc-net" id="netBooth_${id}">خالص: —</div>
+                        <button class="bc-small" style="width:100%; margin-top:8px;" onclick="updateDirectBoothStockWithTare('${id}')">💾 ثبت موجودی خالص</button>
+                        <div style="font-size:10px; color:var(--text-hint); margin-top:5px;">وزن ظرف بعد از ثبت برای دفعه‌ی بعد در همین دستگاه یادآوری می‌شود.</div>
+                    </div>
+                    <div class="bc-sec" style="border-color:rgba(251,191,36,0.4);">
+                        <div class="bc-sec-title" style="color:#fbbf24;">🔔 حداقل موجودی هشدار</div>
+                        <div class="bc-row"><input type="text" inputmode="decimal" id="boothMin_${id}" value="${p.booth_min_stock || 0}"><button class="bc-small" onclick="updateBoothMinStock('${id}', document.getElementById('boothMin_${id}').value)">💾 ذخیره</button></div>
+                    </div>`;
+                }
+
+                return `<div class="bc ${open ? 'open' : ''}" data-id="${id}">
+                    <div class="bc-head" onclick="toggleBoothCard('${id}')">
+                        <div class="bc-top"><b>${p.name}${p.booth_only ? ' <span style="font-size:9px; color:#fbbf24; border:1px solid #fbbf24; border-radius:6px; padding:1px 4px;">فقط غرفه</span>' : ''}</b><span class="status-tag ${status.class}">${status.label}</span></div>
+                        <div class="bc-bar"><i style="width:${lv.pct}%; background:${lv.color};"></i></div>
+                        <div class="bc-meta"><span>🧊 <b style="color:#38bdf8;">${fa(cur)}</b> از ${fa(capacity)} کیلو (${fa(lv.pct)}٪)</span><span>📦 انبار: ${fa(mainStock)}</span><span>${needed > 0 ? 'کمبود: ' + fa(needed) : '✨ پر'} ▾</span></div>
+                    </div>
+                    <div class="bc-body">
+                        <div class="bc-sec" style="border-color:rgba(16,185,129,0.4); margin-top:8px;">
+                            <div class="bc-sec-title" style="color:#10b981;">🔄 پر کردن ظرف</div>
+                            ${fillSec}
+                        </div>
+                        ${editSecs}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function calcBoothNet(id) {
+            const g = parseFloat((document.getElementById('grossBooth_' + id) || {}).value) || 0;
+            const t = parseFloat((document.getElementById('tareBooth_' + id) || {}).value) || 0;
+            const el = document.getElementById('netBooth_' + id);
+            if (el) el.textContent = g > 0 ? 'خالص: ' + Math.max(0, g - t).toLocaleString('fa-IR', { maximumFractionDigits: 3 }) + ' کیلو' : 'خالص: —';
+        }
+
+        // شارژ با مقدار دلخواهی که فروشنده واقعاً داخل ظرف ریخته (از انبار اصلی کسر می‌شود)
+        async function fillBoothByAmount(productId) {
+            const inp = document.getElementById('fillAmt_' + productId);
+            const amt = parseFloat(inp ? inp.value : '');
+            if (isNaN(amt) || amt <= 0) return showToast('مقدار معتبر وارد کنید.');
+            const { data: product } = await _supabase.from('products').select('*').eq('id', productId).single();
+            if (!product) return;
+            const { data, error } = await _supabase.rpc('transfer_main_to_booth', { p_product_id: productId, p_requested_amount: amt });
+            if (error) return showToast('❌ خطا در ثبت شارژ: ' + error.message);
+            const result = Array.isArray(data) ? data[0] : data;
+            const moved = result ? Number(result.actual_moved) : 0;
+            if (moved <= 0) { showToast('این مقدار قابل شارژ نبود (ظرف پر است یا انبار اصلی کافی نیست).'); loadBoothInventory(); return; }
+            let msg = `✅ ${moved.toLocaleString('fa-IR')} کیلو به «${product.name}» اضافه شد.\n🧊 موجودی جدید غرفه: ${(result ? Number(result.new_booth_stock) : 0).toLocaleString('fa-IR')} کیلو`;
+            if (moved < amt - 0.0001) msg += '\n⚠️ کل مقدار قابل انتقال نبود؛ فقط همین مقدار ثبت شد.';
+            showToast(msg);
+            logInventoryChange(product.name, 'شارژ دلخواه ظرف از انبار', `${moved.toLocaleString('fa-IR')} کیلوگرم از انبار اصلی به غرفه منتقل شد`);
+            loadBoothInventory();
+            if (currentRole === 'admin') checkLowStockAlertNoWeight();
         }
 
         // --- سفارشات خرید: ثبت، ویرایش، تایید دریافت با مقدار واقعی توسط مدیر یا فروشنده صبح ---
