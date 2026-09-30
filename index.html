@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v76 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v77 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="icon" href="icon-192.png">
@@ -950,6 +950,46 @@
         .bc-net { font-size:12px; margin:6px 0 0; text-align:center; color:var(--accent); font-weight:bold; }
         .bc-big { width:100%; padding:11px; border:none; border-radius:12px; font-weight:bold; font-size:14px; color:#fff; cursor:pointer; background:linear-gradient(100deg,#059669,#10b981); font-family:inherit; }
         .bc-small { padding:9px 12px; border:none; border-radius:10px; font-weight:bold; font-size:12px; color:#fff; cursor:pointer; background:linear-gradient(100deg,#0284c7,#6366f1); font-family:inherit; white-space:nowrap; }
+        /* ---- v77: یخچال غرفه / انبار / هدف شیفت — طراحی جدید ---- */
+        .bz-hero { display:flex; gap:14px; align-items:center; padding:14px; border-radius:18px; margin:10px 0; border:1px solid var(--border-color); background:linear-gradient(135deg, rgba(34,211,238,0.10), rgba(167,139,250,0.10) 60%, rgba(52,211,153,0.08)); }
+        .bz-ring { --p:0; --c:#10b981; flex:0 0 auto; width:86px; height:86px; border-radius:50%; background:conic-gradient(var(--c) calc(var(--p) * 1%), rgba(148,163,255,0.16) 0); display:flex; align-items:center; justify-content:center; box-shadow:0 0 22px -6px var(--c); }
+        .bz-ring > div { width:66px; height:66px; border-radius:50%; background:var(--bg-card-solid); display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1.15; }
+        .bz-ring b { font-size:18px; }
+        .bz-ring span { font-size:9px; color:var(--text-hint); }
+        .bz-hero-txt { flex:1; min-width:0; }
+        .bz-hero-txt h3 { margin:0 0 4px; font-size:14px; }
+        .bz-hero-txt p { margin:2px 0; font-size:12px; color:var(--text-secondary); line-height:1.7; }
+        .bz-strip { margin:8px 0; padding:9px 12px; border-radius:12px; font-size:12px; line-height:1.8; border:1px dashed rgba(251,191,36,0.55); background:rgba(251,191,36,0.08); color:#fbbf24; }
+        .bz-strip.bad { border-color:rgba(239,68,68,0.55); background:rgba(239,68,68,0.08); color:#f87171; }
+        .bz-card { display:flex; gap:11px; align-items:center; }
+        .bz-jar { --jc:#10b981; flex:0 0 auto; width:46px; height:66px; border-radius:8px 8px 15px 15px; border:2px solid rgba(148,163,255,0.38); border-top-width:4px; position:relative; overflow:hidden; background:rgba(148,163,255,0.07); }
+        .bz-jar i { position:absolute; left:0; right:0; bottom:0; background:var(--jc); box-shadow:inset 0 0 12px rgba(0,0,0,0.28); transition:height .6s cubic-bezier(.22,1,.36,1); }
+        .bz-jar i::after { content:''; position:absolute; top:-5px; left:-50%; width:200%; height:9px; border-radius:50%; background:var(--jc); opacity:.6; animation:bzWave 3.2s linear infinite; }
+        .bz-jar em { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-style:normal; font-size:11px; font-weight:bold; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.75); z-index:2; }
+        @keyframes bzWave { from { transform:translateX(0); } to { transform:translateX(25%); } }
+        @media (prefers-reduced-motion: reduce) { .bz-jar i::after { animation:none; } }
+        .bz-badges { display:flex; flex-wrap:wrap; gap:5px; margin-top:7px; }
+        .bz-b { font-size:10px; padding:3px 7px; border-radius:8px; background:var(--bg-input); border:1px solid var(--border-color); color:var(--text-secondary); white-space:nowrap; display:inline-block; }
+        .bz-b.warn { color:#fbbf24; border-color:rgba(251,191,36,0.5); }
+        .bz-b.bad { color:#f87171; border-color:rgba(248,113,113,0.5); }
+        .bz-b.good { color:#34d399; border-color:rgba(52,211,153,0.5); }
+        .bz-quickfill { flex:0 0 auto; padding:8px 9px; border:none; border-radius:12px; font-weight:bold; font-size:10px; line-height:1.5; color:#fff; cursor:pointer; background:linear-gradient(100deg,#059669,#10b981); font-family:inherit; }
+        .bc.bz-urgent { border-color:rgba(239,68,68,0.6); }
+        .bz-mb { height:6px; border-radius:4px; background:rgba(148,163,255,0.16); position:relative; overflow:hidden; margin-top:5px; min-width:56px; }
+        .bz-mb i { display:block; height:100%; border-radius:4px; }
+        .bz-mb s { position:absolute; top:0; bottom:0; width:2px; background:#fff; opacity:.75; }
+        .bz-sub { font-size:9px; color:var(--text-hint); display:block; margin-top:3px; }
+        .st-card { border:1px solid var(--border-color); border-radius:16px; padding:12px; margin-top:10px; background:var(--bg-card-solid); }
+        .st-card h4 { margin:0 0 6px; font-size:13px; }
+        .st-rule { font-size:11px; color:var(--text-secondary); line-height:1.9; }
+        .st-prog { height:12px; border-radius:8px; background:rgba(148,163,255,0.16); overflow:hidden; margin:8px 0 4px; }
+        .st-prog i { display:block; height:100%; border-radius:8px; transition:width .5s; }
+        .st-tiles { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:10px; }
+        .st-tile { background:var(--bg-input); border:1px solid var(--border-color); border-radius:12px; padding:8px 4px; text-align:center; }
+        .st-tile b { display:block; font-size:14px; }
+        .st-tile span { font-size:10px; color:var(--text-hint); }
+        .st-day { display:flex; justify-content:space-between; align-items:center; gap:6px; padding:7px 9px; margin-top:5px; border-radius:10px; font-size:11px; border:1px solid var(--border-color); background:rgba(15,23,42,0.25); }
+        .st-pre { white-space:pre-wrap; direction:ltr; text-align:left; font-size:10px; background:var(--bg-input); border:1px solid var(--border-color); border-radius:10px; padding:8px; max-height:200px; overflow:auto; }
         .toast-close {
             position: absolute;
             top: 8px;
@@ -1728,6 +1768,7 @@
 
         <div id="boothSummary"></div>
         <div id="boothFilterChips" class="bc-chips"></div>
+        <div id="boothSortChips" class="bc-chips"></div>
         <div id="boothCards"><div class="skeleton-block skeleton-card"></div><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
@@ -1859,6 +1900,10 @@
             <button class="mode-btn" id="invCatBtn_sausage" onclick="switchInventoryCategory('sausage')">🌭 سوسیس و کالباس</button>
         </div>
         <div class="search-box"><input type="text" id="inventorySearchInput" dir="auto" placeholder="🔎 جستجوی نام کالا در انبار..." oninput="filterInventoryTable()"></div>
+        <div id="invSummary"></div>
+        <div id="invFilterChips" class="bc-chips"></div>
+        <div id="invSortChips" class="bc-chips"></div>
+        <div style="overflow-x:auto;">
         <table>
             <thead>
                 <tr id="inventoryHeaderRow">
@@ -1873,6 +1918,7 @@
                 <tr><td colspan="5">در حال بارگذاری...</td></tr>
             </tbody>
         </table>
+        </div>
     </div>
 
     <!-- گزارش فروش -->
@@ -2293,6 +2339,40 @@
             <input type="text" id="salaryNote" placeholder="مثلاً حقوق مرداد ماه">
             <button class="submit-btn" onclick="submitSalaryPayment()">ثبت واریز حقوق</button>
         </div>
+        <div id="sstBox" class="report-card" style="margin-top:16px; border-color:#a78bfa; display:none;">
+            <h3>🎯 هدف فروش شیفت · پاداش و جریمه‌ی حقوق</h3>
+            <div id="sstAdminForm" style="display:none;">
+                <div class="hint" style="margin-top:0;">برای هر فروشنده یک هدف فروش بگذار. فروش از لحظه‌ی «ورود» تا «خروج» همان شیفت حساب می‌شود. اگه به هدف برسد پاداش، و اگه نرسد جریمه روی حقوقش ثبت می‌شود (مبلغ ثابت یا درصدی از حقوق پایه).</div>
+                <label>فروشنده:</label>
+                <select id="sstSeller" onchange="sstLoadForm()"><option value="">در حال دریافت لیست پرسنل...</option></select>
+                <label>حقوق پایه ماهانه (تومان) — فقط برای تبدیل «درصد» به تومان لازمه:</label>
+                <input type="text" inputmode="decimal" id="sstBase" placeholder="مثلاً 15000000" oninput="sstPreview()">
+                <label>🎯 هدف فروش هر شیفت (تومان):</label>
+                <input type="text" inputmode="decimal" id="sstTarget" placeholder="مثلاً 5000000" oninput="sstPreview()">
+                <label>🎁 پاداش اگه به هدف برسد:</label>
+                <div class="bc-row">
+                    <select id="sstBonusType" onchange="sstPreview()"><option value="amount">تومان</option><option value="percent">درصد حقوق</option></select>
+                    <input type="text" inputmode="decimal" id="sstBonusValue" placeholder="مقدار" oninput="sstPreview()">
+                </div>
+                <label>⚠️ جریمه اگه نرسد (۰ = بدون جریمه):</label>
+                <div class="bc-row">
+                    <select id="sstPenaltyType" onchange="sstPreview()"><option value="amount">تومان</option><option value="percent">درصد حقوق</option></select>
+                    <input type="text" inputmode="decimal" id="sstPenaltyValue" placeholder="مقدار" oninput="sstPreview()">
+                </div>
+                <div id="sstPreview" class="hint"></div>
+                <label style="display:flex; align-items:center; gap:8px; margin-top:10px; cursor:pointer;">
+                    <input type="checkbox" id="sstActive" style="width:auto;" checked> فعال باشد
+                </label>
+                <button class="submit-btn" onclick="sstSave()">💾 ذخیره هدف این فروشنده</button>
+                <button class="row-btn delete-btn" style="width:100%; margin-top:8px;" onclick="sstDelete()">🗑️ حذف هدف این فروشنده</button>
+            </div>
+            <div class="mode-selector" style="margin-top:14px;">
+                <button class="mode-btn active" id="sstPerCur" onclick="sstSetPeriod('cur')">این ماه</button>
+                <button class="mode-btn" id="sstPerPrev" onclick="sstSetPeriod('prev')">ماه قبل</button>
+            </div>
+            <div id="sstPanel"></div>
+        </div>
+
         <div class="report-card" style="margin-top:16px;">
             <h3>📋 تاریخچه واریز حقوق</h3>
             <div id="salaryList"><div class="skeleton-block skeleton-card"></div></div>
@@ -2434,7 +2514,7 @@
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v76 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v77 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
 
     <script>
         function toggleLoginPasswordVisibility() {
@@ -5160,6 +5240,10 @@
                         </div>
                         ${reached ? `<p style="color:#10b981; font-weight:bold; margin-top:6px;">🎁 ${bonusTarget.bonus_percent}٪ به حقوقت اضافه میشه!</p>` : ''}
                     </div>`;
+            }
+
+            if (currentRole === 'morning_seller' || currentRole === 'evening_seller') {
+                try { const myShiftCard = await buildMyShiftTargetCard(); if (myShiftCard) bonusCard = myShiftCard; } catch (e) { /* جدول هدف شیفت هنوز ساخته نشده */ }
             }
 
             let personalAlarmCard = '';
@@ -9787,9 +9871,17 @@
         let boothFilterMode = 'all';
         let boothExpandedId = null;
 
+        let boothSortMode = 'urgent';
+        let boothVelocity = {};
+        let _boothFillable = [];
+
         async function loadBoothInventory() {
-            const { data: products } = await _supabase.from('products').select('*');
-            cachedBoothFull = sortProductsAlpha(products || []);
+            const [prodRes, vel] = await Promise.all([
+                _supabase.from('products').select('*'),
+                getSalesVelocity().catch(() => ({}))
+            ]);
+            boothVelocity = vel || {};
+            cachedBoothFull = sortProductsAlpha(prodRes.data || []);
 
             const searchInput = document.getElementById('boothSearchInput');
             if (searchInput) searchInput.value = '';
@@ -9824,6 +9916,7 @@
         }
 
         function setBoothFilterMode(mode) { boothFilterMode = mode; filterBoothTable(); }
+        function setBoothSortMode(mode) { boothSortMode = mode; filterBoothTable(); }
 
         function toggleBoothCard(id) {
             boothExpandedId = (String(boothExpandedId) === String(id)) ? null : id;
@@ -9836,47 +9929,110 @@
             return { ratio, pct: Math.max(0, Math.min(100, Math.round(ratio * 100))), color };
         }
 
+        // سرعت فروش ۱۴ روز اخیر هر کالا → «موجودی غرفه با این سرعت چند روز جواب می‌دهد؟»
+        function boothRunway(p, cur) {
+            const v = boothVelocity[p.code];
+            const avg = v ? v.avg : 0;
+            const today = v ? v.today : 0;
+            return { avg, today, days: avg > 0 ? cur / avg : null };
+        }
+
+        function fmtRunway(days) {
+            if (days === null || days === undefined) return '—';
+            if (days < 1) return 'کمتر از ۱ روز';
+            if (days >= 30) return 'بیش از ۳۰ روز';
+            return '≈ ' + Number(days.toFixed(1)).toLocaleString('fa-IR') + ' روز';
+        }
+
         function renderBoothRows(products) {
             const box = document.getElementById('boothCards');
             const sumBox = document.getElementById('boothSummary');
             const chipBox = document.getElementById('boothFilterChips');
+            const sortBox = document.getElementById('boothSortChips');
             if (!box) return;
             const canEdit = (currentRole === 'admin' || currentRole === 'morning_seller');
             const fa = n => Number(n).toLocaleString('fa-IR');
 
-            const list = (products || []).map(p => {
+            const mk = p => {
                 const capacity = p.container_capacity || 7.0;
                 const cur = p.booth_stock || 0;
-                return { p, capacity, cur, needed: Number((capacity - cur).toFixed(3)), lv: boothLevelInfo(cur, capacity) };
-            });
+                return { p, capacity, cur, needed: Number((capacity - cur).toFixed(3)), lv: boothLevelInfo(cur, capacity), rw: boothRunway(p, cur) };
+            };
+            const all = getBoothCategoryProducts().map(mk);       // آمار کلی: کل دسته، بدون اثر جستجو
+            const list = (products || []).map(mk);                // لیست نمایشی: بعد از جستجو
+            const isSoon = x => x.cur > 0 && x.rw.days !== null && x.rw.days < 1;
 
-            // خلاصه و شمارنده‌ها
-            const cntEmpty = list.filter(x => x.cur <= 0).length;
-            const cntLow = list.filter(x => x.cur > 0 && x.lv.ratio < 0.35).length;
-            const cntNeed = list.filter(x => x.needed > 0).length;
-            const cntFull = list.filter(x => x.needed <= 0.0001 || x.lv.ratio >= 0.98).length;
-            const totalKg = list.reduce((a, x) => a + x.cur, 0);
-            sumBox.innerHTML = `<div class="bs-grid">
+            const cntEmpty = all.filter(x => x.cur <= 0).length;
+            const cntLow = all.filter(x => x.cur > 0 && x.lv.ratio < 0.35).length;
+            const cntNeed = all.filter(x => x.needed > 0).length;
+            const cntFull = all.filter(x => x.needed <= 0.0001 || x.lv.ratio >= 0.98).length;
+            const soonList = all.filter(isSoon).sort((a, b) => a.rw.days - b.rw.days);
+            const totalKg = all.reduce((a, x) => a + x.cur, 0);
+            const totalCap = all.reduce((a, x) => a + x.capacity, 0);
+            const fillPct = totalCap > 0 ? Math.round(totalKg / totalCap * 100) : 0;
+            const heroColor = fillPct < 35 ? '#ef4444' : fillPct < 65 ? '#f59e0b' : '#10b981';
+
+            const fillable = all.filter(x => x.needed > 0 && !x.p.booth_only && (x.p.stock || 0) > 0);
+            const fillKg = fillable.reduce((a, x) => a + Math.min(x.needed, x.p.stock || 0), 0);
+            const buyList = all.filter(x => x.needed > 0 && (x.p.booth_only || (x.p.stock || 0) <= 0));
+            _boothFillable = fillable.map(x => ({ id: x.p.id, name: x.p.name, amt: Number(Math.min(x.needed, x.p.stock || 0).toFixed(3)) }));
+
+            let heroLines = '';
+            if (fillable.length > 0) heroLines += `<p>📦 برای شارژ همه حدود <b>${fa(Number(fillKg.toFixed(1)))}</b> کیلو از انبار لازمه</p>`;
+            if (buyList.length > 0) heroLines += `<p style="color:#fbbf24;">🛒 ${fa(buyList.length)} کالا انبار ندارد — نیاز به خرید/سفارش</p>`;
+
+            let html = `<div class="bz-hero">
+                <div class="bz-ring" style="--p:${fillPct}; --c:${heroColor};"><div><b style="color:${heroColor};">${fa(fillPct)}٪</b><span>پُری یخچال</span></div></div>
+                <div class="bz-hero-txt">
+                    <h3>${cntNeed === 0 ? '✨ یخچال آماده‌ی فروشه' : '🧊 ' + fa(cntNeed) + ' ظرف نیاز به شارژ دارد'}</h3>
+                    <p>در غرفه: <b style="color:#38bdf8;">${fa(Number(totalKg.toFixed(2)))}</b> از ${fa(Number(totalCap.toFixed(1)))} کیلو ظرفیت</p>
+                    ${heroLines}
+                </div>
+            </div>`;
+            if (soonList.length > 0) {
+                html += `<div class="bz-strip bad">⏳ <b>با سرعت فروش ۱۴ روز اخیر، این‌ها زودتر از یک روز تموم می‌شن:</b><br>${soonList.slice(0, 4).map(x => x.p.name).join(' ، ')}${soonList.length > 4 ? ' و ' + fa(soonList.length - 4) + ' مورد دیگر' : ''}</div>`;
+            }
+            if (canEdit && fillable.length > 0) {
+                html += `<button class="bc-big" style="margin-bottom:8px;" onclick="fillAllBooth()">⚡ شارژ همه‌ی کمبودها (${fa(fillable.length)} ظرف · ${fa(Number(fillKg.toFixed(1)))} کیلو)</button>`;
+            }
+            html += `<div class="bs-grid">
                 <div class="bs-tile"><b style="color:#38bdf8;">${fa(Number(totalKg.toFixed(2)))}</b><span>کیلو در غرفه</span></div>
                 <div class="bs-tile"><b style="color:#ef4444;">${fa(cntEmpty)}</b><span>خالی</span></div>
                 <div class="bs-tile"><b style="color:#f97316;">${fa(cntLow)}</b><span>کم</span></div>
                 <div class="bs-tile"><b style="color:#10b981;">${fa(cntFull)}</b><span>پر</span></div>
             </div>`;
-            const chips = [['all', 'همه', list.length], ['need', '🔄 نیاز به شارژ', cntNeed], ['empty', '🔴 خالی', cntEmpty], ['low', '⚠️ کم', cntLow]];
+            sumBox.innerHTML = html;
+
+            const chips = [['all', 'همه', all.length], ['need', '🔄 نیاز به شارژ', cntNeed], ['empty', '🔴 خالی', cntEmpty], ['low', '⚠️ کم', cntLow], ['soon', '⏳ زود تموم میشه', soonList.length]];
             chipBox.innerHTML = chips.map(c => `<button class="bc-chip ${boothFilterMode === c[0] ? 'active' : ''}" onclick="setBoothFilterMode('${c[0]}')">${c[1]} (${fa(c[2])})</button>`).join('');
+            if (sortBox) {
+                const sorts = [['urgent', '🚨 فوریت'], ['alpha', '🔤 الفبا'], ['sales', '📈 پرفروش‌ترین']];
+                sortBox.innerHTML = '<span style="font-size:11px; color:var(--text-hint); align-self:center; white-space:nowrap;">مرتب‌سازی:</span>' +
+                    sorts.map(c => `<button class="bc-chip ${boothSortMode === c[0] ? 'active' : ''}" onclick="setBoothSortMode('${c[0]}')">${c[1]}</button>`).join('');
+            }
 
             let shown = list;
             if (boothFilterMode === 'need') shown = list.filter(x => x.needed > 0);
             else if (boothFilterMode === 'empty') shown = list.filter(x => x.cur <= 0);
             else if (boothFilterMode === 'low') shown = list.filter(x => x.cur > 0 && x.lv.ratio < 0.35);
+            else if (boothFilterMode === 'soon') shown = list.filter(isSoon);
+
+            if (boothSortMode === 'sales') {
+                shown = shown.slice().sort((a, b) => b.rw.avg - a.rw.avg);
+            } else if (boothSortMode === 'urgent') {
+                const key = x => x.cur <= 0 ? -2 : (isSoon(x) ? x.lv.ratio - 1 : x.lv.ratio);
+                shown = shown.slice().sort((a, b) => key(a) - key(b));
+            }
 
             if (shown.length === 0) { box.innerHTML = '<p style="text-align:center; color:#94a3b8;">هیچ کالایی یافت نشد.</p>'; return; }
 
-            box.innerHTML = shown.map(({ p, capacity, cur, needed, lv }) => {
+            box.innerHTML = shown.map(({ p, capacity, cur, needed, lv, rw }) => {
                 const mainStock = p.stock || 0;
                 const status = getQualitativeStatus(cur, capacity);
                 const open = String(boothExpandedId) === String(p.id);
                 const id = p.id;
+                const soon = isSoon({ cur, rw });
+                const canQuick = needed > 0 && !p.booth_only && mainStock > 0;
 
                 // بخش پر کردن
                 let fillSec;
@@ -9922,21 +10078,75 @@
                     </div>`;
                 }
 
-                return `<div class="bc ${open ? 'open' : ''}" data-id="${id}">
+                // آمار فروش
+                const statsSec = `<div class="bc-sec" style="border-color:rgba(34,211,238,0.35);">
+                    <div class="bc-sec-title" style="color:#22d3ee;">📈 آمار فروش (۱۴ روز اخیر)</div>
+                    <div class="bs-grid" style="grid-template-columns:repeat(3,1fr); margin:0;">
+                        <div class="bs-tile"><b>${fa(Number(rw.today.toFixed(2)))}</b><span>فروش امروز</span></div>
+                        <div class="bs-tile"><b>${fa(Number(rw.avg.toFixed(2)))}</b><span>میانگین روزانه</span></div>
+                        <div class="bs-tile"><b style="font-size:12px;">${rw.avg > 0 ? fmtRunway(rw.days) : '—'}</b><span>کفایت غرفه</span></div>
+                    </div>
+                    ${(!p.booth_only && rw.avg > 0) ? `<div style="font-size:11px; color:var(--text-hint); margin-top:7px;">📦 انبار اصلی با همین سرعت حدود ${fmtRunway(mainStock / rw.avg)} جواب می‌دهد.</div>` : ''}
+                    ${rw.avg <= 0 ? `<div style="font-size:11px; color:var(--text-hint); margin-top:7px;">در ۱۴ روز اخیر فروشی برای این کالا ثبت نشده.</div>` : ''}
+                </div>`;
+
+                // نشانه‌های کوچک زیر اسم
+                let badges = '';
+                if (p.booth_only) badges += `<span class="bz-b warn">فقط غرفه</span>`;
+                else badges += `<span class="bz-b ${mainStock <= 0 ? 'bad' : ''}">📦 انبار: ${fa(mainStock)}</span>`;
+                if (rw.today > 0) badges += `<span class="bz-b">🛍️ امروز ${fa(Number(rw.today.toFixed(2)))} کیلو</span>`;
+                if (rw.avg > 0 && cur > 0) badges += `<span class="bz-b ${rw.days < 1 ? 'bad' : rw.days < 2 ? 'warn' : 'good'}">⏳ ${fmtRunway(rw.days)}</span>`;
+                if (rw.avg <= 0 && cur > 0) badges += `<span class="bz-b">😴 ۱۴ روز بدون فروش</span>`;
+
+                const quickBtn = canQuick
+                    ? `<button class="bz-quickfill" onclick="event.stopPropagation(); smartFillBooth('${id}')">🔄<br>شارژ<br>+${fa(Math.min(needed, mainStock))}</button>`
+                    : '';
+
+                return `<div class="bc ${open ? 'open' : ''} ${(cur <= 0 || soon) ? 'bz-urgent' : ''}" data-id="${id}">
                     <div class="bc-head" onclick="toggleBoothCard('${id}')">
-                        <div class="bc-top"><b>${p.name}${p.booth_only ? ' <span style="font-size:9px; color:#fbbf24; border:1px solid #fbbf24; border-radius:6px; padding:1px 4px;">فقط غرفه</span>' : ''}</b><span class="status-tag ${status.class}">${status.label}</span></div>
-                        <div class="bc-bar"><i style="width:${lv.pct}%; background:${lv.color};"></i></div>
-                        <div class="bc-meta"><span>🧊 <b style="color:#38bdf8;">${fa(cur)}</b> از ${fa(capacity)} کیلو (${fa(lv.pct)}٪)</span><span>📦 انبار: ${fa(mainStock)}</span><span>${needed > 0 ? 'کمبود: ' + fa(needed) : '✨ پر'} ▾</span></div>
+                        <div class="bz-card">
+                            <div class="bz-jar" style="--jc:${lv.color};"><i style="height:${cur > 0 ? Math.max(lv.pct, 8) : 0}%;"></i><em>${fa(lv.pct)}٪</em></div>
+                            <div style="flex:1; min-width:0;">
+                                <div class="bc-top"><b>${p.name}</b><span class="status-tag ${status.class}">${status.label}</span></div>
+                                <div class="bc-meta" style="margin-top:0;"><span>🧊 <b style="color:#38bdf8;">${fa(cur)}</b> از ${fa(capacity)} کیلو</span><span>${needed > 0 ? 'کمبود: ' + fa(needed) : '✨ پر'} ▾</span></div>
+                                <div class="bz-badges">${badges}</div>
+                            </div>
+                            ${quickBtn}
+                        </div>
                     </div>
                     <div class="bc-body">
                         <div class="bc-sec" style="border-color:rgba(16,185,129,0.4); margin-top:8px;">
                             <div class="bc-sec-title" style="color:#10b981;">🔄 پر کردن ظرف</div>
                             ${fillSec}
                         </div>
+                        ${statsSec}
                         ${editSecs}
                     </div>
                 </div>`;
             }).join('');
+        }
+
+        // شارژ یک‌جای همه‌ی ظرف‌های کم‌موجود از انبار اصلی (هر ظرف تا سقف ظرفیتش یا تا جایی که انبار دارد)
+        async function fillAllBooth() {
+            const items = _boothFillable.slice();
+            if (items.length === 0) return showToast('الان چیزی برای شارژ نیست 👌');
+            const total = items.reduce((a, i) => a + i.amt, 0);
+            const ok = await showConfirm(`همه‌ی ${items.length.toLocaleString('fa-IR')} ظرف کم‌موجود از انبار اصلی شارژ بشن؟\n\nمجموع حدود ${Number(total.toFixed(1)).toLocaleString('fa-IR')} کیلو از انبار کم می‌شه.\n\n⚠️ فقط وقتی تأیید کن که واقعاً ظرف‌ها رو پر کرده‌ای.`);
+            if (!ok) return;
+            let done = 0, moved = 0, failed = 0;
+            for (const it of items) {
+                const { data, error } = await _supabase.rpc('transfer_main_to_booth', { p_product_id: it.id, p_requested_amount: it.amt });
+                if (error) { failed++; continue; }
+                const r = Array.isArray(data) ? data[0] : data;
+                const m = r ? Number(r.actual_moved) : 0;
+                if (m > 0) {
+                    done++; moved += m;
+                    logInventoryChange(it.name, 'شارژ گروهی ظرف از انبار', `${m.toLocaleString('fa-IR')} کیلوگرم از انبار اصلی به غرفه منتقل شد`);
+                }
+            }
+            showToast(`${failed ? '⚠️' : '✅'} ${done.toLocaleString('fa-IR')} ظرف شارژ شد (جمعاً ${Number(moved.toFixed(2)).toLocaleString('fa-IR')} کیلو)${failed ? '\n' + failed.toLocaleString('fa-IR') + ' مورد با خطا مواجه شد.' : ''}`);
+            loadBoothInventory();
+            if (currentRole === 'admin') checkLowStockAlertNoWeight();
         }
 
         function calcBoothNet(id) {
@@ -10230,9 +10440,13 @@
         let inventoryCategoryFilter = 'general';
 
         async function loadInventory() {
-            const { data: products } = await _supabase
-                .from('products')
-                .select('id, code, name, stock, booth_stock, min_stock, booth_min_stock, sell_price, buy_price, container_capacity, category, no_restock, booth_only');
+            const [prodRes, vel] = await Promise.all([
+                _supabase.from('products')
+                    .select('id, code, name, stock, booth_stock, min_stock, booth_min_stock, sell_price, buy_price, container_capacity, category, no_restock, booth_only'),
+                getSalesVelocity().catch(() => ({}))
+            ]);
+            const products = prodRes.data;
+            invVelocity = vel || {};
 
             cachedProductsList = sortProductsAlpha(products || []);
             cachedInventoryFull = cachedProductsList;
@@ -10320,18 +10534,141 @@
                 banner.style.display = 'none';
             }
 
-            renderInventoryRows(byCategory);
+            filterInventoryTable();
         }
 
+        let invFilterMode = 'all';
+        let invSortMode = 'alpha';
+        let invVelocity = {};
+
+        function invIsLow(p) {
+            if (p.no_restock) return false;
+            return p.booth_only ? (p.booth_stock || 0) <= (p.booth_min_stock || 0) : (p.stock || 0) <= (p.min_stock || 0);
+        }
+        function invRunway(p) {
+            const v = invVelocity[p.code];
+            const avg = v ? v.avg : 0;
+            const total = (p.stock || 0) + (p.booth_stock || 0);
+            return { avg, total, days: avg > 0 ? total / avg : null };
+        }
+        function invIsSoon(p) {
+            if (p.no_restock) return false;
+            const r = invRunway(p);
+            return r.days !== null && r.total > 0 && r.days <= 5;
+        }
+        function invIsOut(p) { return ((p.stock || 0) + (p.booth_stock || 0)) <= 0; }
+        function invCategoryList() {
+            return cachedInventoryFull.filter(p => (inventoryCategoryFilter === 'sausage') ? (p.category === 'sausage') : (p.category !== 'sausage'));
+        }
+        function setInvFilterMode(m) { invFilterMode = m; filterInventoryTable(); }
+        function setInvSortMode(m) { invSortMode = m; filterInventoryTable(); }
+
         function filterInventoryTable() {
-            const term = (document.getElementById('inventorySearchInput').value || '').trim();
-            const byCategory = cachedInventoryFull.filter(p => (inventoryCategoryFilter === 'sausage') ? (p.category === 'sausage') : (p.category !== 'sausage'));
-            if (!term) {
-                renderInventoryRows(byCategory);
-                return;
+            const searchEl = document.getElementById('inventorySearchInput');
+            const term = ((searchEl && searchEl.value) || '').trim();
+            const byCategory = invCategoryList();
+            renderInventorySummary(byCategory);
+
+            let list = term ? byCategory.filter(p => (p.name || '').includes(term) || (p.code || '').includes(term)) : byCategory.slice();
+            if (invFilterMode === 'low') list = list.filter(invIsLow);
+            else if (invFilterMode === 'out') list = list.filter(p => invIsOut(p) && !p.no_restock);
+            else if (invFilterMode === 'soon') list = list.filter(invIsSoon);
+            else if (invFilterMode === 'norestock') list = list.filter(p => p.no_restock);
+            else if (invFilterMode === 'boothonly') list = list.filter(p => p.booth_only);
+
+            if (invSortMode === 'low') {
+                const k = p => (Number(p.min_stock) > 0) ? (p.stock || 0) / Number(p.min_stock) : ((p.stock || 0) > 0 ? 99 : 0);
+                list.sort((a, b) => k(a) - k(b));
+            } else if (invSortMode === 'runway') {
+                list.sort((a, b) => {
+                    const da = invRunway(a).days, db = invRunway(b).days;
+                    if (da === null && db === null) return 0;
+                    if (da === null) return 1;
+                    if (db === null) return -1;
+                    return da - db;
+                });
+            } else if (invSortMode === 'value') {
+                const val = p => ((p.stock || 0) + (p.booth_stock || 0)) * (Number(p.buy_price) || 0);
+                list.sort((a, b) => val(b) - val(a));
             }
-            const filtered = byCategory.filter(p => (p.name || '').includes(term) || (p.code || '').includes(term));
-            renderInventoryRows(filtered);
+            renderInventoryRows(list);
+        }
+
+        function v77Compact(n) {
+            n = Math.round(Number(n) || 0);
+            if (n >= 1e9) return Number((n / 1e9).toFixed(1)).toLocaleString('fa-IR') + ' میلیارد';
+            if (n >= 1e6) return Number((n / 1e6).toFixed(1)).toLocaleString('fa-IR') + ' میلیون';
+            return n.toLocaleString('fa-IR');
+        }
+
+        function renderInventorySummary(list) {
+            const box = document.getElementById('invSummary');
+            const chipBox = document.getElementById('invFilterChips');
+            const sortBox = document.getElementById('invSortChips');
+            if (!box) return;
+            const fa = n => Number(n).toLocaleString('fa-IR');
+            const canManage = (currentRole === 'admin' || currentRole === 'morning_seller');
+            const isAdmin = (currentRole === 'admin');
+
+            const lowItems = list.filter(invIsLow);
+            const outItems = list.filter(p => invIsOut(p) && !p.no_restock);
+            const soonItems = list.filter(invIsSoon).sort((a, b) => invRunway(a).days - invRunway(b).days);
+            const problemSet = new Set([...lowItems, ...outItems, ...soonItems]);
+            const total = list.length;
+            const healthPct = total > 0 ? Math.round((total - problemSet.size) / total * 100) : 100;
+            const color = healthPct < 60 ? '#ef4444' : healthPct < 85 ? '#f59e0b' : '#10b981';
+            const totalMain = list.reduce((a, p) => a + (p.booth_only ? 0 : (Number(p.stock) || 0)), 0);
+            const totalValue = list.reduce((a, p) => a + (((Number(p.stock) || 0) + (Number(p.booth_stock) || 0)) * (Number(p.buy_price) || 0)), 0);
+
+            const critical = [...new Set([...outItems, ...lowItems, ...soonItems])].slice(0, 4).map(p => p.name).join(' ، ');
+            let html = `<div class="bz-hero">
+                <div class="bz-ring" style="--p:${healthPct}; --c:${color};"><div><b style="color:${color};">${fa(healthPct)}٪</b><span>سلامت انبار</span></div></div>
+                <div class="bz-hero-txt">
+                    <h3>${problemSet.size === 0 ? '✨ انبار سر جاشه' : '🩺 ' + fa(problemSet.size) + ' کالا نیاز به توجه دارد'}</h3>
+                    <p>از ${fa(total)} کالای این دسته: ${fa(lowItems.length)} کمبود · ${fa(outItems.length)} تمام‌شده · ${fa(soonItems.length)} در آستانه‌ی اتمام</p>
+                    ${critical ? `<p style="color:#fbbf24;">⚠️ ${critical}</p>` : ''}
+                </div>
+            </div>`;
+            if (canManage && (lowItems.length || soonItems.length || outItems.length)) {
+                html += `<button class="bc-big" style="margin-bottom:8px;" onclick="copyInvShoppingList()">🛒 کپی لیست خرید پیشنهادی</button>`;
+            }
+            html += `<div class="bs-grid">
+                <div class="bs-tile"><b style="color:#38bdf8;">${fa(total)}</b><span>تعداد کالا</span></div>
+                <div class="bs-tile"><b style="color:#22d3ee;">${fa(Number(totalMain.toFixed(1)))}</b><span>کیلو در انبار</span></div>
+                <div class="bs-tile"><b style="color:#ef4444;">${fa(lowItems.length)}</b><span>کمبود</span></div>
+                <div class="bs-tile"><b style="color:#10b981; font-size:13px;">${isAdmin ? v77Compact(totalValue) : fa(soonItems.length)}</b><span>${isAdmin ? 'ارزش موجودی (تومان)' : 'رو به اتمام'}</span></div>
+            </div>`;
+            box.innerHTML = html;
+
+            if (chipBox) {
+                const chips = [['all', 'همه', total], ['low', '⚠️ کمبود', lowItems.length], ['out', '🔴 تمام‌شده', outItems.length], ['soon', '⏳ کمتر از ۵ روز', soonItems.length],
+                    ['norestock', '🚫 دیگه نمیارم', list.filter(p => p.no_restock).length], ['boothonly', 'فقط غرفه', list.filter(p => p.booth_only).length]];
+                chipBox.innerHTML = chips.map(c => `<button class="bc-chip ${invFilterMode === c[0] ? 'active' : ''}" onclick="setInvFilterMode('${c[0]}')">${c[1]} (${fa(c[2])})</button>`).join('');
+            }
+            if (sortBox) {
+                const sorts = [['alpha', '🔤 الفبا'], ['low', '🚨 کمبود'], ['runway', '⏳ کمترین کفایت']];
+                if (isAdmin) sorts.push(['value', '💰 بیشترین ارزش']);
+                sortBox.innerHTML = '<span style="font-size:11px; color:var(--text-hint); align-self:center; white-space:nowrap;">مرتب‌سازی:</span>' +
+                    sorts.map(c => `<button class="bc-chip ${invSortMode === c[0] ? 'active' : ''}" onclick="setInvSortMode('${c[0]}')">${c[1]}</button>`).join('');
+            }
+        }
+
+        // لیست خرید پیشنهادی: هر کالای کم/تمام‌شده/رو به اتمام، با مقدار پیشنهادی تا رسیدن به حداکثرِ «۲ برابر حداقل موجودی» و «۷ روز فروش»
+        function copyInvShoppingList() {
+            const fa = n => Number(n).toLocaleString('fa-IR');
+            const rows = [];
+            invCategoryList().forEach(p => {
+                if (p.no_restock) return;
+                const r = invRunway(p);
+                if (!(invIsLow(p) || invIsSoon(p) || invIsOut(p))) return;
+                const current = p.booth_only ? (p.booth_stock || 0) : (p.stock || 0);
+                const minRef = Number(p.booth_only ? p.booth_min_stock : p.min_stock) || 0;
+                const need = Math.max(0, Math.max(minRef * 2, r.avg * 7) - current);
+                rows.push(`• ${p.name}: موجودی ${fa(Number(current.toFixed(2)))} کیلو` + (need > 0 ? ` ← پیشنهاد خرید حدود ${fa(Math.ceil(need))} کیلو` : ''));
+            });
+            if (rows.length === 0) return showToast('الان کالایی برای خرید لازم نیست 👌');
+            const text = `🛒 لیست خرید پیشنهادی (${getTehranDateString()})\n` + rows.join('\n') + `\n\n(مقدار پیشنهادی = رسیدن به حداکثرِ «۲ برابر حداقل موجودی» و «۷ روز فروش»)`;
+            v77Copy(text).then(ok => showToast(ok ? '✅ لیست خرید کپی شد؛ هرجا خواستی Paste کن.' : '❌ کپی نشد. لطفاً دوباره امتحان کن.'));
         }
 
         function renderInventoryRows(products) {
@@ -10339,6 +10676,7 @@
             const showBuyPrice = (currentRole === 'admin');
             const tbody = document.getElementById('inventoryTable');
             tbody.innerHTML = '';
+            const fa = n => Number(n).toLocaleString('fa-IR', { maximumFractionDigits: 3 });
 
             const colCount = 5 + (showBuyPrice ? 1 : 0) + (canManage ? 1 : 0);
 
@@ -10354,18 +10692,47 @@
                 // قرمز نشون داده بشه؛ کمبودش فقط با موجودی خودِ غرفه سنجیده می‌شه.
                 const stockLow = p.booth_only ? (p.booth_stock || 0) <= (p.booth_min_stock || 0) : (p.stock <= p.min_stock);
                 const boothOnlyTag = p.booth_only ? ' <span style="font-size:9px; color:#fbbf24; border:1px solid #fbbf24; border-radius:6px; padding:1px 4px;">فقط غرفه</span>' : '';
+                const rw = invRunway(p);
+                let rwBadge = '';
+                if (!p.no_restock && rw.days !== null && rw.total > 0) {
+                    const cls = rw.days <= 2 ? 'bad' : rw.days <= 5 ? 'warn' : 'good';
+                    rwBadge = `<br><span class="bz-b ${cls}" style="margin-top:4px;">⏳ ${fmtRunway(rw.days)}</span>`;
+                } else if (!p.no_restock && rw.total <= 0) {
+                    rwBadge = `<br><span class="bz-b bad" style="margin-top:4px;">🔴 تمام شده</span>`;
+                }
                 const nameCell = p.no_restock
                     ? `${p.name || ''}${categoryTag}${boothOnlyTag}<br><span style="background:#64748b; color:#fff; font-size:9px; border-radius:5px; padding:2px 5px;">🚫 دیگه سفارش داده نمی‌شود</span>`
-                    : `${p.name || ''}${categoryTag}${boothOnlyTag}`;
+                    : `${p.name || ''}${categoryTag}${boothOnlyTag}${rwBadge}`;
+
+                // نوار سطح موجودی انبار اصلی؛ خط سفید = نقطه‌ی حداقل (هشدار)
+                let barHtml = '';
+                if (!p.booth_only) {
+                    const minV = Number(p.min_stock) || 0;
+                    const stockV = Number(p.stock) || 0;
+                    const ref = minV * 2;
+                    const pct = ref > 0 ? Math.min(100, stockV / ref * 100) : (stockV > 0 ? 100 : 0);
+                    const col = (stockV <= minV) ? '#ef4444' : (stockV <= minV * 1.5 ? '#f59e0b' : '#10b981');
+                    barHtml = `<div class="bz-mb"><i style="width:${pct}%; background:${col};"></i>${ref > 0 ? '<s style="right:50%;"></s>' : ''}</div><span class="bz-sub">حداقل: ${fa(minV)}</span>`;
+                }
+
+                let margin = '';
+                if (showBuyPrice) {
+                    const sp = Number(p.sell_price) || 0, bp = Number(p.buy_price) || 0;
+                    if (sp > 0) {
+                        const m = (sp - bp) / sp * 100;
+                        margin = `<br><span class="bz-b ${m < 0 ? 'bad' : m < 10 ? 'warn' : 'good'}" style="margin-top:4px;">سود ${Math.round(m).toLocaleString('fa-IR')}٪</span>`;
+                    }
+                }
+
                 let rowHtml = `
                     <td>${p.code || ''}</td>
                     <td>${nameCell}</td>
-                    <td style="color: ${p.booth_only ? '#94a3b8' : ((stockLow && !p.no_restock) ? '#ef4444' : '#10b981')}; font-weight: bold;">${p.booth_only ? '—' : Number(p.stock).toLocaleString('fa-IR', { maximumFractionDigits: 3 })} ${p.booth_only ? '' : 'کیلو'}</td>
-                    <td style="color: ${(p.booth_only && stockLow && !p.no_restock) ? '#ef4444' : 'inherit'}; font-weight: ${(p.booth_only && stockLow && !p.no_restock) ? 'bold' : 'normal'};">${Number(p.booth_stock || 0).toLocaleString('fa-IR', { maximumFractionDigits: 3 })} کیلو</td>
+                    <td style="color: ${p.booth_only ? '#94a3b8' : ((stockLow && !p.no_restock) ? '#ef4444' : '#10b981')}; font-weight: bold;">${p.booth_only ? '—' : fa(Number(p.stock))} ${p.booth_only ? '' : 'کیلو'}${barHtml}</td>
+                    <td style="color: ${(p.booth_only && stockLow && !p.no_restock) ? '#ef4444' : 'inherit'}; font-weight: ${(p.booth_only && stockLow && !p.no_restock) ? 'bold' : 'normal'};">${fa(Number(p.booth_stock || 0))} کیلو</td>
                     <td>${Number(p.sell_price || 0).toLocaleString('fa-IR')} تومان</td>
                 `;
                 if (showBuyPrice) {
-                    rowHtml += `<td>${Number(p.buy_price || 0).toLocaleString('fa-IR')} تومان</td>`;
+                    rowHtml += `<td>${Number(p.buy_price || 0).toLocaleString('fa-IR')} تومان${margin}</td>`;
                 }
                 if (canManage) {
                     rowHtml += `<td>
@@ -13459,6 +13826,7 @@
             if (currentRole === 'admin') {
                 loadSalaryTargets();
             }
+            sstInit();
 
             let query = _supabase.from('salary_payments').select('*').order('paid_at', { ascending: false });
 
@@ -13486,6 +13854,437 @@
                     <b style="color:#34d399;">${Number(s.amount).toLocaleString('fa-IR')} تومان</b>
                 </div>
             `).join('');
+        }
+
+        // =========================================================================
+        // v77 — ابزارهای مشترک
+        // =========================================================================
+        function v77Esc(x) {
+            return String(x == null ? '' : x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+        function v77Fa(n, d) {
+            return Number(n || 0).toLocaleString('fa-IR', { maximumFractionDigits: (d == null ? 3 : d) });
+        }
+        function v77Toman(n) {
+            return Math.round(Number(n) || 0).toLocaleString('fa-IR') + ' تومان';
+        }
+        // تبدیل ارقام فارسی/عربی و جداکننده‌ها به عدد قابل‌محاسبه
+        function v77Num(v) {
+            const t = String(v == null ? '' : v)
+                .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
+                .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
+                .replace(/[,،٬\s]/g, '')
+                .replace('٫', '.');
+            const n = parseFloat(t);
+            return isNaN(n) ? 0 : n;
+        }
+        function v77CopyFallback(text) {
+            try {
+                const ta = document.createElement('textarea');
+                ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+                document.body.appendChild(ta); ta.select();
+                const ok = document.execCommand('copy');
+                ta.remove();
+                return ok;
+            } catch (e) { return false; }
+        }
+        function v77Copy(text) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                return navigator.clipboard.writeText(text).then(() => true).catch(() => v77CopyFallback(text));
+            }
+            return Promise.resolve(v77CopyFallback(text));
+        }
+
+        // سرعت فروش ۱۴ روز اخیر هر کالا (کش ۲ دقیقه‌ای) — برای «چند روز دیگه تموم میشه؟» در یخچال و انبار
+        let _salesVelocityCache = { at: 0, map: null };
+        async function getSalesVelocity(force) {
+            if (!force && _salesVelocityCache.map && (Date.now() - _salesVelocityCache.at) < 120000) return _salesVelocityCache.map;
+            const since = new Date(Date.now() - 14 * 86400000).toISOString();
+            const todayStart = new Date(getTehranISODate() + 'T00:00:00+03:30').getTime();
+            const { data, error } = await _supabase.from('sales').select('product_code, quantity, created_at').gte('created_at', since).limit(10000);
+            const map = {};
+            if (!error) {
+                (data || []).forEach(s => {
+                    const c = s.product_code;
+                    if (!c) return;
+                    const q = Number(s.quantity) || 0;
+                    const o = map[c] || (map[c] = { total: 0, today: 0, avg: 0 });
+                    o.total += q;
+                    if (new Date(s.created_at).getTime() >= todayStart) o.today += q;
+                });
+                Object.keys(map).forEach(c => { map[c].avg = map[c].total / 14; });
+            }
+            _salesVelocityCache = { at: Date.now(), map };
+            return map;
+        }
+
+        // =========================================================================
+        // v77 — هدف فروش هر شیفت برای هر فروشنده + پاداش / جریمه‌ی حقوق
+        // =========================================================================
+        const SST_SQL = `create table if not exists public.seller_shift_targets (
+  seller_label   text primary key,
+  base_salary    numeric not null default 0,
+  target_amount  numeric not null default 0,
+  bonus_type     text not null default 'amount' check (bonus_type in ('amount','percent')),
+  bonus_value    numeric not null default 0,
+  penalty_type   text not null default 'amount' check (penalty_type in ('amount','percent')),
+  penalty_value  numeric not null default 0,
+  active         boolean not null default true,
+  updated_at     timestamptz not null default now()
+);
+alter table public.seller_shift_targets enable row level security;
+drop policy if exists "sst_all" on public.seller_shift_targets;
+create policy "sst_all" on public.seller_shift_targets for all to anon, authenticated using (true) with check (true);
+notify pgrst, 'reload schema';`;
+
+        let _sstTargets = [];
+        let _sstPeriod = 'cur';
+
+        function sstCopySql() {
+            v77Copy(SST_SQL).then(ok => showToast(ok ? '✅ کد SQL کپی شد؛ در Supabase بخش SQL Editor بچسبان و Run بزن.' : '❌ کپی نشد.'));
+        }
+
+        function sstSetupHelp(isAdmin) {
+            if (!isAdmin) return '<p style="color:#94a3b8; font-size:12px;">هدف فروش شیفت هنوز فعال نشده است.</p>';
+            return `<div class="bz-strip">⚙️ برای فعال‌شدن این بخش، یک‌بار جدول <b>seller_shift_targets</b> باید در Supabase ساخته شود.
+                <br>۱) دکمه‌ی زیر را بزن تا کد کپی شود ۲) در Supabase به <b>SQL Editor</b> برو، Paste کن و <b>Run</b> بزن ۳) همین صفحه را دوباره باز کن.</div>
+                <button class="bc-big" onclick="sstCopySql()">📋 کپی کد SQL</button>
+                <div class="st-pre" style="margin-top:8px;">${v77Esc(SST_SQL)}</div>`;
+        }
+
+        async function sstInit() {
+            const box = document.getElementById('sstBox');
+            if (!box) return;
+            const isAdmin = (currentRole === 'admin');
+            const isSeller = (currentRole === 'morning_seller' || currentRole === 'evening_seller');
+            if (!isAdmin && !isSeller) { box.style.display = 'none'; return; }
+            box.style.display = 'block';
+            const form = document.getElementById('sstAdminForm');
+            if (form) form.style.display = isAdmin ? 'block' : 'none';
+            if (isAdmin) await sstLoadSellers();
+            await sstRefresh();
+        }
+
+        async function sstLoadSellers() {
+            const sel = document.getElementById('sstSeller');
+            if (!sel) return;
+            const prev = sel.value;
+            sel.innerHTML = '';
+            const { data: sellers, error } = await _supabase.rpc('admin_list_sellers');
+            if (error || !sellers) { sel.innerHTML = '<option value="">❌ خطا در دریافت لیست پرسنل</option>'; return; }
+            sellers.filter(s => !s.is_terminated).forEach(s => {
+                const roleLabel = (s.role === 'evening_seller') ? 'فروشنده شب' : 'فروشنده صبح';
+                const trialTag = s.trial_expires_at ? ' 🧪 آزمایشی' : '';
+                const opt = document.createElement('option');
+                opt.value = roleLabel + ' - ' + (s.full_name || s.username);
+                opt.textContent = `👤 ${s.full_name || s.username} (${roleLabel}${trialTag})`;
+                sel.appendChild(opt);
+            });
+            if (sel.options.length === 0) { sel.innerHTML = '<option value="">هیچ پرسنلی ثبت‌نام نکرده</option>'; return; }
+            if (prev && Array.from(sel.options).some(o => o.value === prev)) sel.value = prev;
+            sstLoadForm();
+        }
+
+        function sstLoadForm() {
+            const sel = document.getElementById('sstSeller');
+            if (!sel) return;
+            const t = _sstTargets.find(x => x.seller_label === sel.value);
+            document.getElementById('sstBase').value = t && Number(t.base_salary) ? String(t.base_salary) : '';
+            document.getElementById('sstTarget').value = t && Number(t.target_amount) ? String(t.target_amount) : '';
+            document.getElementById('sstBonusType').value = t ? t.bonus_type : 'amount';
+            document.getElementById('sstBonusValue').value = t && Number(t.bonus_value) ? String(t.bonus_value) : '';
+            document.getElementById('sstPenaltyType').value = t ? t.penalty_type : 'amount';
+            document.getElementById('sstPenaltyValue').value = t && Number(t.penalty_value) ? String(t.penalty_value) : '';
+            document.getElementById('sstActive').checked = t ? !!t.active : true;
+            sstPreview();
+        }
+
+        function sstAmtText(type, val, base) {
+            val = Number(val) || 0;
+            if (type === 'percent') {
+                return v77Fa(val) + '٪ حقوق' + (base > 0 ? ' ≈ ' + v77Toman(base * val / 100) : '');
+            }
+            return v77Toman(val);
+        }
+
+        function sstPreview() {
+            const el = document.getElementById('sstPreview');
+            if (!el) return;
+            const base = v77Num(document.getElementById('sstBase').value);
+            const target = v77Num(document.getElementById('sstTarget').value);
+            const bt = document.getElementById('sstBonusType').value, bv = v77Num(document.getElementById('sstBonusValue').value);
+            const pt = document.getElementById('sstPenaltyType').value, pv = v77Num(document.getElementById('sstPenaltyValue').value);
+            if (!target) { el.innerHTML = 'مبلغ هدف را وارد کن تا خلاصه‌ی قانون اینجا نشان داده شود.'; return; }
+            let t = `🎯 فروش شیفت ≥ <b>${v77Toman(target)}</b><br>✅ پاداش: <b>+${sstAmtText(bt, bv, base)}</b>`;
+            t += pv > 0 ? `<br>❌ جریمه: <b>−${sstAmtText(pt, pv, base)}</b>` : '<br>❌ بدون جریمه';
+            if ((bt === 'percent' || pt === 'percent') && !(base > 0)) t += '<br><span style="color:#fbbf24;">⚠️ برای تبدیل درصد به تومان، حقوق پایه را هم وارد کن.</span>';
+            el.innerHTML = t;
+        }
+
+        async function sstSave() {
+            const sel = document.getElementById('sstSeller');
+            const seller_label = sel ? sel.value : '';
+            if (!seller_label) return showToast('⛔ اول یک فروشنده انتخاب کن.');
+            const base_salary = v77Num(document.getElementById('sstBase').value);
+            const target_amount = v77Num(document.getElementById('sstTarget').value);
+            const bonus_type = document.getElementById('sstBonusType').value;
+            const bonus_value = v77Num(document.getElementById('sstBonusValue').value);
+            const penalty_type = document.getElementById('sstPenaltyType').value;
+            const penalty_value = v77Num(document.getElementById('sstPenaltyValue').value);
+            const active = document.getElementById('sstActive').checked;
+            if (target_amount <= 0) return showToast('⛔ مبلغ هدف فروش را وارد کن.');
+            if (bonus_value <= 0 && penalty_value <= 0) return showToast('⛔ حداقل یکی از «پاداش» یا «جریمه» را وارد کن.');
+            if ((bonus_type === 'percent' && bonus_value > 100) || (penalty_type === 'percent' && penalty_value > 100)) return showToast('⛔ درصد نمی‌تواند بیشتر از ۱۰۰ باشد.');
+
+            const { error } = await _supabase.from('seller_shift_targets').upsert([{
+                seller_label, base_salary, target_amount, bonus_type, bonus_value, penalty_type, penalty_value, active,
+                updated_at: new Date().toISOString()
+            }], { onConflict: 'seller_label' });
+            if (error) {
+                showToast('❌ خطا در ذخیره هدف: ' + error.message + '\n\nاگه جدول seller_shift_targets هنوز ساخته نشده، پایین همین بخش راهنمای ساخت آن هست.');
+                return;
+            }
+            let msg = '✅ هدف این فروشنده ذخیره شد.';
+            if ((bonus_type === 'percent' || penalty_type === 'percent') && !(base_salary > 0)) msg += '\n⚠️ چون حقوق پایه وارد نشده، درصدها در «جمع تومانی» حساب نمی‌شوند.';
+            showToast(msg);
+            await sstRefresh();
+        }
+
+        async function sstDelete() {
+            const sel = document.getElementById('sstSeller');
+            const seller_label = sel ? sel.value : '';
+            if (!seller_label) return;
+            if (!_sstTargets.some(x => x.seller_label === seller_label)) return showToast('برای این فروشنده هدفی ثبت نشده.');
+            const ok = await showConfirm('هدف و قانون پاداش/جریمه‌ی این فروشنده حذف شود؟\n\n(نتیجه‌ی روزهای قبل هم دیگر محاسبه نخواهد شد.)');
+            if (!ok) return;
+            const { error } = await _supabase.from('seller_shift_targets').delete().eq('seller_label', seller_label);
+            if (error) return showToast('❌ خطا در حذف: ' + error.message);
+            showToast('✅ هدف حذف شد.');
+            await sstRefresh();
+        }
+
+        function sstEdit(label) {
+            const sel = document.getElementById('sstSeller');
+            if (!sel) return;
+            sel.value = label;
+            sstLoadForm();
+            sel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function sstSetPeriod(which) {
+            _sstPeriod = which;
+            document.getElementById('sstPerCur').classList.toggle('active', which === 'cur');
+            document.getElementById('sstPerPrev').classList.toggle('active', which === 'prev');
+            sstRefresh();
+        }
+
+        // روز ماه شمسی برای یک لحظه‌ی زمانی (به وقت تهران)
+        function sstJalaliDay(d) {
+            const parts = new Intl.DateTimeFormat('en-US-u-ca-persian', { timeZone: 'Asia/Tehran', day: 'numeric' }).formatToParts(d);
+            const x = parts.find(z => z.type === 'day');
+            return x ? (parseInt(x.value, 10) || 1) : 1;
+        }
+        function sstMonthLabel(d) {
+            return new Intl.DateTimeFormat('fa-IR-u-ca-persian', { timeZone: 'Asia/Tehran', month: 'long', year: 'numeric' }).format(d);
+        }
+        function sstPeriodBounds(which) {
+            const now = new Date();
+            const curStart = new Date(now.getTime() - (sstJalaliDay(now) - 1) * 86400000);
+            if (which === 'cur') {
+                return { startISO: getTehranISODate(curStart), endISO: getTehranISODate(now), label: sstMonthLabel(now) };
+            }
+            const prevEnd = new Date(curStart.getTime() - 86400000);
+            const prevStart = new Date(prevEnd.getTime() - (sstJalaliDay(prevEnd) - 1) * 86400000);
+            return { startISO: getTehranISODate(prevStart), endISO: getTehranISODate(prevEnd), label: sstMonthLabel(prevEnd) };
+        }
+
+        // صفحه‌بندی برای کوئری‌های بزرگ (سقف ۱۰۰۰ ردیف در هر درخواست)
+        async function sstFetchAll(makeQuery) {
+            const all = [];
+            const page = 1000;
+            for (let from = 0; from < 20000; from += page) {
+                const { data, error } = await makeQuery().range(from, from + page - 1);
+                if (error) return { data: all, error };
+                (data || []).forEach(r => all.push(r));
+                if (!data || data.length < page) break;
+            }
+            return { data: all, error: null };
+        }
+
+        // شیفت‌های یک فروشنده: هر «ورود» تا اولین «خروج» بعدیش. فروش داخل همین بازه = فروش شیفت.
+        // اگه هنوز خروج نزده: شیفت «در جریان» است (تا ۱۸ ساعت از ورود). اگه خروج را فراموش کرده: تا پایان همان روز.
+        // روز مرخصی (leave) و روزهایی که ورود ثبت نشده، نه پاداش دارند نه جریمه.
+        function sstComputeShifts(sales, events, nowMs) {
+            const evs = events.slice().sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+            const leaveDays = new Set();
+            evs.forEach(e => { if (e.type === 'leave') leaveDays.add(getTehranISODate(new Date(e.created_at))); });
+            const sm = sales.map(x => ({ t: new Date(x.created_at).getTime(), v: Number(x.sell_price) || 0 }));
+            const days = {};
+            for (let i = 0; i < evs.length; i++) {
+                const e = evs[i];
+                if (e.type !== 'entry') continue;
+                const start = new Date(e.created_at).getTime();
+                let end = null, hasExit = false;
+                for (let j = i + 1; j < evs.length; j++) {
+                    if (evs[j].type === 'exit') { end = new Date(evs[j].created_at).getTime(); hasExit = true; break; }
+                    if (evs[j].type === 'entry') break;
+                }
+                let live = false;
+                const dayISO = getTehranISODate(new Date(start));
+                if (!hasExit) {
+                    if (nowMs - start < 18 * 3600000) { end = nowMs; live = true; }
+                    else end = new Date(dayISO + 'T23:59:59+03:30').getTime();
+                }
+                let amount = 0;
+                sm.forEach(x => { if (x.t >= start && x.t <= end) amount += x.v; });
+                const d = days[dayISO] || (days[dayISO] = { dayISO, amount: 0, live: false, start, end });
+                d.amount += amount;
+                d.live = d.live || live;
+                d.end = Math.max(d.end, end);
+            }
+            return Object.values(days).filter(d => !leaveDays.has(d.dayISO)).sort((a, b) => a.dayISO < b.dayISO ? 1 : -1);
+        }
+
+        function sstMoney(type, v, base) {
+            return type === 'percent' ? (base > 0 ? base * Number(v) / 100 : 0) : (Number(v) || 0);
+        }
+        function sstDayResult(t, d) {
+            const base = Number(t.base_salary) || 0;
+            if (d.live) return { status: 'live', delta: 0 };
+            if (d.amount >= Number(t.target_amount)) return { status: 'hit', delta: sstMoney(t.bonus_type, t.bonus_value, base) };
+            return { status: 'miss', delta: -sstMoney(t.penalty_type, t.penalty_value, base) };
+        }
+
+        // کارت پیشرفت لحظه‌ای/نتیجه‌ی یک شیفت
+        function sstShiftBlock(t, d) {
+            const base = Number(t.base_salary) || 0;
+            const target = Number(t.target_amount) || 0;
+            const pct = target > 0 ? Math.min(100, Math.round(d.amount / target * 100)) : 0;
+            const reached = d.amount >= target;
+            const bonusTxt = sstAmtText(t.bonus_type, t.bonus_value, base);
+            const penTxt = Number(t.penalty_value) > 0 ? sstAmtText(t.penalty_type, t.penalty_value, base) : '';
+            const col = reached ? '#10b981' : (pct >= 70 ? '#f59e0b' : '#38bdf8');
+            let msg;
+            if (d.live) {
+                msg = reached
+                    ? `<p style="color:#10b981; font-weight:bold; margin:6px 0 0;">🎉 هدف زده شد! اگه همین‌طور تا آخر شیفت بمونه، <b>+${bonusTxt}</b> به حقوقت اضافه می‌شه.</p>`
+                    : `<p style="margin:6px 0 0; font-size:12px;">🔥 <b>${v77Toman(target - d.amount)}</b> تا هدف مونده.${penTxt ? `<br><span style="color:#f87171;">اگه تا آخر شیفت نرسی: −${penTxt}</span>` : ''}<br><span style="color:#34d399;">اگه برسی: +${bonusTxt}</span></p>`;
+            } else {
+                msg = reached
+                    ? `<p style="color:#10b981; font-weight:bold; margin:6px 0 0;">🎉 هدف این شیفت زده شد: <b>+${bonusTxt}</b></p>`
+                    : `<p style="color:#f87171; margin:6px 0 0; font-size:12px;">این شیفت به هدف نرسید${penTxt ? ': <b>−' + penTxt + '</b>' : ' (بدون جریمه)'}</p>`;
+            }
+            return `<div>
+                <div style="display:flex; justify-content:space-between; font-size:12px;"><span>${d.live ? '⏱️ شیفت در جریان' : '✅ شیفت تمام‌شده'}</span><b style="color:${col};">${v77Toman(d.amount)} از ${v77Toman(target)} (${v77Fa(pct)}٪)</b></div>
+                <div class="st-prog"><i style="width:${pct}%; background:${col};"></i></div>
+                ${msg}
+            </div>`;
+        }
+
+        function sstRuleLine(t) {
+            const base = Number(t.base_salary) || 0;
+            let s = `🎯 هدف هر شیفت: <b>${v77Toman(t.target_amount)}</b><br>🎁 پاداش: <b style="color:#34d399;">+${sstAmtText(t.bonus_type, t.bonus_value, base)}</b>`;
+            s += Number(t.penalty_value) > 0 ? `<br>⚠️ جریمه: <b style="color:#f87171;">−${sstAmtText(t.penalty_type, t.penalty_value, base)}</b>` : '<br>⚠️ جریمه: ندارد';
+            return s;
+        }
+
+        function sstTargetCard(t, shifts, pb, isAdmin) {
+            const base = Number(t.base_salary) || 0;
+            const needBase = (t.bonus_type === 'percent' || t.penalty_type === 'percent') && !(base > 0);
+            let inner = `<div class="st-rule">${sstRuleLine(t)}</div>`;
+            if (!t.active) {
+                inner += '<div class="bz-strip" style="margin-top:8px;">⏸ این هدف فعلاً غیرفعال است و محاسبه نمی‌شود.</div>';
+            } else {
+                const inPeriod = shifts.filter(d => d.dayISO >= pb.startISO && d.dayISO <= pb.endISO);
+                let hit = 0, miss = 0, net = 0, live = null, latestClosed = null;
+                inPeriod.forEach(d => {
+                    const r = sstDayResult(t, d);
+                    if (r.status === 'live') live = d;
+                    else { if (r.status === 'hit') hit++; else miss++; net += r.delta; if (!latestClosed) latestClosed = d; }
+                });
+                const shownShift = live || null;
+                if (shownShift) inner += `<div style="margin-top:10px;">${sstShiftBlock(t, shownShift)}</div>`;
+                inner += `<div class="st-tiles">
+                    <div class="st-tile"><b style="color:#10b981;">${v77Fa(hit)}</b><span>شیفت موفق</span></div>
+                    <div class="st-tile"><b style="color:#ef4444;">${v77Fa(miss)}</b><span>شیفت ناموفق</span></div>
+                    <div class="st-tile"><b style="color:${net >= 0 ? '#10b981' : '#ef4444'}; font-size:12px;">${net >= 0 ? '+' : '−'}${Math.abs(Math.round(net)).toLocaleString('fa-IR')}</b><span>اثر روی حقوق (تومان)</span></div>
+                </div>`;
+                if (needBase) inner += '<div class="bz-strip" style="margin-top:8px;">⚠️ حقوق پایه ثبت نشده؛ بخش درصدی در «اثر روی حقوق» حساب نمی‌شود.</div>';
+                if (inPeriod.length > 0) {
+                    inner += `<details style="margin-top:8px;"><summary style="cursor:pointer; font-size:12px; color:var(--accent);">ریز شیفت‌ها (${v77Fa(inPeriod.length)})</summary>` +
+                        inPeriod.map(d => {
+                            const r = sstDayResult(t, d);
+                            const icon = r.status === 'live' ? '⏳' : (r.status === 'hit' ? '✅' : '❌');
+                            const dtxt = r.status === 'live' ? 'در جریان' : (r.delta === 0 ? '—' : (r.delta > 0 ? '+' : '−') + Math.abs(Math.round(r.delta)).toLocaleString('fa-IR'));
+                            const c = r.status === 'hit' ? '#34d399' : (r.status === 'miss' ? '#f87171' : '#fbbf24');
+                            return `<div class="st-day"><span>${icon} ${jalaliLabelForISODate(d.dayISO)}</span><span>${v77Toman(d.amount)}</span><b style="color:${c};">${dtxt}</b></div>`;
+                        }).join('') + '</details>';
+                } else {
+                    inner += `<p style="font-size:12px; color:#94a3b8; margin-top:8px;">در ${pb.label} هنوز شیفتی ثبت نشده.</p>`;
+                }
+            }
+            const editBtn = isAdmin ? `<button class="row-btn edit-btn" style="margin-top:8px;" onclick="sstEdit('${v77Esc(t.seller_label).replace(/'/g, "\\'")}')">✏️ ویرایش قانون</button>` : '';
+            return `<div class="st-card"><h4>👤 ${v77Esc(t.seller_label)}${t.active ? '' : ' <span class="bz-b warn">غیرفعال</span>'}</h4>${inner}${editBtn}</div>`;
+        }
+
+        async function sstRefresh() {
+            const panel = document.getElementById('sstPanel');
+            if (!panel) return;
+            const isAdmin = (currentRole === 'admin');
+            panel.innerHTML = skeletonCards(1);
+
+            let tq = _supabase.from('seller_shift_targets').select('*');
+            if (!isAdmin) tq = tq.eq('seller_label', currentUserLabel);
+            const { data: targets, error } = await tq;
+            if (error) { _sstTargets = []; panel.innerHTML = sstSetupHelp(isAdmin); return; }
+            _sstTargets = targets || [];
+            if (isAdmin) sstLoadForm();
+
+            if (_sstTargets.length === 0) {
+                panel.innerHTML = isAdmin
+                    ? '<p style="font-size:12px; color:#94a3b8; margin-top:10px;">هنوز برای هیچ فروشنده‌ای هدفی تعیین نشده. از فرم بالا اولین هدف را بساز.</p>'
+                    : '<p style="font-size:12px; color:#94a3b8; margin-top:10px;">مدیر هنوز هدف فروشی برای شیفت تو تعیین نکرده.</p>';
+                return;
+            }
+
+            const pb = sstPeriodBounds(_sstPeriod);
+            const sinceISO = new Date(new Date(pb.startISO + 'T00:00:00+03:30').getTime() - 86400000).toISOString();
+            const active = _sstTargets.filter(t => t.active);
+            const dataBySeller = {};
+            await Promise.all(active.map(async t => {
+                const [sRes, aRes] = await Promise.all([
+                    sstFetchAll(() => _supabase.from('sales').select('sell_price, created_at').eq('seller_name', t.seller_label).gte('created_at', sinceISO).order('created_at', { ascending: false })),
+                    sstFetchAll(() => _supabase.from('attendance').select('type, created_at').eq('seller_name', t.seller_label).gte('created_at', sinceISO).order('created_at', { ascending: true }))
+                ]);
+                dataBySeller[t.seller_label] = sstComputeShifts(sRes.data || [], aRes.data || [], Date.now());
+            }));
+
+            panel.innerHTML = `<div style="font-size:12px; color:var(--text-secondary); margin-top:10px;">📅 نتیجه‌ی <b>${pb.label}</b> (شیفت‌های تمام‌شده؛ شیفت در جریان بعد از خروج حساب می‌شود)</div>` +
+                _sstTargets.map(t => sstTargetCard(t, dataBySeller[t.seller_label] || [], pb, isAdmin)).join('');
+        }
+
+        // کارت داشبورد فروشنده: پیشرفت شیفت فعلی (یا آخرین شیفت امروز) نسبت به هدف شخصی خودش
+        async function buildMyShiftTargetCard() {
+            const { data: t, error } = await _supabase.from('seller_shift_targets').select('*').eq('seller_label', currentUserLabel).maybeSingle();
+            if (error || !t || !t.active) return '';
+            const since = new Date(Date.now() - 36 * 3600000).toISOString();
+            const [sRes, aRes] = await Promise.all([
+                _supabase.from('sales').select('sell_price, created_at').eq('seller_name', currentUserLabel).gte('created_at', since).limit(2000),
+                _supabase.from('attendance').select('type, created_at').eq('seller_name', currentUserLabel).gte('created_at', since).order('created_at', { ascending: true }).limit(50)
+            ]);
+            const shifts = sstComputeShifts(sRes.data || [], aRes.data || [], Date.now());
+            const today = getTehranISODate();
+            const shift = shifts.find(d => d.live) || shifts.find(d => d.dayISO === today) || null;
+            const head = '<h3>🎯 هدف فروش شیفت تو</h3>';
+            if (!shift) {
+                return `<div class="report-card" style="border-color:#a78bfa;">${head}
+                    <div class="st-rule">${sstRuleLine(t)}</div>
+                    <p style="font-size:12px; color:#94a3b8; margin-top:6px;">بعد از ثبت «ورود»، پیشرفتت اینجا لحظه‌ای نشون داده می‌شه.</p></div>`;
+            }
+            const reached = shift.amount >= Number(t.target_amount);
+            return `<div class="report-card" style="border-color:${reached ? '#10b981' : '#a78bfa'};">${head}
+                ${sstShiftBlock(t, shift)}
+                <div class="st-rule" style="margin-top:8px;">${sstRuleLine(t)}</div></div>`;
         }
     </script>
 
