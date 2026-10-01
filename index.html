@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v78.2 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v78.3 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="icon" href="icon-192.png">
@@ -2382,9 +2382,13 @@
             <div id="sstAdminForm" style="display:none;">
                 <div class="hint" style="margin-top:0;">برای هر فروشنده یک هدف فروش بگذار. فروش از لحظه‌ی «ورود» تا «خروج» همان شیفت حساب می‌شود. اگه به هدف برسد پاداش، و اگه نرسد جریمه روی حقوقش ثبت می‌شود (مبلغ ثابت یا درصدی از حقوق پایه).</div>
                 <label>فروشنده:</label>
-                <select id="sstSeller" onchange="sstLoadForm()"><option value="">در حال دریافت لیست پرسنل...</option></select>
+                <select id="sstSeller" onchange="_sstNew=false;_sstEditId=null;sstLoadForm()"><option value="">در حال دریافت لیست پرسنل...</option></select>
                 <label>حقوق پایه ماهانه (تومان) — فقط برای تبدیل «درصد» به تومان لازمه:</label>
                 <input type="text" inputmode="decimal" id="sstBase" placeholder="مثلاً 15000000" oninput="sstPreview()"><div class="sst-words" id="sstWBase"></div>
+                <div id="sstMultiHelp"></div>
+                <div id="sstGoalList"></div>
+                <button class="bc-big" style="margin:8px 0;" onclick="sstNewGoal()">➕ هدف جدید برای این فروشنده</button>
+                <div id="sstEditTitle" class="hint" style="margin:0 0 6px;font-weight:700;"></div>
                 <label>📅 این هدف برای چه بازه‌ای است؟</label>
                 <select id="sstRangeMode" onchange="sstRangeUi()">
                     <option value="always">♾ همیشه (هر شیفت، تا وقتی تغییرش بدهم)</option>
@@ -2400,6 +2404,7 @@
                     <div class="bc-row"><select id="sstTD" onchange="sstPreview()"></select><select id="sstTM" onchange="sstPreview()"></select><select id="sstTY" onchange="sstPreview()"></select></div>
                 </div>
                 <div class="sst-range" id="sstRangeTxt"></div>
+                <div class="hint" style="margin-top:0;">اگر دو هدف یک روز را پوشش بدهند، هدفِ بازه‌ی کوتاه‌تر اعمال می‌شود (مثلاً «هدف عید ۳ روزه» روی «هدف همیشگی» برتری دارد).</div>
                 <label>🎯 هدف فروش هر شیفت (تومان):</label>
                 <input type="text" inputmode="decimal" id="sstTarget" placeholder="مثلاً 5000000" oninput="sstPreview()"><div class="sst-words" id="sstWTarget"></div>
                 <label>🎁 پاداش اگه به هدف برسد:</label>
@@ -2416,8 +2421,8 @@
                 <label style="display:flex; align-items:center; gap:8px; margin-top:10px; cursor:pointer;">
                     <input type="checkbox" id="sstActive" style="width:auto;" checked> فعال باشد
                 </label>
-                <button class="submit-btn" onclick="sstSave()">💾 ذخیره هدف این فروشنده</button>
-                <button class="row-btn delete-btn" style="width:100%; margin-top:8px;" onclick="sstDelete()">🗑️ حذف هدف این فروشنده</button>
+                <button class="submit-btn" onclick="sstSave()">💾 ذخیره‌ی این هدف</button>
+                <button class="row-btn delete-btn" style="width:100%; margin-top:8px;" onclick="sstDelete()">🗑️ حذف این هدف</button>
             </div>
             <div class="mode-selector" style="margin-top:14px;">
                 <button class="mode-btn active" id="sstPerCur" onclick="sstSetPeriod('cur')">این ماه</button>
@@ -2563,7 +2568,7 @@
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v78.2 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v78.3 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
 
     <script>
         function toggleLoginPasswordVisibility() {
@@ -14109,7 +14114,8 @@
         // v77 — هدف فروش هر شیفت برای هر فروشنده + پاداش / جریمه‌ی حقوق
         // =========================================================================
         const SST_SQL = `create table if not exists public.seller_shift_targets (
-  seller_label   text primary key,
+  id             uuid primary key default gen_random_uuid(),
+  seller_label   text not null,
   base_salary    numeric not null default 0,
   target_amount  numeric not null default 0,
   bonus_type     text not null default 'amount' check (bonus_type in ('amount','percent')),
@@ -14117,11 +14123,21 @@
   penalty_type   text not null default 'amount' check (penalty_type in ('amount','percent')),
   penalty_value  numeric not null default 0,
   active         boolean not null default true,
+  start_date     date,
+  end_date       date,
   updated_at     timestamptz not null default now()
 );
+create index if not exists idx_sst_seller on public.seller_shift_targets (seller_label);
 alter table public.seller_shift_targets enable row level security;
 drop policy if exists "sst_all" on public.seller_shift_targets;
 create policy "sst_all" on public.seller_shift_targets for all to anon, authenticated using (true) with check (true);
+notify pgrst, 'reload schema';`;
+        const SST_MULTI_SQL = `alter table public.seller_shift_targets add column if not exists id uuid default gen_random_uuid();
+update public.seller_shift_targets set id = gen_random_uuid() where id is null;
+alter table public.seller_shift_targets alter column id set not null;
+alter table public.seller_shift_targets drop constraint if exists seller_shift_targets_pkey;
+alter table public.seller_shift_targets add primary key (id);
+create index if not exists idx_sst_seller on public.seller_shift_targets (seller_label);
 alter table public.seller_shift_targets add column if not exists start_date date;
 alter table public.seller_shift_targets add column if not exists end_date date;
 notify pgrst, 'reload schema';`;
@@ -14177,18 +14193,47 @@ notify pgrst, 'reload schema';`;
             sstLoadForm();
         }
 
+        let _sstEditId = null, _sstNew = false, _sstMulti = false;
+        const sstKey = g => g.id ? String(g.id) : g.seller_label;
+        function sstSellerGoals(label) { return _sstTargets.filter(x => x.seller_label === label); }
+        function sstSpan(t) { return (t.start_date && t.end_date) ? sstDayDiff(t.start_date, t.end_date) + 1 : 100000; }
+        // اگر چند هدف یک روز را پوشش بدهند: بازه‌ی کوتاه‌تر، بعد جدیدتر
+        function sstPickTarget(list, iso) {
+            const c = list.filter(t => t.active && sstInRange(t, iso));
+            c.sort((a, b) => (sstSpan(a) - sstSpan(b)) || (new Date(b.updated_at || 0) - new Date(a.updated_at || 0)));
+            return c[0] || null;
+        }
+        function sstNewGoal() { _sstNew = true; _sstEditId = null; sstLoadForm(); const t = document.getElementById('sstEditTitle'); if (t) t.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+        function sstPickGoal(id) { _sstNew = false; _sstEditId = id; sstLoadForm(); }
+        function sstGoalListRender(goals) {
+            const box = document.getElementById('sstGoalList'); if (!box) return;
+            if (!goals.length) { box.innerHTML = '<div class="hint" style="margin:6px 0;">برای این فروشنده هنوز هدفی ثبت نشده؛ فرم پایین را پر کن.</div>'; return; }
+            box.innerHTML = '<div style="font-size:12px;margin:6px 0 4px;">🎯 هدف‌های این فروشنده (برای ویرایش لمس کن):</div>' + goals.map(g => {
+                const st = sstRangeStatus(g), on = (!_sstNew && String(_sstEditId) === sstKey(g));
+                const tag = !g.active ? '<span class="bz-b warn">غیرفعال</span>' : (st.st === 'ended' ? '<span class="bz-b" style="background:#64748b;color:#fff;">تمام‌شده</span>' : (st.st === 'upcoming' ? '<span class="bz-b warn">در راه</span>' : '<span class="bz-b good">فعال</span>'));
+                return `<div class="st-day" style="cursor:pointer;${on ? 'border:1px solid #a78bfa;border-radius:10px;padding:6px;' : ''}" onclick="sstPickGoal('${sstKey(g).replace(/'/g, '')}')"><span>${sstRangeText(g)}</span><span>${v77Toman(g.target_amount)}</span>${tag}</div>`;
+            }).join('');
+        }
         function sstLoadForm() {
             const sel = document.getElementById('sstSeller');
             if (!sel) return;
-            const t = _sstTargets.find(x => x.seller_label === sel.value);
-            document.getElementById('sstBase').value = t && Number(t.base_salary) ? String(t.base_salary) : '';
+            const goals = sstSellerGoals(sel.value);
+            if (!_sstNew && !(_sstEditId && goals.some(g => sstKey(g) === String(_sstEditId)))) {
+                const pick = sstPickTarget(goals, getTehranISODate()) || goals[0] || null;
+                _sstEditId = pick ? sstKey(pick) : null;
+            }
+            const t = _sstNew ? null : (goals.find(g => sstKey(g) === String(_sstEditId)) || null);
+            const base0 = (_sstNew && goals[0]) ? goals[0] : t;
+            document.getElementById('sstBase').value = base0 && Number(base0.base_salary) ? String(base0.base_salary) : '';
             document.getElementById('sstTarget').value = t && Number(t.target_amount) ? String(t.target_amount) : '';
             document.getElementById('sstBonusType').value = t ? t.bonus_type : 'amount';
             document.getElementById('sstBonusValue').value = t && Number(t.bonus_value) ? String(t.bonus_value) : '';
             document.getElementById('sstPenaltyType').value = t ? t.penalty_type : 'amount';
             document.getElementById('sstPenaltyValue').value = t && Number(t.penalty_value) ? String(t.penalty_value) : '';
             document.getElementById('sstActive').checked = t ? !!t.active : true;
+            const et = document.getElementById('sstEditTitle'); if (et) et.textContent = t ? '✏️ در حال ویرایش: ' + sstRangeText(t) : '🆕 ساخت هدف جدید';
             sstRangeFill(t);
+            sstGoalListRender(goals);
             sstPreview();
         }
 
@@ -14356,16 +14401,27 @@ notify pgrst, 'reload schema';`;
             const rg = sstRangeFromForm();
             if (rg.error) return showToast('⛔ ' + rg.error);
             const row = { seller_label, base_salary, target_amount, bonus_type, bonus_value, penalty_type, penalty_value, active, updated_at: new Date().toISOString() };
-            let { error } = await _supabase.from('seller_shift_targets').upsert([{ ...row, start_date: rg.start, end_date: rg.end }], { onConflict: 'seller_label' });
-            if (error && /start_date|end_date/.test(error.message || '')) {
-                if (rg.start) { v77Copy(SST_RANGE_SQL); return showToast('❌ ستون‌های بازه‌ی تاریخ هنوز در Supabase ساخته نشده‌اند.\nکد SQL کپی شد؛ در SQL Editor بچسبان، Run بزن و دوباره ذخیره کن.'); }
-                ({ error } = await _supabase.from('seller_shift_targets').upsert([row], { onConflict: 'seller_label' }));
+            let error = null;
+            if (_sstMulti) {
+                const payload = { ...row, start_date: rg.start, end_date: rg.end };
+                if (_sstEditId && !_sstNew) ({ error } = await _supabase.from('seller_shift_targets').update(payload).eq('id', _sstEditId));
+                else {
+                    const r = await _supabase.from('seller_shift_targets').insert([payload]).select('id').single();
+                    error = r.error; if (!error && r.data) _sstEditId = String(r.data.id);
+                }
+                _sstNew = false;
+            } else {
+                ({ error } = await _supabase.from('seller_shift_targets').upsert([{ ...row, start_date: rg.start, end_date: rg.end }], { onConflict: 'seller_label' }));
+                if (error && /start_date|end_date/.test(error.message || '')) {
+                    if (rg.start) { v77Copy(SST_RANGE_SQL); return showToast('❌ ستون‌های بازه‌ی تاریخ هنوز در Supabase ساخته نشده‌اند.\nکد SQL کپی شد؛ در SQL Editor بچسبان، Run بزن و دوباره ذخیره کن.'); }
+                    ({ error } = await _supabase.from('seller_shift_targets').upsert([row], { onConflict: 'seller_label' }));
+                }
             }
             if (error) {
-                showToast('❌ خطا در ذخیره هدف: ' + error.message + '\n\nاگه جدول seller_shift_targets هنوز ساخته نشده، پایین همین بخش راهنمای ساخت آن هست.');
+                showToast('❌ خطا در ذخیره هدف: ' + error.message);
                 return;
             }
-            let msg = '✅ هدف این فروشنده ذخیره شد.';
+            let msg = '✅ این هدف ذخیره شد.' + (_sstMulti ? '' : '\nℹ️ برای داشتن چند هدف همزمان، کد SQL بالای فرم را اجرا کن.');
             if ((bonus_type === 'percent' || penalty_type === 'percent') && !(base_salary > 0)) msg += '\n⚠️ چون حقوق پایه وارد نشده، درصدها در «جمع تومانی» حساب نمی‌شوند.';
             showToast(msg);
             await sstRefresh();
@@ -14375,19 +14431,22 @@ notify pgrst, 'reload schema';`;
             const sel = document.getElementById('sstSeller');
             const seller_label = sel ? sel.value : '';
             if (!seller_label) return;
-            if (!_sstTargets.some(x => x.seller_label === seller_label)) return showToast('برای این فروشنده هدفی ثبت نشده.');
-            const ok = await showConfirm('هدف و قانون پاداش/جریمه‌ی این فروشنده حذف شود؟\n\n(نتیجه‌ی روزهای قبل هم دیگر محاسبه نخواهد شد.)');
+            const g = sstSellerGoals(seller_label).find(x => sstKey(x) === String(_sstEditId));
+            if (!g || _sstNew) return showToast('اول یکی از هدف‌های این فروشنده را از لیست انتخاب کن.');
+            const ok = await showConfirm('این هدف حذف شود؟\n' + sstRangeText(g) + '\n\n(نتیجه‌ی روزهای مربوط به همین هدف هم دیگر محاسبه نخواهد شد.)');
             if (!ok) return;
-            const { error } = await _supabase.from('seller_shift_targets').delete().eq('seller_label', seller_label);
+            const q = _supabase.from('seller_shift_targets').delete();
+            const { error } = await (g.id ? q.eq('id', g.id) : q.eq('seller_label', seller_label));
             if (error) return showToast('❌ خطا در حذف: ' + error.message);
             showToast('✅ هدف حذف شد.');
+            _sstEditId = null; _sstNew = false;
             await sstRefresh();
         }
 
-        function sstEdit(label) {
+        function sstEdit(label, id) {
             const sel = document.getElementById('sstSeller');
             if (!sel) return;
-            sel.value = label;
+            sel.value = label; _sstNew = false; _sstEditId = id || null;
             sstLoadForm();
             sel.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
@@ -14509,43 +14568,43 @@ notify pgrst, 'reload schema';`;
             return s;
         }
 
-        function sstTargetCard(t, shifts, pb, isAdmin) {
-            const base = Number(t.base_salary) || 0;
-            const needBase = (t.bonus_type === 'percent' || t.penalty_type === 'percent') && !(base > 0);
-            let inner = `<div class="st-rule">${sstRuleLine(t)}</div>`;
-            if (!t.active) {
-                inner += '<div class="bz-strip" style="margin-top:8px;">⏸ این هدف فعلاً غیرفعال است و محاسبه نمی‌شود.</div>';
+        function sstTargetCard(label, goals, shifts, pb, isAdmin) {
+            const needBase = goals.some(t => (t.bonus_type === 'percent' || t.penalty_type === 'percent') && !(Number(t.base_salary) > 0));
+            let inner = goals.map(t => {
+                const eb = isAdmin ? `<button class="row-btn edit-btn" style="margin-top:4px;" onclick="sstEdit('${v77Esc(label).replace(/'/g, "\\'")}', '${sstKey(t).replace(/'/g, '')}')">✏️ ویرایش</button>` : '';
+                return `<div class="st-rule" style="margin-top:6px;${t.active ? '' : 'opacity:.55;'}">${sstRuleLine(t)}${t.active ? '' : '<br><span class="bz-b warn">⏸ غیرفعال</span>'}${eb}</div>`;
+            }).join('');
+            const act = goals.filter(t => t.active);
+            if (!act.length) {
+                inner += '<div class="bz-strip" style="margin-top:8px;">⏸ همه‌ی هدف‌های این فروشنده غیرفعال‌اند.</div>';
             } else {
-                const inPeriod = shifts.filter(d => d.dayISO >= pb.startISO && d.dayISO <= pb.endISO && sstInRange(t, d.dayISO));
-                let hit = 0, miss = 0, net = 0, live = null, latestClosed = null;
-                inPeriod.forEach(d => {
-                    const r = sstDayResult(t, d);
-                    if (r.status === 'live') live = d;
-                    else { if (r.status === 'hit') hit++; else miss++; net += r.delta; if (!latestClosed) latestClosed = d; }
+                const inPeriod = []; let hit = 0, miss = 0, net = 0, live = null;
+                shifts.filter(d => d.dayISO >= pb.startISO && d.dayISO <= pb.endISO).forEach(d => {
+                    const t = sstPickTarget(act, d.dayISO); if (!t) return;
+                    const r = sstDayResult(t, d); inPeriod.push({ d, t, r });
+                    if (r.status === 'live') live = { d, t };
+                    else { if (r.status === 'hit') hit++; else miss++; net += r.delta; }
                 });
-                const shownShift = live || null;
-                if (shownShift) inner += `<div style="margin-top:10px;">${sstShiftBlock(t, shownShift)}</div>`;
+                if (live) inner += `<div style="margin-top:10px;">${sstShiftBlock(live.t, live.d)}</div>`;
                 inner += `<div class="st-tiles">
                     <div class="st-tile"><b style="color:#10b981;">${v77Fa(hit)}</b><span>شیفت موفق</span></div>
                     <div class="st-tile"><b style="color:#ef4444;">${v77Fa(miss)}</b><span>شیفت ناموفق</span></div>
                     <div class="st-tile"><b style="color:${net >= 0 ? '#10b981' : '#ef4444'}; font-size:12px;">${net >= 0 ? '+' : '−'}${Math.abs(Math.round(net)).toLocaleString('fa-IR')}</b><span>اثر روی حقوق (تومان)</span></div>
                 </div>`;
-                if (needBase) inner += '<div class="bz-strip" style="margin-top:8px;">⚠️ حقوق پایه ثبت نشده؛ بخش درصدی در «اثر روی حقوق» حساب نمی‌شود.</div>';
+                if (needBase) inner += '<div class="bz-strip" style="margin-top:8px;">⚠️ برای یکی از هدف‌ها حقوق پایه ثبت نشده؛ بخش درصدی در «اثر روی حقوق» حساب نمی‌شود.</div>';
                 if (inPeriod.length > 0) {
                     inner += `<details style="margin-top:8px;"><summary style="cursor:pointer; font-size:12px; color:var(--accent);">ریز شیفت‌ها (${v77Fa(inPeriod.length)})</summary>` +
-                        inPeriod.map(d => {
-                            const r = sstDayResult(t, d);
+                        inPeriod.map(({ d, r }) => {
                             const icon = r.status === 'live' ? '⏳' : (r.status === 'hit' ? '✅' : '❌');
                             const dtxt = r.status === 'live' ? 'در جریان' : (r.delta === 0 ? '—' : (r.delta > 0 ? '+' : '−') + Math.abs(Math.round(r.delta)).toLocaleString('fa-IR'));
                             const c = r.status === 'hit' ? '#34d399' : (r.status === 'miss' ? '#f87171' : '#fbbf24');
                             return `<div class="st-day"><span>${icon} ${jalaliLabelForISODate(d.dayISO)}</span><span>${v77Toman(d.amount)}</span><b style="color:${c};">${dtxt}</b></div>`;
                         }).join('') + '</details>';
                 } else {
-                    inner += `<p style="font-size:12px; color:#94a3b8; margin-top:8px;">در ${pb.label} هنوز شیفتی ثبت نشده.</p>`;
+                    inner += `<p style="font-size:12px; color:#94a3b8; margin-top:8px;">در ${pb.label} شیفتی داخل بازه‌ی هدف‌ها ثبت نشده.</p>`;
                 }
             }
-            const editBtn = isAdmin ? `<button class="row-btn edit-btn" style="margin-top:8px;" onclick="sstEdit('${v77Esc(t.seller_label).replace(/'/g, "\\'")}')">✏️ ویرایش قانون</button>` : '';
-            return `<div class="st-card"><h4>👤 ${v77Esc(t.seller_label)}${t.active ? '' : ' <span class="bz-b warn">غیرفعال</span>'}</h4>${inner}${editBtn}</div>`;
+            return `<div class="st-card"><h4>👤 ${v77Esc(label)} <span class="bz-b good">${v77Fa(goals.length)} هدف</span></h4>${inner}</div>`;
         }
 
         async function sstRefresh() {
@@ -14559,6 +14618,11 @@ notify pgrst, 'reload schema';`;
             const { data: targets, error } = await tq;
             if (error) { _sstTargets = []; panel.innerHTML = sstSetupHelp(isAdmin); return; }
             _sstTargets = targets || [];
+            if (_sstTargets.length) _sstMulti = _sstTargets.every(t => t.id);
+            else { const pr = await _supabase.from('seller_shift_targets').select('id').limit(1); _sstMulti = !pr.error; }
+            const mh = document.getElementById('sstMultiHelp');
+            if (mh) mh.innerHTML = (isAdmin && !_sstMulti)
+                ? `<div class="bz-strip">ℹ️ الان هر فروشنده فقط <b>یک</b> هدف می‌تواند داشته باشد. برای چند هدف با بازه‌های مختلف، یک‌بار این کد را در Supabase (SQL Editor) اجرا کن، بعد صفحه را دوباره باز کن.</div><button class="bc-big" onclick="v77Copy(SST_MULTI_SQL).then(ok => showToast(ok ? '✅ کد SQL کپی شد.' : '❌ کپی نشد.'))">📋 کپی کد SQL چند-هدفی</button>` : '';
             if (isAdmin) sstLoadForm();
             if (!isAdmin) { try { const ab = document.getElementById('sstAlerts'); if (ab) ab.innerHTML = await buildMyShiftTargetCard(); } catch (e) {} }
 
@@ -14571,18 +14635,20 @@ notify pgrst, 'reload schema';`;
 
             const pb = sstPeriodBounds(_sstPeriod);
             const sinceISO = new Date(new Date(pb.startISO + 'T00:00:00+03:30').getTime() - 86400000).toISOString();
-            const active = _sstTargets.filter(t => t.active);
+            const bySeller = {};
+            _sstTargets.forEach(t => { (bySeller[t.seller_label] = bySeller[t.seller_label] || []).push(t); });
+            const labels = Object.keys(bySeller);
             const dataBySeller = {};
-            await Promise.all(active.map(async t => {
+            await Promise.all(labels.filter(l => bySeller[l].some(t => t.active)).map(async l => {
                 const [sRes, aRes] = await Promise.all([
-                    sstFetchAll(() => _supabase.from('sales').select('sell_price, created_at').eq('seller_name', t.seller_label).gte('created_at', sinceISO).order('created_at', { ascending: false })),
-                    sstFetchAll(() => _supabase.from('attendance').select('type, created_at').eq('seller_name', t.seller_label).gte('created_at', sinceISO).order('created_at', { ascending: true }))
+                    sstFetchAll(() => _supabase.from('sales').select('sell_price, created_at').eq('seller_name', l).gte('created_at', sinceISO).order('created_at', { ascending: false })),
+                    sstFetchAll(() => _supabase.from('attendance').select('type, created_at').eq('seller_name', l).gte('created_at', sinceISO).order('created_at', { ascending: true }))
                 ]);
-                dataBySeller[t.seller_label] = sstComputeShifts(sRes.data || [], aRes.data || [], Date.now());
+                dataBySeller[l] = sstComputeShifts(sRes.data || [], aRes.data || [], Date.now());
             }));
 
             panel.innerHTML = `<div style="font-size:12px; color:var(--text-secondary); margin-top:10px;">📅 نتیجه‌ی <b>${pb.label}</b> (شیفت‌های تمام‌شده؛ شیفت در جریان بعد از خروج حساب می‌شود)</div>` +
-                _sstTargets.map(t => sstTargetCard(t, dataBySeller[t.seller_label] || [], pb, isAdmin)).join('');
+                labels.map(l => sstTargetCard(l, bySeller[l], dataBySeller[l] || [], pb, isAdmin)).join('');
         }
 
 
@@ -14626,36 +14692,42 @@ notify pgrst, 'reload schema';`;
 
         // کارت داشبورد فروشنده: پیشرفت شیفت فعلی (یا آخرین شیفت امروز) نسبت به هدف شخصی خودش
         async function buildMyShiftTargetCard() {
-            const { data: t, error } = await _supabase.from('seller_shift_targets').select('*').eq('seller_label', currentUserLabel).maybeSingle();
-            if (error || !t || !t.active) return '';
-            const rs = sstRangeStatus(t);
-            if (rs.st === 'ended') return '';
+            const { data: all, error } = await _supabase.from('seller_shift_targets').select('*').eq('seller_label', currentUserLabel);
+            if (error || !all) return '';
+            const goals = all.filter(g => g.active && sstRangeStatus(g).st !== 'ended');
+            if (!goals.length) return '';
             try {
-                const nk = 'sstNew_' + currentUserLabel + '_' + (t.updated_at || '');
-                if (!localStorage.getItem(nk)) { localStorage.setItem(nk, '1'); showToast('🎯 هدف جدید برای تو ثبت شد\n' + sstRangeText(t) + '\nهدف هر شیفت: ' + v77Toman(t.target_amount)); }
+                goals.forEach(g => {
+                    const nk = 'sstNew_' + currentUserLabel + '_' + sstKey(g) + '_' + (g.updated_at || '');
+                    if (!localStorage.getItem(nk)) { localStorage.setItem(nk, '1'); showToast('🎯 هدف جدید برای تو ثبت شد\n' + sstRangeText(g) + '\nهدف هر شیفت: ' + v77Toman(g.target_amount)); }
+                });
             } catch (e) {}
-            if (rs.st === 'upcoming') return `<div class="report-card" style="border-color:#a78bfa;"><h3>🎯 هدف جدید در راه است</h3><div class="st-rule">${sstRuleLine(t)}</div></div>`;
+            const today = getTehranISODate();
+            const upcoming = goals.filter(g => sstRangeStatus(g).st === 'upcoming').sort((a, b) => a.start_date < b.start_date ? -1 : 1);
+            const upHtml = upcoming.length ? `<div class="st-rule" style="margin-top:8px;">⏭ هدف‌های بعدی:${upcoming.map(g => '<br>' + sstRangeText(g) + ' — ' + v77Toman(g.target_amount)).join('')}</div>` : '';
+            const t = sstPickTarget(goals, today);
+            const head = '<h3>🎯 هدف فروش شیفت تو</h3>';
+            if (!t) return `<div class="report-card" style="border-color:#a78bfa;"><h3>🎯 هدف جدید در راه است</h3>${upcoming.slice(0, 1).map(g => `<div class="st-rule">${sstRuleLine(g)}</div>`).join('')}${upcoming.length > 1 ? upHtml : ''}</div>`;
             const since = new Date(Date.now() - 36 * 3600000).toISOString();
             const [sRes, aRes] = await Promise.all([
                 _supabase.from('sales').select('sell_price, created_at').eq('seller_name', currentUserLabel).gte('created_at', since).limit(2000),
                 _supabase.from('attendance').select('type, created_at').eq('seller_name', currentUserLabel).gte('created_at', since).order('created_at', { ascending: true }).limit(50)
             ]);
-            const shifts = sstComputeShifts(sRes.data || [], aRes.data || [], Date.now()).filter(d => sstInRange(t, d.dayISO));
-            const today = getTehranISODate();
+            const shifts = sstComputeShifts(sRes.data || [], aRes.data || [], Date.now());
             const shift = shifts.find(d => d.live) || shifts.find(d => d.dayISO === today) || null;
-            const head = '<h3>🎯 هدف فروش شیفت تو</h3>';
             if (!shift) {
                 return `<div class="report-card" style="border-color:#a78bfa;">${head}
-                    <div class="st-rule">${sstRuleLine(t)}</div>
+                    <div class="st-rule">${sstRuleLine(t)}</div>${upHtml}
                     <p style="font-size:12px; color:#94a3b8; margin-top:6px;">بعد از ثبت «ورود»، پیشرفتت اینجا لحظه‌ای نشون داده می‌شه.</p></div>`;
             }
-            const reached = shift.amount >= Number(t.target_amount);
+            const ts = sstPickTarget(goals, shift.dayISO) || t;
+            const reached = shift.amount >= Number(ts.target_amount);
             sstStartWatcher();
-            const al = await sstNotifySeller(t, shift);
+            const al = await sstNotifySeller(ts, shift);
             const alHtml = al ? `<div class="v78-alert v78-${al.lvl}">${al.title}<br><span style="font-weight:400;">${al.msg}</span></div>` : '';
             return `<div class="report-card" style="border-color:${reached ? '#10b981' : '#a78bfa'};">${head}
-                ${alHtml}${sstShiftBlock(t, shift)}
-                <div class="st-rule" style="margin-top:8px;">${sstRuleLine(t)}</div></div>`;
+                ${alHtml}${sstShiftBlock(ts, shift)}
+                <div class="st-rule" style="margin-top:8px;">${sstRuleLine(ts)}</div>${upHtml}</div>`;
         }
     </script>
 
