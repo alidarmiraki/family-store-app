@@ -13631,9 +13631,10 @@
             ov.innerHTML = `<div class="report-card" style="width:min(94vw,380px); background:var(--bg-card-solid);">
                 <h3>✏️ ویرایش برداشت — ${escapeHtmlForToast(t.seller_name)}</h3>
                 <label>نام کالا</label><input type="text" id="ateItem" value="${escapeHtmlForToast(t.item_name)}">
-                <label>وزن (کیلو)</label><input type="number" step="0.001" id="ateWeight" value="${t.weight || ''}">
-                <label>مبلغ قابل کسر (تومان)</label><input type="number" id="ateAmount" value="${t.amount}">
-                <div id="ateHint" class="hint" style="margin-top:4px;"></div>
+                <label>وزن (کیلو)</label><input type="text" inputmode="decimal" id="ateWeight" value="${t.weight || ''}">
+                <label>درصد تخفیف (٪) — قابل تغییر توسط مدیر</label><input type="text" inputmode="decimal" id="atePct" value="${Math.round((1 - TAKEOUT_DISCOUNT) * 100)}">
+                <label>مبلغ قابل کسر (تومان)</label><input type="text" inputmode="decimal" id="ateAmount" value="${t.amount}">
+                <div id="ateHint" class="hint" style="margin-top:4px;">با تغییر وزن یا درصد، مبلغ خودکار دوباره حساب می‌شود؛ مبلغ را هم می‌توانید دستی عوض کنید.</div>
                 <label>توضیح</label><input type="text" id="ateNote" value="${escapeHtmlForToast(t.note || '')}">
                 <div style="display:flex; gap:8px; margin-top:10px;">
                     <button class="row-btn edit-btn" style="flex:1;" onclick="saveAdminTakeoutEdit('${t.id}')">💾 ذخیره</button>
@@ -13642,16 +13643,21 @@
             document.body.appendChild(ov);
             const ateRecalc = async () => {
                 const hint = document.getElementById('ateHint');
+                if (!hint) return;
                 const name = document.getElementById('ateItem').value.trim();
                 const w = parseFloat(document.getElementById('ateWeight').value) || 0;
+                const pct = Math.min(100, Math.max(0, parseFloat(document.getElementById('atePct').value) || 0));
                 if (cachedProductsList.length === 0) { const { data } = await _supabase.from('products').select('*'); cachedProductsList = sortProductsAlpha(data || []); }
                 const prod = cachedProductsList.find(p => p.name === name || p.code === name);
-                if (!prod || w <= 0) { hint.innerText = prod ? '' : '⚠️ کالا در انبار پیدا نشد؛ مبلغ را دستی وارد کنید.'; return; }
-                const amt = Math.round(Math.round(w * (prod.sell_price || 0)) * TAKEOUT_DISCOUNT);
+                if (!prod) { hint.innerText = '⚠️ کالا در انبار پیدا نشد؛ مبلغ را دستی وارد کنید.'; return; }
+                if (w <= 0) return;
+                const full = Math.round(w * (prod.sell_price || 0));
+                const amt = Math.round(full * (1 - pct / 100));
                 document.getElementById('ateAmount').value = amt;
-                hint.innerText = `🧮 ${w.toLocaleString('fa-IR')} کیلو × ${(prod.sell_price || 0).toLocaleString('fa-IR')} تومان با ۱۰٪ تخفیف = ${amt.toLocaleString('fa-IR')} تومان (خودکار؛ در صورت نیاز مبلغ را دستی عوض کنید)`;
+                hint.innerText = `🧮 ${w.toLocaleString('fa-IR')} کیلو × ${(prod.sell_price || 0).toLocaleString('fa-IR')} = ${full.toLocaleString('fa-IR')} تومان؛ با ${pct.toLocaleString('fa-IR')}٪ تخفیف → ${amt.toLocaleString('fa-IR')} تومان`;
             };
             document.getElementById('ateWeight').addEventListener('input', ateRecalc);
+            document.getElementById('atePct').addEventListener('input', ateRecalc);
             document.getElementById('ateItem').addEventListener('change', ateRecalc);
         }
 
@@ -13663,16 +13669,6 @@
             let amount = parseFloat(document.getElementById('ateAmount').value);
             const note = document.getElementById('ateNote').value.trim();
             if (!itemName || isNaN(weight) || weight <= 0 || isNaN(amount) || amount < 0) return showToast('نام کالا، وزن و مبلغ معتبر وارد کنید.');
-
-            // اگر کالا یا وزن عوض شده و مبلغ دستی تغییر نکرده، مبلغ را با قیمت فعلی و ۱۰٪ تخفیف دوباره حساب کن
-            if ((itemName !== t.item_name || weight !== Number(t.weight)) && amount === Number(t.amount)) {
-                if (cachedProductsList.length === 0) {
-                    const { data } = await _supabase.from('products').select('*');
-                    cachedProductsList = sortProductsAlpha(data || []);
-                }
-                const prod = cachedProductsList.find(p => p.name === itemName || p.code === itemName);
-                if (prod) amount = Math.round(Math.round(weight * (prod.sell_price || 0)) * TAKEOUT_DISCOUNT);
-            }
 
             const upd = { item_name: itemName, weight, amount, note };
             const { error } = await _supabase.from('personal_takeouts').update(upd).eq('id', takeoutId);
