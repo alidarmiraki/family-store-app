@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v81 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v83 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="icon" href="icon-192.png">
@@ -2586,7 +2586,7 @@
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v81 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v83 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
 
     <script>
         function toggleLoginPasswordVisibility() {
@@ -3637,7 +3637,11 @@
             return `${y}-${m}-${d}`;
         }
 
-        function getTehranMinutesOfDay(dateObj = new Date()) {
+        // ماه شمسی یک لحظه (برای «این ماه» در همه‌ی بخش‌ها) و تاریخ شمسی برای نام فایل‌ها
+function jMonthKeyOf(d) { const q = sstJParts(d); return q.y + '-' + q.m; }
+function jFileDate(iso) { const q = sstJParts(new Date(iso + 'T12:00:00+03:30')); return q.y + '-' + String(q.m).padStart(2, '0') + '-' + String(q.d).padStart(2, '0'); }
+
+function getTehranMinutesOfDay(dateObj = new Date()) {
             const timeStr = getTehranTimeString(dateObj);
             const [h, m] = timeStr.split(':').map(Number);
             return h * 60 + m;
@@ -7834,14 +7838,14 @@
         // --- شمارش تعداد دفعاتی که این کاربر در همین ماه دیر آمده یا زود رفته ---
         async function countRecentAttendanceIssues(type, maxDelay) {
             try {
-                const monthPrefix = getTehranISODate(new Date()).slice(0, 7); // مثلاً "2026-08"
+                const monthPrefix = jMonthKeyOf(new Date()); // ماه شمسی
                 const { data } = await _supabase
                     .from('attendance')
                     .select('created_at, delay_minutes, exit_diff_minutes, type')
                     .eq('seller_name', currentUserLabel)
                     .eq('type', type);
 
-                const list = (data || []).filter(r => getTehranISODate(new Date(r.created_at)).startsWith(monthPrefix));
+                const list = (data || []).filter(r => jMonthKeyOf(new Date(r.created_at)) === monthPrefix);
 
                 if (type === 'entry') {
                     return list.filter(r => r.delay_minutes !== null && r.delay_minutes > maxDelay).length;
@@ -11508,7 +11512,7 @@
                         const a = document.createElement('a');
                         const chunkEndInclusive = new Date(chunkEnd.getTime() - 1);
                         a.href = url;
-                        a.download = `آرشیو-فروش_${getTehranISODate(chunkStart)}_تا_${getTehranISODate(chunkEndInclusive)}.csv`;
+                        a.download = `آرشیو-فروش_${jFileDate(getTehranISODate(chunkStart))}_تا_${jFileDate(getTehranISODate(chunkEndInclusive))}.csv`;
                         document.body.appendChild(a);
                         a.click();
                         document.body.removeChild(a);
@@ -11670,7 +11674,7 @@
                 const topAoa = [
                     ['📊 خلاصه مدیریتی گزارش ۱۰ روز اخیر — سیستم مدیریت غرفه فامیلی (دره میرکی)'],
                     [],
-                    ['📅 بازه گزارش:', `${getTehranISODate(tenDaysAgo)} تا ${getTehranISODate(now)}`],
+                    ['📅 بازه گزارش:', `${jalaliLabelForISODate(getTehranISODate(tenDaysAgo))} تا ${jalaliLabelForISODate(getTehranISODate(now))}`],
                     ['🧾 تعداد کل فاکتورهای فروش:', sales.length],
                     ['💰 مجموع کل فروش (تومان):', totalRevenue],
                     ['⏰ تعداد کل ثبت‌های حضور و غیاب:', attendance.length],
@@ -11694,7 +11698,7 @@
                 if (wsAtt['!ref']) { wsAtt['!autofilter'] = { ref: wsAtt['!ref'] }; wsAtt['!freeze'] = { xSplit: 0, ySplit: 1 }; }
                 XLSX.utils.book_append_sheet(wb, wsAtt, 'حضور و غیاب ۱۰ روز اخیر');
 
-                const fileName = `گزارش-اکسل-۱۰-روز-اخیر_${getTehranISODate(tenDaysAgo)}_تا_${getTehranISODate(now)}.xlsx`;
+                const fileName = `گزارش-اکسل-۱۰-روز-اخیر_${jFileDate(getTehranISODate(tenDaysAgo))}_تا_${jFileDate(getTehranISODate(now))}.xlsx`;
                 XLSX.writeFile(wb, fileName);
 
                 showToast('✅ فایل اکسل کامل ۱۰ روز اخیر (فروش + حضور و غیاب + خلاصه مدیریتی) دانلود شد.\n\n📌 هیچ داده‌ای از سرور پاک نشد؛ همه فاکتورها و رکوردهای حضور و غیاب برای همیشه در سیستم باقی می‌مانند.');
@@ -11940,7 +11944,7 @@
                 row.getCell(2).numFmt = '#,##0';
             });
 
-            const fileName = `general-report_${ctx.startISODate}_to_${ctx.endISODate}.xlsx`;
+            const fileName = `general-report_${jFileDate(ctx.startISODate)}_to_${jFileDate(ctx.endISODate)}.xlsx`;
             return { workbook: wb, fileName };
         }
 
@@ -12023,7 +12027,7 @@
             wsTake.columns = [{ width: 20 }, { width: 18 }, { width: 22 }, { width: 12 }, { width: 16 }, { width: 30 }];
             if (ctx.takeouts.length) wsTake.autoFilter = { from: 'A1', to: `F${ctx.takeouts.length + 1}` };
 
-            const fileName = `detailed-report_${ctx.startISODate}_to_${ctx.endISODate}.xlsx`;
+            const fileName = `detailed-report_${jFileDate(ctx.startISODate)}_to_${jFileDate(ctx.endISODate)}.xlsx`;
             return { workbook: wb, fileName };
         }
 
@@ -14156,8 +14160,8 @@
             // فروشنده فقط هزینه‌های خودش رو می‌بینه، مدیر همه رو
             const visibleData = isAdmin ? data : data.filter(e => e.created_by === currentUserLabel);
 
-            const nowMonth = getTehranISODate(new Date()).slice(0, 7);
-            const thisMonthAll = data.filter(e => (e.expense_date || '').slice(0, 7) === nowMonth); // جمع کل ماه همیشه برای همه محاسبه میشه (شفافیت)
+            const nowMonth = jMonthKeyOf(new Date());
+            const thisMonthAll = data.filter(e => e.expense_date && jMonthKeyOf(new Date(e.expense_date + 'T12:00:00+03:30')) === nowMonth); // جمع کل ماه همیشه برای همه محاسبه میشه (شفافیت)
             const monthTotal = thisMonthAll.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
             totalBox.innerText = `${monthTotal.toLocaleString('fa-IR')} تومان (${thisMonthAll.length.toLocaleString('fa-IR')} مورد، کل فروشگاه)`;
 
@@ -14177,7 +14181,7 @@
                             <b style="color:#f87171;">👤 ${seller} — جمعاً ${info.total.toLocaleString('fa-IR')} تومان طلب دارد</b>
                             ${info.items.map(e => `
                                 <div class="summary-mini">
-                                    <span>${e.category}${e.note ? ' — ' + escapeHtmlForToast(e.note) : ''} (${e.expense_date})</span>
+                                    <span>${e.category}${e.note ? ' — ' + escapeHtmlForToast(e.note) : ''} (${e.expense_date ? jalaliLabelForISODate(e.expense_date) : '-'})</span>
                                     <span>
                                         <b style="color:#f87171;">${Number(e.amount).toLocaleString('fa-IR')}</b>
                                         <button class="row-btn edit-btn" style="padding:4px 8px; font-size:10px;" onclick="markExpenseReimbursed('${e.id}')">✅ تسویه شد</button>
@@ -14189,7 +14193,7 @@
                 } else {
                     const myTotal = unsettled.reduce((s, e) => s + (Number(e.amount) || 0), 0);
                     unsettledList.innerHTML = `<p style="color:#f87171; font-weight:bold;">جمعاً ${myTotal.toLocaleString('fa-IR')} تومان از مدیر طلب داری (هنوز تسویه نشده).</p>` +
-                        unsettled.map(e => `<div class="summary-mini"><span>${e.category}${e.note ? ' — ' + escapeHtmlForToast(e.note) : ''} (${e.expense_date})</span><b style="color:#f87171;">${Number(e.amount).toLocaleString('fa-IR')}</b></div>`).join('');
+                        unsettled.map(e => `<div class="summary-mini"><span>${e.category}${e.note ? ' — ' + escapeHtmlForToast(e.note) : ''} (${e.expense_date ? jalaliLabelForISODate(e.expense_date) : '-'})</span><b style="color:#f87171;">${Number(e.amount).toLocaleString('fa-IR')}</b></div>`).join('');
                 }
             } else {
                 unsettledBox.style.display = 'none';
@@ -14205,7 +14209,7 @@
                     <h3>${e.category} — ${(Number(e.amount) || 0).toLocaleString('fa-IR')} تومان
                         ${e.paid_by_seller ? (e.reimbursed ? ' <span style="font-size:10px; color:#10b981;">✅ تسویه‌شده</span>' : ' <span style="font-size:10px; color:#ef4444;">⏳ حساب‌نشده</span>') : ''}
                     </h3>
-                    <p>📅 ${e.expense_date || '-'} | ثبت‌کننده: ${e.created_by || '-'}</p>
+                    <p>📅 ${e.expense_date ? jalaliLabelForISODate(e.expense_date) : '-'} | ثبت‌کننده: ${e.created_by || '-'}</p>
                     ${e.note ? `<p>📝 ${escapeHtmlForToast(e.note)}</p>` : ''}
                     <div style="display:flex; gap:6px; margin-top:6px;">
                         <button class="row-btn edit-btn" style="flex:1; padding:5px 8px; font-size:11px;" onclick="editExpense('${e.id}')">✏️ ویرایش</button>
@@ -14262,19 +14266,22 @@
             loadProductDatalist();
 
             const isAdmin = currentRole === 'admin';
-            const { data, error } = await _supabase.from('waste_log').select('*').order('created_at', { ascending: false }).limit(150);
+            const { data, error } = await _supabase.from('waste_log').select('*').order('created_at', { ascending: false }).limit(1000);
             if (error || !data) {
                 listBox.innerHTML = '<p style="color:#ef4444;">خطا در بارگذاری ضایعات — مطمئن شوید جدول waste_log در Supabase ساخته شده است.</p>';
                 totalBox.innerText = '—';
                 return;
             }
 
-            const visibleData = isAdmin ? data : data.filter(w => w.seller_name === currentUserLabel);
+            const visibleData = (isAdmin ? data : data.filter(w => w.seller_name === currentUserLabel)).slice(0, 150);
 
-            const nowMonth = getTehranISODate(new Date()).slice(0, 7);
-            const thisMonthAll = data.filter(w => getTehranISODate(new Date(w.created_at)).slice(0, 7) === nowMonth);
+            // جمع ماهانه بر اساس ماه شمسی (قبلاً ماه میلادی بود و ضایعاتِ ثبت‌شده در ماه میلادیِ قبل از جمع جا می‌افتاد)
+            const jMonthKey = d => { const p = new Intl.DateTimeFormat('en-US-u-ca-persian-nu-latn', { timeZone: 'Asia/Tehran', year: 'numeric', month: 'numeric' }).formatToParts(d); return p.find(x => x.type === 'year').value + '-' + p.find(x => x.type === 'month').value; };
+            const nowMonth = jMonthKey(new Date());
+            const thisMonthAll = data.filter(w => jMonthKey(new Date(w.created_at)) === nowMonth);
+            const monthName = new Intl.DateTimeFormat('fa-IR-u-ca-persian', { timeZone: 'Asia/Tehran', month: 'long', year: 'numeric' }).format(new Date());
             const monthTotalKg = thisMonthAll.reduce((sum, w) => sum + (Number(w.quantity) || 0), 0);
-            totalBox.innerText = `${monthTotalKg.toLocaleString('fa-IR', { maximumFractionDigits: 2 })} کیلوگرم (${thisMonthAll.length.toLocaleString('fa-IR')} مورد، کل فروشگاه)`;
+            totalBox.innerText = `${monthTotalKg.toLocaleString('fa-IR', { maximumFractionDigits: 2 })} کیلوگرم (${thisMonthAll.length.toLocaleString('fa-IR')} مورد در ${monthName}، کل فروشگاه)`;
 
             if (visibleData.length === 0) {
                 listBox.innerHTML = '<p class="hint">هنوز هیچ ضایعاتی ثبت نشده.</p>';
@@ -15044,5 +15051,73 @@ notify pgrst, 'reload schema';`;
 
     <!-- نوار پایین صفحه: میانبر پرکاربردترین بخش‌ها (محتوایش با نقش کاربر توسط JS پر می‌شه) -->
     <div class="bottom-nav" id="bottomNav"></div>
+<script>
+/* v83 — تقویم شمسی برای همه‌ی فیلدهای تاریخ؛ مقدار داخلی همچنان YYYY-MM-DD میلادی می‌ماند تا بقیه‌ی کد سایت بدون تغییر کار کند */
+(function () {
+    const FA = n => Number(n).toLocaleString('fa-IR', { useGrouping: false });
+    const valSet = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+    const at = iso => new Date(iso + 'T12:00:00+03:30');
+    const label = iso => { const q = sstJParts(at(iso)); return FA(q.d) + ' ' + SST_MONTHS[q.m - 1] + ' ' + FA(q.y); };
+    const monthLen = (y, m) => m <= 6 ? 31 : m <= 11 ? 30 : (sstJParts(new Date(at(sstJToISO(y, 12, 29)).getTime() + 86400000)).m === 12 ? 30 : 29);
+    const B = 'border:1px solid rgba(255,255,255,.18);background:transparent;color:inherit;border-radius:8px;padding:6px 10px;font:inherit;cursor:pointer;';
+    let ov = null;
+    const close = () => { if (ov) { ov.remove(); ov = null; } };
+    function openPicker(el) {
+        close();
+        const b = sstJParts(el.value ? at(el.value) : new Date()), cur = sstJParts(new Date());
+        let y = b.y, m = b.m;
+        ov = document.createElement('div');
+        ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100000;display:flex;align-items:center;justify-content:center;padding:12px;';
+        const pick = iso => { el.value = iso; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); close(); };
+        const draw = () => {
+            const t0 = at(sstJToISO(y, m, 1)), off = (t0.getUTCDay() + 1) % 7, len = monthLen(y, m), todayISO = getTehranISODate();
+            let cells = '<div></div>'.repeat(off);
+            for (let d = 1; d <= len; d++) {
+                const iso = getTehranISODate(new Date(t0.getTime() + (d - 1) * 86400000));
+                const st = iso === el.value ? 'background:#06b6d4;color:#fff;' : iso === todayISO ? 'border-color:#06b6d4;' : '';
+                cells += `<button type="button" data-iso="${iso}" style="${B}padding:9px 0;border-color:transparent;${st}">${FA(d)}</button>`;
+            }
+            const yrs = []; for (let i = Math.min(cur.y - 6, y); i <= Math.max(cur.y + 2, y); i++) yrs.push(i);
+            ov.innerHTML = `<div style="width:min(94vw,340px);background:var(--bg-card-solid,#1a1a2e);border-radius:16px;padding:14px;direction:rtl;box-shadow:0 10px 40px rgba(0,0,0,.5);">
+                <div style="display:flex;gap:6px;align-items:center;margin-bottom:10px;">
+                    <button type="button" data-nav="-1" style="${B}">قبل</button>
+                    <select data-sel="m" style="${B}flex:1;">${SST_MONTHS.map((n, i) => `<option value="${i + 1}"${i + 1 === m ? ' selected' : ''}>${n}</option>`).join('')}</select>
+                    <select data-sel="y" style="${B}">${yrs.map(v => `<option value="${v}"${v === y ? ' selected' : ''}>${FA(v)}</option>`).join('')}</select>
+                    <button type="button" data-nav="1" style="${B}">بعد</button>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center;font-size:13px;">
+                    ${['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج'].map(w => `<div style="opacity:.6;padding:4px 0;">${w}</div>`).join('')}${cells}
+                </div>
+                <div style="display:flex;gap:8px;margin-top:12px;">
+                    <button type="button" data-today="1" style="${B}flex:1;">امروز</button>
+                    <button type="button" data-clear="1" style="${B}flex:1;">پاک کردن</button>
+                    <button type="button" data-close="1" style="${B}flex:1;">بستن</button>
+                </div></div>`;
+        };
+        ov.addEventListener('click', e => {
+            if (e.target === ov) return close();
+            const t = e.target.closest('button'); if (!t) return;
+            if (t.dataset.iso) pick(t.dataset.iso);
+            else if (t.dataset.nav) { m += +t.dataset.nav; if (m > 12) { m = 1; y++; } if (m < 1) { m = 12; y--; } draw(); }
+            else if (t.dataset.today) pick(getTehranISODate());
+            else if (t.dataset.clear) pick('');
+            else if (t.dataset.close) close();
+        });
+        ov.addEventListener('change', e => { const k = e.target.dataset.sel; if (k === 'm') m = +e.target.value; else if (k === 'y') y = +e.target.value; draw(); });
+        draw(); document.body.appendChild(ov);
+    }
+    function enhance(el) {
+        if (el._jd) return; el._jd = true;
+        const iso0 = el.value; let iso = '';
+        el.type = 'text'; el.readOnly = true; el.placeholder = 'انتخاب تاریخ شمسی'; el.setAttribute('inputmode', 'none'); el.style.cursor = 'pointer';
+        Object.defineProperty(el, 'value', { configurable: true, get: () => iso, set: v => { iso = /^\d{4}-\d{2}-\d{2}$/.test(v || '') ? v : ''; valSet.call(el, iso ? label(iso) : ''); } });
+        el.value = iso0;
+        el.addEventListener('click', () => openPicker(el));
+    }
+    const scan = n => { if (n.nodeType !== 1) return; if (n.matches('input[type="date"]')) enhance(n); n.querySelectorAll('input[type="date"]').forEach(enhance); };
+    scan(document.body);
+    new MutationObserver(ms => ms.forEach(r => r.addedNodes.forEach(scan))).observe(document.body, { childList: true, subtree: true });
+})();
+</script>
 </body>
 </html>
