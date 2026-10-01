@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v80 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v81 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="icon" href="icon-192.png">
@@ -2586,7 +2586,7 @@
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v80 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v81 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
 
     <script>
         function toggleLoginPasswordVisibility() {
@@ -5362,7 +5362,7 @@
             };
             const mStats = shiftStats('morning');
             const eStats = shiftStats('evening');
-            const leaderboardCard = v80LeaderCard(mStats, eStats);
+            let leaderboardCard = ''; try { leaderboardCard = await v81SelfCard(); } catch (e) { console.warn(e); }
             let _vel = {}; try { _vel = await getSalesVelocity(); } catch (e) {}
             let heroCard = ''; try { heroCard = await buildDashHero(todaySales, productsRes.data, todayISO, lowStockItems, todayAttendance); } catch (e) { console.warn(e); }
             box.innerHTML = `
@@ -5495,6 +5495,90 @@
                 <p class="v79-sub" style="margin-top:6px;">${lead ? '🥇 ' + V79_SHIFT[lead].name + ' جلوتر است؛ اختلاف ' + v77Compact(diff) + ' تومان' + (mine && mine !== lead ? ' — می‌توانی جبران کنی! 💪' : (mine ? ' — همین‌طور ادامه بده! 🔥' : '')) : '🤝 مساوی!'}</p></div>`;
         }
 
+
+        // v81 — هر فروشنده فقط با «خودش» مقایسه می‌شود + بهترین روز/ساعت + جمله‌ی انگیزشی هر شیفت
+        const V81_QUOTES = {
+            morning: {
+                ok: ['صبحت عالی شروع شده؛ همین ریتم را تا ظهر نگه دار! 🔥', 'امروز از خودِ دیروزت جلوتری؛ ادامه بده قهرمان 🏆', 'مشتری‌های صبح عاشق برخورد گرم تو هستند؛ لبخندت را از دست نده ☀️', 'هر فروش خوب صبح، کل روز را می‌سازد؛ دمت گرم! 💪'],
+                warn: ['صبح‌ها یک پیشنهاد خوب جانبی، فاکتور را بزرگ‌تر می‌کند؛ امتحانش کن 🧀', 'هنوز وقت داری از میانگین خودت جلو بزنی؛ یک مشتری دیگر! ⏳', 'ویترین را مرتب نگه دار؛ چشم مشتری اول از همین‌جا می‌خرد ✨', 'هر روز یک درصد بهتر از دیروز؛ همین کافی است 📈'],
+                bad: ['صبح کند شروع شده ولی روز تمام نشده؛ با یک پیشنهاد خوب جبران می‌شود 💫', 'بهترین فروشنده‌ها از روزهای کند، تجربه می‌سازند؛ ادامه بده 🌱', 'به مشتری‌های رد شونده سلام کن؛ یک گفت‌وگو می‌تواند روز را عوض کند 🙂', 'امروز را با یک فروش خوب برگردان؛ می‌توانی! 💪']
+            },
+            evening: {
+                ok: ['شبت درخشان است؛ همین‌طور ادامه بده، رکورد نزدیک است! 🌟', 'امروز از میانگین شبانه‌ی خودت جلوتری؛ آفرین 🔥', 'مشتری‌های شب خرید پر می‌کنند؛ از این فرصت لذت ببر 🌙', 'شیفت شب با تو امن و پرفروش است؛ دمت گرم 🏆'],
+                warn: ['ساعت‌های اوج شب نزدیک است؛ آماده باش و ویترین را پر نگه دار 🌆', 'کمی تا میانگین خودت مانده؛ یک پیشنهاد ویژه به مشتری بعدی بده 🎯', 'شب‌ها مشتری عجله دارد؛ سریع و خوش‌برخورد باش ⚡', 'یک فاکتور خوب دیگر و از میانگین خودت رد می‌شوی 📈'],
+                bad: ['شب آرام شروع شده ولی هنوز زمان هست؛ یک پیشنهاد خوب بده 🌙', 'روزهای کند هم می‌گذرد؛ تمرکزت را روی مشتری بعدی بگذار 💫', 'اگر ساعتی کند بود، همان وقت ویترین را مرتب کن؛ فرصت مفیدی است 🧹', 'تو شب‌های پرفروش زیاد داشته‌ای؛ امشب هم می‌شود! 💪']
+            }
+        };
+        function v81Quote(shiftKey, mood, seed, bestHour) {
+            const pool = (V81_QUOTES[shiftKey] || V81_QUOTES.morning)[mood] || V81_QUOTES.morning.warn;
+            const d = Math.floor(Date.now() / 86400000);
+            let line = pool[(d + (seed || 0)) % pool.length];
+            if (bestHour !== null && bestHour !== undefined && (d + (seed || 0)) % 3 === 0) line = '⏰ ساعت ' + v77Fa(bestHour) + ' معمولاً بهترین ساعت فروش خودت است؛ آن موقع کنار ویترین حاضر باش! ⏰';
+            return line;
+        }
+        const V81_DOW = [['Sat', 'شنبه'], ['Sun', 'یکشنبه'], ['Mon', 'دوشنبه'], ['Tue', 'سه‌شنبه'], ['Wed', 'چهارشنبه'], ['Thu', 'پنجشنبه'], ['Fri', 'جمعه']];
+        function v81Analyze(rows) {
+            const nowMs = Date.now(), val = x => Number(x.sell_price) || 0;
+            const hFmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Tehran', hour: '2-digit', hour12: false }), wFmt = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Tehran', weekday: 'short' });
+            const byDay = {}, hourSum = {}, dowSum = {}, dowDates = {};
+            rows.forEach(x => {
+                const d = new Date(x.created_at), iso = getTehranISODate(d), h = parseInt(hFmt.format(d), 10) % 24, w = wFmt.format(d);
+                const o = byDay[iso] || (byDay[iso] = { sum: 0, cnt: 0 }); o.sum += val(x); o.cnt++;
+                hourSum[h] = (hourSum[h] || 0) + val(x);
+                dowSum[w] = (dowSum[w] || 0) + val(x); (dowDates[w] = dowDates[w] || new Set()).add(iso);
+            });
+            const activeDays = Object.keys(byDay).length;
+            const win = (from, to) => { let sum = 0, cnt = 0; for (let i = from; i <= to; i++) { const o = byDay[getTehranISODate(new Date(nowMs - i * 86400000))]; if (o) { sum += o.sum; cnt += o.cnt; } } return { sum, cnt, avg: cnt ? sum / cnt : 0 }; };
+            const w1 = win(0, 6), w0 = win(7, 13);
+            const hours = Object.keys(hourSum).map(h => ({ h: +h, v: hourSum[h] / Math.max(1, activeDays) })).sort((a, b) => b.v - a.v);
+            const dows = V81_DOW.map(([k, n]) => ({ k, n, v: dowDates[k] ? dowSum[k] / dowDates[k].size : 0, days: dowDates[k] ? dowDates[k].size : 0 }));
+            const ranked = dows.filter(d => d.days > 0).sort((a, b) => b.v - a.v);
+            const today = byDay[getTehranISODate(new Date(nowMs))] || { sum: 0, cnt: 0 };
+            return { activeDays, w1, w0, hours, dows, ranked, today, total: rows.length };
+        }
+        const v81Pct = (a, b) => b > 0 ? Math.round((a - b) / b * 100) : null;
+        const v81Chip = p => p === null ? '' : `<span class="v80-tag ${p >= 0 ? 'g' : 'r'}">${p >= 0 ? '▲' : '▼'} ${v77Fa(Math.abs(p))}٪</span>`;
+
+        function v81PersonCard(name, rows, isMe) {
+            const A = v81Analyze(rows), sk = v79ShiftOf(name) || 'morning', sh = V79_SHIFT[sk];
+            const dRev = v81Pct(A.w1.sum, A.w0.sum), dCnt = v81Pct(A.w1.cnt, A.w0.cnt), dAvg = v81Pct(A.w1.avg, A.w0.avg);
+            const mood = dRev === null ? 'warn' : (dRev >= 5 ? 'ok' : (dRev >= -10 ? 'warn' : 'bad'));
+            const bestH = (A.activeDays >= 5 && A.hours[0]) ? A.hours[0].h : null;
+            const quote = v81Quote(sk, mood, name.length, bestH);
+            const maxD = Math.max(1, ...A.dows.map(d => d.v)), maxH = Math.max(1, ...A.hours.slice(0, 3).map(h => h.v));
+            const enough = A.activeDays >= 5;
+            const best = A.ranked[0], worst = A.ranked.length > 1 ? A.ranked[A.ranked.length - 1] : null;
+            const top3 = A.hours.slice(0, 3);
+            const title = (isMe ? 'مقایسه‌ی تو با خودت' : v77Esc(v80Name(name)) + ' با خودش');
+            return `<div class="v80-card"><h3><span>📈 ${sh.icon} ${title}</span><span class="v80-tag b">${v77Fa(A.activeDays)} روز سابقه</span></h3>
+                <div class="v78-alert v78-ok" style="margin-top:0;">💬 ${quote}</div>
+                <div class="v79-sub" style="margin-top:8px;">۷ روز اخیر در برابر ۷ روز قبلش — فقط با فروش‌های خودت</div>
+                <div class="v78-grid">
+                    <div class="v78-t"><b>${v77Compact(A.w1.sum)}</b><span>فروش ${v81Chip(dRev)}</span></div>
+                    <div class="v78-t"><b>${v77Fa(A.w1.cnt)}</b><span>فاکتور ${v81Chip(dCnt)}</span></div>
+                    <div class="v78-t"><b>${A.w1.cnt ? v77Compact(A.w1.avg) : '—'}</b><span>میانگین فاکتور ${v81Chip(dAvg)}</span></div>
+                </div>
+                <div style="margin-top:12px;font-size:12px;font-weight:700;">📅 قوی‌ترین روزهای هفته‌ی تو (میانگین فروش در هر روز)</div>
+                <div class="v79-hours" style="height:56px;">${A.dows.map(d => `<i class="${best && d.k === best.k && enough ? 'cur' : ''}" style="height:${Math.max(4, d.v / maxD * 100)}%" title="${d.n}: ${Math.round(d.v).toLocaleString('fa-IR')}"></i>`).join('')}</div>
+                <div class="v78-lbl">${A.dows.map(d => `<span>${d.n.replace('شنبه', 'ش').replace('یک', '۱').replace('دو', '۲').replace('سه', '۳').replace('چهار', '۴').replace('پنج', '۵')}</span>`).join('')}</div>
+                ${top3.length ? `<div style="margin-top:12px;font-size:12px;font-weight:700;">⏰ قوی‌ترین ساعت‌های تو</div>` + top3.map((h, i) => `<div class="v80-row"><div class="v80-line"><span>${['🥇', '🥈', '🥉'][i]} ساعت ${v77Fa(h.h)}:۰۰ تا ${v77Fa((h.h + 1) % 24)}:۰۰</span><b>${v77Compact(h.v)}</b></div><div class="v80-bar"><i style="width:${h.v / maxH * 100}%"></i></div></div>`).join('') : ''}
+                ${enough && best ? `<div class="v78-alert v78-ok">⭐ قوی‌ترین روزت <b>${best.n}</b> و قوی‌ترین ساعتت <b>${v77Fa(top3[0].h)}:۰۰</b> است${worst && worst.k !== best.k ? ` — ${worst.n}ها کندتر هستند؛ همان روز بیشتر تلاش کن.` : '.'}</div>` : `<div class="v78-alert v78-warn">📝 هنوز فقط ${v77Fa(A.activeDays)} روز فروش ثبت شده. <b>هر فروش را همان لحظه ثبت کن</b> تا بفهمی کدام ساعت‌ها و کدام روزهای هفته بهتر می‌فروشی.</div>`}
+                ${A.today.cnt === 0 && new Date().getHours() >= 11 ? '<div class="v78-alert v78-bad">🔔 امروز هنوز فروشی ثبت نشده؛ اگر فروخته‌ای، همین الان ثبتش کن تا در تحلیل‌ها حساب شود.</div>' : ''}
+                <p class="v79-sub" style="margin-top:6px;">📝 تحلیل ساعت و روز قوی تو فقط از فروش‌هایی ساخته می‌شود که ثبت می‌کنی؛ هرچه کامل‌تر، دقیق‌تر.</p></div>`;
+        }
+
+        async function v81SelfCard() {
+            const isAdmin = (currentRole === 'admin');
+            const since = new Date(Date.now() - 60 * 86400000).toISOString();
+            const r = await sstFetchAll(() => { let q = _supabase.from('sales').select('sell_price, created_at, seller_name'); if (!isAdmin) q = q.eq('seller_name', currentUserLabel); return q.gte('created_at', since).order('created_at', { ascending: false }); });
+            const by = {}; (r.data || []).forEach(x => { if (v79ShiftOf(x.seller_name)) (by[x.seller_name] = by[x.seller_name] || []).push(x); });
+            if (!isAdmin && !by[currentUserLabel]) by[currentUserLabel] = [];
+            const recent = Date.now() - 14 * 86400000;
+            const names = Object.keys(by).filter(n => isAdmin ? by[n].some(x => new Date(x.created_at) >= recent) : true).sort((a, b) => by[b].length - by[a].length).slice(0, 4);
+            if (!names.length) return '';
+            return names.map(n => v81PersonCard(n, by[n], n === currentUserLabel)).join('');
+        }
+
         // v79 — خلاصه‌ی روز هوشمند: تشخیص خودکار شیفت + مقایسه با میانگین همان شیفت در روزهای قبل
         const V79_SHIFT = { morning: { prefix: 'فروشنده صبح', icon: '🌅', name: 'شیفت صبح' }, evening: { prefix: 'فروشنده شب', icon: '🌙', name: 'شیفت شب' } };
         function v79ShiftOf(name) { name = String(name || ''); return name.indexOf('فروشنده صبح') === 0 ? 'morning' : (name.indexOf('فروشنده شب') === 0 ? 'evening' : null); }
@@ -5588,6 +5672,7 @@
                 <div class="v79-tabs"><button class="${scope === 'shift' ? 'active' : ''}" onclick="v79SetScope('shift')">${sh.icon} فقط ${sh.name}</button><button class="${scope === 'day' ? 'active' : ''}" onclick="v79SetScope('day')">📅 کل روز</button></div>
                 <div class="v78-big">${Math.round(today).toLocaleString('fa-IR')} <span style="font-size:13px;">تومان</span></div>
                 <div class="v79-sub">فروش ${scope === 'shift' ? sh.name : 'کل روز'} تا همین لحظه · ${Math.round(today).toLocaleString('fa-IR')} = ${v78Words(today)} تومان</div>
+                <div class="v78-alert v78-ok" style="margin-top:8px;">💬 ${v81Quote(sk, mood, 0, null)}</div>
                 <div class="v78-alert v78-${mood}" style="margin-top:8px;">${verdict}${projected ? `<br><span style="font-weight:400;">📈 با این روند، پایان ${sh.name} حدود <b>${v77Compact(projected)}</b> تومان می‌شود.</span>` : ''}</div>
                 <div class="v79-pace" title="مقایسه با میانگین و رکورد"><i style="width:${pacePct(today)}%;background:${col};"></i>${avgShift > 0 ? `<s style="right:${pacePct(avgShift)}%"></s>` : ''}</div>
                 <div class="v79-sub" style="display:flex;justify-content:space-between;"><span>امروز ${v77Compact(today)}</span><span>⬜ میانگین شیفت ${avgShift > 0 ? v77Compact(avgShift) : '—'}</span><span>🏆 رکورد ${best ? v77Compact(perDay[best]) : '—'}</span></div>
