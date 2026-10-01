@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v78.3 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v80 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="icon" href="icon-192.png">
@@ -1195,6 +1195,24 @@
 .inv-card.susp{border-color:#a78bfa;box-shadow:0 0 0 1px rgba(167,139,250,.35)}
 .inv-susp{background:rgba(167,139,250,.14);border:1px solid #a78bfa;color:#c4b5fd;border-radius:12px;padding:8px 10px;font-size:12px;margin-top:8px;line-height:1.8}
 .inv-split{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.inv-split .v78-t b{font-size:15px}
+.v80-card{border-radius:18px;padding:14px;margin-bottom:12px;background:var(--bg-card,rgba(30,41,59,.6));border:1px solid rgba(148,163,184,.22)}
+.v80-card h3{margin:0 0 8px;font-size:15px;display:flex;justify-content:space-between;align-items:center;gap:6px}
+.v80-stack{display:flex;height:12px;border-radius:8px;overflow:hidden;background:rgba(148,163,184,.2);margin:8px 0 4px}.v80-stack i{display:block;height:100%}
+.v80-legend{display:flex;flex-wrap:wrap;gap:8px;font-size:11px;color:#cbd5e1}.v80-legend span::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--c);margin-left:4px}
+.v80-row{padding:9px 0;border-bottom:1px dashed rgba(148,163,184,.22)}.v80-row:last-child{border-bottom:0}
+.v80-line{display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:13px}
+.v80-bar{height:7px;border-radius:6px;background:rgba(148,163,184,.2);margin-top:6px;overflow:hidden}.v80-bar i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,#6366f1,#38bdf8)}
+.v80-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}.v80-tag{font-size:10px;border-radius:8px;padding:2px 7px;background:rgba(148,163,184,.16);color:#cbd5e1}
+.v80-tag.g{background:rgba(16,185,129,.18);color:#34d399}.v80-tag.r{background:rgba(239,68,68,.18);color:#f87171}.v80-tag.y{background:rgba(245,158,11,.18);color:#fbbf24}.v80-tag.b{background:rgba(56,189,248,.18);color:#38bdf8}
+.v80-live{display:inline-block;width:9px;height:9px;border-radius:50%;background:#10b981;box-shadow:0 0 0 0 rgba(16,185,129,.7);animation:v80p 1.6s infinite;margin-left:5px}
+@keyframes v80p{70%{box-shadow:0 0 0 8px rgba(16,185,129,0)}100%{box-shadow:0 0 0 0 rgba(16,185,129,0)}}
+.v80-ava{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#6366f1,#38bdf8);color:#fff;font-weight:800;flex:none}
+.v80-vs{display:flex;align-items:center;gap:8px;margin:8px 0}.v80-vs .side{flex:1;text-align:center;border-radius:14px;padding:10px 4px;background:rgba(148,163,184,.1)}.v80-vs .side.win{background:rgba(16,185,129,.15);border:1px solid #10b981}
+.v79-shift{display:flex;justify-content:space-between;align-items:center;gap:8px;background:rgba(0,0,0,.18);border-radius:14px;padding:10px 12px;margin-top:10px}
+.v79-shift b{font-size:13px}.v79-pace{height:12px;border-radius:8px;background:rgba(148,163,184,.2);position:relative;overflow:hidden;margin-top:8px}
+.v79-pace i{position:absolute;top:0;bottom:0;right:0;border-radius:8px}.v79-pace s{position:absolute;top:-2px;bottom:-2px;width:3px;background:#fff;border-radius:2px}
+.v79-hours{display:flex;align-items:flex-end;gap:2px;height:46px;margin-top:6px}.v79-hours i{flex:1;background:linear-gradient(#38bdf8,#6366f1);border-radius:3px 3px 0 0;min-height:2px}.v79-hours i.cur{background:linear-gradient(#34d399,#10b981)}
+.v79-sub{font-size:10px;color:#94a3b8}.v79-tabs{display:flex;gap:6px;margin-top:10px}.v79-tabs button{flex:1;border:1px solid rgba(148,163,184,.3);background:transparent;color:inherit;border-radius:10px;padding:6px;font-size:11px;font-family:inherit}.v79-tabs button.active{background:linear-gradient(135deg,#0ea5e9,#6366f1);color:#fff;border-color:transparent}
 .sst-range{background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.35);border-radius:12px;padding:8px 10px;margin:6px 0;font-size:12px;line-height:1.9}
 </style>
 </head>
@@ -2568,7 +2586,7 @@
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v78.3 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v80 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
 
     <script>
         function toggleLoginPasswordVisibility() {
@@ -5208,7 +5226,7 @@
                     ? _supabase.from('sales').select('sell_price, quantity, created_at, seller_name, sale_type, product_code')
                     : _supabase.from('sales').select('sell_price, quantity, created_at, seller_name, sale_type, product_code').eq('seller_name', currentUserLabel)
                 ).gte('created_at', todayStartUTC.toISOString()).order('created_at', { ascending: false }).limit(1000),
-                _supabase.from('attendance').select('seller_name, type, created_at')
+                _supabase.from('attendance').select('seller_name, type, created_at, delay_minutes, overtime_hours, exit_diff_minutes')
                     .gte('created_at', todayStartUTC.toISOString())
                     .order('created_at', { ascending: false }).limit(500),
                 messagesQuery,
@@ -5344,49 +5362,18 @@
             };
             const mStats = shiftStats('morning');
             const eStats = shiftStats('evening');
-            const leaderboardCard = `
-                <div class="report-card">
-                    <h3>🏆 رقابت دوستانه این ماه</h3>
-                    <div class="summary-mini"><span>🌅 فروشنده صبح</span><span style="color:#38bdf8;">${mStats.sum.toLocaleString('fa-IR')} تومان <span style="color:#94a3b8; font-size:10px;">(${mStats.lateCount.toLocaleString('fa-IR')} تاخیر)</span></span></div>
-                    <div class="summary-mini"><span>🌙 فروشنده شب</span><span style="color:#38bdf8;">${eStats.sum.toLocaleString('fa-IR')} تومان <span style="color:#94a3b8; font-size:10px;">(${eStats.lateCount.toLocaleString('fa-IR')} تاخیر)</span></span></div>
-                    <p style="font-size:11px; color:#94a3b8; margin-top:6px;">${mStats.sum === eStats.sum ? '🤝 مساوی!' : (mStats.sum > eStats.sum ? '🥇 شیفت صبح جلوتره!' : '🥇 شیفت شب جلوتره!')}</p>
-                </div>`;
-
-            let heroCard = ''; try { heroCard = await buildDashHero(todaySales, productsRes.data, todayISO, lowStockItems); } catch (e) { console.warn(e); }
+            const leaderboardCard = v80LeaderCard(mStats, eStats);
+            let _vel = {}; try { _vel = await getSalesVelocity(); } catch (e) {}
+            let heroCard = ''; try { heroCard = await buildDashHero(todaySales, productsRes.data, todayISO, lowStockItems, todayAttendance); } catch (e) { console.warn(e); }
             box.innerHTML = `
                 ${personalAlarmCard}
                 ${heroCard}
                 ${handoverCard}
                 ${bonusCard}
-                <div class="report-card">
-                    <h3>💰 ${currentRole === 'admin' ? 'فروش امروز (مجموع کل)' : 'فروش امروز شما'}</h3>
-                    <p style="font-size:20px; font-weight:bold; color:#38bdf8;" id="dashTodayRevenueNum">۰ تومان</p>
-                    <p style="font-size:12px; color:#94a3b8;">${(currentRole === 'admin' ? todayCount : (perPersonToday[currentUserLabel] ? perPersonToday[currentUserLabel].count : 0)).toLocaleString('fa-IR')} فاکتور ثبت شده</p>
-                    ${currentRole === 'admin' ? `
-                    <h4 style="color:#cbd5e1; margin-top:12px; margin-bottom:6px; font-size:13px;">👥 تفکیک دقیق به‌ازای هر فروشنده:</h4>
-                    ${perPersonRows || '<p style="color:#94a3b8; font-size:12px;">هنوز امروز فروشی ثبت نشده است.</p>'}
-                    ` : ''}
-                </div>
-                <div class="report-card">
-                    <h3>⏰ وضعیت حضور امروز</h3>
-                    <p>${attendanceStatus(morningEntered, morningOnLeave, 'فروشنده صبح')}</p>
-                    <p>${attendanceStatus(eveningEntered, eveningOnLeave, 'فروشنده شب')}</p>
-                </div>
-                <div class="report-card">
-                    <h3>📦 وضعیت موجودی</h3>
-                    ${lowStockItems.length > 0
-                        ? `<p style="color:#ef4444; font-weight:bold;">⚠️ ${lowStockItems.length.toLocaleString('fa-IR')} کالا به نقطه سفارش رسیده یا تمام شده</p>${(currentRole === 'admin' || currentRole === 'morning_seller') ? `<button class="row-btn edit-btn" onclick="switchTab('inventory'); loadInventory();">مشاهده در موجودی انبار</button>` : ''}`
-                        : `<p style="color:#34d399;">✅ همه‌چیز مرتب است</p>`}
-                </div>
-                <div class="report-card">
-                    <h3>📥 آخرین پیام‌ها</h3>
-                    ${recentMessages.length === 0 ? '<p style="color:#94a3b8;">پیام جدیدی نیست.</p>' : recentMessages.map(m => `
-                        <div class="summary-mini">
-                            <span>📩 <b>${m.title}</b><br><span style="font-size:10px; color:#94a3b8;">از: ${m.sender} — ${getTehranFullDateTimeString(new Date(m.created_at))}</span></span>
-                        </div>
-                    `).join('')}
-                    <button class="row-btn edit-btn" style="width:100%; margin-top:8px;" onclick="switchTab('inbox'); loadInbox();">مشاهده صندوقچه پیام‌ها</button>
-                </div>
+                ${v80SalesCard(todaySales, perPersonToday, currentRole === 'admin')}
+                ${v80AttendanceCard(todayAttendance)}
+                ${v80StockCard(productsRes.data, lowStockItems, _vel)}
+                ${v80MessagesCard(recentMessages)}
                 ${leaderboardCard}
                 ${(currentRole === 'morning_seller' || currentRole === 'evening_seller') ? `
                 <div class="report-card">
@@ -5404,44 +5391,220 @@
         }
 
 
-        // v78 — خلاصه‌ی روز پیشرفته: مقایسه با دیروز، ۷ روز اخیر، ساعت اوج، پرفروش‌ها
-        async function buildDashHero(todaySales, products, todayISO, lowItems) {
+
+        // v80 — کارت‌های داشبورد: فروش، حضور، موجودی، پیام‌ها و رقابت (واقعی‌تر و کاربردی‌تر)
+        function v80Hm(iso) { return new Intl.DateTimeFormat('fa-IR', { timeZone: 'Asia/Tehran', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(iso)); }
+        function v80Dur(min) { min = Math.max(0, Math.round(min)); const h = Math.floor(min / 60), m = min % 60; return (h ? v77Fa(h) + ' ساعت' : '') + (h && m ? ' و ' : '') + ((m || !h) ? v77Fa(m) + ' دقیقه' : ''); }
+        function v80Ago(iso) { const m = Math.round((Date.now() - new Date(iso)) / 60000); if (m < 1) return 'همین الان'; if (m < 60) return v77Fa(m) + ' دقیقه پیش'; if (m < 1440) return v77Fa(Math.round(m / 60)) + ' ساعت پیش'; return v77Fa(Math.round(m / 1440)) + ' روز پیش'; }
+        function v80Name(n) { return String(n || 'نامشخص').split(' - ').pop(); }
+        function v80Shift(n) { const k = v79ShiftOf(n); return k ? V79_SHIFT[k].icon : '👤'; }
+
+        function v80SalesCard(todaySales, perPerson, isAdmin) {
+            const T = { instore: { n: '🏪 حضوری', c: '#38bdf8' }, ekala: { n: '📱 اکالا', c: '#a78bfa' }, sausage: { n: '🌭 سوسیس', c: '#f59e0b' } };
+            const ty = { instore: { s: 0, c: 0 }, ekala: { s: 0, c: 0 }, sausage: { s: 0, c: 0 } };
+            let total = 0, cnt = 0;
+            todaySales.forEach(x => { const k = ty[x.sale_type] ? x.sale_type : 'instore', v = Number(x.sell_price) || 0; ty[k].s += v; ty[k].c++; total += v; cnt++; });
+            const stack = total > 0 ? `<div class="v80-stack">${Object.keys(ty).map(k => `<i style="width:${ty[k].s / total * 100}%;background:${T[k].c};"></i>`).join('')}</div>
+                <div class="v80-legend">${Object.keys(ty).filter(k => ty[k].c).map(k => `<span style="--c:${T[k].c}">${T[k].n}: <b>${v77Compact(ty[k].s)}</b> (${v77Fa(Math.round(ty[k].s / total * 100))}٪)</span>`).join('')}</div>` : '';
+            const rows = isAdmin ? Object.entries(perPerson).sort((a, b) => b[1].sum - a[1].sum).map(([name, v], i) => {
+                const share = total > 0 ? v.sum / total * 100 : 0;
+                return `<div class="v80-row"><div class="v80-line"><span style="display:flex;align-items:center;gap:8px;"><span class="v80-ava">${v77Esc(v80Name(name).charAt(0))}</span><span>${i === 0 && total > 0 ? '👑 ' : ''}${v80Shift(name)} ${v77Esc(v80Name(name))}</span></span><b style="color:#38bdf8;">${v77Compact(v.sum)}</b></div>
+                    <div class="v80-bar"><i style="width:${share}%"></i></div>
+                    <div class="v80-tags"><span class="v80-tag b">${v77Fa(Math.round(share))}٪ سهم</span><span class="v80-tag">${v77Fa(v.count)} فاکتور</span><span class="v80-tag">میانگین ${v77Compact(v.sum / Math.max(1, v.count))}</span></div></div>`;
+            }).join('') : '';
+            return `<div class="v80-card"><h3><span>💰 ${isAdmin ? 'فروش امروز (مجموع کل)' : 'فروش امروز شما'}</span><span class="v80-tag g">${v77Fa(cnt)} فاکتور</span></h3>
+                <div class="v78-big" id="dashTodayRevenueNum" style="margin:0;">۰ تومان</div>
+                <div class="v79-sub">${total > 0 ? v78Words(total) + ' تومان' : 'هنوز فروشی ثبت نشده'}${cnt ? ' · میانگین هر فاکتور ' + v77Compact(total / cnt) : ''}</div>
+                ${stack}
+                ${isAdmin ? `<div style="margin-top:10px;font-size:12px;font-weight:700;">👥 سهم هر فروشنده از امروز</div>${rows || '<p class="v79-sub">هنوز امروز فروشی ثبت نشده است.</p>'}` : ''}
+            </div>`;
+        }
+
+        function v80AttendanceCard(att) {
+            const nowMs = Date.now(), by = {};
+            (att || []).slice().sort((a, b) => new Date(a.created_at) - new Date(b.created_at)).forEach(a => { (by[a.seller_name] = by[a.seller_name] || []).push(a); });
+            const names = Object.keys(by).filter(n => n && n !== 'null');
+            const rows = names.map(n => {
+                const ev = by[n], entry = ev.find(e => e.type === 'entry'), exits = ev.filter(e => e.type === 'exit'), exit = exits[exits.length - 1];
+                const leave = ev.find(e => e.type === 'leave'), hl = ev.find(e => e.type === 'leave_hourly');
+                let badge = '', tags = '';
+                if (leave) badge = '<span class="v80-tag y">🏖️ مرخصی امروز</span>';
+                else if (entry && !(exit && new Date(exit.created_at) > new Date(entry.created_at))) badge = '<span class="v80-tag g"><span class="v80-live"></span>در شیفت</span>';
+                else if (entry) badge = '<span class="v80-tag">⚪ شیفت تمام شد</span>';
+                if (entry) {
+                    const d = Number(entry.delay_minutes) || 0;
+                    tags += `<span class="v80-tag b">🟢 ورود ${v80Hm(entry.created_at)}</span>` + (d > 0 ? `<span class="v80-tag r">⏰ ${v77Fa(d)} دقیقه تاخیر</span>` : '<span class="v80-tag g">✅ به‌موقع</span>');
+                    const endMs = (exit && new Date(exit.created_at) > new Date(entry.created_at)) ? new Date(exit.created_at).getTime() : nowMs;
+                    tags += `<span class="v80-tag">⏱ ${v80Dur((endMs - new Date(entry.created_at).getTime()) / 60000)} حضور</span>`;
+                }
+                if (exit) {
+                    const df = Number(exit.exit_diff_minutes) || 0, ot = Number(exit.overtime_hours) || 0;
+                    tags += `<span class="v80-tag">🔴 خروج ${v80Hm(exit.created_at)}</span>` + (df < 0 ? `<span class="v80-tag r">🚪 ${v77Fa(Math.abs(df))} دقیقه زودتر</span>` : '') + (ot > 0 ? `<span class="v80-tag g">💪 اضافه‌کاری ${v77Fa(ot)} ساعت</span>` : '');
+                }
+                if (hl) tags += '<span class="v80-tag y">🕐 مرخصی ساعتی</span>';
+                const me = (n === currentUserLabel);
+                return `<div class="v80-row" ${me ? 'style="background:rgba(99,102,241,.1);border-radius:12px;padding:9px;"' : ''}><div class="v80-line"><span style="display:flex;align-items:center;gap:8px;"><span class="v80-ava">${v77Esc(v80Name(n).charAt(0))}</span><span>${v80Shift(n)} ${v77Esc(v80Name(n))}${me ? ' <span class="v80-tag b">تو</span>' : ''}</span></span>${badge}</div><div class="v80-tags">${tags}</div></div>`;
+            }).join('');
+            const missing = ['morning', 'evening'].filter(k => !names.some(n => v79ShiftOf(n) === k)).map(k => `<div class="v78-alert v78-bad" style="margin:8px 0 0;">⛔ ${V79_SHIFT[k].icon} ${V79_SHIFT[k].prefix}: هنوز ورود نزده</div>`).join('');
+            const inNow = names.filter(n => { const ev = by[n], en = ev.find(e => e.type === 'entry'), ex = ev.filter(e => e.type === 'exit').pop(); return en && !ev.some(e => e.type === 'leave') && !(ex && new Date(ex.created_at) > new Date(en.created_at)); }).length;
+            return `<div class="v80-card"><h3><span>⏰ وضعیت حضور امروز</span><span class="v80-tag ${inNow ? 'g' : ''}">${v77Fa(inNow)} نفر در شیفت</span></h3>${rows || '<p class="v79-sub">امروز هنوز ورودی ثبت نشده.</p>'}${missing}</div>`;
+        }
+
+        function v80StockCard(products, lowItems, vel) {
+            const fa = n => Number(n).toLocaleString('fa-IR', { maximumFractionDigits: 1 });
+            const canManage = (currentRole === 'admin' || currentRole === 'morning_seller');
+            const list = (products || []).filter(p => !p.no_restock);
+            const tot = p => (Number(p.stock) || 0) + (Number(p.booth_stock) || 0);
+            const days = p => { const v = vel && vel[p.code]; return (v && v.avg > 0) ? tot(p) / v.avg : null; };
+            const out = list.filter(p => tot(p) <= 0), soon = list.filter(p => tot(p) > 0 && days(p) !== null && days(p) <= 5);
+            const urgent = [...new Set([...out, ...lowItems, ...soon])].sort((a, b) => { const da = tot(a) <= 0 ? -1 : (days(a) === null ? 999 : days(a)), db = tot(b) <= 0 ? -1 : (days(b) === null ? 999 : days(b)); return da - db; }).slice(0, 5);
+            const susp = (typeof invSusp === 'function') ? (products || []).filter(p => invSusp(p).any) : [];
+            const ok = lowItems.length === 0 && soon.length === 0 && out.length === 0;
+            const rows = urgent.map(p => {
+                const d = days(p), isOut = tot(p) <= 0;
+                const cls = isOut ? 'r' : (d !== null && d <= 2 ? 'r' : 'y');
+                const lbl = isOut ? '🔴 تمام شده' : (d !== null ? '⏳ حدود ' + (d < 1 ? 'کمتر از یک' : v77Fa(Math.round(d))) + ' روز' : '⚠️ زیر حداقل');
+                const ref = p.booth_only ? (Number(p.booth_min_stock) || 0) * 2 : (Number(p.min_stock) || 0) * 2, cur = p.booth_only ? (Number(p.booth_stock) || 0) : (Number(p.stock) || 0);
+                const pct = ref > 0 ? Math.min(100, cur / ref * 100) : (cur > 0 ? 100 : 0);
+                return `<div class="v80-row"><div class="v80-line"><b>${v77Esc(p.name)}</b><span class="v80-tag ${cls}">${lbl}</span></div>
+                    <div class="v80-bar"><i style="width:${pct}%;background:${pct < 35 ? '#ef4444' : '#f59e0b'};"></i></div>
+                    <div class="v80-tags"><span class="v80-tag">📦 انبار ${fa(p.stock || 0)} کیلو</span><span class="v80-tag">🧊 غرفه ${fa(p.booth_stock || 0)} کیلو</span>${vel && vel[p.code] ? `<span class="v80-tag b">فروش روزانه ~${fa(vel[p.code].avg)} کیلو</span>` : ''}</div></div>`;
+            }).join('');
+            return `<div class="v80-card"><h3><span>📦 وضعیت موجودی</span>${ok ? '<span class="v80-tag g">✅ مرتب</span>' : `<span class="v80-tag r">${v77Fa(urgent.length < lowItems.length ? lowItems.length : urgent.length)} هشدار</span>`}</h3>
+                <div class="v78-grid" style="grid-template-columns:repeat(4,1fr);"><div class="v78-t"><b>${v77Fa(list.length)}</b><span>کالا</span></div><div class="v78-t"><b style="color:#f87171;">${v77Fa(lowItems.length)}</b><span>کمبود</span></div><div class="v78-t"><b style="color:#ef4444;">${v77Fa(out.length)}</b><span>تمام‌شده</span></div><div class="v78-t"><b style="color:#fbbf24;">${v77Fa(soon.length)}</b><span>≤ ۵ روز</span></div></div>
+                ${ok ? '<p style="color:#34d399;margin-top:10px;">✅ همه‌چیز مرتب است؛ کالایی نزدیک اتمام نیست.</p>' : `<div style="margin-top:10px;font-size:12px;font-weight:700;">🚨 فوری‌ترین‌ها</div>${rows}`}
+                ${susp.length && canManage ? `<div class="v78-alert v78-warn" style="margin-top:8px;">🔍 ${v77Fa(susp.length)} کالا وزن مشکوک (بالای ${v77Fa(invWeightLimit)} کیلو) دارد؛ چک کن اشتباه ثبت نشده باشد.</div>` : ''}
+                ${canManage ? `<button class="bc-big" style="margin-top:8px;" onclick="switchTab('inventory'); loadInventory();">📦 مشاهده‌ی کامل انبار</button>` : ''}</div>`;
+        }
+
+        function v80MessagesCard(msgs) {
+            return `<div class="v80-card"><h3><span>📥 آخرین پیام‌ها</span><span class="v80-tag b">${v77Fa(msgs.length)}</span></h3>
+                ${msgs.length === 0 ? '<p class="v79-sub">پیام جدیدی نیست.</p>' : msgs.map(m => `<div class="v80-row"><div class="v80-line"><span style="display:flex;align-items:center;gap:8px;"><span class="v80-ava">${v77Esc(String(m.sender || '?').charAt(0))}</span><span><b>${v77Esc(m.title || '')}</b><br><span class="v79-sub">از: ${v77Esc(m.sender || '')}</span></span></span><span class="v79-sub">${v80Ago(m.created_at)}</span></div></div>`).join('')}
+                <button class="bc-big" style="margin-top:8px;" onclick="switchTab('inbox'); loadInbox();">📬 مشاهده صندوقچه پیام‌ها</button></div>`;
+        }
+
+        function v80LeaderCard(m, e) {
+            const tot = m.sum + e.sum, mp = tot > 0 ? Math.round(m.sum / tot * 100) : 50, diff = Math.abs(m.sum - e.sum);
+            const mine = currentRole === 'morning_seller' ? 'morning' : (currentRole === 'evening_seller' ? 'evening' : null);
+            const lead = m.sum === e.sum ? null : (m.sum > e.sum ? 'morning' : 'evening');
+            const side = (k, d) => `<div class="side ${lead === k ? 'win' : ''}"><div style="font-size:20px;">${V79_SHIFT[k].icon}${lead === k ? '👑' : ''}</div><b>${v77Compact(d.sum)}</b><div class="v79-sub">${V79_SHIFT[k].name}${mine === k ? ' (تو)' : ''}</div><div class="v79-sub">${v77Fa(d.lateCount)} تاخیر</div></div>`;
+            return `<div class="v80-card"><h3><span>🏆 رقابت دوستانه این ماه</span></h3>
+                <div class="v80-vs">${side('morning', m)}<b>VS</b>${side('evening', e)}</div>
+                <div class="v80-stack"><i style="width:${mp}%;background:#38bdf8;"></i><i style="width:${100 - mp}%;background:#a78bfa;"></i></div>
+                <div class="v79-sub" style="display:flex;justify-content:space-between;"><span>صبح ${v77Fa(mp)}٪</span><span>شب ${v77Fa(100 - mp)}٪</span></div>
+                <p class="v79-sub" style="margin-top:6px;">${lead ? '🥇 ' + V79_SHIFT[lead].name + ' جلوتر است؛ اختلاف ' + v77Compact(diff) + ' تومان' + (mine && mine !== lead ? ' — می‌توانی جبران کنی! 💪' : (mine ? ' — همین‌طور ادامه بده! 🔥' : '')) : '🤝 مساوی!'}</p></div>`;
+        }
+
+        // v79 — خلاصه‌ی روز هوشمند: تشخیص خودکار شیفت + مقایسه با میانگین همان شیفت در روزهای قبل
+        const V79_SHIFT = { morning: { prefix: 'فروشنده صبح', icon: '🌅', name: 'شیفت صبح' }, evening: { prefix: 'فروشنده شب', icon: '🌙', name: 'شیفت شب' } };
+        function v79ShiftOf(name) { name = String(name || ''); return name.indexOf('فروشنده صبح') === 0 ? 'morning' : (name.indexOf('فروشنده شب') === 0 ? 'evening' : null); }
+        // شیفت فعلی: فروشنده → شیفت خودش | مدیر → هر کسی که الان «داخل» است، وگرنه آخرین فروش امروز، وگرنه ساعت
+        function v79DetectShift(todaySales, att, nowMs) {
+            if (currentRole === 'morning_seller') return { key: 'morning', how: 'شیفت خودت' };
+            if (currentRole === 'evening_seller') return { key: 'evening', how: 'شیفت خودت' };
+            const last = {};
+            (att || []).slice().sort((a, b) => new Date(a.created_at) - new Date(b.created_at)).forEach(a => { if (a.type === 'entry' || a.type === 'exit') last[a.seller_name] = a.type; });
+            const inside = Object.entries(last).filter(([n, t]) => t === 'entry' && v79ShiftOf(n)).map(([n]) => v79ShiftOf(n));
+            if (inside.length) return { key: inside[inside.length - 1], how: 'تشخیص از ورود فعال' };
+            const lastSale = (todaySales || []).slice().sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).find(x => v79ShiftOf(x.seller_name));
+            if (lastSale) return { key: v79ShiftOf(lastSale.seller_name), how: 'تشخیص از آخرین فروش' };
+            return { key: new Date(nowMs).getHours() < 15 ? 'morning' : 'evening', how: 'تشخیص از ساعت' };
+        }
+        let _v79Scope = 'shift';
+        function v79SetScope(k) { _v79Scope = k; loadAdminDashboard(); }
+
+        async function buildDashHero(todaySales, products, todayISO, lowItems, attToday) {
             const isAdmin = (currentRole === 'admin');
-            const since = new Date(Date.now() - 8 * 86400000).toISOString();
-            const r = await sstFetchAll(() => { let q = _supabase.from('sales').select('sell_price, created_at'); if (!isAdmin) q = q.eq('seller_name', currentUserLabel); return q.gte('created_at', since).order('created_at', { ascending: false }); });
-            const byDay = {}; const nowMs = Date.now();
+            const nowMs = Date.now(), DAYS = 28;
+            const since = new Date(nowMs - (DAYS + 1) * 86400000).toISOString();
+            const r = await sstFetchAll(() => { let q = _supabase.from('sales').select('sell_price, created_at, seller_name, product_code, quantity'); if (!isAdmin) q = q.eq('seller_name', currentUserLabel); return q.gte('created_at', since).order('created_at', { ascending: false }); });
+            const all = r.data || [];
             const tehHM = d => { const p = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Tehran', hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(d); return (+p[0].value) * 60 + (+p[2].value); };
-            const nowHM = tehHM(new Date());
-            let yNow = 0;
-            (r.data || []).forEach(x => { const d = new Date(x.created_at), k = getTehranISODate(d), v = Number(x.sell_price) || 0; byDay[k] = (byDay[k] || 0) + v; if (k === getTehranISODate(new Date(nowMs - 86400000)) && tehHM(d) <= nowHM) yNow += v; });
-            const days = []; for (let i = 6; i >= 0; i--) { const d = new Date(nowMs - i * 86400000); days.push({ k: getTehranISODate(d), v: 0, lbl: new Intl.DateTimeFormat('fa-IR-u-ca-persian', { timeZone: 'Asia/Tehran', weekday: 'short' }).format(d) }); }
-            days.forEach(d => d.v = byDay[d.k] || 0);
-            const today = todaySales.reduce((a, x) => a + (Number(x.sell_price) || 0), 0), cnt = todaySales.length;
+            const nowHM = tehHM(new Date(nowMs));
+            const det = v79DetectShift(todaySales, attToday, nowMs), sk = det.key, sh = V79_SHIFT[sk];
+            const scope = _v79Scope;                       // shift | day
+            const inScope = x => scope === 'day' || v79ShiftOf(x.seller_name) === sk;
+            const val = x => Number(x.sell_price) || 0;
+
+            // جمع هر روز (برای آن شیفت یا کل روز) + جمع «تا همین ساعت» برای مقایسه‌ی منصفانه
+            const perDay = {}, perDayNow = {}, perDayCnt = {};
+            all.forEach(x => {
+                if (!inScope(x)) return;
+                const d = new Date(x.created_at), k = getTehranISODate(d);
+                perDay[k] = (perDay[k] || 0) + val(x); perDayCnt[k] = (perDayCnt[k] || 0) + 1;
+                if (tehHM(d) <= nowHM) perDayNow[k] = (perDayNow[k] || 0) + val(x);
+            });
+            const todaySc = todaySales.filter(inScope);
+            const today = todaySc.reduce((a, x) => a + val(x), 0), cnt = todaySc.length;
+            const pastKeys = Object.keys(perDay).filter(k => k < todayISO && perDay[k] > 0).sort().reverse();
+            const last7 = pastKeys.slice(0, 7), last14 = pastKeys.slice(0, 14);
+            const avg = a => a.length ? a.reduce((s2, k) => s2 + perDay[k], 0) / a.length : 0;
+            const avgShift = avg(last14);                  // میانگین کل روزِ همین شیفت
+            const avgNow = last14.length ? last14.reduce((s2, k) => s2 + (perDayNow[k] || 0), 0) / last14.length : 0; // میانگین تا همین ساعت
+            const avgCnt = last14.length ? last14.reduce((s2, k) => s2 + (perDayCnt[k] || 0), 0) / last14.length : 0;
+            const best = pastKeys.slice().sort((a, b) => perDay[b] - perDay[a])[0];
+            const dow = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Tehran', weekday: 'short' });
+            const sameDow = pastKeys.filter(k => dow.format(new Date(k + 'T12:00:00+03:30')) === dow.format(new Date(nowMs))).slice(0, 4);
+            const avgDow = sameDow.length ? avg(sameDow) : 0;
+            const pctNow = avgNow > 0 ? Math.round((today - avgNow) / avgNow * 100) : null;
+            const projected = (avgNow > 0 && avgShift > 0) ? Math.round(today / avgNow * avgShift) : null; // پیش‌بینی پایان شیفت
+            const paceMax = Math.max(today, avgShift, best ? perDay[best] : 0, 1);
+
+            // ۷ روز اخیر (نمودار)
+            const days = []; for (let i = 6; i >= 0; i--) { const d = new Date(nowMs - i * 86400000); const k = getTehranISODate(d); days.push({ k, v: k === todayISO ? today : (perDay[k] || 0), lbl: new Intl.DateTimeFormat('fa-IR-u-ca-persian', { timeZone: 'Asia/Tehran', weekday: 'short' }).format(d) }); }
             const max = Math.max(1, ...days.map(d => d.v));
-            const avg7 = days.slice(0, 6).reduce((a, d) => a + d.v, 0) / 6;
-            const cmp = yNow > 0 ? Math.round((today - yNow) / yNow * 100) : null;
-            const hours = {}; todaySales.forEach(x => { const h = Math.floor(tehHM(new Date(x.created_at)) / 60); hours[h] = (hours[h] || 0) + (Number(x.sell_price) || 0); });
+
+            // ساعت‌به‌ساعت امروز
+            const hours = {}; todaySc.forEach(x => { const h = Math.floor(tehHM(new Date(x.created_at)) / 60); hours[h] = (hours[h] || 0) + val(x); });
+            const hKeys = Object.keys(hours).map(Number), hMin = hKeys.length ? Math.min(...hKeys) : 9, hMax = hKeys.length ? Math.max(...hKeys, hMin + 5) : 14;
+            const hArr = []; for (let h = hMin; h <= Math.min(23, hMax); h++) hArr.push({ h, v: hours[h] || 0 });
+            const hTop = Math.max(1, ...hArr.map(x => x.v));
             const peak = Object.entries(hours).sort((a, b) => b[1] - a[1])[0];
+
             const pmap = {}; (products || []).forEach(p => { pmap[p.code] = p; });
-            const tp = {}; todaySales.forEach(x => { if (!x.product_code) return; tp[x.product_code] = (tp[x.product_code] || 0) + (Number(x.sell_price) || 0); });
+            const tp = {}; todaySc.forEach(x => { if (!x.product_code) return; tp[x.product_code] = (tp[x.product_code] || 0) + val(x); });
             const top = Object.entries(tp).sort((a, b) => b[1] - a[1]).slice(0, 3);
+
+            // هوش: جمع‌بندی و پیشنهاد
+            let mood = 'ok', verdict = '';
+            if (pctNow === null) verdict = 'هنوز سابقه‌ی کافی از این شیفت نیست؛ با ثبت فروش‌های بیشتر، مقایسه دقیق می‌شود.';
+            else if (pctNow >= 15) { mood = 'ok'; verdict = `🔥 عالی! ${sh.name} امروز ${v77Fa(pctNow)}٪ از میانگین همین ساعت جلوتر است.`; }
+            else if (pctNow >= -10) { mood = 'warn'; verdict = `👌 در حال و هوای معمولِ ${sh.name} هستیم (${pctNow >= 0 ? '+' : '−'}${v77Fa(Math.abs(pctNow))}٪).`; }
+            else { mood = 'bad'; verdict = `⚠️ ${sh.name} امروز ${v77Fa(Math.abs(pctNow))}٪ از میانگین همین ساعت عقب‌تر است.`; }
+            const tips = [];
+            if (pctNow !== null && pctNow < -10 && top.length === 0) tips.push('هنوز فروش ثبت نشده؛ ورود و فروش‌ها را چک کن.');
+            if (avgCnt > 0 && cnt < avgCnt * 0.8 && cnt > 0) tips.push('تعداد فاکتورها کمتر از معمول است؛ به مشتری‌ها پیشنهاد جانبی بده.');
+            if (cnt > 0 && avgCnt > 0 && today / cnt < (avgShift / avgCnt) * 0.85) tips.push('میانگین هر فاکتور پایین‌تر از معمول است؛ پیشنهاد وزن بیشتر یا کالای مکمل بده.');
+            if (best && today >= perDay[best] && perDay[best] > 0) tips.push('🏆 رکورد ۲۸ روز اخیر این شیفت شکسته شد!');
+            if (isAdmin && lowItems.length) tips.push(`${v77Fa(lowItems.length)} کالا نیاز به خرید دارد.`);
+
             const hr = new Date().getHours(), greet = hr < 12 ? '🌅 صبح بخیر' : hr < 17 ? '☀️ ظهر بخیر' : hr < 20 ? '🌇 عصر بخیر' : '🌙 شب بخیر';
-            const dateTxt = new Intl.DateTimeFormat('fa-IR-u-ca-persian', { timeZone: 'Asia/Tehran', weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
-            const chip = cmp === null ? '' : `<span class="v78-chip ${cmp >= 0 ? 'v78-up' : 'v78-down'}">${cmp >= 0 ? '▲' : '▼'} ${v77Fa(Math.abs(cmp))}٪ نسبت به دیروز تا همین ساعت</span>`;
-            const vsAvg = avg7 > 0 ? `<span class="v78-chip ${today >= avg7 ? 'v78-up' : 'v78-down'}">${today >= avg7 ? 'بالاتر' : 'پایین‌تر'} از میانگین ۶ روز قبل (${v77Compact(avg7)})</span>` : '';
+            const dateTxt = new Intl.DateTimeFormat('fa-IR-u-ca-persian', { timeZone: 'Asia/Tehran', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date());
+            const pacePct = v => Math.min(100, v / paceMax * 100);
+            const col = mood === 'ok' ? '#10b981' : mood === 'warn' ? '#f59e0b' : '#ef4444';
             return `<div class="v78-hero">
                 <h3>${greet}${currentUserLabel ? '، ' + v77Esc(String(currentUserLabel).split(' - ').pop()) : ''}</h3><span style="font-size:11px;color:#94a3b8;">${dateTxt}</span>
+                <div class="v79-shift"><div><b>${sh.icon} ${sh.name}</b><div class="v79-sub">${det.how}${isAdmin ? '' : ''}</div></div><div style="text-align:left;"><div class="v79-sub">میانگین ${v77Fa(last14.length)} روز اخیر همین شیفت</div><b style="color:#a78bfa;">${avgShift > 0 ? v77Compact(avgShift) + ' تومان' : '—'}</b></div></div>
+                <div class="v79-tabs"><button class="${scope === 'shift' ? 'active' : ''}" onclick="v79SetScope('shift')">${sh.icon} فقط ${sh.name}</button><button class="${scope === 'day' ? 'active' : ''}" onclick="v79SetScope('day')">📅 کل روز</button></div>
                 <div class="v78-big">${Math.round(today).toLocaleString('fa-IR')} <span style="font-size:13px;">تومان</span></div>
-                <div>${chip}${vsAvg}</div>
+                <div class="v79-sub">فروش ${scope === 'shift' ? sh.name : 'کل روز'} تا همین لحظه · ${Math.round(today).toLocaleString('fa-IR')} = ${v78Words(today)} تومان</div>
+                <div class="v78-alert v78-${mood}" style="margin-top:8px;">${verdict}${projected ? `<br><span style="font-weight:400;">📈 با این روند، پایان ${sh.name} حدود <b>${v77Compact(projected)}</b> تومان می‌شود.</span>` : ''}</div>
+                <div class="v79-pace" title="مقایسه با میانگین و رکورد"><i style="width:${pacePct(today)}%;background:${col};"></i>${avgShift > 0 ? `<s style="right:${pacePct(avgShift)}%"></s>` : ''}</div>
+                <div class="v79-sub" style="display:flex;justify-content:space-between;"><span>امروز ${v77Compact(today)}</span><span>⬜ میانگین شیفت ${avgShift > 0 ? v77Compact(avgShift) : '—'}</span><span>🏆 رکورد ${best ? v77Compact(perDay[best]) : '—'}</span></div>
                 <div class="v78-grid">
-                    <div class="v78-t"><b>${v77Fa(cnt)}</b><span>فاکتور امروز</span></div>
+                    <div class="v78-t"><b>${v77Fa(cnt)}</b><span>فاکتور${avgCnt ? ' (معمول ' + v77Fa(Math.round(avgCnt)) + ')' : ''}</span></div>
                     <div class="v78-t"><b>${cnt ? v77Compact(today / cnt) : '۰'}</b><span>میانگین فاکتور</span></div>
-                    <div class="v78-t"><b>${peak ? v77Fa(peak[0]) + ':۰۰' : '—'}</b><span>ساعت اوج فروش</span></div>
+                    <div class="v78-t"><b>${peak ? v77Fa(peak[0]) + ':۰۰' : '—'}</b><span>ساعت اوج</span></div>
+                    <div class="v78-t"><b style="color:${pctNow === null ? 'inherit' : (pctNow >= 0 ? '#34d399' : '#f87171')}">${pctNow === null ? '—' : (pctNow >= 0 ? '▲' : '▼') + v77Fa(Math.abs(pctNow)) + '٪'}</b><span>نسبت به میانگین همین ساعت</span></div>
+                    <div class="v78-t"><b>${avgNow > 0 ? v77Compact(avgNow) : '—'}</b><span>معمولِ تا الان</span></div>
+                    <div class="v78-t"><b>${avgDow > 0 ? v77Compact(avgDow) : '—'}</b><span>میانگین همین روز هفته</span></div>
                 </div>
+                ${hArr.length ? `<div style="margin-top:10px;font-size:12px;font-weight:700;">⏱ فروش ساعت‌به‌ساعت</div><div class="v79-hours">${hArr.map(x => `<i class="${x.h === Math.floor(nowHM / 60) ? 'cur' : ''}" style="height:${Math.max(4, x.v / hTop * 100)}%" title="${v77Fa(x.h)}:۰۰ — ${Math.round(x.v).toLocaleString('fa-IR')}"></i>`).join('')}</div><div class="v78-lbl">${hArr.map(x => `<span>${v77Fa(x.h)}</span>`).join('')}</div>` : ''}
+                <div style="margin-top:10px;font-size:12px;font-weight:700;">📊 ۷ روز اخیر (${scope === 'shift' ? sh.name : 'کل روز'})</div>
                 <div class="v78-spark">${days.map((d, i) => `<i class="${i === 6 ? 'now' : ''}" style="height:${Math.max(5, d.v / max * 100)}%" title="${Math.round(d.v).toLocaleString('fa-IR')}"></i>`).join('')}</div>
                 <div class="v78-lbl">${days.map(d => `<span>${d.lbl}</span>`).join('')}</div>
                 ${top.length ? `<div style="margin-top:10px;font-size:12px;font-weight:700;">🏅 پرفروش‌های امروز</div>` + top.map((t, i) => `<div class="v78-top"><span>${['🥇', '🥈', '🥉'][i]} ${v77Esc((pmap[t[0]] || {}).name || t[0])}</span><b>${v77Toman(t[1])}</b></div>`).join('') : ''}
-                ${lowItems.length && isAdmin ? `<div class="v78-alert v78-warn" style="margin-top:10px;">📦 ${v77Fa(lowItems.length)} کالا نیاز به خرید دارد: ${lowItems.slice(0, 3).map(p => v77Esc(p.name)).join('، ')}${lowItems.length > 3 ? ' و …' : ''}</div>` : ''}
+                ${tips.length ? `<div class="v78-alert v78-warn" style="margin-top:10px;">💡 ${tips.map(t => v77Esc(t)).join('<br>💡 ')}</div>` : ''}
                 <div class="v78-act"><button onclick="switchTab('sale')">🧀 ثبت فروش</button><button onclick="switchTab('goals')">🎯 هدف و پاداش</button>${(isAdmin || currentRole === 'morning_seller') ? `<button onclick="switchTab('inventory'); loadInventory();">📦 انبار</button>` : ''}</div>
             </div>`;
         }
