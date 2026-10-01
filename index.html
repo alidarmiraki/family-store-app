@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v78.1 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v78.2 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="icon" href="icon-192.png">
@@ -1192,6 +1192,10 @@
 .inv-col{background:rgba(148,163,184,.08);border-radius:12px;padding:8px;text-align:center}.inv-col span{display:block;font-size:10px;color:#94a3b8}.inv-col b{font-size:15px}
 .inv-foot{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;font-size:11px;color:#cbd5e1;align-items:center}
 .inv-view{display:flex;gap:6px;margin:8px 0}.inv-view button{flex:1;border:1px solid rgba(148,163,184,.3);background:transparent;color:inherit;border-radius:12px;padding:8px;font-family:inherit;font-size:12px}.inv-view button.active{background:linear-gradient(135deg,#0ea5e9,#6366f1);color:#fff;border-color:transparent}
+.inv-card.susp{border-color:#a78bfa;box-shadow:0 0 0 1px rgba(167,139,250,.35)}
+.inv-susp{background:rgba(167,139,250,.14);border:1px solid #a78bfa;color:#c4b5fd;border-radius:12px;padding:8px 10px;font-size:12px;margin-top:8px;line-height:1.8}
+.inv-split{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.inv-split .v78-t b{font-size:15px}
+.sst-range{background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.35);border-radius:12px;padding:8px 10px;margin:6px 0;font-size:12px;line-height:1.9}
 </style>
 </head>
 <body>
@@ -2381,6 +2385,21 @@
                 <select id="sstSeller" onchange="sstLoadForm()"><option value="">در حال دریافت لیست پرسنل...</option></select>
                 <label>حقوق پایه ماهانه (تومان) — فقط برای تبدیل «درصد» به تومان لازمه:</label>
                 <input type="text" inputmode="decimal" id="sstBase" placeholder="مثلاً 15000000" oninput="sstPreview()"><div class="sst-words" id="sstWBase"></div>
+                <label>📅 این هدف برای چه بازه‌ای است؟</label>
+                <select id="sstRangeMode" onchange="sstRangeUi()">
+                    <option value="always">♾ همیشه (هر شیفت، تا وقتی تغییرش بدهم)</option>
+                    <option value="today">📌 فقط امروز</option>
+                    <option value="days">🔢 چند روز از امروز</option>
+                    <option value="custom">🗓 بازه‌ی دلخواه (تقویم شمسی)</option>
+                </select>
+                <div id="sstRangeDays" style="display:none;"><input type="text" inputmode="numeric" id="sstDaysCount" placeholder="چند روز؟ مثلاً ۲" oninput="sstPreview()"></div>
+                <div id="sstRangeCustom" style="display:none;">
+                    <label style="margin-top:6px;">از تاریخ:</label>
+                    <div class="bc-row"><select id="sstFD" onchange="sstPreview()"></select><select id="sstFM" onchange="sstPreview()"></select><select id="sstFY" onchange="sstPreview()"></select></div>
+                    <label style="margin-top:6px;">تا تاریخ:</label>
+                    <div class="bc-row"><select id="sstTD" onchange="sstPreview()"></select><select id="sstTM" onchange="sstPreview()"></select><select id="sstTY" onchange="sstPreview()"></select></div>
+                </div>
+                <div class="sst-range" id="sstRangeTxt"></div>
                 <label>🎯 هدف فروش هر شیفت (تومان):</label>
                 <input type="text" inputmode="decimal" id="sstTarget" placeholder="مثلاً 5000000" oninput="sstPreview()"><div class="sst-words" id="sstWTarget"></div>
                 <label>🎁 پاداش اگه به هدف برسد:</label>
@@ -2544,7 +2563,7 @@
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v78.1 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v78.2 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
 
     <script>
         function toggleLoginPasswordVisibility() {
@@ -10649,6 +10668,7 @@
             if (invFilterMode === 'low') list = list.filter(invIsLow);
             else if (invFilterMode === 'out') list = list.filter(p => invIsOut(p) && !p.no_restock);
             else if (invFilterMode === 'soon') list = list.filter(invIsSoon);
+            else if (invFilterMode === 'susp') list = list.filter(p => invSusp(p).any);
             else if (invFilterMode === 'dead') list = list.filter(p => !p.no_restock && invQty(p) > 0 && !invVelocity[p.code]);
             else if (invFilterMode === 'norestock') list = list.filter(p => p.no_restock);
             else if (invFilterMode === 'boothonly') list = list.filter(p => p.booth_only);
@@ -10689,6 +10709,14 @@
             const b = Number(p.buy_price) || 0; if (b > 0) return { v: b, est: false };
             const sp = Number(p.sell_price) || 0; return { v: sp * (1 - (mg == null ? 0.15 : mg)), est: sp > 0 };
         }
+        let invWeightLimit = 50;
+        try { const lv = parseInt(localStorage.getItem('invWeightLimit'), 10); if (lv) invWeightLimit = lv; } catch (e) {}
+        function setInvLimit(n) { invWeightLimit = n; try { localStorage.setItem('invWeightLimit', String(n)); } catch (e) {} filterInventoryTable(); }
+        function invSusp(p) {
+            const s0 = Number(p.stock) || 0, b0 = Number(p.booth_stock) || 0;
+            const main = s0 > invWeightLimit || s0 < 0, booth = b0 > invWeightLimit || b0 < 0;
+            return { main, booth, any: main || booth, s: s0, b: b0 };
+        }
         function invQty(p) { return (Number(p.stock) || 0) + (Number(p.booth_stock) || 0); }
 
         function renderInventorySummary(list) {
@@ -10712,6 +10740,9 @@
             let totalValue = 0, sellValue = 0, estCount = 0;
             list.forEach(p => { const c = invCost(p, mg); totalValue += invQty(p) * c.v; sellValue += invQty(p) * (Number(p.sell_price) || 0); if (c.est && invQty(p) > 0) estCount++; });
             const deadItems = list.filter(p => !p.no_restock && invQty(p) > 0 && !invVelocity[p.code]);
+            const suspList = list.filter(p => invSusp(p).any);
+            let mainVal = 0, boothVal = 0, mainKg = 0, boothKg = 0;
+            list.forEach(p => { const c0 = invCost(p, mg); mainVal += (Number(p.stock) || 0) * c0.v; boothVal += (Number(p.booth_stock) || 0) * c0.v; mainKg += Number(p.stock) || 0; boothKg += Number(p.booth_stock) || 0; });
             const topVal = list.slice().sort((a, b) => invQty(b) * invCost(b, mg).v - invQty(a) * invCost(a, mg).v).slice(0, 3).filter(p => invQty(p) > 0);
 
             const critical = [...new Set([...outItems, ...lowItems, ...soonItems])].slice(0, 4).map(p => p.name).join(' ، ');
@@ -10732,6 +10763,10 @@
                 <div class="bs-tile"><b style="color:#ef4444;">${fa(lowItems.length)}</b><span>کمبود</span></div>
                 <div class="bs-tile"><b style="color:#10b981; font-size:13px;">${isAdmin ? v77Compact(totalValue) : fa(soonItems.length)}</b><span>${isAdmin ? 'ارزش خرید (تومان)' : 'رو به اتمام'}</span>${isAdmin ? `<span style="display:block;font-size:9px;color:#94a3b8;">${Math.round(totalValue).toLocaleString('fa-IR')}${estCount ? ' ≈' : ''}</span>` : ''}</div>
             </div>`;
+            html += `<div class="inv-split">
+                <div class="v78-t"><span>📦 انبار اصلی</span><b style="color:#38bdf8;">${fa(Number(mainKg.toFixed(1)))} کیلو</b>${isAdmin ? `<b style="color:#34d399;">${v77Compact(mainVal)} تومان</b><span>${Math.round(mainVal).toLocaleString('fa-IR')}${estCount ? ' ≈' : ''}</span>` : ''}</div>
+                <div class="v78-t"><span>🧊 غرفه (ویترین)</span><b style="color:#a78bfa;">${fa(Number(boothKg.toFixed(1)))} کیلو</b>${isAdmin ? `<b style="color:#34d399;">${v77Compact(boothVal)} تومان</b><span>${Math.round(boothVal).toLocaleString('fa-IR')}${estCount ? ' ≈' : ''}</span>` : ''}</div>
+            </div>`;
             if (isAdmin) {
                 html += `<div class="v78-grid">
                     <div class="v78-t"><b style="color:#a78bfa;">${v77Compact(sellValue)}</b><span>ارزش فروش</span></div>
@@ -10740,11 +10775,13 @@
                 </div>` + (estCount ? `<div class="bz-strip" style="margin-top:8px;">ℹ️ برای ${fa(estCount)} کالا قیمت خرید ثبت نشده؛ ارزش آن‌ها با میانگین سود (${fa(Math.round(mg * 100))}٪) تخمین زده شد. با ثبت قیمت خرید، عدد دقیق می‌شود.</div>` : '') +
                 (topVal.length ? `<div style="margin-top:8px;font-size:12px;">💎 <b>بیشترین سرمایه‌ی خوابیده:</b> ${topVal.map(p => p.name + ' (' + v77Compact(invQty(p) * invCost(p, mg).v) + ')').join(' ، ')}</div>` : '');
             }
+            html += `<div class="inv-susp">🔍 <b>${fa(suspList.length)}</b> کالا موجودی بیشتر از <b>${fa(invWeightLimit)}</b> کیلو (یا منفی) دارد؛ احتمال اشتباه در ثبت.
+                <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">${[30, 50, 100].map(n => `<button class="bc-chip ${invWeightLimit === n ? 'active' : ''}" onclick="setInvLimit(${n})">بالای ${fa(n)} کیلو</button>`).join('')}<button class="bc-chip ${invFilterMode === 'susp' ? 'active' : ''}" onclick="setInvFilterMode('${invFilterMode === 'susp' ? 'all' : 'susp'}')">${invFilterMode === 'susp' ? 'نمایش همه' : 'فقط مشکوک‌ها'}</button></div></div>`;
             box.innerHTML = html;
 
             if (chipBox) {
                 const chips = [['all', 'همه', total], ['low', '⚠️ کمبود', lowItems.length], ['out', '🔴 تمام‌شده', outItems.length], ['soon', '⏳ کمتر از ۵ روز', soonItems.length],
-                    ['dead', '🧊 راکد', deadItems.length], ['norestock', '🚫 دیگه نمیارم', list.filter(p => p.no_restock).length], ['boothonly', 'فقط غرفه', list.filter(p => p.booth_only).length]];
+                    ['susp', '🔍 وزن مشکوک', suspList.length], ['dead', '🧊 راکد', deadItems.length], ['norestock', '🚫 دیگه نمیارم', list.filter(p => p.no_restock).length], ['boothonly', 'فقط غرفه', list.filter(p => p.booth_only).length]];
                 chipBox.innerHTML = chips.map(c => `<button class="bc-chip ${invFilterMode === c[0] ? 'active' : ''}" onclick="setInvFilterMode('${c[0]}')">${c[1]} (${fa(c[2])})</button>`).join('');
             }
             if (sortBox) {
@@ -10805,13 +10842,15 @@
                 const sp = Number(p.sell_price) || 0, bp = Number(p.buy_price) || 0;
                 const m = (isAdmin && sp > 0 && bp > 0) ? Math.round((sp - bp) / sp * 100) : null;
                 const nm = (p.name || '').replace(/'/g, "\\'");
-                return `<div class="inv-card ${low && !p.no_restock ? 'low' : (soon ? 'soon' : '')}">
+                const sus = invSusp(p), vMain = (Number(p.stock) || 0) * c.v, vBooth = (Number(p.booth_stock) || 0) * c.v;
+                return `<div class="inv-card ${low && !p.no_restock ? 'low' : (soon ? 'soon' : '')}${sus.any ? ' susp' : ''}">
                     <div class="inv-h"><div><b>${v77Esc(p.name)}${p.category === 'sausage' ? ' 🌭' : ''}${p.booth_only ? ' <span style="font-size:9px;color:#fbbf24;">فقط غرفه</span>' : ''}</b><div class="inv-code">کد: ${v77Esc(p.code || '—')}</div></div>${badge}</div>
                     <div class="inv-cols">
-                        <div class="inv-col"><span>📦 انبار اصلی</span><b style="color:${p.booth_only ? '#94a3b8' : col};">${p.booth_only ? '—' : fa(stV) + ' کیلو'}</b>${bar}</div>
-                        <div class="inv-col"><span>🧊 موجودی غرفه</span><b>${fa(Number(p.booth_stock || 0))} کیلو</b></div>
+                        <div class="inv-col"><span>📦 انبار اصلی</span><b style="color:${p.booth_only ? '#94a3b8' : col};">${p.booth_only ? '—' : fa(stV) + ' کیلو'}${sus.main ? ' ⚠️' : ''}</b>${bar}${isAdmin && !p.booth_only ? `<span class="bz-sub">ارزش: ${Math.round(vMain).toLocaleString('fa-IR')}${c.est ? ' ≈' : ''}</span>` : ''}</div>
+                        <div class="inv-col"><span>🧊 موجودی غرفه</span><b>${fa(Number(p.booth_stock || 0))} کیلو${sus.booth ? ' ⚠️' : ''}</b>${isAdmin ? `<span class="bz-sub">ارزش: ${Math.round(vBooth).toLocaleString('fa-IR')}${c.est ? ' ≈' : ''}</span>` : ''}</div>
                     </div>
-                    <div class="inv-foot"><span>💵 فروش: <b>${sp.toLocaleString('fa-IR')}</b> تومان</span>${isAdmin ? `<span>🛒 خرید: <b>${bp ? bp.toLocaleString('fa-IR') : '—'}</b></span>${m !== null ? `<span class="bz-b ${m < 0 ? 'bad' : m < 10 ? 'warn' : 'good'}">سود ${fa(m)}٪</span>` : ''}<span>💎 ارزش موجودی: <b>${Math.round(val).toLocaleString('fa-IR')}</b>${c.est ? ' ≈' : ''} تومان</span>` : ''}</div>
+                    ${sus.any ? `<div class="inv-susp">⚠️ ${sus.main ? 'انبار اصلی ' + fa(sus.s) + ' کیلو' : ''}${sus.main && sus.booth ? ' و ' : ''}${sus.booth ? 'غرفه ' + fa(sus.b) + ' کیلو' : ''} ثبت شده؛ لطفاً درست بودنش را چک کن.${canManage ? ` <button class="row-btn edit-btn" onclick="editProductById('${p.id}')">✏️ اصلاح</button>` : ''}</div>` : ''}
+                    <div class="inv-foot"><span>💵 فروش: <b>${sp.toLocaleString('fa-IR')}</b> تومان</span>${isAdmin ? `<span>🛒 خرید: <b>${bp ? bp.toLocaleString('fa-IR') : '—'}</b></span>${m !== null ? `<span class="bz-b ${m < 0 ? 'bad' : m < 10 ? 'warn' : 'good'}">سود ${fa(m)}٪</span>` : ''}<span>💎 جمع ارزش: <b>${Math.round(val).toLocaleString('fa-IR')}</b>${c.est ? ' ≈' : ''} تومان</span>` : ''}</div>
                     ${canManage ? `<div class="inv-foot"><button class="row-btn edit-btn" onclick="editProductById('${p.id}')">ویرایش</button><button class="row-btn delete-btn" onclick="deleteProduct('${p.id}', '${nm}')">حذف</button><label style="display:flex;align-items:center;gap:4px;font-size:10px;color:#94a3b8;"><input type="checkbox" style="width:auto;margin:0;" ${p.no_restock ? 'checked' : ''} onchange="toggleNoRestock('${p.id}', this.checked)">دیگه نمیارم</label></div>` : ''}
                 </div>`;
             }).join('');
@@ -10835,6 +10874,8 @@
 
             products.forEach(p => {
                 const tr = document.createElement('tr');
+                const sus = invSusp(p);
+                if (sus.any) tr.style.background = 'rgba(167,139,250,.14)';
                 const categoryTag = (p.category === 'sausage') ? ' 🌭' : '';
                 // برای کالای «فقط غرفه‌ای» ستون انبار اصلی اصلاً معنی نداره (همیشه صفره)، پس نباید
                 // قرمز نشون داده بشه؛ کمبودش فقط با موجودی خودِ غرفه سنجیده می‌شه.
@@ -10875,9 +10916,9 @@
                 let rowHtml = `
                     <td>${p.code || ''}</td>
                     <td>${nameCell}</td>
-                    <td style="color: ${p.booth_only ? '#94a3b8' : ((stockLow && !p.no_restock) ? '#ef4444' : '#10b981')}; font-weight: bold;">${p.booth_only ? '—' : fa(Number(p.stock))} ${p.booth_only ? '' : 'کیلو'}${barHtml}</td>
-                    <td style="color: ${(p.booth_only && stockLow && !p.no_restock) ? '#ef4444' : 'inherit'}; font-weight: ${(p.booth_only && stockLow && !p.no_restock) ? 'bold' : 'normal'};">${fa(Number(p.booth_stock || 0))} کیلو</td>
-                    <td>${Number(p.sell_price || 0).toLocaleString('fa-IR')} تومان${showBuyPrice ? `<br><span class="bz-sub">ارزش موجودی: ${Math.round(invQty(p) * invCost(p, invAvgMargin(invCategoryList())).v).toLocaleString('fa-IR')}${invCost(p).est ? ' ≈' : ''}</span>` : ''}</td>
+                    <td style="color: ${p.booth_only ? '#94a3b8' : ((stockLow && !p.no_restock) ? '#ef4444' : '#10b981')}; font-weight: bold;">${p.booth_only ? '—' : fa(Number(p.stock))} ${p.booth_only ? '' : 'کیلو'}${sus.main ? ' <span class="bz-b bad">⚠️ مشکوک</span>' : ''}${barHtml}</td>
+                    <td style="color: ${(p.booth_only && stockLow && !p.no_restock) ? '#ef4444' : 'inherit'}; font-weight: ${(p.booth_only && stockLow && !p.no_restock) ? 'bold' : 'normal'};">${fa(Number(p.booth_stock || 0))} کیلو${sus.booth ? ' <span class="bz-b bad">⚠️ مشکوک</span>' : ''}</td>
+                    <td>${Number(p.sell_price || 0).toLocaleString('fa-IR')} تومان${showBuyPrice ? (() => { const c1 = invCost(p, invAvgMargin(invCategoryList())), e1 = c1.est ? ' ≈' : ''; return `<br><span class="bz-sub">📦 ارزش انبار: ${Math.round((Number(p.stock) || 0) * c1.v).toLocaleString('fa-IR')}${e1}</span><br><span class="bz-sub">🧊 ارزش غرفه: ${Math.round((Number(p.booth_stock) || 0) * c1.v).toLocaleString('fa-IR')}${e1}</span>`; })() : ''}</td>
                 `;
                 if (showBuyPrice) {
                     rowHtml += `<td>${Number(p.buy_price || 0).toLocaleString('fa-IR')} تومان${margin}</td>`;
@@ -14081,6 +14122,11 @@
 alter table public.seller_shift_targets enable row level security;
 drop policy if exists "sst_all" on public.seller_shift_targets;
 create policy "sst_all" on public.seller_shift_targets for all to anon, authenticated using (true) with check (true);
+alter table public.seller_shift_targets add column if not exists start_date date;
+alter table public.seller_shift_targets add column if not exists end_date date;
+notify pgrst, 'reload schema';`;
+        const SST_RANGE_SQL = `alter table public.seller_shift_targets add column if not exists start_date date;
+alter table public.seller_shift_targets add column if not exists end_date date;
 notify pgrst, 'reload schema';`;
 
         let _sstTargets = [];
@@ -14107,7 +14153,7 @@ notify pgrst, 'reload schema';`;
             box.style.display = 'block';
             const form = document.getElementById('sstAdminForm');
             if (form) form.style.display = isAdmin ? 'block' : 'none';
-            if (isAdmin) await sstLoadSellers();
+            if (isAdmin) { sstRangeInit(); await sstLoadSellers(); }
             await sstRefresh();
         }
 
@@ -14142,6 +14188,7 @@ notify pgrst, 'reload schema';`;
             document.getElementById('sstPenaltyType').value = t ? t.penalty_type : 'amount';
             document.getElementById('sstPenaltyValue').value = t && Number(t.penalty_value) ? String(t.penalty_value) : '';
             document.getElementById('sstActive').checked = t ? !!t.active : true;
+            sstRangeFill(t);
             sstPreview();
         }
 
@@ -14174,6 +14221,97 @@ notify pgrst, 'reload schema';`;
             set('sstWPen', v78MoneyLine(v77Num(g('sstPenaltyValue').value), g('sstPenaltyType').value, base));
         }
 
+
+        // v78.2 — بازه‌ی تاریخ شمسی برای هدف/پاداش/جریمه
+        const SST_MONTHS = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
+        function sstJParts(d) {
+            const f = new Intl.DateTimeFormat('en-US-u-ca-persian', { timeZone: 'Asia/Tehran', year: 'numeric', month: 'numeric', day: 'numeric' }).formatToParts(d);
+            const g = t => { const x = f.find(z => z.type === t); return x ? parseInt(x.value, 10) : 0; };
+            return { y: g('year') || g('relatedYear'), m: g('month'), d: g('day') };
+        }
+        function sstJToISO(y, m, d) {
+            const key = p => p.y * 10000 + p.m * 100 + p.d, target = y * 10000 + m * 100 + d;
+            const doy = (m <= 6 ? (m - 1) * 31 : 186 + (m - 7) * 30) + d - 1;
+            let ms = Date.UTC(y + 621, 2, 21, 8, 30) + doy * 86400000;
+            for (let i = 0; i < 14; i++) {
+                const k = key(sstJParts(new Date(ms)));
+                if (k === target) return getTehranISODate(new Date(ms));
+                ms += (k < target ? 1 : -1) * 86400000;
+            }
+            return null;
+        }
+        function sstDayDiff(a, b) { return Math.round((new Date(b + 'T12:00:00+03:30') - new Date(a + 'T12:00:00+03:30')) / 86400000); }
+        function sstRangeInit() {
+            const fy = document.getElementById('sstFY');
+            if (!fy || fy.options.length) return;
+            const now = sstJParts(new Date());
+            ['F', 'T'].forEach(p => {
+                const y = document.getElementById('sst' + p + 'Y'), m = document.getElementById('sst' + p + 'M'), d = document.getElementById('sst' + p + 'D');
+                for (let i = now.y - 1; i <= now.y + 2; i++) y.add(new Option(i.toLocaleString('fa-IR', { useGrouping: false }), i));
+                SST_MONTHS.forEach((n, i) => m.add(new Option(n, i + 1)));
+                for (let i = 1; i <= 31; i++) d.add(new Option(i.toLocaleString('fa-IR'), i));
+                y.value = now.y; m.value = now.m; d.value = now.d;
+            });
+        }
+        function sstSetSel(id, v) {
+            const el = document.getElementById(id); if (!el) return;
+            if (!Array.from(el.options).some(o => String(o.value) === String(v))) el.add(new Option(String(v), v));
+            el.value = v;
+        }
+        function sstRangeFromForm() {
+            const mode = (document.getElementById('sstRangeMode') || {}).value || 'always';
+            const today = getTehranISODate();
+            if (mode === 'always') return { start: null, end: null };
+            if (mode === 'today') return { start: today, end: today };
+            if (mode === 'days') {
+                const n = Math.floor(v77Num(document.getElementById('sstDaysCount').value));
+                if (!(n >= 1 && n <= 366)) return { error: 'تعداد روز را وارد کن (۱ تا ۳۶۶).' };
+                return { start: today, end: getTehranISODate(new Date(Date.now() + (n - 1) * 86400000)) };
+            }
+            const g = id => parseInt(document.getElementById(id).value, 10);
+            const a = sstJToISO(g('sstFY'), g('sstFM'), g('sstFD')), b = sstJToISO(g('sstTY'), g('sstTM'), g('sstTD'));
+            if (!a || !b) return { error: 'تاریخ نامعتبر است (مثلاً روز ۳۱ برای ماهی که ۳۰ روز دارد).' };
+            if (b < a) return { error: 'تاریخ «تا» نباید قبل از تاریخ «از» باشد.' };
+            return { start: a, end: b };
+        }
+        function sstRangeUi() {
+            const mode = document.getElementById('sstRangeMode').value;
+            document.getElementById('sstRangeDays').style.display = (mode === 'days') ? 'block' : 'none';
+            document.getElementById('sstRangeCustom').style.display = (mode === 'custom') ? 'block' : 'none';
+            sstPreview();
+        }
+        function sstRangeFill(t) {
+            const m = document.getElementById('sstRangeMode'); if (!m) return;
+            sstRangeInit();
+            if (!t || (!t.start_date && !t.end_date)) m.value = 'always';
+            else if (t.start_date === t.end_date && t.start_date === getTehranISODate()) m.value = 'today';
+            else {
+                m.value = 'custom';
+                const a = sstJParts(new Date(t.start_date + 'T12:00:00+03:30')), b = sstJParts(new Date((t.end_date || t.start_date) + 'T12:00:00+03:30'));
+                sstSetSel('sstFY', a.y); sstSetSel('sstFM', a.m); sstSetSel('sstFD', a.d);
+                sstSetSel('sstTY', b.y); sstSetSel('sstTM', b.m); sstSetSel('sstTD', b.d);
+            }
+            document.getElementById('sstRangeDays').style.display = 'none';
+            document.getElementById('sstRangeCustom').style.display = (m.value === 'custom') ? 'block' : 'none';
+        }
+        function sstInRange(t, iso) { return (!t.start_date || iso >= t.start_date) && (!t.end_date || iso <= t.end_date); }
+        function sstRangeStatus(t) {
+            const today = getTehranISODate();
+            if (t.start_date && today < t.start_date) return { st: 'upcoming', left: sstDayDiff(today, t.start_date) };
+            if (t.end_date && today > t.end_date) return { st: 'ended', left: 0 };
+            return { st: 'active', left: t.end_date ? sstDayDiff(today, t.end_date) : -1 };
+        }
+        function sstRangeText(t) {
+            if (!t.start_date && !t.end_date) return '♾ بازه: همیشه (هر شیفت)';
+            const s = t.start_date || t.end_date, e = t.end_date || t.start_date, n = sstDayDiff(s, e) + 1;
+            let txt = (s === e) ? '📅 فقط ' + jalaliLabelForISODate(s) : '📅 از ' + jalaliLabelForISODate(s) + ' تا ' + jalaliLabelForISODate(e) + ' (' + v77Fa(n) + ' روز)';
+            const st = sstRangeStatus(t);
+            if (st.st === 'upcoming') txt += ' — ⏳ ' + v77Fa(st.left) + ' روز دیگر شروع می‌شود';
+            else if (st.st === 'ended') txt += ' — ✅ تمام شده';
+            else if (st.left >= 0) txt += st.left === 0 ? ' — 🔥 امروز آخرین روز است' : ' — 🔥 ' + v77Fa(st.left) + ' روز مانده';
+            return txt;
+        }
+
         function sstAmtText(type, val, base) {
             val = Number(val) || 0;
             if (type === 'percent') {
@@ -14184,6 +14322,8 @@ notify pgrst, 'reload schema';`;
 
         function sstPreview() {
             sstWordsUpdate();
+            const rt = document.getElementById('sstRangeTxt');
+            if (rt) { const r0 = sstRangeFromForm(); rt.textContent = r0.error ? '⚠️ ' + r0.error : sstRangeText({ start_date: r0.start, end_date: r0.end }); }
             const el = document.getElementById('sstPreview');
             if (!el) return;
             const base = v77Num(document.getElementById('sstBase').value);
@@ -14191,7 +14331,8 @@ notify pgrst, 'reload schema';`;
             const bt = document.getElementById('sstBonusType').value, bv = v77Num(document.getElementById('sstBonusValue').value);
             const pt = document.getElementById('sstPenaltyType').value, pv = v77Num(document.getElementById('sstPenaltyValue').value);
             if (!target) { el.innerHTML = 'مبلغ هدف را وارد کن تا خلاصه‌ی قانون اینجا نشان داده شود.'; return; }
-            let t = `🎯 فروش شیفت ≥ <b>${v77Toman(target)}</b><br>✅ پاداش: <b>+${sstAmtText(bt, bv, base)}</b>`;
+            const rg = sstRangeFromForm();
+            let t = (rg.error ? '' : sstRangeText({ start_date: rg.start, end_date: rg.end }) + '<br>') + `🎯 فروش شیفت ≥ <b>${v77Toman(target)}</b><br>✅ پاداش: <b>+${sstAmtText(bt, bv, base)}</b>`;
             t += pv > 0 ? `<br>❌ جریمه: <b>−${sstAmtText(pt, pv, base)}</b>` : '<br>❌ بدون جریمه';
             if ((bt === 'percent' || pt === 'percent') && !(base > 0)) t += '<br><span style="color:#fbbf24;">⚠️ برای تبدیل درصد به تومان، حقوق پایه را هم وارد کن.</span>';
             el.innerHTML = t;
@@ -14212,10 +14353,14 @@ notify pgrst, 'reload schema';`;
             if (bonus_value <= 0 && penalty_value <= 0) return showToast('⛔ حداقل یکی از «پاداش» یا «جریمه» را وارد کن.');
             if ((bonus_type === 'percent' && bonus_value > 100) || (penalty_type === 'percent' && penalty_value > 100)) return showToast('⛔ درصد نمی‌تواند بیشتر از ۱۰۰ باشد.');
 
-            const { error } = await _supabase.from('seller_shift_targets').upsert([{
-                seller_label, base_salary, target_amount, bonus_type, bonus_value, penalty_type, penalty_value, active,
-                updated_at: new Date().toISOString()
-            }], { onConflict: 'seller_label' });
+            const rg = sstRangeFromForm();
+            if (rg.error) return showToast('⛔ ' + rg.error);
+            const row = { seller_label, base_salary, target_amount, bonus_type, bonus_value, penalty_type, penalty_value, active, updated_at: new Date().toISOString() };
+            let { error } = await _supabase.from('seller_shift_targets').upsert([{ ...row, start_date: rg.start, end_date: rg.end }], { onConflict: 'seller_label' });
+            if (error && /start_date|end_date/.test(error.message || '')) {
+                if (rg.start) { v77Copy(SST_RANGE_SQL); return showToast('❌ ستون‌های بازه‌ی تاریخ هنوز در Supabase ساخته نشده‌اند.\nکد SQL کپی شد؛ در SQL Editor بچسبان، Run بزن و دوباره ذخیره کن.'); }
+                ({ error } = await _supabase.from('seller_shift_targets').upsert([row], { onConflict: 'seller_label' }));
+            }
             if (error) {
                 showToast('❌ خطا در ذخیره هدف: ' + error.message + '\n\nاگه جدول seller_shift_targets هنوز ساخته نشده، پایین همین بخش راهنمای ساخت آن هست.');
                 return;
@@ -14359,7 +14504,7 @@ notify pgrst, 'reload schema';`;
 
         function sstRuleLine(t) {
             const base = Number(t.base_salary) || 0;
-            let s = `🎯 هدف هر شیفت: <b>${v77Toman(t.target_amount)}</b><br>🎁 پاداش: <b style="color:#34d399;">+${sstAmtText(t.bonus_type, t.bonus_value, base)}</b>`;
+            let s = `${sstRangeText(t)}<br>🎯 هدف هر شیفت: <b>${v77Toman(t.target_amount)}</b><br>🎁 پاداش: <b style="color:#34d399;">+${sstAmtText(t.bonus_type, t.bonus_value, base)}</b>`;
             s += Number(t.penalty_value) > 0 ? `<br>⚠️ جریمه: <b style="color:#f87171;">−${sstAmtText(t.penalty_type, t.penalty_value, base)}</b>` : '<br>⚠️ جریمه: ندارد';
             return s;
         }
@@ -14371,7 +14516,7 @@ notify pgrst, 'reload schema';`;
             if (!t.active) {
                 inner += '<div class="bz-strip" style="margin-top:8px;">⏸ این هدف فعلاً غیرفعال است و محاسبه نمی‌شود.</div>';
             } else {
-                const inPeriod = shifts.filter(d => d.dayISO >= pb.startISO && d.dayISO <= pb.endISO);
+                const inPeriod = shifts.filter(d => d.dayISO >= pb.startISO && d.dayISO <= pb.endISO && sstInRange(t, d.dayISO));
                 let hit = 0, miss = 0, net = 0, live = null, latestClosed = null;
                 inPeriod.forEach(d => {
                     const r = sstDayResult(t, d);
@@ -14483,12 +14628,19 @@ notify pgrst, 'reload schema';`;
         async function buildMyShiftTargetCard() {
             const { data: t, error } = await _supabase.from('seller_shift_targets').select('*').eq('seller_label', currentUserLabel).maybeSingle();
             if (error || !t || !t.active) return '';
+            const rs = sstRangeStatus(t);
+            if (rs.st === 'ended') return '';
+            try {
+                const nk = 'sstNew_' + currentUserLabel + '_' + (t.updated_at || '');
+                if (!localStorage.getItem(nk)) { localStorage.setItem(nk, '1'); showToast('🎯 هدف جدید برای تو ثبت شد\n' + sstRangeText(t) + '\nهدف هر شیفت: ' + v77Toman(t.target_amount)); }
+            } catch (e) {}
+            if (rs.st === 'upcoming') return `<div class="report-card" style="border-color:#a78bfa;"><h3>🎯 هدف جدید در راه است</h3><div class="st-rule">${sstRuleLine(t)}</div></div>`;
             const since = new Date(Date.now() - 36 * 3600000).toISOString();
             const [sRes, aRes] = await Promise.all([
                 _supabase.from('sales').select('sell_price, created_at').eq('seller_name', currentUserLabel).gte('created_at', since).limit(2000),
                 _supabase.from('attendance').select('type, created_at').eq('seller_name', currentUserLabel).gte('created_at', since).order('created_at', { ascending: true }).limit(50)
             ]);
-            const shifts = sstComputeShifts(sRes.data || [], aRes.data || [], Date.now());
+            const shifts = sstComputeShifts(sRes.data || [], aRes.data || [], Date.now()).filter(d => sstInRange(t, d.dayISO));
             const today = getTehranISODate();
             const shift = shifts.find(d => d.live) || shifts.find(d => d.dayISO === today) || null;
             const head = '<h3>🎯 هدف فروش شیفت تو</h3>';
