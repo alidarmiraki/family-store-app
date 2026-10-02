@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v85 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v86 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="icon" href="icon-192.png">
@@ -1267,6 +1267,37 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
 #netPill{position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:100001;padding:8px 14px;border-radius:20px;font-size:12px;font-weight:700;background:rgba(15,23,42,.94);color:#fbbf24;border:1px solid rgba(251,191,36,.5);box-shadow:var(--shadow-soft);display:none;max-width:92vw;text-align:center}
 .build-tag{cursor:pointer}
 </style>
+
+<style>
+/* v86 — دفترچه فروش سریع */
+.qn-badge{position:absolute;top:-5px;left:-4px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#f43f5e;color:#fff;font-size:10px;font-weight:800;display:none;align-items:center;justify-content:center;line-height:1;box-shadow:0 2px 6px rgba(244,63,94,.5)}
+.bottom-nav-btn{position:relative}
+.bottom-nav-btn .qn-badge{top:0;left:50%;margin-left:6px}
+.qn-chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 2px}
+.qn-chip{border:1px solid var(--border-color);background:var(--bg-input);color:var(--text-primary);border-radius:12px;padding:8px 11px;font:inherit;font-size:12.5px;cursor:pointer}
+.qn-chip:active{transform:scale(.94)}
+.qn-row{display:flex;gap:8px;align-items:center}
+.qn-photo-btn{display:inline-flex;align-items:center;gap:6px;padding:11px 12px;border-radius:12px;border:1px dashed var(--accent);color:var(--accent);cursor:pointer;font-size:13px;font-weight:700;margin-top:6px}
+.qn-thumb{width:54px;height:54px;border-radius:10px;object-fit:cover;border:1px solid var(--border-color);cursor:zoom-in;flex:0 0 auto}
+.qn-item{border:1px solid var(--border-color);border-radius:16px;padding:11px;margin-top:10px;background:var(--bg-card-solid)}
+.qn-item.ok{border-color:rgba(16,185,129,.55)}
+.qn-item.warn{border-color:rgba(245,158,11,.6)}
+.qn-item.old{border-style:dashed}
+.qn-head{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:var(--text-secondary)}
+.qn-title{font-size:15px;font-weight:800;margin:6px 0 2px;color:var(--text-primary)}
+.qn-sub{font-size:12.5px;color:var(--text-secondary);line-height:1.8}
+.qn-problems{font-size:12px;color:#f59e0b;margin-top:4px;line-height:1.8}
+.qn-actions{display:flex;gap:6px;margin-top:9px}
+.qn-actions .row-btn{flex:1;padding:10px 6px;font-size:13px}
+.qn-ok-btn{background:linear-gradient(100deg,#059669,#10b981);color:#fff;font-weight:800}
+.qn-hours{display:flex;align-items:flex-end;gap:4px;height:92px;margin-top:10px}
+.qn-hcol{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0}
+.qn-hbar{width:100%;border-radius:6px 6px 2px 2px;background:linear-gradient(180deg,var(--accent),var(--accent-2));min-height:3px}
+.qn-hbar.peak{background:linear-gradient(180deg,#f59e0b,#ef4444)}
+.qn-hlbl{font-size:9.5px;color:var(--text-hint);margin-top:3px}
+.qn-viewer{position:fixed;inset:0;z-index:100003;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:10px}
+.qn-viewer img{max-width:100%;max-height:100%;border-radius:10px}
+</style>
 </head>
 <body>
 
@@ -1469,6 +1500,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <button class="tab-btn" id="btnSale" onclick="switchTab('sale'); loadProductDatalist(); loadRecentSales('instore');"><span class="tab-ico">🧀</span><span class="tab-label">ثبت فروش لبنیات</span></button>
         <button class="tab-btn" id="btnSaleEkala" onclick="switchTab('saleEkala'); loadProductDatalist(); loadRecentSales('ekala');"><span class="tab-ico">🛒</span><span class="tab-label">ثبت فروش اکالا</span></button>
         <button class="tab-btn" id="btnSaleSausage" onclick="switchTab('saleSausage'); loadProductDatalist(); loadRecentSales('sausage');"><span class="tab-ico">🌭</span><span class="tab-label">ثبت فروش سوسیس و کالباس</span></button>
+        <button class="tab-btn" id="btnQuickNote" onclick="switchTab('quickNote');"><span class="tab-ico">📝</span><span class="tab-label">دفترچه فروش سریع</span><span class="qn-badge" id="qnTabBadge"></span></button>
         <button class="tab-btn" id="btnAttendance" onclick="switchTab('attendance'); loadFingerprintStatus();"><span class="tab-ico">⏰</span><span class="tab-label">حضور و غیاب</span></button>
         <button class="tab-btn" id="btnMessage" onclick="switchTab('message');"><span class="tab-ico">📩</span><span class="tab-label">ارسال پیام به مدیر</span></button>
         <button class="tab-btn" id="btnStaffMessage" onclick="switchTab('staffMessage'); loadStaffMessageTargets(); loadSentMessageReadStatus();"><span class="tab-ico">📤</span><span class="tab-label">پیام به پرسنل</span></button>
@@ -1724,6 +1756,66 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
     </div>
 
     <!-- فرم حضور و غیاب -->
+    <div id="quickNoteTab" class="card">
+        <h2>📝 دفترچه فروش سریع</h2>
+        <div class="hint" style="margin-top:0;">وقت نداری درجا فاکتور بزنی؟ هر چی فروختی همون لحظه اینجا یادداشت کن (اسم + مقدار، یا فقط یک عکس از لیبل/برگه). <b>ساعت یادداشت خودکار ثبت می‌شه.</b> بعداً هر وقت وقت داشتی، درستیش رو چک کن و «✅ تایید» بزن؛ همون لحظه به‌عنوان فروش واقعی و با <b>همون ساعتی که یادداشت کردی</b> ثبت می‌شه.</div>
+
+        <div class="tare-box" style="margin-top:10px;">
+            <label style="margin-top:0;">نوع فروش:</label>
+            <select id="qnType" onchange="qnRenderChips(); qnPreview();">
+                <option value="instore">🧀 حضوری (لبنیات و ترشیجات)</option>
+                <option value="ekala">🛒 اکالا</option>
+                <option value="sausage">🌭 سوسیس و کالباس</option>
+            </select>
+            <div id="qnChips" class="qn-chips"></div>
+
+            <label>نام کالا:</label>
+            <input type="text" id="qnName" dir="auto" list="productDatalist" placeholder="نام کالا (یا خالی بذار و فقط عکس بگیر)" oninput="qnPreview()" onchange="qnPreview()">
+
+            <label>مقدار:</label>
+            <div class="qn-row">
+                <input type="text" inputmode="decimal" id="qnQty" placeholder="مثلاً 1.5" style="flex:1;" oninput="qnPreview()" onkeydown="if(event.key==='Enter'){event.preventDefault();qnSubmit();}">
+                <div class="unit-toggle" style="margin:0;">
+                    <label><input type="radio" name="qnUnit" value="kg" checked onchange="qnPreview()"> کیلو</label>
+                    <label><input type="radio" name="qnUnit" value="gram" onchange="qnPreview()"> گرم</label>
+                </div>
+            </div>
+            <div id="qnPreview" class="hint" style="margin-top:4px;"></div>
+
+            <input type="text" id="qnNote" dir="auto" placeholder="توضیح کوتاه (اختیاری)" style="margin-top:6px;">
+
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <label class="qn-photo-btn" for="qnPhotoInput">📷 عکس لیبل / برگه</label>
+                <input type="file" id="qnPhotoInput" accept="image/*" capture="environment" style="display:none;" onchange="qnPickPhoto(this)">
+                <img id="qnPhotoPreview" class="qn-thumb" style="display:none; margin-top:6px;" onclick="qnViewPhoto(this.src)">
+                <button type="button" id="qnPhotoClear" class="row-btn delete-btn" style="display:none; margin-top:6px;" onclick="qnClearPhoto()">حذف عکس</button>
+            </div>
+
+            <button class="submit-btn" id="qnSubmitBtn" onclick="qnSubmit()">➕ افزودن به دفترچه</button>
+            <button class="cancel-edit-btn" id="qnCancelEditBtn" style="display:none;" onclick="qnCancelEdit()">لغو ویرایش</button>
+        </div>
+
+        <div class="report-card" style="margin-top:16px;">
+            <h3>⏱️ ساعت‌های پرفروش امروز من</h3>
+            <div id="qnHours" class="hint">در حال بارگذاری...</div>
+        </div>
+
+        <div class="report-card" style="margin-top:16px;">
+            <h3>🗒️ یادداشت‌های منتظر تایید <span id="qnCount" style="color:#f43f5e;"></span></h3>
+            <div class="hint" style="margin-top:0;">اول روی گوشی ذخیره می‌شن (بدون اینترنت هم کار می‌کنه) و با اینترنت، خودکار روی سرور هم نگه‌داری می‌شن. تا «تایید» نزنی، جزو فروش و موجودی حساب نمی‌شن؛ پس قبل از پایان شیفت همه رو تایید کن.</div>
+            <button class="row-btn qn-ok-btn" id="qnConfirmAllBtn" style="width:100%; margin-top:8px; padding:12px; display:none;" onclick="qnConfirmAll()">✅ تایید همه‌ی آماده‌ها</button>
+            <div id="qnSync" class="hint" style="margin:6px 0;"></div>
+            <div id="qnList"></div>
+        </div>
+
+        <div class="report-card" id="qnAdminCard" style="margin-top:16px; display:none; border-color:#f59e0b;">
+            <h3>👑 یادداشت‌های منتظر تایید فروشنده‌ها <span id="qnAdminCount" style="color:#f43f5e;"></span></h3>
+            <div class="hint" style="margin-top:0;">فقط مدیر می‌بیند. فروشنده‌ای که تایید نکرده، فروشش هنوز جزو حساب و موجودی نیست؛ اینجا می‌فهمی کی چه چیزی مانده. فقط مشاهده است و تایید با خود فروشنده است.</div>
+            <button type="button" class="row-btn" style="width:100%; margin-top:8px;" onclick="qnAdminLoad()">🔄 تازه‌سازی</button>
+            <div id="qnAdminList" class="hint" style="margin-top:8px;"></div>
+        </div>
+    </div>
+
     <div id="attendanceTab" class="card">
         <h2>⏰ ثبت ورود، خروج و مرخصی</h2>
         <div class="hint">⚠️ ثبت عکس یا موقعیت مکانی لحظه‌ای برای ورود و خروج **اجباری** است. برای ورود/خروج، تایید بیومتریک همان گوشی هم لازم است — گوشی خودش تشخیص می‌دهد از اثر انگشت استفاده کند یا تشخیص چهره (هرکدام که روی گوشی فعال باشد، خودکار همان استفاده می‌شود). سیستم تاخیرها و زودتر‌رفتن‌ها را اتوماتیک بررسی می‌کند.</div>
@@ -2648,7 +2740,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v85 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v88 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
 
     <script>
         function toggleLoginPasswordVisibility() {
@@ -2833,6 +2925,7 @@ try { JSON.parse(localStorage.getItem('extraProxies') || '[]').forEach(u => { if
 let activeBaseUrl = PROXY_ENDPOINTS[0];
         // آخرین پروکسیِ سالم یادش می‌ماند تا فروشنده‌ی بدون فیلترشکن هر بار منتظر آدرس مستقیم (فیلتر) نماند
         try { const savedEp = localStorage.getItem('lastGoodEndpoint'); if (savedEp && PROXY_ENDPOINTS.indexOf(savedEp) !== -1) activeBaseUrl = savedEp; } catch (e) {}
+        try { if (localStorage.getItem('autoSwitch') === '0') { const pe = localStorage.getItem('pinnedEp'); if (pe && PROXY_ENDPOINTS.indexOf(pe) !== -1) activeBaseUrl = pe; } } catch (e) {}
 
         // این تابع جایگزین fetch پیش‌فرض می‌شود و به Supabase client داده می‌شود.
         // اول آدرس فعال فعلی را امتحان می‌کند؛ اگر آن آدرس (مثلاً به‌خاطر فیلترینگ)
@@ -2858,7 +2951,10 @@ let activeBaseUrl = PROXY_ENDPOINTS[0];
             const colors = { direct: '#22c55e', proxy: '#eab308', error: '#ef4444' };
             const titles = { direct: 'وضعیت اتصال: مستقیم و سالم', proxy: 'وضعیت اتصال: از طریق پروکسی (اینترنت مستقیم فیلتر/کند است)', error: 'وضعیت اتصال: قطع — نه مستقیم و نه پروکسی جواب نمی‌دهند' };
             dot.style.background = colors[connectionStatus] || colors.direct;
-            dot.title = titles[connectionStatus] || '';
+            dot.title = (titles[connectionStatus] || '') + ' — برای تعویض مسیر بزن';
+            let nm = document.getElementById('connEpName');
+            if (!nm) { nm = document.createElement('span'); nm.id = 'connEpName'; nm.style.cssText = 'font-size:9px;opacity:.8;margin-left:6px;cursor:pointer;'; dot.insertAdjacentElement('afterend', nm); nm.addEventListener('click', openProxyPanel); }
+            nm.textContent = (autoSwitchOn() ? '🔄 ' : '📌 ') + epLabel(activeBaseUrl);
         }
 
         // =========================================================================
@@ -2866,11 +2962,32 @@ let activeBaseUrl = PROXY_ENDPOINTS[0];
 // =========================================================================
 const EP_FAIL = {};   // آدرس ← زمان آخرین شکست؛ آدرس مرده هر بار چند ثانیه معطل‌مان نکند
 let inflightNet = 0;
+function autoSwitchOn() { try { return localStorage.getItem('autoSwitch') !== '0'; } catch (e) { return true; } }
+function pinnedEp() { try { const p = localStorage.getItem('pinnedEp'); return p && PROXY_ENDPOINTS.indexOf(p) !== -1 ? p : null; } catch (e) { return null; } }
+function epLabel(u) { return u === SUPABASE_REAL_URL ? 'مستقیم' : u.replace(/^https?:\/\//, '').split('/')[0].split('.')[0]; }
 function epOrder() {
+    const pin = pinnedEp(); if (!autoSwitchOn() && pin) return [pin]; // انتخاب دستی: فقط همین مسیر، بدون پرش خودکار
     const now = Date.now(), all = [activeBaseUrl].concat(PROXY_ENDPOINTS.filter(e => e !== activeBaseUrl));
     const ok = all.filter(e => !(EP_FAIL[e] && now - EP_FAIL[e] < 45000));
     return ok.concat(all.filter(e => ok.indexOf(e) === -1));
 }
+// پایش پس‌زمینه: هر ۹۰ ثانیه سرعت همه‌ی مسیرها سنجیده می‌شود؛ در حالت خودکار به سریع‌ترین مسیر زنده می‌پرد
+const EP_MS = {};
+async function probeAllEndpoints() {
+    await Promise.all(PROXY_ENDPOINTS.map(async u => {
+        const t0 = performance.now();
+        try { const r = await fetchWithTimeout(u + '/auth/v1/health', { headers: { apikey: SUPABASE_KEY }, cache: 'no-store' }, 7000); if (isHtmlResp(r)) throw 0; EP_MS[u] = Math.round(performance.now() - t0); delete EP_FAIL[u]; }
+        catch (e) { EP_MS[u] = -1; EP_FAIL[u] = Date.now(); }
+    }));
+    if (autoSwitchOn()) {
+        const ok = PROXY_ENDPOINTS.filter(u => EP_MS[u] > 0).sort((a, b) => EP_MS[a] - EP_MS[b]);
+        const cur = EP_MS[activeBaseUrl];
+        if (ok.length && (!(cur > 0) || EP_MS[ok[0]] * 2 < cur)) markEp(ok[0], true);
+    }
+    updateConnectionStatusIndicator();
+}
+setTimeout(() => { try { probeAllEndpoints(); } catch (e) {} }, 6000);
+setInterval(() => { try { if (!document.hidden && navigator.onLine) probeAllEndpoints(); } catch (e) {} }, 90000);
 function markEp(ep, good) {
     if (good) {
         delete EP_FAIL[ep]; activeBaseUrl = ep;
@@ -3007,44 +3124,46 @@ document.addEventListener('click', ev => {
     setTimeout(() => { b.style.opacity = '.6'; rel(); }, 50);
 }, true);
 
-// پنل مسیرهای اتصال: روی دایره‌ی رنگی کنار نام کاربر یا نوشته‌ی ورژن پایین صفحه بزن
+// پنل مسیرهای اتصال: روی دایره‌ی رنگی/نام مسیر کنار نام کاربر یا نوشته‌ی ورژن پایین صفحه بزن
 function openProxyPanel() {
     const old = document.getElementById('proxyPanel'); if (old) old.remove();
     const ov = document.createElement('div'); ov.id = 'proxyPanel';
     ov.style.cssText = 'position:fixed;inset:0;z-index:100002;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:12px;';
     const extras = () => { try { return JSON.parse(localStorage.getItem('extraProxies') || '[]'); } catch (e) { return []; } };
     const saveExtras = a => { try { localStorage.setItem('extraProxies', JSON.stringify(a)); } catch (e) {} };
-    const host = u => u.replace(/^https?:\/\//, '');
+    const host = u => u === SUPABASE_REAL_URL ? 'سرور اصلی (مستقیم)' : u.replace(/^https?:\/\//, '');
+    const msTxt = u => EP_MS[u] > 0 ? EP_MS[u] + ' ms ✅' : EP_MS[u] === -1 ? '✖ پاسخ نداد' : '—';
+    const pin = (u) => { try { localStorage.setItem('pinnedEp', u); localStorage.setItem('autoSwitch', '0'); } catch (e) {} activeBaseUrl = u; connectionStatus = (u === SUPABASE_REAL_URL) ? 'direct' : 'proxy'; delete EP_FAIL[u]; updateConnectionStatusIndicator(); };
     const draw = () => {
-        const ex = extras(), st = ({ direct: '🟢 مستقیم', proxy: '🟡 از طریق پروکسی', error: '🔴 قطع' })[connectionStatus] || '';
-        ov.innerHTML = `<div style="width:min(94vw,380px);max-height:86vh;overflow:auto;background:var(--bg-card-solid);color:var(--text-primary);border-radius:18px;padding:14px;direction:rtl;">
+        const ex = extras(), auto = autoSwitchOn(), st = ({ direct: '🟢 مستقیم', proxy: '🟡 از طریق پروکسی', error: '🔴 قطع' })[connectionStatus] || '';
+        ov.innerHTML = `<div style="width:min(94vw,400px);max-height:88vh;overflow:auto;background:var(--bg-card-solid);color:var(--text-primary);border-radius:18px;padding:14px;direction:rtl;">
 <h3 style="margin:0 0 6px;">🌐 مسیرهای اتصال به سرور</h3>
-<div class="hint" style="margin:0 0 8px;">برنامه خودش سریع‌ترین مسیر را انتخاب می‌کند. اگر بدون فیلترشکن کند یا قطع بود، می‌توانی مسیر (پروکسی) جدید اضافه کنی. وضعیت فعلی: ${st}</div>
-${PROXY_ENDPOINTS.map(u => `<div class="summary-mini" style="gap:6px;align-items:center;"><span style="font-size:11px;direction:ltr;word-break:break-all;flex:1;">${host(u)}${u === activeBaseUrl ? ' ✅' : ''}</span><span class="hint" style="margin:0;" data-ms="${u}">—</span>${ex.indexOf(u) !== -1 ? `<button class="row-btn delete-btn" data-del="${u}">✖</button>` : ''}</div>`).join('')}
+<div class="hint" style="margin:0 0 8px;">وضعیت: ${st} — الان وصل به: <b>${host(activeBaseUrl)}</b> (${auto ? 'خودکار' : 'انتخاب دستی'})<br>روی هر مسیر بزنی همان انتخاب می‌شود و برنامه فقط به همان وصل می‌ماند.</div>
+<button type="button" class="exp-more" data-auto="1" style="margin-bottom:8px;">${auto ? '🔄 تعویض خودکار: روشن (برای خاموش کردن بزن)' : '📌 تعویض خودکار: خاموش (برای روشن کردن بزن)'}</button>
+${PROXY_ENDPOINTS.map(u => `<div class="summary-mini" data-sel="${u}" style="gap:6px;align-items:center;cursor:pointer;${u === activeBaseUrl ? 'border:1px solid #22c55e;border-radius:10px;' : ''}"><span style="font-size:11px;direction:ltr;word-break:break-all;flex:1;">${u === activeBaseUrl ? '✅ ' : ''}${host(u)}</span><span class="hint" style="margin:0;" data-ms="${u}">${msTxt(u)}</span>${ex.indexOf(u) !== -1 ? `<button type="button" class="exp-more" style="width:auto;padding:2px 8px;" data-del="${u}">🗑️</button>` : ''}</div>`).join('')}
+<button type="button" class="exp-more" data-next="1" style="margin-top:8px;">⏭ تعویض به مسیر بعدی</button>
 <button type="button" class="exp-more" data-test="1">⚡ تست سرعت همه‌ی مسیرها</button>
-<input type="text" id="proxyNew" placeholder="https://your-proxy.workers.dev" style="direction:ltr;margin-top:10px;">
-<button type="button" class="exp-more" style="margin-top:6px;" data-add="1">➕ افزودن پروکسی</button>
+<textarea id="proxyNew" rows="3" placeholder="هر خط یک آدرس: https://your-proxy.workers.dev" style="direction:ltr;margin-top:10px;width:100%;"></textarea>
+<button type="button" class="exp-more" style="margin-top:6px;" data-add="1">➕ افزودن پروکسی(ها)</button>
 <div class="hint">⚠️ فقط آدرس Worker/پروکسی‌ای را اضافه کن که خودت ساخته‌ای؛ ورود و اطلاعات فروشگاه از آن عبور می‌کند. این لیست فقط روی همین گوشی ذخیره می‌شود.</div>
 <button type="button" class="exp-more" data-close="1">بستن</button></div>`;
     };
     ov.addEventListener('click', async ev => {
         if (ev.target === ov) return ov.remove();
-        const t = ev.target.closest('button'); if (!t) return;
+        const t = ev.target.closest('button');
+        if (!t) { const row = ev.target.closest('[data-sel]'); if (row) { pin(row.dataset.sel); draw(); showToast('📌 به همین مسیر وصل شدی؛ تعویض خودکار خاموش شد.'); } return; }
         if (t.dataset.close) ov.remove();
-        else if (t.dataset.del) { const u = t.dataset.del; saveExtras(extras().filter(x => x !== u)); const i = PROXY_ENDPOINTS.indexOf(u); if (i > 0) PROXY_ENDPOINTS.splice(i, 1); if (activeBaseUrl === u) activeBaseUrl = PROXY_ENDPOINTS[0]; draw(); }
+        else if (t.dataset.auto) { try { localStorage.setItem('autoSwitch', autoSwitchOn() ? '0' : '1'); if (autoSwitchOn()) localStorage.removeItem('pinnedEp'); else localStorage.setItem('pinnedEp', activeBaseUrl); } catch (e) {} updateConnectionStatusIndicator(); draw(); if (autoSwitchOn()) probeAllEndpoints().then(draw); }
+        else if (t.dataset.next) { const i = PROXY_ENDPOINTS.indexOf(activeBaseUrl); pin(PROXY_ENDPOINTS[(i + 1) % PROXY_ENDPOINTS.length]); draw(); }
+        else if (t.dataset.del) { const u = t.dataset.del; saveExtras(extras().filter(x => x !== u)); const i = PROXY_ENDPOINTS.indexOf(u); if (i > 0) PROXY_ENDPOINTS.splice(i, 1); if (activeBaseUrl === u) { activeBaseUrl = PROXY_ENDPOINTS[0]; try { localStorage.setItem('autoSwitch', '1'); localStorage.removeItem('pinnedEp'); } catch (e) {} } updateConnectionStatusIndicator(); draw(); }
         else if (t.dataset.add) {
-            const u = (document.getElementById('proxyNew').value || '').trim().replace(/\/+$/, '');
-            if (!/^https:\/\/[^\s\/]+(\/\S*)?$/.test(u)) return showToast('آدرس باید با https:// شروع شود و فاصله نداشته باشد.');
-            if (PROXY_ENDPOINTS.indexOf(u) === -1) { PROXY_ENDPOINTS.push(u); saveExtras(extras().concat([u])); }
-            draw(); showToast('✅ پروکسی اضافه شد؛ برای امتحانش «تست سرعت» را بزن.');
+            const lines = (document.getElementById('proxyNew').value || '').split(/\s+/).map(s => s.trim().replace(/\/+$/, '')).filter(Boolean);
+            let n = 0, bad = 0;
+            lines.forEach(u => { if (!/^https:\/\/[^\s\/]+(\/\S*)?$/.test(u)) { bad++; return; } if (PROXY_ENDPOINTS.indexOf(u) === -1) { PROXY_ENDPOINTS.push(u); saveExtras(extras().concat([u])); n++; } });
+            draw(); showToast(n ? '✅ ' + n + ' پروکسی اضافه شد؛ «تست سرعت» را بزن.' + (bad ? ' (' + bad + ' آدرس نامعتبر نادیده گرفته شد)' : '') : '⛔ آدرس باید با https:// شروع شود و تکراری نباشد.');
         } else if (t.dataset.test) {
             t.disabled = true; t.textContent = '⏳ در حال تست...';
-            await Promise.all(PROXY_ENDPOINTS.map(async u => {
-                const el = ov.querySelector('[data-ms="' + u + '"]'), t0 = performance.now();
-                try { await fetchWithTimeout(u + '/auth/v1/health', { headers: { apikey: SUPABASE_KEY }, cache: 'no-store' }, 7000); if (el) el.textContent = Math.round(performance.now() - t0) + ' ms ✅'; }
-                catch (e) { if (el) el.textContent = '✖ پاسخ نداد'; }
-            }));
-            t.disabled = false; t.textContent = '⚡ تست سرعت همه‌ی مسیرها';
+            await probeAllEndpoints(); draw();
         }
     });
     draw(); document.body.appendChild(ov);
@@ -4877,15 +4996,15 @@ function getTehranMinutesOfDay(dateObj = new Date()) {
             document.getElementById('buyPriceField').style.display = (currentRole === 'admin') ? 'block' : 'none';
 
             if (currentRole === 'admin') {
-                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnInbox', 'btnStaffMessage', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnShiftSettings', 'btnTelegramSettings', 'btnDebtLedger', 'btnContractAdmin', 'btnGrowthReport', 'btnPurchaseInvoices', 'btnTakeoutAdmin', 'btnGoals', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnDeletedSales', 'btnWeeklyReports', 'btnPersonnel', 'btnMyAccount'], 'dashboardTab');
+                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnQuickNote', 'btnInbox', 'btnStaffMessage', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnShiftSettings', 'btnTelegramSettings', 'btnDebtLedger', 'btnContractAdmin', 'btnGrowthReport', 'btnPurchaseInvoices', 'btnTakeoutAdmin', 'btnGoals', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnDeletedSales', 'btnWeeklyReports', 'btnPersonnel', 'btnMyAccount'], 'dashboardTab');
                 checkAndGenerateWeeklyReport();
                 document.getElementById('salaryAdminForm').style.display = 'block';
                 checkLowStockAlertNoWeight();
             } else if (currentRole === 'morning_seller') {
-                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnDebtLedger', 'btnPersonalTakeout', 'btnGoals', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnMyAccount'], 'dashboardTab');
+                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnQuickNote', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnDebtLedger', 'btnPersonalTakeout', 'btnGoals', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnMyAccount'], 'dashboardTab');
                 document.getElementById('salaryAdminForm').style.display = 'none';
             } else {
-                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnReport', 'btnDebtLedger', 'btnPersonalTakeout', 'btnGoals', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnMyAccount'], 'dashboardTab');
+                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnQuickNote', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnReport', 'btnDebtLedger', 'btnPersonalTakeout', 'btnGoals', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnMyAccount'], 'dashboardTab');
                 document.getElementById('salaryAdminForm').style.display = 'none';
             }
 
@@ -5106,6 +5225,7 @@ function getTehranMinutesOfDay(dateObj = new Date()) {
             morning_seller: [
                 { tab: 'dashboard', icon: '🏠', label: 'خلاصه روز' },
                 { tab: 'sale', icon: '🧀', label: 'فروش' },
+                { tab: 'quickNote', icon: '📝', label: 'دفترچه' },
                 { tab: 'attendance', icon: '⏰', label: 'حضور و غیاب' },
                 { tab: 'inbox', icon: '📥', label: 'صندوقچه' },
                 { tab: 'myAccount', icon: '👤', label: 'حساب من' },
@@ -5113,6 +5233,7 @@ function getTehranMinutesOfDay(dateObj = new Date()) {
             evening_seller: [
                 { tab: 'dashboard', icon: '🏠', label: 'خلاصه روز' },
                 { tab: 'sale', icon: '🧀', label: 'فروش' },
+                { tab: 'quickNote', icon: '📝', label: 'دفترچه' },
                 { tab: 'attendance', icon: '⏰', label: 'حضور و غیاب' },
                 { tab: 'inbox', icon: '📥', label: 'صندوقچه' },
                 { tab: 'myAccount', icon: '👤', label: 'حساب من' },
@@ -5133,6 +5254,7 @@ function getTehranMinutesOfDay(dateObj = new Date()) {
             nav.classList.add('show');
             document.body.classList.add('has-bottom-nav');
             syncBottomNavActiveState(document.getElementById('dashboardTab') && document.getElementById('dashboardTab').classList.contains('active') ? 'dashboard' : null);
+            try { qnUpdateBadge(); } catch (e) {}
         }
 
         function syncBottomNavActiveState(tab) {
@@ -5166,6 +5288,7 @@ function getTehranMinutesOfDay(dateObj = new Date()) {
             if (tab === 'attendance') { syncAttendanceTypeSelector(); loadMyLeaveRecords(); checkAttendanceReminders(); }
             if (tab === 'dashboard') { loadAdminDashboard(); }
             if (tab === 'goals') { sstInit(); }
+            if (tab === 'quickNote') { try { qnOpen(); } catch (e) { console.warn(e); } }
 
             updateTrialGuideBanner(tab);
             syncBottomNavActiveState(tab);
@@ -5174,6 +5297,7 @@ function getTehranMinutesOfDay(dateObj = new Date()) {
         // --- راهنمای مخصوص حساب آزمایشی: توضیح مختصر هر بخش، فقط برای نیروی تازه‌کاری که دارد یاد می‌گیرد ---
         const TRIAL_TAB_GUIDES = {
             dashboard: '🏠 این خلاصه‌ی روز توئه: فروش امروزت، وضعیت ورود/خروجت، آخرین پیام‌ها و هدف فروش، همه یه‌جا. هر بار وارد شی همینجا میای.',
+            quickNote: '📝 وقتی سرت شلوغه، فروش رو همین‌جا سریع یادداشت کن (اسم + مقدار یا عکس لیبل). ساعت خودکار ثبت می‌شه؛ بعداً چک کن و «تایید» بزن تا فروش واقعی بشه.',
             sale: '🧀 اینجا فروش لبنیات رو ثبت می‌کنی: کالا رو انتخاب کن، وزن/تعداد و قیمت رو وارد کن و بزن «ثبت فروش». این حساب آزمایشیه ولی فروش‌هایی که اینجا می‌زنی واقعی ثبت می‌شه (دقیقاً مثل حساب اصلی)، پس با دقت انجامش بده تا یاد بگیری.',
             saleEkala: '🛒 همینجا فروش‌های اکالا (فروش آنلاین/ارسالی) رو جدا از فروش حضوری ثبت می‌کنی. این ثبت‌ها هم واقعی و در موجودی و گزارش اثر داره، پس دقیق وارد کن.',
             saleSausage: '🌭 اینجا مخصوص ثبت فروش سوسیس و کالباسه. همون روال فروش لبنیات رو اینجا هم انجام بده؛ این ثبت هم واقعیه.',
@@ -15309,6 +15433,350 @@ notify pgrst, 'reload schema';`;
                 <div class="st-rule" style="margin-top:8px;">${sstRuleLine(ts)}</div>${upHtml}</div>`;
         }
     </script>
+
+    <script>
+/* v86 — دفترچه فروش سریع: یادداشت لحظه‌ای فروش (محلی روی گوشی) → تایید → ثبت واقعی با همون ساعت یادداشت */
+(function () {
+    const $ = id => document.getElementById(id);
+    const FA = n => Number(n).toLocaleString('fa-IR');
+    const TYPE_LBL = { instore: '🧀 حضوری', ekala: '🛒 اکالا', sausage: '🌭 سوسیس و کالباس' };
+    let photo = null, editId = null, busy = false, hoursCache = { t: 0, rows: null };
+
+    const key = () => 'qnDrafts_' + (currentUserLabel || '');
+    const load = () => { try { const a = JSON.parse(localStorage.getItem(key()) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } };
+    const tkey = () => 'qnTomb_' + (currentUserLabel || '');
+    const tomb = () => { try { return JSON.parse(localStorage.getItem(tkey()) || '[]'); } catch (e) { return []; } };
+    function save(a) {
+        const prev = load();
+        try { localStorage.setItem(key(), JSON.stringify(a)); }
+        catch (e) { showToast('⛔ حافظه‌ی گوشی پر شده؛ اول چند یادداشت قدیمی رو تایید یا حذف کن.'); return false; }
+        const ids = new Set(a.map(x => x.id)), gone = prev.filter(x => !ids.has(x.id)).map(x => x.id);
+        if (gone.length) { try { localStorage.setItem(tkey(), JSON.stringify(tomb().concat(gone).slice(-300))); } catch (e) {} }
+        qnSyncSoon(); return true;
+    }
+    /* ---------- همگام‌سازی با Supabase (جدول quick_notes) ---------- */
+    const QN_SQL = `create table if not exists public.quick_notes (
+  id           text primary key,
+  seller_label text not null,
+  data         jsonb not null,
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now()
+);
+create index if not exists idx_qn_seller on public.quick_notes (seller_label);
+alter table public.quick_notes enable row level security;
+drop policy if exists "qn_all" on public.quick_notes;
+create policy "qn_all" on public.quick_notes for all to anon, authenticated using (true) with check (true);
+notify pgrst, 'reload schema';`;
+    let syncing = false, syncT = null, syncState = '';
+    const setSync = (s) => { syncState = s; const el = $('qnSync'); if (!el) return; el.innerHTML = s === 'ok' ? '☁️ روی سرور هم ذخیره است' : s === 'wait' ? '⏳ منتظر اینترنت؛ بعداً خودکار ارسال می‌شود' : s === 'nosql' ? '📱 فعلاً فقط روی گوشی — جدول سرور ساخته نشده. <a href="#" onclick="qnShowSql();return false;" style="color:var(--accent);">کد SQL</a>' : ''; };
+    window.qnShowSql = function () {
+        const o = document.createElement('div'); o.style.cssText = 'position:fixed;inset:0;z-index:100003;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:12px;';
+        o.innerHTML = '<div style="width:min(94vw,420px);background:var(--bg-card-solid);color:var(--text-primary);border-radius:16px;padding:14px;direction:rtl;"><div class="hint" style="margin:0 0 6px;">این کد را در Supabase ← SQL Editor اجرا کن (یک‌بار):</div><textarea readonly rows="12" style="direction:ltr;width:100%;font-size:11px;"></textarea><button type="button" class="exp-more" id="qnCopySql">📋 کپی</button><button type="button" class="exp-more" id="qnCloseSql">بستن</button></div>';
+        o.querySelector('textarea').value = QN_SQL; document.body.appendChild(o);
+        o.querySelector('#qnCopySql').onclick = () => { const ta = o.querySelector('textarea'); ta.select(); try { navigator.clipboard.writeText(QN_SQL); } catch (e) { document.execCommand('copy'); } showToast('📋 کپی شد'); };
+        o.querySelector('#qnCloseSql').onclick = () => o.remove();
+    };
+    function qnSyncSoon() { clearTimeout(syncT); syncT = setTimeout(qnSync, 800); }
+    window.qnSync = async function () {
+        if (syncing || !currentUserLabel || typeof _supabase === 'undefined' || !_supabase) return;
+        if (!navigator.onLine) { setSync('wait'); return; }
+        syncing = true; const label = currentUserLabel;
+        try {
+            const T = tomb();
+            if (T.length) { const { error } = await _supabase.from('quick_notes').delete().eq('seller_label', label).in('id', T); if (error) throw error; localStorage.setItem(tkey(), '[]'); }
+            const dirty = load().filter(d => !d.sy || d.sy < (d.editedAt || d.at));
+            for (const d of dirty) {
+                const row = Object.assign({}, d); delete row.sy; row.hp = d.photo ? 1 : 0;
+                const { error } = await _supabase.from('quick_notes').upsert([{ id: d.id, seller_label: label, data: row, updated_at: new Date().toISOString() }]);
+                if (error) throw error;
+                const cur = load(), x = cur.find(z => z.id === d.id);
+                if (x && (x.editedAt || x.at) === (d.editedAt || d.at)) { x.sy = Date.now(); localStorage.setItem(key(), JSON.stringify(cur)); }
+            }
+            const { data, error } = await _supabase.from('quick_notes').select('id,data').eq('seller_label', label).limit(500);
+            if (error) throw error;
+            const cur = load(), have = new Set(cur.map(x => x.id)), dead = new Set(tomb()); let added = 0;
+            (data || []).forEach(r => { if (!have.has(r.id) && !dead.has(r.id) && r.data) { cur.push(Object.assign({}, r.data, { sy: Date.now() })); added++; } });
+            if (added) { localStorage.setItem(key(), JSON.stringify(cur)); qnRender(); qnUpdateBadge(); }
+            setSync('ok');
+        } catch (e) {
+            const m = String((e && (e.message || e.code)) || '');
+            setSync(/quick_notes|PGRST205|42P01|schema cache|404/i.test(m) ? 'nosql' : 'wait');
+        } finally { syncing = false; }
+    };
+    const isAdminUser = () => { try { return !!currentSessionUser && currentSessionUser.role === 'admin'; } catch (e) { return false; } };
+    window.qnAdminLoad = async function () {
+        const card = $('qnAdminCard'); if (!card) return;
+        if (!isAdminUser()) { card.style.display = 'none'; return; }
+        card.style.display = 'block'; const box = $('qnAdminList');
+        if (!navigator.onLine) { box.innerHTML = '📴 اینترنت قطع است؛ آخرین لیست همین است.'; return; }
+        try {
+            const { data, error } = await _supabase.from('quick_notes').select('id,seller_label,nm:data->>name,qty:data->>qty,unit:data->>unit,type:data->>type,note:data->>note,at:data->>at,hp:data->>hp').neq('seller_label', currentUserLabel).order('created_at', { ascending: false }).limit(300);
+            if (error) throw error;
+            $('qnAdminCount').innerText = (data || []).length ? '(' + FA((data || []).length) + ')' : '';
+            if (!(data || []).length) { box.innerHTML = '✨ هیچ فروشنده‌ای یادداشت تاییدنشده ندارد.'; return; }
+            const by = {}; data.forEach(r => { (by[r.seller_label] = by[r.seller_label] || []).push(r); });
+            box.innerHTML = Object.keys(by).map(who => {
+                let sum = 0, old = 0;
+                const rows = by[who].map(r => {
+                    const at = Number(r.at) || 0, q = toKg(r.qty, r.unit), p = findProduct(r.nm), price = p && q > 0 ? Math.round(q * (p.sell_price || 0)) : 0;
+                    sum += price; if (at && !isToday(at)) old++;
+                    const qt = parseFloat(toEn(r.qty)) > 0 ? FA(parseFloat(toEn(r.qty))) + (r.unit === 'gram' ? ' گرم' : ' کیلو') : '—';
+                    return `<div class="qn-item ${at && !isToday(at) ? 'old' : 'ok'}"><div class="qn-head"><span>🕒 ${at ? getTehranTimeString(new Date(at)) + (!isToday(at) ? ' — ' + dateLbl(at) + ' (روز قبل)' : '') : ''}</span><span>${TYPE_LBL[r.type] || ''}</span></div>
+                        <div class="qn-title">${r.nm ? esc(r.nm) : '<span style="opacity:.6">بدون نام</span>'}</div>
+                        <div class="qn-sub">مقدار: <b>${qt}</b>${price ? ' · مبلغ: <b>' + FA(price) + '</b> تومان' : ''}${r.note ? '<br>📌 ' + esc(r.note) : ''}</div>
+                        ${r.hp ? `<button type="button" class="row-btn" style="margin-top:6px;" onclick="qnAdminPhoto('${r.id}')">📷 دیدن عکس</button>` : ''}</div>`;
+                }).join('');
+                return `<div style="margin:10px 0 4px; color:var(--text-primary); font-weight:700;">👤 ${esc(who)} — ${FA(by[who].length)} یادداشت${sum ? ' · جمع تقریبی ' + FA(sum) + ' تومان' : ''}${old ? ' <span style="color:#f43f5e;">· ' + FA(old) + ' مال روز قبل ⚠️</span>' : ''}</div>${rows}`;
+            }).join('');
+        } catch (e) {
+            const m = String((e && (e.message || e.code)) || '');
+            box.innerHTML = /quick_notes|PGRST205|42P01|schema cache|404/i.test(m) ? 'جدول سرور هنوز ساخته نشده. <a href="#" onclick="qnShowSql();return false;" style="color:var(--accent);">کد SQL</a>' : '⚠️ اینترنت ضعیف است؛ چند ثانیه بعد «تازه‌سازی» را بزن.';
+        }
+    };
+    window.qnAdminPhoto = async function (id) {
+        try { const { data } = await _supabase.from('quick_notes').select('ph:data->>photo').eq('id', id).maybeSingle(); if (data && data.ph) qnViewPhoto(data.ph); else showToast('عکس پیدا نشد.'); }
+        catch (e) { showToast('⚠️ عکس با این اینترنت باز نشد؛ دوباره امتحان کن.'); }
+    };
+    setInterval(() => { try { const c = $('qnAdminCard'); if (!document.hidden && c && c.offsetParent) qnAdminLoad(); } catch (e) {} }, 60000);
+    window.addEventListener('online', () => qnSyncSoon());
+    setInterval(() => { if (!document.hidden) qnSync(); }, 45000);
+    const toEn = s => String(s || '').replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[٫،,]/g, '.').trim();
+    const esc = s => escapeHtmlForToast(String(s == null ? '' : s));
+    const hourOf = ms => { const h = parseInt(getTehranTimeString(new Date(ms)).slice(0, 2), 10); return isNaN(h) ? 0 : h % 24; };
+    const unitVal = () => (document.querySelector('input[name="qnUnit"]:checked') || {}).value || 'kg';
+    const toKg = (raw, unit) => { const v = parseFloat(toEn(raw)); if (!(v > 0)) return 0; return unit === 'gram' ? Number((v / 1000).toFixed(4)) : v; };
+    const findProduct = name => {
+        const n = String(name || '').trim().toLowerCase(); if (!n) return null;
+        return (cachedProductsList || []).find(p => String(p.name || '').trim().toLowerCase() === n || String(p.code || '') === String(name).trim()) || null;
+    };
+    const dateLbl = ms => new Intl.DateTimeFormat('fa-IR-u-ca-persian', { timeZone: 'Asia/Tehran', month: 'long', day: 'numeric' }).format(new Date(ms));
+    const isToday = ms => getTehranISODate(new Date(ms)) === getTehranISODate(new Date());
+
+    function evalDraft(d) {
+        const p = findProduct(d.name), qty = toKg(d.qty, d.unit), problems = []; let fatal = false;
+        if (!d.name) { problems.push('نام کالا نوشته نشده'); fatal = true; }
+        else if (!p) { problems.push('کالایی با این اسم در انبار پیدا نشد (✏️ ویرایش بزن)'); fatal = true; }
+        else if (d.type === 'sausage' && p.category !== 'sausage') { problems.push('این کالا سوسیس/کالباس نیست؛ نوع فروش رو اصلاح کن'); fatal = true; }
+        if (!(qty > 0)) { problems.push('مقدار نوشته نشده'); fatal = true; }
+        else if (p && (p.booth_stock || 0) < qty) { problems.push('موجودی غرفه (' + FA(p.booth_stock || 0) + ' کیلو) کمتر از این مقداره'); fatal = true; }
+        return { p, qty, fatal, problems, price: p && qty > 0 ? Math.round(qty * (p.sell_price || 0)) : 0 };
+    }
+
+    /* ---------- بدنه‌ی تب ---------- */
+    window.qnOpen = async function () {
+        qnRenderChips(); qnRender(); qnRenderHours(true); qnSync(); qnAdminLoad();
+        try {
+            await loadProductDatalist();
+            try { setupProductAutocomplete('qnName', () => cachedProductsList); } catch (e) {}
+            qnRender(); qnPreview();
+        } catch (e) {}
+    };
+
+    window.qnRenderChips = function () {
+        const box = $('qnChips'); if (!box) return;
+        const type = $('qnType').value; let freq = {};
+        try { freq = JSON.parse(localStorage.getItem('productFreq_' + type) || '{}'); } catch (e) {}
+        const top = Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 8).map(e => e[0]);
+        box.innerHTML = top.map(n => `<button type="button" class="qn-chip" data-n="${escapeHtmlAttr(n)}" onclick="qnPickChip(this.dataset.n)">⭐ ${esc(n)}</button>`).join('');
+    };
+    window.qnPickChip = function (name) {
+        $('qnName').value = name; qnPreview(); $('qnQty').focus();
+        try { if (navigator.vibrate) navigator.vibrate(15); } catch (e) {}
+    };
+    window.qnPreview = function () {
+        const el = $('qnPreview'); if (!el) return;
+        const p = findProduct($('qnName').value), q = toKg($('qnQty').value, unitVal());
+        el.innerText = (p && q > 0) ? ('مبلغ تقریبی: ' + FA(Math.round(q * (p.sell_price || 0))) + ' تومان') : '';
+    };
+
+    /* ---------- عکس ---------- */
+    window.qnPickPhoto = function (inp) {
+        const f = inp.files && inp.files[0]; if (!f) return;
+        const img = new Image(), url = URL.createObjectURL(f);
+        img.onload = () => {
+            const max = 720, r = Math.min(1, max / Math.max(img.width, img.height));
+            const c = document.createElement('canvas'); c.width = Math.round(img.width * r); c.height = Math.round(img.height * r);
+            c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+            photo = c.toDataURL('image/jpeg', 0.55); URL.revokeObjectURL(url); inp.value = ''; showPhoto();
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); showToast('❌ عکس خونده نشد، دوباره امتحان کن.'); };
+        img.src = url;
+    };
+    function showPhoto() {
+        const im = $('qnPhotoPreview'), cl = $('qnPhotoClear');
+        if (photo) { im.src = photo; im.style.display = 'block'; cl.style.display = 'inline-block'; }
+        else { im.removeAttribute('src'); im.style.display = 'none'; cl.style.display = 'none'; }
+    }
+    window.qnClearPhoto = function () { photo = null; showPhoto(); };
+    window.qnViewPhoto = function (src) {
+        if (!src) return;
+        const v = document.createElement('div'); v.className = 'qn-viewer'; v.innerHTML = '<img>'; v.firstChild.src = src;
+        v.onclick = () => v.remove(); document.body.appendChild(v);
+    };
+
+    /* ---------- افزودن / ویرایش ---------- */
+    function resetForm() {
+        $('qnName').value = ''; $('qnQty').value = ''; $('qnNote').value = '';
+        document.querySelector('input[name="qnUnit"][value="kg"]').checked = true;
+        photo = null; showPhoto(); editId = null;
+        $('qnSubmitBtn').innerText = '➕ افزودن به دفترچه'; $('qnCancelEditBtn').style.display = 'none'; qnPreview();
+    }
+    window.qnCancelEdit = function () { resetForm(); };
+    window.qnSubmit = function () {
+        const type = $('qnType').value, name = $('qnName').value.trim(), qty = toEn($('qnQty').value), unit = unitVal(), note = $('qnNote').value.trim();
+        if (!name && !photo && !note) { showToast('⛔ حداقل اسم کالا، عکس یا یک توضیح بنویس.'); return; }
+        const list = load();
+        if (editId) {
+            const d = list.find(x => x.id === editId);
+            if (!d) { resetForm(); return; }
+            Object.assign(d, { type, name, qty, unit, note, photo, editedAt: Date.now() });
+            if (!save(list)) return;
+            showToast('✏️ یادداشت ویرایش شد (ساعت اصلی ثبت حفظ شد).');
+        } else {
+            list.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), type, name, qty, unit, note, photo, at: Date.now() });
+            if (!save(list)) return;
+            showToast('📝 یادداشت شد — ساعت ' + getTehranTimeString(new Date()));
+            try { if (navigator.vibrate) navigator.vibrate(20); } catch (e) {}
+        }
+        resetForm(); qnRender(); qnUpdateBadge(); qnRenderHours(false);
+        $('qnName').focus();
+    };
+    window.qnEdit = function (id) {
+        const d = load().find(x => x.id === id); if (!d) return;
+        editId = id; $('qnType').value = d.type; $('qnName').value = d.name || ''; $('qnQty').value = d.qty || ''; $('qnNote').value = d.note || '';
+        const r = document.querySelector('input[name="qnUnit"][value="' + (d.unit || 'kg') + '"]'); if (r) r.checked = true;
+        photo = d.photo || null; showPhoto(); qnRenderChips(); qnPreview();
+        $('qnSubmitBtn').innerText = '💾 ذخیره‌ی ویرایش'; $('qnCancelEditBtn').style.display = 'block';
+        $('quickNoteTab').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    window.qnDelete = async function (id) {
+        const d = load().find(x => x.id === id); if (!d) return;
+        if (!(await showConfirm('این یادداشت حذف بشه؟\n\n' + (d.name || 'بدون نام') + ' — ساعت ' + getTehranTimeString(new Date(d.at)) + '\n\n(چون هنوز تایید نشده، جزو فروش و موجودی نبوده.)'))) return;
+        save(load().filter(x => x.id !== id));
+        if (editId === id) resetForm();
+        qnRender(); qnUpdateBadge(); qnRenderHours(false);
+    };
+
+    /* ---------- تایید و ثبت واقعی ---------- */
+    async function confirmOne(id, bulk) {
+        if (!navigator.onLine) { showToast('📴 اینترنت قطعه؛ برای تایید باید آنلاین باشی. یادداشت‌ها سر جاشون می‌مونن.'); return false; }
+        const d = load().find(x => x.id === id); if (!d) return false;
+        let ev = evalDraft(d);
+        if (!ev.p || !(ev.qty > 0) || (d.type === 'sausage' && ev.p.category !== 'sausage')) { showToast('⛔ «' + (d.name || 'بدون نام') + '»: ' + ev.problems.join('، ')); return false; }
+        // موجودی تازه از دیتابیس
+        const { data: fresh } = await _supabase.from('products').select('*').eq('id', ev.p.id).maybeSingle();
+        const prod = fresh || ev.p, qty = ev.qty;
+        if ((prod.booth_stock || 0) < qty) {
+            if (!bulk) await showUnderstoodAlert('⛔ این مقدار قابل ثبت نیست!\n\nموجودی فعلی «' + prod.name + '» داخل ظرف غرفه: ' + FA(prod.booth_stock || 0) + ' کیلوگرم\nمقدار یادداشت: ' + FA(qty) + ' کیلوگرم\n\nاگه موجودی سیستم با واقعیت نمی‌خونه، اول از تب «🧊 وضعیت یخچال غرفه» اصلاحش کن، بعد دوباره تایید بزن.');
+            else showToast('⛔ «' + prod.name + '»: موجودی غرفه کافی نیست.');
+            return false;
+        }
+        const { data: newStock, error: adjErr } = await _supabase.rpc('adjust_booth_stock', { p_product_id: prod.id, p_delta: -qty });
+        if (adjErr) { showToast('❌ خطا در ثبت: ' + adjErr.message); return false; }
+        const at = new Date(d.at), price = Math.round(qty * (prod.sell_price || 0));
+        // اگه یادداشت مال روز قبله، مثل «ثبت با تاخیر» شیفت هم ست می‌شه
+        const shift = isToday(d.at) ? null : (v79ShiftOf(currentUserLabel) || 'admin');
+        const { error: insErr } = await _supabase.from('sales').insert([{
+            product_code: prod.code, quantity: qty, sell_price: price, seller_name: currentUserLabel,
+            sale_type: d.type, shift_label: shift, customer_name: null, created_at: at.toISOString()
+        }]);
+        if (insErr) {
+            await _supabase.rpc('adjust_booth_stock', { p_product_id: prod.id, p_delta: qty }); // برگردوندن موجودی
+            showToast('❌ فاکتور ثبت نشد: ' + insErr.message); return false;
+        }
+        save(load().filter(x => x.id !== id));
+        try { recordProductFrequency(d.type, prod.name); saveLastSale(d.type, prod.name, qty, 'kg'); } catch (e) {}
+        try { loadRecentSales(d.type); } catch (e) {}
+        hoursCache.t = 0;
+        if (!bulk) {
+            showToast('✅ فروش «' + prod.name + '» با ساعت ' + getTehranTimeString(at) + ' ثبت شد.\n💰 مبلغ: ' + FA(price) + ' تومان\n🧊 موجودی جدید غرفه: ' + newStock + ' کیلوگرم');
+            try { checkCriticalAfterSale(prod, newStock); } catch (e) {}
+        }
+        return true;
+    }
+    window.qnConfirm = async function (id) {
+        if (busy) return; busy = true;
+        try { if (await confirmOne(id, false)) { if (editId === id) resetForm(); } } finally { busy = false; qnRender(); qnUpdateBadge(); qnRenderHours(true); await loadProductDatalist().catch(() => {}); }
+    };
+    window.qnConfirmAll = async function () {
+        if (busy) return;
+        const ready = load().filter(d => !evalDraft(d).fatal);
+        if (!ready.length) { showToast('هیچ یادداشت آماده‌ای نیست؛ موارد زردرنگ رو اول اصلاح کن.'); return; }
+        if (!(await showConfirm('این ' + FA(ready.length) + ' یادداشتِ آماده به‌عنوان فروش واقعی (با ساعت خودشون) ثبت بشن؟'))) return;
+        busy = true; let ok = 0;
+        try {
+            for (const d of ready) {
+                if (await confirmOne(d.id, true)) { ok++; await loadProductDatalist().catch(() => {}); } // موجودی تازه برای کالای تکراری
+            }
+        } finally { busy = false; }
+        showToast('✅ ' + FA(ok) + ' از ' + FA(ready.length) + ' یادداشت به فروش واقعی تبدیل شد.' + (ok < ready.length ? '\nبقیه رو چک کن (موجودی/اسم).' : ''));
+        qnRender(); qnUpdateBadge(); qnRenderHours(true);
+    };
+
+    /* ---------- لیست ---------- */
+    window.qnRender = function () {
+        const box = $('qnList'); if (!box) return;
+        const list = load().sort((a, b) => b.at - a.at);
+        $('qnCount').innerText = list.length ? '(' + FA(list.length) + ')' : '';
+        let readyN = 0;
+        if (!list.length) { box.innerHTML = '<div class="hint" style="text-align:center; padding:14px 0;">✨ یادداشتی در انتظار نیست. هر فروشی انجام دادی همین بالا سریع بنویس.</div>'; $('qnConfirmAllBtn').style.display = 'none'; return; }
+        box.innerHTML = list.map(d => {
+            const ev = evalDraft(d); if (!ev.fatal) readyN++;
+            const old = !isToday(d.at);
+            const qtyTxt = parseFloat(toEn(d.qty)) > 0 ? FA(parseFloat(toEn(d.qty))) + (d.unit === 'gram' ? ' گرم' : ' کیلو') : '—';
+            return `<div class="qn-item ${ev.fatal ? 'warn' : 'ok'} ${old ? 'old' : ''}">
+                <div class="qn-head"><span>🕒 ${getTehranTimeString(new Date(d.at))}${old ? ' — ' + dateLbl(d.at) + ' (روز قبل)' : ''}</span><span>${TYPE_LBL[d.type] || ''}</span></div>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    ${d.photo ? `<img class="qn-thumb" src="${d.photo}" onclick="qnViewPhoto(this.src)">` : ''}
+                    <div style="flex:1; min-width:0;">
+                        <div class="qn-title">${d.name ? esc(d.name) : '<span style="opacity:.6">بدون نام</span>'}</div>
+                        <div class="qn-sub">مقدار: <b>${qtyTxt}</b>${ev.price ? ' · مبلغ: <b>' + FA(ev.price) + '</b> تومان' : ''}${d.note ? '<br>📌 ' + esc(d.note) : ''}</div>
+                    </div>
+                </div>
+                ${ev.problems.length ? `<div class="qn-problems">⚠️ ${ev.problems.map(esc).join('<br>⚠️ ')}</div>` : ''}
+                <div class="qn-actions">
+                    <button class="row-btn qn-ok-btn" ${ev.fatal ? 'disabled style="opacity:.45;"' : ''} onclick="qnConfirm('${d.id}')">✅ تایید و ثبت</button>
+                    <button class="row-btn edit-btn" onclick="qnEdit('${d.id}')">✏️ ویرایش</button>
+                    <button class="row-btn delete-btn" onclick="qnDelete('${d.id}')">🗑️ حذف</button>
+                </div></div>`;
+        }).join('');
+        const b = $('qnConfirmAllBtn'); b.style.display = readyN > 1 ? 'block' : 'none'; b.innerText = '✅ تایید همه‌ی آماده‌ها (' + FA(readyN) + ')';
+    };
+
+    /* ---------- نشان تعداد روی تب و نوار پایین ---------- */
+    window.qnUpdateBadge = function () {
+        const n = load().length;
+        document.querySelectorAll('#qnTabBadge, .qn-badge-nav').forEach(el => { el.innerText = n ? FA(n) : ''; el.style.display = n ? 'flex' : 'none'; });
+        const nb = document.querySelector('.bottom-nav-btn[data-bn-tab="quickNote"]');
+        if (nb && !nb.querySelector('.qn-badge-nav')) { const s = document.createElement('span'); s.className = 'qn-badge qn-badge-nav'; nb.appendChild(s); s.innerText = n ? FA(n) : ''; s.style.display = n ? 'flex' : 'none'; }
+    };
+
+    /* ---------- نمودار ساعت‌های فروش امروز ---------- */
+    window.qnRenderHours = async function (force) {
+        const box = $('qnHours'); if (!box) return;
+        try {
+            if (force || !hoursCache.rows || Date.now() - hoursCache.t > 60000) {
+                const since = new Date(getTehranISODate() + 'T00:00:00+03:30').toISOString();
+                const { data } = await _supabase.from('sales').select('sell_price, created_at').eq('seller_name', currentUserLabel).gte('created_at', since).limit(2000);
+                hoursCache = { t: Date.now(), rows: data || [] };
+            }
+            const sum = {}, cnt = {};
+            hoursCache.rows.forEach(r => { const h = hourOf(new Date(r.created_at).getTime()); sum[h] = (sum[h] || 0) + (Number(r.sell_price) || 0); cnt[h] = (cnt[h] || 0) + 1; });
+            load().filter(d => isToday(d.at)).forEach(d => { const h = hourOf(d.at); sum[h] = (sum[h] || 0) + evalDraft(d).price; cnt[h] = (cnt[h] || 0) + 1; });
+            const hs = Object.keys(cnt).map(Number).sort((a, b) => a - b);
+            if (!hs.length) { box.innerHTML = 'هنوز فروشی امروز ثبت/یادداشت نشده.'; return; }
+            const lo = hs[0], hi = hs[hs.length - 1]; let peak = hs[0];
+            hs.forEach(h => { if ((sum[h] || 0) > (sum[peak] || 0)) peak = h; });
+            const maxV = Math.max(1, ...hs.map(h => sum[h] || 0)); let cols = '';
+            for (let h = lo; h <= hi; h++) {
+                const v = sum[h] || 0;
+                cols += `<div class="qn-hcol" title="${FA(cnt[h] || 0)} فاکتور"><div class="qn-hbar ${h === peak ? 'peak' : ''}" style="height:${Math.max(3, Math.round(v / maxV * 100))}%"></div><div class="qn-hlbl">${FA(h)}</div></div>`;
+            }
+            box.innerHTML = `<div style="color:var(--text-primary); font-size:13px;">🔥 پرفروش‌ترین ساعت امروز: <b>${FA(peak)} تا ${FA((peak + 1) % 24)}</b> — ${FA(cnt[peak])} فاکتور، ${FA(sum[peak] || 0)} تومان</div><div class="qn-hours">${cols}</div><div class="hint" style="margin-top:4px;">فروش‌های ثبت‌شده + یادداشت‌های منتظر تایید (بر اساس ساعت واقعی فروش)</div>`;
+        } catch (e) { box.innerText = 'نمودار در دسترس نیست.'; }
+    };
+})();
+</script>
 
     <!-- نوار پایین صفحه: میانبر پرکاربردترین بخش‌ها (محتوایش با نقش کاربر توسط JS پر می‌شه) -->
     <div class="bottom-nav" id="bottomNav"></div>
