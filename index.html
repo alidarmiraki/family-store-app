@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v83 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v85 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="icon" href="icon-192.png">
@@ -1215,6 +1215,58 @@
 .v79-sub{font-size:10px;color:#94a3b8}.v79-tabs{display:flex;gap:6px;margin-top:10px}.v79-tabs button{flex:1;border:1px solid rgba(148,163,184,.3);background:transparent;color:inherit;border-radius:10px;padding:6px;font-size:11px;font-family:inherit}.v79-tabs button.active{background:linear-gradient(135deg,#0ea5e9,#6366f1);color:#fff;border-color:transparent}
 .sst-range{background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.35);border-radius:12px;padding:8px 10px;margin:6px 0;font-size:12px;line-height:1.9}
 </style>
+<style>
+/* v84 — ظاهر مدرن و یکدست برای همه‌ی تب‌ها (هماهنگ با خلاصه‌ی روز) */
+.card{border-radius:22px;box-shadow:var(--shadow-soft),inset 0 1px 0 rgba(255,255,255,.05)}
+.card h2{border:1px solid rgba(167,139,250,.28);border-image:none;border-radius:16px;padding:11px 14px;background:linear-gradient(135deg,rgba(56,189,248,.16),rgba(167,139,250,.16));display:flex;align-items:center;gap:8px;font-weight:800}
+.report-card,.msg-card{border:1px solid rgba(148,163,184,.2)!important;border-image:none!important;border-radius:18px;padding:14px;position:relative;overflow:hidden;background:linear-gradient(160deg,rgba(255,255,255,.05),rgba(255,255,255,0) 60%),var(--bg-card)}
+.report-card::before,.msg-card::before{content:'';position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent-2),var(--accent-3))}
+.report-card h3,.msg-card h3{font-size:14.5px;font-weight:800}
+.summary-mini{background:rgba(148,163,184,.08);border:1px solid rgba(148,163,184,.14);border-radius:14px;padding:10px 12px;margin:7px 0}
+input,select,textarea{border-radius:14px}
+button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing:.2px;box-shadow:0 10px 28px rgba(16,185,129,.32)}
+.row-btn{border-radius:11px;padding:7px 11px}
+.hint{line-height:1.8}
+.exp-hero{border-radius:20px;padding:14px;margin:12px 0;border:1px solid rgba(167,139,250,.35);background:linear-gradient(135deg,rgba(56,189,248,.16),rgba(167,139,250,.16))}
+.sal-hero{border-radius:20px;padding:14px;margin:12px 0;border:1px solid rgba(52,211,153,.35);background:linear-gradient(135deg,rgba(52,211,153,.16),rgba(56,189,248,.14))}
+.exp-nav{display:flex;align-items:center;gap:8px}
+.exp-navbtn{flex:none;border:1px solid rgba(148,163,184,.3);background:rgba(148,163,184,.1);color:inherit;border-radius:12px;padding:8px 11px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.exp-month{flex:1;text-align:center;font-weight:800;font-size:15px}
+.exp-total{font-size:28px;font-weight:800;color:#38bdf8;margin:10px 0 2px;text-align:center}
+.sal-hero .exp-total{color:#34d399}
+.exp-sub{text-align:center;font-size:12px;color:var(--text-secondary);margin-bottom:6px}
+.v78-spark i{cursor:pointer}
+.exp-form{border:1px dashed var(--border-glow);border-radius:16px;padding:0 12px;margin:10px 0;background:rgba(56,189,248,.05)}
+.exp-form>summary{cursor:pointer;font-weight:800;padding:12px 2px;list-style:none;color:var(--accent)}
+.exp-form>summary::-webkit-details-marker{display:none}
+.exp-form[open]{padding-bottom:12px}
+.exp-row{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px dashed rgba(148,163,184,.22)}
+.exp-row:last-child{border-bottom:0}
+.exp-ico{flex:none;width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px;background:linear-gradient(135deg,rgba(56,189,248,.2),rgba(167,139,250,.2))}
+.exp-main{flex:1;min-width:0;font-size:13px}
+.exp-meta{font-size:11px;color:var(--text-secondary);margin-top:2px}
+.exp-note{font-size:12px;margin-top:3px;opacity:.9}
+.exp-side{flex:none;text-align:left}
+.exp-side b{display:block;font-size:13px;color:#fbbf24}
+.exp-act{display:flex;gap:4px;margin-top:5px;justify-content:flex-end}
+.exp-act .row-btn{margin:0;padding:6px 9px}
+.exp-more{width:100%;margin-top:10px;padding:11px;border-radius:12px;border:1px dashed var(--border-glow);background:transparent;color:var(--accent);font:inherit;font-weight:700;cursor:pointer}
+.sal-month{border:1px solid rgba(148,163,184,.2);border-radius:16px;margin:8px 0;padding:0 12px;background:rgba(148,163,184,.05)}
+.sal-month>summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px 0;font-weight:800;font-size:13px}
+.sal-month>summary::-webkit-details-marker{display:none}
+.sal-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px dashed rgba(148,163,184,.22)}
+.sal-amt{font-weight:800;color:#34d399;font-size:13px;white-space:nowrap}
+.sal-chips,.msg-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.sal-chips button,.msg-chips button{border:1px solid rgba(148,163,184,.3);background:rgba(148,163,184,.1);color:inherit;border-radius:20px;padding:6px 11px;font:inherit;font-size:12px;cursor:pointer}
+.msg-in{padding-top:16px}
+.mc-head{display:flex;gap:10px;align-items:center}
+.mc-meta{flex:1;min-width:0}
+.mc-meta h3{margin:0!important}
+.mc-sub{font-size:11px;color:var(--accent);margin-top:2px}
+.mc-body{margin:10px 0 6px;padding:11px 12px;border-radius:14px;background:rgba(148,163,184,.1);border:1px solid rgba(148,163,184,.16);font-size:13px;line-height:1.9;white-space:pre-line}
+#netPill{position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:100001;padding:8px 14px;border-radius:20px;font-size:12px;font-weight:700;background:rgba(15,23,42,.94);color:#fbbf24;border:1px solid rgba(251,191,36,.5);box-shadow:var(--shadow-soft);display:none;max-width:92vw;text-align:center}
+.build-tag{cursor:pointer}
+</style>
 </head>
 <body>
 
@@ -1334,7 +1386,7 @@
         <label class="lg-label">نام کاربری</label>
         <div class="lg-field">
             <span class="lg-ico">👤</span>
-            <input type="text" id="accessUser" dir="auto" autocomplete="username" placeholder="نام کاربری خود را وارد کنید">
+            <input type="text" id="accessUser" dir="auto" autocomplete="username" placeholder="نام کاربری خود را وارد کنید" autocapitalize="none" autocorrect="off" spellcheck="false">
         </div>
         <label class="lg-label">رمز عبور</label>
         <div class="lg-field">
@@ -1762,6 +1814,7 @@
         <h2>📩 ارسال پیام / گزارش کسری به مدیر</h2>
         <label>عنوان پیام:</label>
         <input type="text" id="msgTitle" placeholder="مثلاً: اعلام کسری خیارشور یا درخواست ظرف">
+<div class="msg-chips"><button type="button" onclick="msgChip('msgTitle','📉 اعلام کسری: ')">📉 کسری کالا</button><button type="button" onclick="msgChip('msgTitle','🥡 درخواست ظرف/لوازم: ')">🥡 درخواست لوازم</button><button type="button" onclick="msgChip('msgTitle','🔧 خرابی/تعمیر: ')">🔧 خرابی</button><button type="button" onclick="msgChip('msgTitle','💬 ')">💬 سایر</button></div>
         <label>متن پیام:</label>
         <textarea id="msgBody" placeholder="توضیحات کامل پیام یا گزارش کسری را بنویسید..."></textarea>
         <button class="submit-btn" onclick="sendMessageToAdmin()">ارسال به مدیر غرفه</button>
@@ -1779,6 +1832,7 @@
 
         <label>عنوان پیام:</label>
         <input type="text" id="staffMsgTitle" placeholder="مثلاً: یادآوری یا دستور کاری">
+<div class="msg-chips"><button type="button" onclick="msgChip('staffMsgTitle','⏰ یادآوری: ')">⏰ یادآوری</button><button type="button" onclick="msgChip('staffMsgTitle','🧹 نظافت: ')">🧹 نظافت</button><button type="button" onclick="msgChip('staffMsgTitle','📦 بررسی موجودی: ')">📦 موجودی</button><button type="button" onclick="msgChip('staffMsgTitle','📣 اطلاعیه: ')">📣 اطلاعیه</button></div>
         <label>متن پیام:</label>
         <textarea id="staffMsgBody" placeholder="متن پیام را بنویسید..."></textarea>
         <button class="submit-btn" onclick="sendMessageToStaff()">ارسال پیام به فروشنده</button>
@@ -2375,13 +2429,16 @@
     <!-- تب واریز حقوق -->
     <div id="salaryTab" class="card">
         <h2>💰 واریز حقوق پرسنل</h2>
+<div id="salaryHero"></div>
         <div id="salaryAdminForm" style="display:none;">
             <label>انتخاب فروشنده:</label>
             <select id="salaryTargetSeller">
                 <option value="">در حال دریافت لیست پرسنل...</option>
             </select>
             <label>مبلغ واریزی (تومان):</label>
-            <input type="text" inputmode="decimal" id="salaryAmount" placeholder="مثلاً 15000000">
+            <input type="text" inputmode="decimal" id="salaryAmount" placeholder="مثلاً 15000000" oninput="updateSalaryPreview()">
+<div class="price-display" id="salaryAmountPreview" style="margin-top:6px;"></div>
+<div class="sal-chips"><button type="button" onclick="salaryAdd(500000)">+۵۰۰ هزار</button><button type="button" onclick="salaryAdd(1000000)">+۱ میلیون</button><button type="button" onclick="salaryAdd(5000000)">+۵ میلیون</button><button type="button" onclick="salaryAdd(0)">پاک</button></div>
             <label>بابت (توضیحات/دوره):</label>
             <input type="text" id="salaryNote" placeholder="مثلاً حقوق مرداد ماه">
             <button class="submit-btn" onclick="submitSalaryPayment()">ثبت واریز حقوق</button>
@@ -2456,7 +2513,9 @@
         <h2>📒 دفترچه هزینه‌های جانبی</h2>
         <div class="hint" style="margin-top:0;">هزینه‌های جانبی مثل ظرف، دستکش، دستمال کاغذی و لوازم مصرفی رو اینجا ثبت کن. اگه خودت از جیب خودت خریدی، مشخص کن تا مدیر بدونه باید بهت پس بده.</div>
 
-        <label>دسته‌بندی:</label>
+        <details id="expenseFormDetails" class="exp-form">
+<summary>➕ ثبت هزینه‌ی جدید</summary>
+<label>دسته‌بندی:</label>
         <select id="expenseCategory">
             <option value="لوازم مصرفی">🧤 لوازم مصرفی (ظرف/دستکش/دستمال کاغذی و مشابه)</option>
             <option value="اجاره">🏠 اجاره</option>
@@ -2483,19 +2542,22 @@
 
         <button class="submit-btn" id="expenseSubmitBtn" onclick="submitExpense()">💾 ثبت هزینه</button>
         <button class="row-btn edit-btn" id="expenseCancelEditBtn" style="width:100%; margin-top:8px; display:none; background:#475569;" onclick="cancelExpenseEdit()">✖️ انصراف از ویرایش</button>
+</details>
 
-        <div class="report-card" style="margin-top:16px;" id="expensesMonthTotalBox">
-            <h3>📊 جمع هزینه‌های این ماه</h3>
-            <p id="expensesMonthTotal" style="font-size:18px; font-weight:bold; color:#fbbf24;">در حال محاسبه...</p>
-        </div>
-
-        <div class="report-card" id="unsettledExpensesBox" style="margin-top:10px; display:none;">
+        <div class="exp-hero" id="expensesMonthTotalBox">
+<div class="exp-nav"><button type="button" class="exp-navbtn" onclick="expNav(-1)">▶ ماه قبل</button><div class="exp-month" id="expMonthLabel">—</div><button type="button" class="exp-navbtn" onclick="expNav(1)">ماه بعد ◀</button></div>
+<div class="exp-total" id="expensesMonthTotal">در حال محاسبه...</div>
+<div class="exp-sub" id="expMonthSub"></div>
+<div class="v80-stack" id="expCatBar"></div><div class="v80-legend" id="expCatLegend"></div>
+<div class="v78-spark" id="expSpark"></div><div class="v78-lbl" id="expSparkLbl"></div>
+</div>
+<div class="report-card" id="unsettledExpensesBox" style="margin-top:10px; display:none;">
             <h3>🧾 مبالغی که هنوز حساب نشده (طلب از مدیر)</h3>
             <div id="unsettledExpensesList"></div>
         </div>
 
         <div class="report-card" style="margin-top:10px;">
-            <h3>📋 آخرین هزینه‌های ثبت‌شده</h3>
+            <h3>📋 فهرست هزینه‌ها</h3>
             <div id="expensesList"><div class="skeleton-block skeleton-card"></div></div>
         </div>
     </div>
@@ -2586,7 +2648,7 @@
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v83 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v85 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
 
     <script>
         function toggleLoginPasswordVisibility() {
@@ -2766,7 +2828,9 @@
             // "https://shop-proxy-2.adarmiraki.workers.dev",
         ];
 
-        let activeBaseUrl = PROXY_ENDPOINTS[0];
+        // پروکسی‌هایی که خودت داخل برنامه اضافه کرده‌ای (روی همین گوشی ذخیره می‌شود)
+try { JSON.parse(localStorage.getItem('extraProxies') || '[]').forEach(u => { if (/^https:\/\/\S+$/.test(u) && PROXY_ENDPOINTS.indexOf(u) === -1) PROXY_ENDPOINTS.push(u); }); } catch (e) {}
+let activeBaseUrl = PROXY_ENDPOINTS[0];
         // آخرین پروکسیِ سالم یادش می‌ماند تا فروشنده‌ی بدون فیلترشکن هر بار منتظر آدرس مستقیم (فیلتر) نماند
         try { const savedEp = localStorage.getItem('lastGoodEndpoint'); if (savedEp && PROXY_ENDPOINTS.indexOf(savedEp) !== -1) activeBaseUrl = savedEp; } catch (e) {}
 
@@ -2797,41 +2861,203 @@
             dot.title = titles[connectionStatus] || '';
         }
 
-        async function proxiedFetch(input, init) {
-            const originalUrl = (typeof input === 'string') ? input : input.url;
-            if (originalUrl.indexOf(SUPABASE_REAL_URL) !== 0) {
-                return fetch(input, init); // درخواستی که اصلاً مربوط به Supabase نیست
-            }
-            const path = originalUrl.slice(SUPABASE_REAL_URL.length);
-            // آپلود عکس روی اینترنت فیلتر/کند در ۵ ثانیه تمام نمی‌شود و قطع می‌شد؛ برای آپلود سقف زمانی بلندتر
-            const isUpload = path.indexOf('/storage/v1/object/') === 0 && init && init.body;
-            const T1 = isUpload ? 30000 : 5000, T2 = isUpload ? 30000 : 7000;
+        // =========================================================================
+// v84 — اینترنت ضعیف: انتخاب سریع‌ترین مسیر، حافظه‌ی پنهان برای خواندن، جلوگیری از ثبت دوباره
+// =========================================================================
+const EP_FAIL = {};   // آدرس ← زمان آخرین شکست؛ آدرس مرده هر بار چند ثانیه معطل‌مان نکند
+let inflightNet = 0;
+function epOrder() {
+    const now = Date.now(), all = [activeBaseUrl].concat(PROXY_ENDPOINTS.filter(e => e !== activeBaseUrl));
+    const ok = all.filter(e => !(EP_FAIL[e] && now - EP_FAIL[e] < 45000));
+    return ok.concat(all.filter(e => ok.indexOf(e) === -1));
+}
+function markEp(ep, good) {
+    if (good) {
+        delete EP_FAIL[ep]; activeBaseUrl = ep;
+        if (ep !== SUPABASE_REAL_URL) { try { localStorage.setItem('lastGoodEndpoint', ep); } catch (e) {} }
+        connectionStatus = (ep === SUPABASE_REAL_URL) ? 'direct' : 'proxy';
+    } else { EP_FAIL[ep] = Date.now(); }
+    updateConnectionStatusIndicator();
+}
+const isHtmlResp = r => /text\/html/i.test((r.headers && r.headers.get('content-type')) || '');
+const isSoftFail = r => r.status === 502 || r.status === 503 || r.status === 504 || r.status >= 520 || isHtmlResp(r); // پاسخ HTML = صفحه‌ی مسدودی/خطای پروکسی، نه جواب Supabase
+function netScale() { const c = (typeof navigator !== 'undefined') && navigator.connection; return (c && (c.saveData || /2g/.test(c.effectiveType || ''))) ? 2 : 1; }
 
-            try {
-                const res = await fetchWithTimeout(activeBaseUrl + path, init, T1);
-                connectionStatus = (activeBaseUrl === SUPABASE_REAL_URL) ? 'direct' : 'proxy';
-                updateConnectionStatusIndicator();
-                return res;
-            } catch (firstErr) {
-                for (const candidate of PROXY_ENDPOINTS) {
-                    if (candidate === activeBaseUrl) continue;
-                    try {
-                        const res = await fetchWithTimeout(candidate + path, init, T2);
-                        activeBaseUrl = candidate;
-                        if (candidate !== SUPABASE_REAL_URL) { try { localStorage.setItem('lastGoodEndpoint', candidate); } catch (e) {} }
-                        console.warn('📡 اتصال مستقیم برقرار نشد؛ سوییچ خودکار به پروکسی:', candidate);
-                        connectionStatus = (candidate === SUPABASE_REAL_URL) ? 'direct' : 'proxy';
-                        updateConnectionStatusIndicator();
-                        return res;
-                    } catch (e) { /* برو سراغ پروکسی بعدی */ }
-                }
-                connectionStatus = 'error';
-                updateConnectionStatusIndicator();
-                throw firstErr; // هیچ‌کدام از آدرس‌ها جواب ندادند
-            }
+// خواندن (GET): اگر مسیر اول تا ۳ ثانیه جواب نداد، همزمان مسیر بعدی هم امتحان می‌شود؛ اولین جواب سالم برنده است
+function hedgedGet(path, init, eps, timeout) {
+    return new Promise((resolve, reject) => {
+        let done = false, pending = 0, next = 0, lastRes = null, lastErr = null;
+        const ctrls = [], timers = [];
+        const finish = (fn, v) => { if (done) return; done = true; timers.forEach(clearTimeout); fn(v); };
+        const fail = () => { if (done || pending > 0) return; if (!launch()) finish(lastRes ? resolve : reject, lastRes || lastErr); };
+        const launch = () => {
+            if (done || next >= eps.length) return false;
+            const ep = eps[next++], c = new AbortController(); ctrls.push([ep, c]); pending++;
+            const t = setTimeout(() => c.abort(), timeout); timers.push(t);
+            let pr; try { pr = fetch(ep + path, Object.assign({}, init, { signal: c.signal })); } catch (e) { pr = Promise.reject(e); }
+            pr.then(r => {
+                clearTimeout(t); if (done) return;
+                if (isSoftFail(r)) { lastRes = r; markEp(ep, false); pending--; return fail(); }
+                markEp(ep, true); ctrls.forEach(([e, x]) => { if (e !== ep) x.abort(); }); finish(resolve, r);
+            }, err => { clearTimeout(t); if (done) return; lastErr = err; markEp(ep, false); pending--; fail(); });
+            if (next < eps.length) timers.push(setTimeout(() => { if (!done) launch(); }, 3000));
+            return true;
+        };
+        launch();
+    });
+}
+// نوشتن (POST/PATCH/DELETE): پشت‌سرهم، و فقط روی خطای شبکه سراغ مسیر بعدی می‌رود (برای جلوگیری از ثبت تکراری)
+async function seqFetch(path, init, eps, timeout) {
+    let firstErr = null;
+    for (const ep of eps) {
+        try { const r = await fetchWithTimeout(ep + path, init, timeout); if (isHtmlResp(r) && ep !== eps[eps.length - 1]) { markEp(ep, false); firstErr = firstErr || new Error('html'); continue; } markEp(ep, true); return r; }
+        catch (e) { firstErr = firstErr || e; markEp(ep, false); }
+    }
+    connectionStatus = 'error'; updateConnectionStatusIndicator();
+    throw firstErr;
+}
+// حافظه‌ی پنهان خواندن‌ها (جدا برای هر کاربر): وقتی اینترنت قطع/خیلی ضعیف است آخرین اطلاعات نمایش داده می‌شود
+function cacheKey(path, init) {
+    if (path.indexOf('/rest/v1/') !== 0) return null;
+    let sub = 'anon', acc = '';
+    try {
+        const h = init && init.headers, g = n => h ? (h.get ? h.get(n) : (h[n] || h[n.toLowerCase()])) : '';
+        acc = g('Accept') || '';
+        const t = String(g('Authorization') || '').replace(/^Bearer\s+/i, '').split('.')[1];
+        if (t) sub = JSON.parse(atob(t.replace(/-/g, '+').replace(/_/g, '/'))).sub || 'anon';
+    } catch (e) {}
+    return 'rc|' + sub + '|' + acc + '|' + path;
+}
+async function cachePut(key, res) {
+    try {
+        const text = await res.text(); if (text.length > 300000) return;
+        localStorage.setItem(key, JSON.stringify({ t: Date.now(), ct: res.headers.get('content-type') || 'application/json', b: text }));
+    } catch (e) { try { Object.keys(localStorage).forEach(k => { if (k.indexOf('rc|') === 0) localStorage.removeItem(k); }); } catch (e2) {} }
+}
+function cacheGet(key) {
+    try {
+        const o = JSON.parse(localStorage.getItem(key) || 'null');
+        if (!o || Date.now() - o.t > 3 * 86400000) return null;
+        return new Response(o.b, { status: 200, headers: { 'content-type': o.ct, 'x-from-cache': '1' } });
+    } catch (e) { return null; }
+}
+function showNetPill(text) {
+    try {
+        let p = document.getElementById('netPill');
+        if (!p) { p = document.createElement('div'); p.id = 'netPill'; document.body.appendChild(p); }
+        p.textContent = text; p.style.display = 'block'; clearTimeout(p._t); p._t = setTimeout(() => { p.style.display = 'none'; }, 6000);
+    } catch (e) {}
+}
+window.addEventListener('offline', () => showNetPill('📴 اینترنت قطع شد'));
+window.addEventListener('online', () => showNetPill('✅ اینترنت وصل شد'));
+
+async function proxiedFetch(input, init) {
+    const originalUrl = (typeof input === 'string') ? input : input.url;
+    if (originalUrl.indexOf(SUPABASE_REAL_URL) !== 0) return fetch(input, init); // درخواستی که اصلاً مربوط به Supabase نیست
+    const path = originalUrl.slice(SUPABASE_REAL_URL.length);
+    const method = String((init && init.method) || (typeof input !== 'string' && input.method) || 'GET').toUpperCase();
+    const k = netScale(), eps = epOrder();
+    inflightNet++;
+    try {
+        if (method === 'GET' || method === 'HEAD' || /^\/rest\/v1\/rpc\/(login_user|admin_list_sellers)\b/.test(path)) {
+            const ck = method === 'GET' ? cacheKey(path, init) : null;
+            const stale = () => { const hit = ck ? cacheGet(ck) : null; if (hit) showNetPill('📴 اینترنت قطع یا ضعیف است — آخرین اطلاعات ذخیره‌شده نمایش داده می‌شود'); return hit; };
+            let res;
+            try { res = await hedgedGet(path, init, eps, 12000 * k); }
+            catch (err) { const hit = stale(); if (hit) return hit; connectionStatus = 'error'; updateConnectionStatusIndicator(); throw err; }
+            if (isSoftFail(res)) { const hit = stale(); if (hit) return hit; }
+            else if (ck && res.status === 200) cachePut(ck, res.clone());
+            return res;
         }
+        const isUpload = path.indexOf('/storage/v1/object/') === 0 && init && init.body;
+        const slow = setTimeout(() => { try { showToast('⏳ اینترنت کند است؛ لطفاً صبر کن و دوباره نزن'); } catch (e) {} }, 4000);
+        try { return await seqFetch(path, init, eps, (isUpload ? 40000 : 12000) * k); }
+        finally { clearTimeout(slow); }
+    } finally { inflightNet--; }
+}
 
-        // پوشش دادن اتصال Realtime (که با WebSocket کار می‌کند، نه fetch)، تا اگر
+// عکس‌ها (<img>) از fetch رد نمی‌شوند؛ اگر آدرس مستقیم بالا نیامد، از پروکسی‌ها امتحان می‌شوند
+document.addEventListener('error', ev => {
+    const im = ev.target;
+    if (!im || im.tagName !== 'IMG' || !im.src) return;
+    let path = im.dataset.px0;
+    if (path === undefined) { if (im.src.indexOf(SUPABASE_REAL_URL) !== 0) return; path = im.dataset.px0 = im.src.slice(SUPABASE_REAL_URL.length); im.dataset.pxi = '0'; }
+    const eps = [activeBaseUrl].concat(PROXY_ENDPOINTS).filter((e, i, a) => e !== SUPABASE_REAL_URL && a.indexOf(e) === i);
+    const i = +im.dataset.pxi || 0;
+    if (i >= eps.length) return;
+    im.dataset.pxi = String(i + 1); im.src = eps[i] + path;
+}, true);
+new MutationObserver(ms => {
+    if (activeBaseUrl === SUPABASE_REAL_URL) return;
+    ms.forEach(r => r.addedNodes.forEach(n => {
+        if (n.nodeType !== 1) return;
+        (n.tagName === 'IMG' ? [n] : (n.querySelectorAll ? n.querySelectorAll('img') : [])).forEach(im => {
+            const u = im.getAttribute('src') || '';
+            if (u.indexOf(SUPABASE_REAL_URL) === 0) { im.dataset.px0 = u.slice(SUPABASE_REAL_URL.length); im.dataset.pxi = '1'; im.src = activeBaseUrl + im.dataset.px0; }
+        });
+    }));
+}).observe(document.documentElement, { childList: true, subtree: true });
+
+// جلوگیری از ثبت دوباره: روی اینترنت کند کاربر چند بار «ثبت» را می‌زند؛ تا پایان درخواست‌ها دکمه قفل می‌ماند
+document.addEventListener('click', ev => {
+    const b = ev.target.closest && ev.target.closest('button.submit-btn'); if (!b) return;
+    if (b.dataset.lk) { ev.preventDefault(); ev.stopImmediatePropagation(); return; }
+    b.dataset.lk = '1'; const t0 = Date.now();
+    const rel = () => { if ((inflightNet === 0 && Date.now() - t0 > 600) || Date.now() - t0 > 25000) { delete b.dataset.lk; b.style.opacity = ''; } else setTimeout(rel, 300); };
+    setTimeout(() => { b.style.opacity = '.6'; rel(); }, 50);
+}, true);
+
+// پنل مسیرهای اتصال: روی دایره‌ی رنگی کنار نام کاربر یا نوشته‌ی ورژن پایین صفحه بزن
+function openProxyPanel() {
+    const old = document.getElementById('proxyPanel'); if (old) old.remove();
+    const ov = document.createElement('div'); ov.id = 'proxyPanel';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:100002;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:12px;';
+    const extras = () => { try { return JSON.parse(localStorage.getItem('extraProxies') || '[]'); } catch (e) { return []; } };
+    const saveExtras = a => { try { localStorage.setItem('extraProxies', JSON.stringify(a)); } catch (e) {} };
+    const host = u => u.replace(/^https?:\/\//, '');
+    const draw = () => {
+        const ex = extras(), st = ({ direct: '🟢 مستقیم', proxy: '🟡 از طریق پروکسی', error: '🔴 قطع' })[connectionStatus] || '';
+        ov.innerHTML = `<div style="width:min(94vw,380px);max-height:86vh;overflow:auto;background:var(--bg-card-solid);color:var(--text-primary);border-radius:18px;padding:14px;direction:rtl;">
+<h3 style="margin:0 0 6px;">🌐 مسیرهای اتصال به سرور</h3>
+<div class="hint" style="margin:0 0 8px;">برنامه خودش سریع‌ترین مسیر را انتخاب می‌کند. اگر بدون فیلترشکن کند یا قطع بود، می‌توانی مسیر (پروکسی) جدید اضافه کنی. وضعیت فعلی: ${st}</div>
+${PROXY_ENDPOINTS.map(u => `<div class="summary-mini" style="gap:6px;align-items:center;"><span style="font-size:11px;direction:ltr;word-break:break-all;flex:1;">${host(u)}${u === activeBaseUrl ? ' ✅' : ''}</span><span class="hint" style="margin:0;" data-ms="${u}">—</span>${ex.indexOf(u) !== -1 ? `<button class="row-btn delete-btn" data-del="${u}">✖</button>` : ''}</div>`).join('')}
+<button type="button" class="exp-more" data-test="1">⚡ تست سرعت همه‌ی مسیرها</button>
+<input type="text" id="proxyNew" placeholder="https://your-proxy.workers.dev" style="direction:ltr;margin-top:10px;">
+<button type="button" class="exp-more" style="margin-top:6px;" data-add="1">➕ افزودن پروکسی</button>
+<div class="hint">⚠️ فقط آدرس Worker/پروکسی‌ای را اضافه کن که خودت ساخته‌ای؛ ورود و اطلاعات فروشگاه از آن عبور می‌کند. این لیست فقط روی همین گوشی ذخیره می‌شود.</div>
+<button type="button" class="exp-more" data-close="1">بستن</button></div>`;
+    };
+    ov.addEventListener('click', async ev => {
+        if (ev.target === ov) return ov.remove();
+        const t = ev.target.closest('button'); if (!t) return;
+        if (t.dataset.close) ov.remove();
+        else if (t.dataset.del) { const u = t.dataset.del; saveExtras(extras().filter(x => x !== u)); const i = PROXY_ENDPOINTS.indexOf(u); if (i > 0) PROXY_ENDPOINTS.splice(i, 1); if (activeBaseUrl === u) activeBaseUrl = PROXY_ENDPOINTS[0]; draw(); }
+        else if (t.dataset.add) {
+            const u = (document.getElementById('proxyNew').value || '').trim().replace(/\/+$/, '');
+            if (!/^https:\/\/[^\s\/]+(\/\S*)?$/.test(u)) return showToast('آدرس باید با https:// شروع شود و فاصله نداشته باشد.');
+            if (PROXY_ENDPOINTS.indexOf(u) === -1) { PROXY_ENDPOINTS.push(u); saveExtras(extras().concat([u])); }
+            draw(); showToast('✅ پروکسی اضافه شد؛ برای امتحانش «تست سرعت» را بزن.');
+        } else if (t.dataset.test) {
+            t.disabled = true; t.textContent = '⏳ در حال تست...';
+            await Promise.all(PROXY_ENDPOINTS.map(async u => {
+                const el = ov.querySelector('[data-ms="' + u + '"]'), t0 = performance.now();
+                try { await fetchWithTimeout(u + '/auth/v1/health', { headers: { apikey: SUPABASE_KEY }, cache: 'no-store' }, 7000); if (el) el.textContent = Math.round(performance.now() - t0) + ' ms ✅'; }
+                catch (e) { if (el) el.textContent = '✖ پاسخ نداد'; }
+            }));
+            t.disabled = false; t.textContent = '⚡ تست سرعت همه‌ی مسیرها';
+        }
+    });
+    draw(); document.body.appendChild(ov);
+}
+(function () {
+    const bind = () => {
+        const d = document.getElementById('connStatusDot'); if (d) { d.style.cursor = 'pointer'; d.addEventListener('click', openProxyPanel); }
+        document.querySelectorAll('.build-tag').forEach(b => b.addEventListener('click', openProxyPanel));
+    };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind); else bind();
+})();
+
+// پوشش دادن اتصال Realtime (که با WebSocket کار می‌کند، نه fetch)، تا اگر
         // پروکسی فعال شد، کانال زنده‌ی پیام‌ها و موجودی هم از همان پروکسی رد شود.
         (function setupWebSocketProxy() {
             const NativeWebSocket = window.WebSocket;
@@ -4566,35 +4792,37 @@ function getTehranMinutesOfDay(dateObj = new Date()) {
             // روش امن: بررسی نام‌کاربری/رمز از طریق تابع دیتابیس login_user
             // که رمز عبور را به‌صورت هش‌شده (pgcrypto) مقایسه می‌کند و هرگز رمز خام
             // یا هش رمز به مرورگر برنمی‌گردد.
-            const { data: secureResult, error: secureError } = await withTimeout(
-                _supabase.rpc('login_user', { p_username: username, p_password: password }),
-                12000, 'ورود به سیستم'
-            );
-
-            if (!secureError && secureResult && secureResult.length > 0) {
-                user = secureResult[0];
-            } else if (secureError && secureError.message && (secureError.message.includes('does not exist') || secureError.message.includes('login_user'))) {
-                // اگر هنوز فایل SQL امنیتی (fix_security_login.sql) در Supabase اجرا نشده،
-                // موقتاً با روش قدیمی وارد می‌شویم تا ورود کاربران قطع نشود.
-                // توصیه اکید: هرچه سریع‌تر آن فایل را اجرا کنید تا امنیت واقعی برقرار شود.
-                console.warn('تابع امن login_user یافت نشد؛ در حال استفاده موقت از روش قدیمی ورود.');
-                const { data: legacyUser, error: legacyErr } = await withTimeout(_supabase
-                    .from('users')
-                    .select('*')
-                    .eq('username', username)
-                    .eq('password', password)
-                    .maybeSingle(), 12000, 'ورود به سیستم');
-                if (!legacyErr && legacyUser) {
-                    user = legacyUser;
+            // ورود مقاوم در برابر اینترنت ضعیف/فیلتر: هر پاسخ نامطمئن (قطعی، صفحه‌ی مسدودی، پاسخ ناقص) دوباره امتحان می‌شود
+            // و فقط وقتی سرور دوبار «کاربری پیدا نشد» بگوید، پیام «رمز اشتباه» نشان داده می‌شود.
+            const sleep = ms => new Promise(r => setTimeout(r, ms));
+            const missingFn = e => e && (e.code === 'PGRST202' || /Could not find the function|function .*login_user.* does not exist/i.test(String(e.message || '')));
+            const T = 20000 * netScale();
+            let secureResult = null, secureError = null, emptyCount = 0, outcome = 'net';
+            for (let attempt = 1; attempt <= 3; attempt++) {
+                try {
+                    const r = await withTimeout(_supabase.rpc('login_user', { p_username: username, p_password: password }), T, 'ورود به سیستم');
+                    secureResult = r.data; secureError = r.error;
+                } catch (e) { secureResult = null; secureError = { message: String((e && e.message) || e), net: true }; }
+                if (!secureError && Array.isArray(secureResult) && secureResult.length > 0) { outcome = 'ok'; break; }
+                if (!secureError && Array.isArray(secureResult)) { emptyCount++; outcome = 'empty'; if (emptyCount >= 2) break; }
+                else if (missingFn(secureError)) { outcome = 'nofn'; if (attempt >= 2) break; }
+                else outcome = 'net';
+                if (attempt < 3) {
+                    if (loginBtn) loginBtn.innerText = '⏳ اینترنت ضعیف است؛ تلاش دوباره (' + (attempt + 1).toLocaleString('fa-IR') + ' از ۳)...';
+                    await sleep(900 * attempt);
                 }
-            } else if (secureError) {
-                errBox.innerText = '❌ خطا در برقراری ارتباط: ' + secureError.message;
-                errBox.style.display = 'block';
-                return;
             }
-
+            if (outcome === 'ok') user = secureResult[0];
+            else if (outcome === 'nofn') {
+                // تابع امن login_user واقعاً در دیتابیس نیست (دوبار تأیید شد) — روش قدیمی، تا ورود قطع نشود
+                console.warn('تابع امن login_user یافت نشد؛ استفاده موقت از روش قدیمی ورود.');
+                const { data: legacyUser, error: legacyErr } = await withTimeout(_supabase.from('users').select('*').eq('username', username).eq('password', password).maybeSingle(), T, 'ورود به سیستم');
+                if (legacyErr) outcome = 'net'; else if (legacyUser) { user = legacyUser; outcome = 'ok'; } else outcome = 'empty';
+            }
             if (!user) {
-                errBox.innerText = '❌ نام کاربری یا رمز عبور اشتباه است!';
+                errBox.innerText = (outcome === 'empty')
+                    ? '❌ نام کاربری یا رمز عبور اشتباه است!'
+                    : '📶 ارتباط با سرور ناقص بود (اینترنت ضعیف یا فیلتر)؛ رمز شما اشتباه تشخیص داده نشد. چند ثانیه بعد دوباره «ورود» را بزن یا اینترنت/فیلترشکن را عوض کن.';
                 errBox.style.display = 'block';
                 return;
             }
@@ -4811,6 +5039,7 @@ function getTehranMinutesOfDay(dateObj = new Date()) {
         }
 
         function logout() {
+    try { Object.keys(localStorage).forEach(k => { if (k.indexOf('rc|') === 0) localStorage.removeItem(k); }); } catch (e) {} // پاک‌کردن حافظه‌ی پنهان هنگام خروج
             teardownRealtimeSubscriptions();
             window._unreadMsgs = {}; closeUnreadPanel(); const _fab = document.getElementById('msgFab'); if (_fab) _fab.remove();
             hideBottomNav();
@@ -6440,7 +6669,7 @@ function getTehranMinutesOfDay(dateObj = new Date()) {
         // --- بارگذاری صندوقچه پیام‌ها ---
         async function loadInbox() {
             const inbox = document.getElementById('inboxList');
-            inbox.innerHTML = 'در حال دریافت پیام‌ها...';
+            inbox.innerHTML = skeletonCards(2);
 
             let query = _supabase.from('messages').select('*').order('created_at', { ascending: false });
 
@@ -6465,14 +6694,14 @@ function getTehranMinutesOfDay(dateObj = new Date()) {
             }
 
             if (!msgs || msgs.length === 0) {
-                inbox.innerHTML = '<p style="text-align:center; color:#94a3b8;">هیچ پیامی در صندوقچه دریافت نشده است.</p>';
+                inbox.innerHTML = '<div style="text-align:center;padding:26px 0;"><div style="font-size:44px;">📭</div><p class="hint" style="text-align:center;">هیچ پیامی در صندوقچه نیست.</p></div>';
                 return;
             }
 
             window._inboxMsgs = msgs;
             markMessagesRead(msgs.map(m => m.id));
             recordMessageReads(msgs.map(m => m.id));
-            inbox.innerHTML = msgs.map(m => {
+            inbox.innerHTML = '<div class="exp-sub" style="text-align:right;margin:0 0 8px;">📬 ' + msgs.length.toLocaleString('fa-IR') + ' پیام در صندوقچه</div>' + msgs.map(m => {
                 const timeStr = getTehranFullDateTimeString(new Date(m.created_at));
                 const recipientTag = (currentRole === 'admin')
                     ? ''
@@ -6481,11 +6710,10 @@ function getTehranMinutesOfDay(dateObj = new Date()) {
                     ? String(m.sender || '').startsWith(roleLabels.admin || 'مدیر')
                     : !!m.sender_username;
                 return `
-                    <div class="msg-card">
-                        <h3>📩 ${m.title}</h3>
-                        <p style="color:#38bdf8; font-size:11px;">ارسال‌کننده: ${m.sender} ${recipientTag}</p>
-                        <p style="white-space:pre-line;">${linkify(m.body)}</p>
-                        <span class="msg-time">⏱️ ${timeStr}</span>
+                    <div class="msg-card msg-in">
+<div class="mc-head"><div class="v80-ava">${escapeHtmlForToast(String(m.sender || '؟').trim().charAt(0))}</div><div class="mc-meta"><h3>${m.title}</h3><div class="mc-sub">${m.sender} ${recipientTag}</div></div></div>
+<div class="mc-body">${linkify(m.body)}</div>
+<span class="msg-time">⏱️ ${timeStr}</span>
                         ${canReply ? `<div class="reply-box" id="replyBox_${m.id}"><button class="row-btn edit-btn" style="width:100%; margin-top:8px;" onclick="toggleReplyBox('${m.id}')">${currentRole === 'admin' ? '↩️ پاسخ به ' + escapeHtmlForToast(m.sender) : '↩️ پاسخ به مدیر'}</button></div>` : ''}
                     </div>
                 `;
@@ -13961,6 +14189,7 @@ function getTehranMinutesOfDay(dateObj = new Date()) {
         // یه هزینه ثبت‌شده رو برای ویرایش توی همون فرم بالا باز می‌کنه — مدیر همه رو می‌تونه
         // ویرایش کنه، فروشنده فقط هزینه‌های خودش رو
         function editExpense(expenseId) {
+    { const _fd = document.getElementById('expenseFormDetails'); if (_fd) { _fd.open = true; setTimeout(() => _fd.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60); } }
             const e = cachedExpensesList.find(x => String(x.id) === String(expenseId));
             if (!e) return;
             if (currentRole !== 'admin' && e.created_by !== currentUserLabel) {
@@ -14132,7 +14361,64 @@ function getTehranMinutesOfDay(dateObj = new Date()) {
             win.document.close();
         }
 
-        async function loadExpensesTab() {
+        // =========================================================================
+// v84 — دفترچه هزینه (ناوبری ماه‌به‌ماه)، واریز حقوق و پیام‌ها: ظاهر جدید
+// =========================================================================
+window._expM = null; window._expN = 15;
+const EXP_ICON = { 'لوازم مصرفی': '🧤', 'اجاره': '🏠', 'قبض': '💡', 'تعمیرات': '🔧', 'حمل‌ونقل': '🚚', 'سایر': '📌' };
+const EXP_COL = ['#38bdf8', '#a78bfa', '#34d399', '#fbbf24', '#f87171', '#fb923c', '#94a3b8'];
+function expSel() { if (!window._expM) { const q = sstJParts(new Date()); window._expM = { y: q.y, m: q.m }; } return window._expM; }
+function expGoto(y, m) { if (m > 12) { m = 1; y++; } if (m < 1) { m = 12; y--; } window._expM = { y, m }; window._expN = 15; renderExpensesView(); }
+function expNav(d) { const s = expSel(); expGoto(s.y, s.m + d); }
+function expMore() { window._expN += 15; renderExpensesView(); }
+function renderExpensesView() {
+    const all = cachedExpensesList || [], isAdmin = currentRole === 'admin', sel = expSel();
+    const fa = n => Number(n || 0).toLocaleString('fa-IR'), mk = (y, m) => y + '-' + m;
+    const byM = {};
+    all.forEach(e => { if (!e.expense_date) return; const k = jMonthKeyOf(new Date(e.expense_date + 'T12:00:00+03:30')); (byM[k] = byM[k] || []).push(e); });
+    const sum = rows => rows.reduce((a, e) => a + (Number(e.amount) || 0), 0);
+    const rows = byM[mk(sel.y, sel.m)] || [], total = sum(rows);
+    const pm = sel.m === 1 ? mk(sel.y - 1, 12) : mk(sel.y, sel.m - 1), prev = sum(byM[pm] || []);
+    const nowQ = sstJParts(new Date()), isNow = nowQ.y === sel.y && nowQ.m === sel.m;
+    const set = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+    set('expMonthLabel', SST_MONTHS[sel.m - 1] + ' ' + Number(sel.y).toLocaleString('fa-IR', { useGrouping: false }) + (isNow ? '' : ' <button type="button" class="exp-navbtn" style="padding:3px 8px;" onclick="expGoto(' + nowQ.y + ',' + nowQ.m + ')">این ماه</button>'));
+    set('expensesMonthTotal', fa(total) + ' <small style="font-size:13px;">تومان</small>');
+    const diff = prev > 0 ? Math.round((total - prev) / prev * 100) : null;
+    set('expMonthSub', fa(rows.length) + ' مورد · کل فروشگاه' + (diff === null ? '' : ' <span class="v78-chip ' + (diff > 0 ? 'v78-down' : 'v78-up') + '">' + fa(Math.abs(diff)) + '٪ ' + (diff > 0 ? 'بیشتر' : 'کمتر') + ' از ماه قبل</span>'));
+    const cats = {}; rows.forEach(e => { const c = e.category || 'سایر'; cats[c] = (cats[c] || 0) + (Number(e.amount) || 0); });
+    const ce = Object.entries(cats).sort((a, b) => b[1] - a[1]);
+    set('expCatBar', ce.map(([c, v], i) => '<i style="width:' + (v / (total || 1) * 100) + '%;background:' + EXP_COL[i % EXP_COL.length] + '"></i>').join(''));
+    set('expCatLegend', ce.map(([c, v], i) => '<span style="--c:' + EXP_COL[i % EXP_COL.length] + '">' + c + ': ' + fa(v) + '</span>').join(''));
+    const ms = []; let y = nowQ.y, m = nowQ.m;
+    for (let i = 0; i < 6; i++) { ms.unshift([y, m]); m--; if (m < 1) { m = 12; y--; } }
+    const vals = ms.map(([a, b]) => sum(byM[mk(a, b)] || [])), mx = Math.max(...vals, 1);
+    set('expSpark', ms.map(([a, b], i) => '<i class="' + (a === sel.y && b === sel.m ? 'now' : '') + '" title="' + fa(vals[i]) + ' تومان" style="height:' + Math.max(vals[i] / mx * 100, 4) + '%" onclick="expGoto(' + a + ',' + b + ')"></i>').join(''));
+    set('expSparkLbl', ms.map(([a, b]) => '<span>' + SST_MONTHS[b - 1] + '</span>').join(''));
+    const mine = isAdmin ? rows : rows.filter(e => e.created_by === currentUserLabel);
+    const list = document.getElementById('expensesList'); if (!list) return;
+    if (!mine.length) { list.innerHTML = '<p class="hint" style="text-align:center;padding:14px 0;">📭 در این ماه هزینه‌ای ثبت نشده است.</p>'; return; }
+    const shown = mine.slice(0, window._expN);
+    list.innerHTML = shown.map(e => `<div class="exp-row"><div class="exp-ico">${EXP_ICON[e.category] || '📌'}</div><div class="exp-main"><b>${e.category}</b>${e.paid_by_seller ? (e.reimbursed ? ' <span class="v78-chip v78-up">✅ تسویه‌شده</span>' : ' <span class="v78-chip v78-down">⏳ حساب‌نشده</span>') : ''}<div class="exp-meta">📅 ${jalaliLabelForISODate(e.expense_date)} · 👤 ${e.created_by || '-'}</div>${e.note ? '<div class="exp-note">📝 ' + escapeHtmlForToast(e.note) + '</div>' : ''}</div><div class="exp-side"><b>${fa(e.amount)}</b><div class="exp-act"><button class="row-btn edit-btn" onclick="editExpense('${e.id}')">✏️</button><button class="row-btn delete-btn" onclick="deleteExpense('${e.id}')">🗑️</button></div></div></div>`).join('')
+        + (mine.length > shown.length ? '<button type="button" class="exp-more" onclick="expMore()">نمایش ' + fa(mine.length - shown.length) + ' مورد دیگر ⌄</button>' : '');
+}
+function updateSalaryPreview() { const el = document.getElementById('salaryAmountPreview'); if (!el) return; const v = v77Num(document.getElementById('salaryAmount').value); el.innerText = v > 0 ? '💵 ' + v.toLocaleString('fa-IR') + ' تومان' : ''; }
+function salaryAdd(n) { const el = document.getElementById('salaryAmount'); el.value = n === 0 ? '' : String((v77Num(el.value) || 0) + n); updateSalaryPreview(); }
+function renderSalaryView(data) {
+    const fa = n => Number(n || 0).toLocaleString('fa-IR'), now = jMonthKeyOf(new Date()), isAdmin = currentRole === 'admin';
+    const gm = {}; data.forEach(s => { const k = jMonthKeyOf(new Date(s.paid_at)); (gm[k] = gm[k] || []).push(s); });
+    const sum = r => r.reduce((a, s) => a + (Number(s.amount) || 0), 0);
+    const cur = gm[now] || [], per = {};
+    cur.forEach(s => { per[s.seller_name] = (per[s.seller_name] || 0) + (Number(s.amount) || 0); });
+    const pe = Object.entries(per).sort((a, b) => b[1] - a[1]), top = pe.length ? pe[0][1] : 1;
+    const hero = document.getElementById('salaryHero');
+    if (hero) hero.innerHTML = '<div class="sal-hero"><div class="exp-sub" style="margin:0;">' + (isAdmin ? 'جمع واریزی‌های این ماه' : 'دریافتی تو در این ماه') + '</div><div class="exp-total">' + fa(sum(cur)) + ' <small style="font-size:13px;">تومان</small></div><div class="exp-sub">' + fa(cur.length) + ' واریز · کل واریزی‌ها: ' + fa(sum(data)) + ' تومان</div>'
+        + (isAdmin ? pe.map(([n, v]) => '<div class="v80-row"><div class="v80-line"><span>👤 ' + escapeHtmlForToast(n) + '</span><b>' + fa(v) + '</b></div><div class="v80-bar"><i style="width:' + (v / top * 100) + '%"></i></div></div>').join('') : '') + '</div>';
+    const lbl = k => { const [y, m] = k.split('-'); return SST_MONTHS[m - 1] + ' ' + Number(y).toLocaleString('fa-IR', { useGrouping: false }); };
+    document.getElementById('salaryList').innerHTML = Object.keys(gm).map((k, i) => `<details class="sal-month"${i === 0 ? ' open' : ''}><summary><span>📅 ${lbl(k)}${k === now ? ' <span class="v78-chip v78-up">جاری</span>' : ''}</span><span class="sal-amt">${fa(sum(gm[k]))} تومان · ${fa(gm[k].length)}</span></summary>${gm[k].map(s => `<div class="sal-row"><div class="v80-ava">${escapeHtmlForToast(String(s.seller_name || '؟').charAt(0))}</div><div style="flex:1;min-width:0;font-size:13px;"><b>${escapeHtmlForToast(s.seller_name)}</b>${s.note ? '<div class="exp-meta">' + escapeHtmlForToast(s.note) + '</div>' : ''}<div class="exp-meta">${getTehranFullDateTimeString(new Date(s.paid_at))}</div></div><div class="sal-amt">${fa(s.amount)}</div></div>`).join('')}</details>`).join('');
+}
+function msgChip(id, text) { const el = document.getElementById(id); if (!el) return; el.value = text; el.focus(); try { el.setSelectionRange(text.length, text.length); } catch (e) {} }
+
+async function loadExpensesTab() {
             document.getElementById('expenseDate').value = getTehranISODate(new Date());
             const listBox = document.getElementById('expensesList');
             const totalBox = document.getElementById('expensesMonthTotal');
@@ -14160,10 +14446,7 @@ function getTehranMinutesOfDay(dateObj = new Date()) {
             // فروشنده فقط هزینه‌های خودش رو می‌بینه، مدیر همه رو
             const visibleData = isAdmin ? data : data.filter(e => e.created_by === currentUserLabel);
 
-            const nowMonth = jMonthKeyOf(new Date());
-            const thisMonthAll = data.filter(e => e.expense_date && jMonthKeyOf(new Date(e.expense_date + 'T12:00:00+03:30')) === nowMonth); // جمع کل ماه همیشه برای همه محاسبه میشه (شفافیت)
-            const monthTotal = thisMonthAll.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
-            totalBox.innerText = `${monthTotal.toLocaleString('fa-IR')} تومان (${thisMonthAll.length.toLocaleString('fa-IR')} مورد، کل فروشگاه)`;
+            renderExpensesView(); // خلاصه‌ی ماه + فهرست صفحه‌بندی‌شده
 
             // بخش «حساب‌نشده‌ها» — مدیر همه رو می‌بینه با دکمه تسویه، فروشنده فقط طلب خودش رو می‌بینه
             const unsettled = (isAdmin ? data : visibleData).filter(e => e.paid_by_seller && !e.reimbursed);
@@ -14199,24 +14482,7 @@ function getTehranMinutesOfDay(dateObj = new Date()) {
                 unsettledBox.style.display = 'none';
             }
 
-            if (visibleData.length === 0) {
-                listBox.innerHTML = '<p class="hint">هنوز هیچ هزینه‌ای ثبت نشده.</p>';
-                return;
-            }
-
-            listBox.innerHTML = visibleData.map(e => `
-                <div class="report-card">
-                    <h3>${e.category} — ${(Number(e.amount) || 0).toLocaleString('fa-IR')} تومان
-                        ${e.paid_by_seller ? (e.reimbursed ? ' <span style="font-size:10px; color:#10b981;">✅ تسویه‌شده</span>' : ' <span style="font-size:10px; color:#ef4444;">⏳ حساب‌نشده</span>') : ''}
-                    </h3>
-                    <p>📅 ${e.expense_date ? jalaliLabelForISODate(e.expense_date) : '-'} | ثبت‌کننده: ${e.created_by || '-'}</p>
-                    ${e.note ? `<p>📝 ${escapeHtmlForToast(e.note)}</p>` : ''}
-                    <div style="display:flex; gap:6px; margin-top:6px;">
-                        <button class="row-btn edit-btn" style="flex:1; padding:5px 8px; font-size:11px;" onclick="editExpense('${e.id}')">✏️ ویرایش</button>
-                        <button class="row-btn delete-btn" style="flex:1; padding:5px 8px; font-size:11px;" onclick="deleteExpense('${e.id}')">🗑️ حذف</button>
-                    </div>
-                </div>
-            `).join('');
+            // فهرست در renderExpensesView ساخته می‌شود
         }
 
         // --- ثبت ضایعات: کالای خراب/تاریخ‌گذشته رو از موجودی کم می‌کنه و توی جدول waste_log
@@ -14358,12 +14624,7 @@ function getTehranMinutesOfDay(dateObj = new Date()) {
                 return;
             }
 
-            box.innerHTML = data.map(s => `
-                <div class="summary-mini">
-                    <span>👤 <b>${s.seller_name}</b>${s.note ? ' — ' + s.note : ''}<br><span style="font-size:10px; color:#94a3b8;">${getTehranFullDateTimeString(new Date(s.paid_at))}</span></span>
-                    <b style="color:#34d399;">${Number(s.amount).toLocaleString('fa-IR')} تومان</b>
-                </div>
-            `).join('');
+            renderSalaryView(data);
         }
 
         // =========================================================================
