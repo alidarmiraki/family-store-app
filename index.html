@@ -17,8 +17,9 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v86 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v89 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
+    <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
     <link rel="icon" href="icon-192.png">
     <link rel="apple-touch-icon" href="icon-192.png">
@@ -31,12 +32,13 @@
     <meta name="format-detection" content="telephone=no">
     <!-- فونت فارسی وزیرمتن: خوانایی و ظاهر مدرن‌تر نسبت به تاهوما پیش‌فرض -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" media="print" onload="this.media='all'">
     <!-- تلگرام، اسکنر بارکد، نمودار و اکسل دیگر اینجا لود نمی‌شوند (تا صفحه اصلی سریع‌تر بالا بیاید
          و اگر یکی از این آدرس‌ها فیلتر بود، کل صفحه گیر نکند). فقط Supabase (که برای ورود لازم است)
          همینجا با سیستم پشتیبان (fallback) چند-CDN لود می‌شود؛ بقیه فقط وقتی همان قابلیت لازم شد
          به‌صورت خودکار لود می‌شوند — کد کامل این منطق در ابتدای اسکریپت اصلی است. -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="window.__supabasePrimaryFailed = true;"></script>
+    <!-- v89: اول نسخه‌ی محلی (vendor/supabase.js) تا بدون فیلترشکن هم لود شود؛ اگر نبود، CDNها امتحان می‌شوند -->
+    <script src="vendor/supabase.js" onerror="window.__supabasePrimaryFailed = true;"></script>
     <style>
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
         :root {
@@ -2740,7 +2742,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v88 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v89 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
 
     <script>
         function toggleLoginPasswordVisibility() {
@@ -2864,7 +2866,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // اگر فایل sw.js کنار همین HTML آپلود نشده باشد، این فقط یک خطای بی‌اهمیت در کنسول می‌دهد
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js').catch(() => {
+                navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(r => { try { r.update(); } catch (e) {} }).catch(() => {
                     console.warn('Service Worker ثبت نشد (فایل sw.js کنار HTML موجود نیست؛ برای نصب PWA لازم است).');
                 });
             });
@@ -2986,7 +2988,30 @@ async function probeAllEndpoints() {
     }
     updateConnectionStatusIndicator();
 }
-setTimeout(() => { try { probeAllEndpoints(); } catch (e) {} }, 6000);
+setTimeout(() => { try { probeAllEndpoints(); } catch (e) {} }, 1200);
+// v89 — فهرست پروکسی قابل به‌روزرسانی بدون انتشار دوباره‌ی برنامه: فایل proxies.json کنار همین صفحه
+// ({"supabase": ["https://..."]}) خوانده و روی گوشی ذخیره می‌شود؛ پروکسی تازه فقط با آپلود همان فایل اضافه می‌شود
+const _PX_RE = /^https:\/\/[^\s\/]+(\/\S*)?$/;
+function _addProxyList(list) {
+    let n = 0;
+    (Array.isArray(list) ? list : []).forEach(u => { u = String(u).trim().replace(/\/+$/, ''); if (_PX_RE.test(u) && PROXY_ENDPOINTS.indexOf(u) === -1) { PROXY_ENDPOINTS.push(u); n++; } });
+    return n;
+}
+try { _addProxyList(JSON.parse(localStorage.getItem('remoteProxies') || '[]')); } catch (e) {}
+(async function loadRemoteProxies() {
+    try {
+        const r = await fetchWithTimeout('proxies.json', { cache: 'no-store' }, 6000);
+        if (!r.ok || isHtmlResp(r)) return;
+        const list = (await r.json()).supabase || [];
+        try { localStorage.setItem('remoteProxies', JSON.stringify(list.filter(u => _PX_RE.test(String(u))))); } catch (e) {}
+        if (_addProxyList(list)) probeAllEndpoints();
+    } catch (e) {}
+})();
+// با وصل‌شدن دوباره‌ی نت یا برگشتن به برنامه، فوراً مسیرها سنجیده می‌شوند (نه تا ۹۰ ثانیه‌ی بعد)
+let _lastProbe = 0;
+const _probeSoon = () => { if (Date.now() - _lastProbe < 15000) return; _lastProbe = Date.now(); try { probeAllEndpoints(); } catch (e) {} };
+window.addEventListener('online', _probeSoon);
+document.addEventListener('visibilitychange', () => { if (!document.hidden && navigator.onLine) _probeSoon(); });
 setInterval(() => { try { if (!document.hidden && navigator.onLine) probeAllEndpoints(); } catch (e) {} }, 90000);
 function markEp(ep, good) {
     if (good) {
@@ -3017,7 +3042,7 @@ function hedgedGet(path, init, eps, timeout) {
                 if (isSoftFail(r)) { lastRes = r; markEp(ep, false); pending--; return fail(); }
                 markEp(ep, true); ctrls.forEach(([e, x]) => { if (e !== ep) x.abort(); }); finish(resolve, r);
             }, err => { clearTimeout(t); if (done) return; lastErr = err; markEp(ep, false); pending--; fail(); });
-            if (next < eps.length) timers.push(setTimeout(() => { if (!done) launch(); }, 3000));
+            if (next < eps.length) timers.push(setTimeout(() => { if (!done) launch(); }, (ep === SUPABASE_REAL_URL ? 1500 : 2500) * netScale()));
             return true;
         };
         launch();
@@ -3081,7 +3106,10 @@ async function proxiedFetch(input, init) {
             const stale = () => { const hit = ck ? cacheGet(ck) : null; if (hit) showNetPill('📴 اینترنت قطع یا ضعیف است — آخرین اطلاعات ذخیره‌شده نمایش داده می‌شود'); return hit; };
             let res;
             try { res = await hedgedGet(path, init, eps, 12000 * k); }
-            catch (err) { const hit = stale(); if (hit) return hit; connectionStatus = 'error'; updateConnectionStatusIndicator(); throw err; }
+            catch (err) {
+                if (navigator.onLine !== false) { try { await new Promise(r => setTimeout(r, 700)); const ms = u => EP_MS[u] > 0 ? EP_MS[u] : 99999; res = await hedgedGet(path, init, PROXY_ENDPOINTS.slice().sort((a, b) => ms(a) - ms(b)), 12000 * k); } catch (err2) { err = err2; } }
+                if (!res) { const hit = stale(); if (hit) return hit; connectionStatus = 'error'; updateConnectionStatusIndicator(); throw err; }
+            }
             if (isSoftFail(res)) { const hit = stale(); if (hit) return hit; }
             else if (ck && res.status === 200) cachePut(ck, res.clone());
             return res;
@@ -3401,7 +3429,7 @@ ${PROXY_ENDPOINTS.map(u => `<div class="summary-mini" data-sel="${u}" style="gap
                 if (!ready) {
                     // نشد؟ (مثلاً jsDelivr فیلتر بود) — یک CDN جایگزین را امتحان کن
                     console.warn('📡 Supabase از jsDelivr لود نشد؛ تلاش برای CDN جایگزین (unpkg)...');
-                    await loadScriptOnce('https://unpkg.com/@supabase/supabase-js@2', 8000);
+                    for (const u of ['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', 'https://unpkg.com/@supabase/supabase-js@2']) { await loadScriptOnce(u, 8000); if (typeof supabase !== 'undefined' && supabase.createClient) break; }
                     ready = (typeof supabase !== 'undefined' && supabase.createClient);
                 }
                 if (!ready) throw new Error('کتابخانه Supabase از هیچ منبعی بارگذاری نشد');
@@ -15846,6 +15874,47 @@ notify pgrst, 'reload schema';`;
     const scan = n => { if (n.nodeType !== 1) return; if (n.matches('input[type="date"]')) enhance(n); n.querySelectorAll('input[type="date"]').forEach(enhance); };
     scan(document.body);
     new MutationObserver(ms => ms.forEach(r => r.addedNodes.forEach(scan))).observe(document.body, { childList: true, subtree: true });
+})();
+</script>
+<script>
+/* v89 — نصب PWA روی آیفون/اندروید/هر مرورگر: دکمه‌ی نصب مستقیم (کروم/اج/سامسونگ) یا راهنمای دقیق همان مرورگر */
+(function () {
+    var ua = navigator.userAgent || '', dp = null, box = null;
+    if (navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches)) return;
+    var isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    var inApp = /Instagram|Telegram|FBAN|FBAV|Line\/|Eitaa|Bale|Rubika|Soroush/i.test(ua);
+    var iosSafari = isIOS && !/CriOS|FxiOS|EdgiOS|OPiOS|OPT\//.test(ua);
+    var isFx = /Firefox|FxiOS/.test(ua);
+    function help() {
+        if (inApp) return 'این صفحه داخل یک اپ دیگر باز شده. از منوی ⋮ یا … گزینه «باز کردن در مرورگر» را بزن، بعد دوباره همین‌جا نصب کن.';
+        if (isIOS) return iosSafari
+            ? '۱) دکمه‌ی اشتراک‌گذاری (مربع با فلش رو به بالا) را بزن.\n۲) «Add to Home Screen / افزودن به صفحه اصلی» را انتخاب کن.\n۳) «Add» را بزن.'
+            : 'دکمه‌ی اشتراک‌گذاری یا منوی ⋯ مرورگر را بزن و «Add to Home Screen / افزودن به صفحه اصلی» را انتخاب کن (نیاز به iOS 16.4 یا بالاتر). اگر گزینه نبود، لینک را در Safari باز کن.';
+        if (isFx) return 'منوی ⋮ را بزن و «Install / نصب» یا «Add to Home screen» را انتخاب کن.';
+        return 'منوی ⋮ مرورگر را بزن و «Install app / نصب برنامه» یا «Add to Home screen / افزودن به صفحه اصلی» را انتخاب کن.';
+    }
+    function hide(snooze) { if (box) { box.remove(); box = null; } if (snooze) { try { localStorage.setItem('pwaHintAt', String(Date.now())); } catch (e) {} } }
+    function show() {
+        if (box) return;
+        box = document.createElement('div');
+        box.style.cssText = 'position:fixed;top:10px;right:10px;left:10px;max-width:420px;margin:0 auto;z-index:99990;background:var(--bg-card-solid,#0f1324);color:var(--text-primary,#fff);border:1px solid var(--border-glow,#22d3ee);border-radius:16px;padding:12px 14px;box-shadow:0 12px 40px rgba(0,0,0,.5);direction:rtl;font:13px/1.7 inherit;';
+        var btn = dp ? '<button type="button" data-a="i" style="border:0;border-radius:10px;padding:8px 16px;background:#22d3ee;color:#06121a;font:inherit;font-weight:700;cursor:pointer;">نصب</button>'
+                     : '<button type="button" data-a="h" style="border:0;border-radius:10px;padding:8px 16px;background:#22d3ee;color:#06121a;font:inherit;font-weight:700;cursor:pointer;">راهنمای نصب</button>';
+        box.innerHTML = '<div style="display:flex;align-items:center;gap:10px;"><span style="flex:1;">📲 برنامه را روی گوشی نصب کن تا مثل اپ و سریع‌تر باز شود.</span>' + btn +
+            '<button type="button" data-a="x" aria-label="بستن" style="border:0;background:transparent;color:inherit;font-size:20px;cursor:pointer;">×</button></div><div data-h style="display:none;white-space:pre-line;margin-top:8px;"></div>';
+        box.addEventListener('click', function (e) {
+            var a = e.target.getAttribute && e.target.getAttribute('data-a');
+            if (a === 'x') hide(true);
+            else if (a === 'i' && dp) { dp.prompt(); dp.userChoice.then(function () { dp = null; hide(); }); }
+            else if (a === 'h') { var h = box.querySelector('[data-h]'); h.textContent = help(); h.style.display = 'block'; }
+        });
+        document.body.appendChild(box);
+    }
+    window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); dp = e; if (box) { hide(); } show(); });
+    window.addEventListener('appinstalled', function () { dp = null; hide(); });
+    window.openInstallHelp = show;
+    var last = 0; try { last = +localStorage.getItem('pwaHintAt') || 0; } catch (e) {}
+    if (Date.now() - last > 3 * 86400000) setTimeout(show, 5000);
 })();
 </script>
 </body>
