@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v89 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v90 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2742,7 +2742,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v89 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v90 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
 
     <script>
         function toggleLoginPasswordVisibility() {
@@ -15248,7 +15248,8 @@ notify pgrst, 'reload schema';`;
                 }
                 let amount = 0;
                 sm.forEach(x => { if (x.t >= start && x.t <= end) amount += x.v; });
-                const d = days[dayISO] || (days[dayISO] = { dayISO, amount: 0, live: false, start, end });
+                const d = days[dayISO] || (days[dayISO] = { dayISO, amount: 0, live: false, start, end, parts: [], sm });
+                d.parts.push({ s: start, e: end });
                 d.amount += amount;
                 d.live = d.live || live;
                 d.end = Math.max(d.end, end);
@@ -15266,6 +15267,89 @@ notify pgrst, 'reload schema';`;
             return { status: 'miss', delta: -sstMoney(t.penalty_type, t.penalty_value, base) };
         }
 
+
+        // v90 — وقتی بازه‌ی هدف تمام شد، شیفتی که هنوز «در جریان» است بسته می‌شود و فروش فقط تا پایان همان بازه حساب می‌شود
+        function sstFinalize(t, d) {
+            if (!t || !d || !d.live || !t.end_date || getTehranISODate() <= t.end_date) return d;
+            if (!d.parts || !d.sm) return Object.assign({}, d, { live: false, closedByPeriod: true });
+            const cut = new Date(t.end_date + 'T23:59:59+03:30').getTime();
+            let amount = 0;
+            d.parts.forEach(p => { const e = Math.min(p.e, cut); d.sm.forEach(x => { if (x.t >= p.s && x.t <= e) amount += x.v; }); });
+            return Object.assign({}, d, { amount, live: false, end: Math.min(d.end, cut), closedByPeriod: true });
+        }
+        const SST_MISS_MSGS = [
+            'متأسفانه این بار به هدف نرسیدی، ولی هیچی تموم نشده؛ دفعه بعد جبران کن 💪',
+            'اینبار نشد، اما فروشنده‌ی خوب کسیه که بعد از یه روز کم‌فروش قوی‌تر برمی‌گرده.',
+            'هدف رو از دست دادی، ولی تجربه‌ش برات می‌مونه؛ دفعه بعد با انرژی بیشتر بیا!',
+            'این دفعه به نفعت پیش نرفت؛ فردا یه روز تازه‌ست، جبران کن 🌱',
+            'عیبی نداره، همه روزهای بد دارن؛ مهم اینه که دفعه بعد جبرانش کنی.',
+            'کمی کم موند... دفعه بعد با پیشنهاد به مشتری‌های بیشتر، این فاصله رو پر می‌کنی.',
+            'متأسفانه نرسیدی، ولی باور دارم می‌تونی؛ شیفت بعدی رو محکم شروع کن 🔥',
+            'نتیجه این بار خوب نبود، اما توانایی‌ش رو داری؛ دفعه بعد جبرانش کن.',
+            'هر شکستی یه درسه؛ ببین کجا فروش افتاد و دفعه بعد همون‌جا قوی‌تر باش.',
+            'این بار هدف بهت رحم نکرد 😅 ولی دفعه بعد نوبت توئه که بزنی!',
+            'اگه این بار نشد، دلسرد نشو؛ یه شیفت خوب می‌تونه همه‌چیز رو جبران کنه.',
+            'ناراحت نباش؛ با برنامه‌ی تازه و پیشنهاد به هر مشتری دوباره برمی‌گردی.',
+            'تا هدف فاصله بود؛ دفعه بعد از همون اول با سرعت بیشتری شروع کن ⏱️',
+            'متأسفیم که نشد؛ ولی همین‌که تلاش کردی ارزش داره. دفعه بعد جبران می‌کنی.',
+            'قهرمان‌ها هم گاهی می‌بازن؛ فرقشون اینه که دفعه بعد قوی‌تر برمی‌گردن 🏆',
+            'این بار از هدف جا موندی؛ دفعه بعد با لبخند و پیشنهاد بیشتر به مشتری‌ها جبران کن.',
+            'نرسیدی، اما هنوز فرصت جبران هست؛ شیفت بعدی رو از دست نده!',
+            'یه شیفت کم‌فروش، قضاوت درباره‌ی تو نیست؛ دفعه بعد نشونشون بده.',
+            'این بار نشد؛ ولی همین الان تصمیم بگیر دفعه بعد از هدف هم جلو بزنی 🚀',
+            'نتیجه‌ی این بار تلخ بود، اما تو از پسش برمیای؛ دفعه بعد جبران می‌کنیم 🤝'
+        ];
+        const SST_HIT_MSGS = [
+            'تبریک! هدف رو زدی و پاداشت ثبت شد 🎉',
+            'دمت گرم! عالی بود، همین‌طور ادامه بده 🔥',
+            'آفرین! تلاشت نتیجه داد و هدف رو گرفتی 👏',
+            'کارت درست بود؛ هدف زده شد. شیفت بعدی هم همین‌طور!',
+            'خسته نباشی قهرمان! هدف رو شکستی 🏆',
+            'عالی بود! اینجوری که پیش بری، هر هدفی کوچیکه 🚀',
+            'پاداشت حلال! حسابی زحمت کشیدی 💚',
+            'هدف رو گرفتی و مشتری‌ها هم راضی بودن؛ ادامه بده ⭐',
+            'این یعنی حرفه‌ای‌بودن! دمت گرم 👌',
+            'بالاخره رسیدی و حقته؛ همین انرژی رو نگه دار ✨',
+            'تبریک! فروش این بازه حرف نداشت 🎯',
+            'ایول! یه شیفت پرفروش دیگه به نام تو ثبت شد 🙌'
+        ];
+        const SST_PART_MSGS = [
+            'بعضی شیفت‌ها خوب بود، بعضی کم؛ دفعه بعد همه‌شون رو بزن 💪',
+            'نصفه‌نیمه رسیدی؛ با کمی تلاش بیشتر دفعه بعد کامل می‌شه.',
+            'شیفت‌های خوبت رو یادت نگه دار و دفعه بعد روی بقیه هم همونو تکرار کن.',
+            'متأسفانه همه‌ی شیفت‌ها نشد، ولی راه درست رو رفتی؛ دفعه بعد جبران کن 🌟',
+            'هر شیفتی که رسیدی نشون داد می‌تونی؛ دفعه بعد همه رو بگیر!',
+            'تعادل خوبی نبود، اما قابل جبرانه؛ دفعه بعد پایدارتر باش 🔥'
+        ];
+        // انتخاب جمله: برای هر روز/هدف فرق می‌کند ولی در یک نمایش ثابت می‌ماند (با رفرش عوض نمی‌شود)
+        function sstPickMsg(pool, label, iso, keyStr) {
+            let h = 0; const s = String(label || '') + '|' + String(keyStr || '');
+            for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 100003;
+            const dayN = Math.floor(new Date((iso || getTehranISODate()) + 'T12:00:00Z').getTime() / 86400000);
+            return pool[(dayN + h) % pool.length];
+        }
+        // کارت نتیجه‌ی نهایی یک هدف که بازه‌اش تمام شده
+        function sstEndedInfo(g, rows) {
+            let hit = 0, miss = 0, net = 0;
+            rows.forEach(x => { if (x.r.status === 'hit') hit++; else if (x.r.status === 'miss') miss++; net += x.r.delta || 0; });
+            const kind = hit > 0 && miss === 0 ? 'hit' : (hit === 0 ? 'miss' : 'part');
+            return { hit, miss, net, kind };
+        }
+        function sstEndedBlock(g, rows, label, isAdmin) {
+            const f = sstEndedInfo(g, rows), you = !isAdmin, nm = v77Esc(label);
+            const iso = g.end_date || getTehranISODate();
+            const pool = f.kind === 'hit' ? SST_HIT_MSGS : (f.kind === 'miss' ? SST_MISS_MSGS : SST_PART_MSGS);
+            const msg = sstPickMsg(pool, label, iso, sstKey(g));
+            const head = f.kind === 'hit' ? (you ? '🎉 هدف تموم شد و رسیدی!' : '🎉 ' + nm + ' به هدف رسید')
+                : f.kind === 'miss' ? (you ? '😔 هدف تموم شد و متأسفانه نرسیدی' : '😔 ' + nm + ' به هدف نرسید')
+                : (you ? '⚖️ هدف تموم شد؛ بعضی شیفت‌ها رسیدی، بعضی نه' : '⚖️ ' + nm + ': بعضی شیفت‌ها رسید، بعضی نه');
+            const cls = f.kind === 'hit' ? 'v78-ok' : (f.kind === 'miss' ? 'v78-bad' : 'v78-warn');
+            const netTxt = f.net === 0 ? '' : ' — اثر روی حقوق: ' + (f.net > 0 ? '+' : '−') + Math.abs(Math.round(f.net)).toLocaleString('fa-IR') + ' تومان';
+            return `<div class="v78-alert ${cls}" style="margin-top:10px;">🏁 اتمام شده — ${head}
+                <div style="font-weight:400; font-size:12px; margin-top:4px;">${sstRangeText(g)}<br>شیفت موفق: ${v77Fa(f.hit)} | ناموفق: ${v77Fa(f.miss)}${netTxt}</div>
+                <div style="font-weight:700; font-size:12px; margin-top:6px;">${you ? '' : '📨 پیام برای فروشنده: '}«${msg}»</div></div>`;
+        }
+
         // کارت پیشرفت لحظه‌ای/نتیجه‌ی یک شیفت
         function sstShiftBlock(t, d) {
             const base = Number(t.base_salary) || 0;
@@ -15281,9 +15365,11 @@ notify pgrst, 'reload schema';`;
                     ? `<p style="color:#10b981; font-weight:bold; margin:6px 0 0;">🎉 هدف زده شد! اگه همین‌طور تا آخر شیفت بمونه، <b>+${bonusTxt}</b> به حقوقت اضافه می‌شه.</p>`
                     : `<p style="margin:6px 0 0; font-size:12px;">🔥 <b>${v77Toman(target - d.amount)}</b> تا هدف مونده.${penTxt ? `<br><span style="color:#f87171;">اگه تا آخر شیفت نرسی: −${penTxt}</span>` : ''}<br><span style="color:#34d399;">اگه برسی: +${bonusTxt}</span></p>`;
             } else {
+                const sentence = sstPickMsg(reached ? SST_HIT_MSGS : SST_MISS_MSGS, currentUserLabel, d.dayISO, sstKey(t));
+                const closed = d.closedByPeriod ? '<br><span style="font-size:11px; color:#94a3b8;">🏁 بازه‌ی هدف تمام شد؛ نتیجه تا پایان همان بازه حساب شد.</span>' : '';
                 msg = reached
-                    ? `<p style="color:#10b981; font-weight:bold; margin:6px 0 0;">🎉 هدف این شیفت زده شد: <b>+${bonusTxt}</b></p>`
-                    : `<p style="color:#f87171; margin:6px 0 0; font-size:12px;">این شیفت به هدف نرسید${penTxt ? ': <b>−' + penTxt + '</b>' : ' (بدون جریمه)'}</p>`;
+                    ? `<p style="color:#10b981; font-weight:bold; margin:6px 0 0;">🎉 هدف این شیفت زده شد: <b>+${bonusTxt}</b>${closed}<br><span style="font-weight:700; font-size:12px;">«${sentence}»</span></p>`
+                    : `<p style="color:#f87171; margin:6px 0 0; font-size:12px;">😔 متأسفانه این شیفت به هدف نرسید${penTxt ? ': <b>−' + penTxt + '</b>' : ' (بدون جریمه)'}${closed}<br><b>«${sentence}»</b></p>`;
             }
             return `<div>
                 <div style="display:flex; justify-content:space-between; font-size:12px;"><span>${d.live ? '⏱️ شیفت در جریان' : '✅ شیفت تمام‌شده'}</span><b style="color:${col};">${v77Toman(d.amount)} از ${v77Toman(target)} (${v77Fa(pct)}٪)</b></div>
@@ -15310,12 +15396,14 @@ notify pgrst, 'reload schema';`;
                 inner += '<div class="bz-strip" style="margin-top:8px;">⏸ همه‌ی هدف‌های این فروشنده غیرفعال‌اند.</div>';
             } else {
                 const inPeriod = []; let hit = 0, miss = 0, net = 0, live = null;
-                shifts.filter(d => d.dayISO >= pb.startISO && d.dayISO <= pb.endISO).forEach(d => {
-                    const t = sstPickTarget(act, d.dayISO); if (!t) return;
+                shifts.filter(d => d.dayISO >= pb.startISO && d.dayISO <= pb.endISO).forEach(d0 => {
+                    const t = sstPickTarget(act, d0.dayISO); if (!t) return;
+                    const d = sstFinalize(t, d0);
                     const r = sstDayResult(t, d); inPeriod.push({ d, t, r });
                     if (r.status === 'live') live = { d, t };
                     else { if (r.status === 'hit') hit++; else miss++; net += r.delta; }
                 });
+                act.filter(g => sstRangeStatus(g).st === 'ended').forEach(g => { const rows = inPeriod.filter(x => x.t === g); if (rows.length) inner += sstEndedBlock(g, rows, label, isAdmin); });
                 if (live) inner += `<div style="margin-top:10px;">${sstShiftBlock(live.t, live.d)}</div>`;
                 inner += `<div class="st-tiles">
                     <div class="st-tile"><b style="color:#10b981;">${v77Fa(hit)}</b><span>شیفت موفق</span></div>
@@ -15422,11 +15510,46 @@ notify pgrst, 'reload schema';`;
         }
 
         // کارت داشبورد فروشنده: پیشرفت شیفت فعلی (یا آخرین شیفت امروز) نسبت به هدف شخصی خودش
+        async function sstLoadMyShifts() {
+            const since = new Date(Date.now() - 60 * 3600000).toISOString();
+            const [sRes, aRes] = await Promise.all([
+                _supabase.from('sales').select('sell_price, created_at').eq('seller_name', currentUserLabel).gte('created_at', since).limit(3000),
+                _supabase.from('attendance').select('type, created_at').eq('seller_name', currentUserLabel).gte('created_at', since).order('created_at', { ascending: true }).limit(80)
+            ]);
+            return sstComputeShifts(sRes.data || [], aRes.data || [], Date.now());
+        }
         async function buildMyShiftTargetCard() {
             const { data: all, error } = await _supabase.from('seller_shift_targets').select('*').eq('seller_label', currentUserLabel);
             if (error || !all) return '';
             const goals = all.filter(g => g.active && sstRangeStatus(g).st !== 'ended');
-            if (!goals.length) return '';
+            const _today0 = getTehranISODate();
+            const endedRecent = all.filter(g => g.active && g.end_date && sstRangeStatus(g).st === 'ended' && sstDayDiff(g.end_date, _today0) <= 2);
+            if (!goals.length && !endedRecent.length) return '';
+            let shiftsAll = null, endedHtml = '';
+            if (endedRecent.length) {
+                try {
+                    shiftsAll = await sstLoadMyShifts();
+                    const act = all.filter(g => g.active);
+                    for (const g of endedRecent) {
+                        const rows = [];
+                        shiftsAll.forEach(d0 => { if (sstPickTarget(act, d0.dayISO) === g) { const d = sstFinalize(g, d0); rows.push({ d, t: g, r: sstDayResult(g, d) }); } });
+                        if (!rows.length) continue;
+                        endedHtml += sstEndedBlock(g, rows, currentUserLabel, false);
+                        const f = sstEndedInfo(g, rows), nk = 'sstEnd_' + currentUserLabel + '_' + sstKey(g) + '_' + g.end_date;
+                        if (!localStorage.getItem(nk)) {
+                            localStorage.setItem(nk, '1');
+                            const pool = f.kind === 'hit' ? SST_HIT_MSGS : (f.kind === 'miss' ? SST_MISS_MSGS : SST_PART_MSGS);
+                            const title = f.kind === 'hit' ? '🎉 هدف تموم شد و رسیدی!' : (f.kind === 'miss' ? '😔 هدف تموم شد و متأسفانه نرسیدی' : '⚖️ هدف تموم شد؛ بعضی شیفت‌ها رسیدی');
+                            const body = sstPickMsg(pool, currentUserLabel, g.end_date, sstKey(g));
+                            showToast(title + '\n' + body);
+                            try { navigator.vibrate && navigator.vibrate(f.kind === 'hit' ? [120] : [200, 100, 200]); } catch (e) {}
+                            const un = currentSessionUser && currentSessionUser.username;
+                            if (un) { try { await _supabase.from('messages').insert([{ sender: 'سیستم هدف فروش', recipient: un, title: title, body: body, created_at: new Date().toISOString() }]); } catch (e) {} }
+                        }
+                    }
+                } catch (e) {}
+            }
+            if (!goals.length) return endedHtml;
             try {
                 goals.forEach(g => {
                     const nk = 'sstNew_' + currentUserLabel + '_' + sstKey(g) + '_' + (g.updated_at || '');
@@ -15438,16 +15561,11 @@ notify pgrst, 'reload schema';`;
             const upHtml = upcoming.length ? `<div class="st-rule" style="margin-top:8px;">⏭ هدف‌های بعدی:${upcoming.map(g => '<br>' + sstRangeText(g) + ' — ' + v77Toman(g.target_amount)).join('')}</div>` : '';
             const t = sstPickTarget(goals, today);
             const head = '<h3>🎯 هدف فروش شیفت تو</h3>';
-            if (!t) return `<div class="report-card" style="border-color:#a78bfa;"><h3>🎯 هدف جدید در راه است</h3>${upcoming.slice(0, 1).map(g => `<div class="st-rule">${sstRuleLine(g)}</div>`).join('')}${upcoming.length > 1 ? upHtml : ''}</div>`;
-            const since = new Date(Date.now() - 36 * 3600000).toISOString();
-            const [sRes, aRes] = await Promise.all([
-                _supabase.from('sales').select('sell_price, created_at').eq('seller_name', currentUserLabel).gte('created_at', since).limit(2000),
-                _supabase.from('attendance').select('type, created_at').eq('seller_name', currentUserLabel).gte('created_at', since).order('created_at', { ascending: true }).limit(50)
-            ]);
-            const shifts = sstComputeShifts(sRes.data || [], aRes.data || [], Date.now());
+            if (!t) return endedHtml + `<div class="report-card" style="border-color:#a78bfa;"><h3>🎯 هدف جدید در راه است</h3>${upcoming.slice(0, 1).map(g => `<div class="st-rule">${sstRuleLine(g)}</div>`).join('')}${upcoming.length > 1 ? upHtml : ''}</div>`;
+            const shifts = shiftsAll || await sstLoadMyShifts();
             const shift = shifts.find(d => d.live) || shifts.find(d => d.dayISO === today) || null;
             if (!shift) {
-                return `<div class="report-card" style="border-color:#a78bfa;">${head}
+                return endedHtml + `<div class="report-card" style="border-color:#a78bfa;">${head}
                     <div class="st-rule">${sstRuleLine(t)}</div>${upHtml}
                     <p style="font-size:12px; color:#94a3b8; margin-top:6px;">بعد از ثبت «ورود»، پیشرفتت اینجا لحظه‌ای نشون داده می‌شه.</p></div>`;
             }
@@ -15456,7 +15574,7 @@ notify pgrst, 'reload schema';`;
             sstStartWatcher();
             const al = await sstNotifySeller(ts, shift);
             const alHtml = al ? `<div class="v78-alert v78-${al.lvl}">${al.title}<br><span style="font-weight:400;">${al.msg}</span></div>` : '';
-            return `<div class="report-card" style="border-color:${reached ? '#10b981' : '#a78bfa'};">${head}
+            return endedHtml + `<div class="report-card" style="border-color:${reached ? '#10b981' : '#a78bfa'};">${head}
                 ${alHtml}${sstShiftBlock(ts, shift)}
                 <div class="st-rule" style="margin-top:8px;">${sstRuleLine(ts)}</div>${upHtml}</div>`;
         }
