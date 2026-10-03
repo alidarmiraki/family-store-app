@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v94 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v96 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2743,7 +2743,8 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v94 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v96 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div style="text-align:center; margin:8px 12px 4px;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی (اعلان، موقعیت، دوربین، میکروفون)</button></div>
 
     <script>
         function toggleLoginPasswordVisibility() {
@@ -5146,6 +5147,7 @@ notify pgrst, 'reload schema';`;
             currentRole = user.role;
             currentUserLabel = (roleLabels[user.role] || user.role) + ' - ' + (user.full_name || user.username);
             try { loadFiredStaff(true); } catch (e) {}
+            try { setTimeout(() => { if (window.maybeShowPermWizard) window.maybeShowPermWizard(); }, 4000); } catch (e) {}
             currentSessionUser = user;
             alertDismissedThisSession = false;
             reminderDismissedThisSession = false;
@@ -11101,6 +11103,28 @@ notify pgrst, 'reload schema';`;
             if (currentRole === 'admin') checkLowStockAlertNoWeight();
         }
 
+
+        // v95 — وقتی مدیر سفارش خرید تازه ثبت می‌کند: پیام داخل برنامه + اعلان فوری برای فروشنده(های) صبح
+        const PO_REMINDER = '✅ هر موقع کالا را تحویل گرفتی، حتماً «تایید دریافت» را بزن؛ چون این کالاها فقط با تایید تو به موجودی انبار اضافه می‌شوند.\n🧴 وقتی ظرف‌های داخل غرفه را پر کردی، «شارژ ظرف» را بزن تا همان مقدار از موجودی انبار کم شود.';
+        async function notifyMorningSellersNewOrder(productName, qty, unit) {
+            try {
+                const unitTxt = unit === 'count' ? 'عدد' : 'کیلوگرم';
+                const cnt = await _supabase.from('purchase_orders').select('id', { count: 'exact', head: true }).neq('status', 'received');
+                const n = (cnt && typeof cnt.count === 'number' && cnt.count > 0) ? cnt.count : 1;
+                const title = `📦 سفارش خرید جدید — ${n.toLocaleString('fa-IR')} قلم کالا در راه است`;
+                const body = `مدیر «${productName}» (${Number(qty).toLocaleString('fa-IR')} ${unitTxt}) را به سفارش‌های در راه اضافه کرد. الان در مجموع ${n.toLocaleString('fa-IR')} قلم کالا منتظر رسیدن است.\n\n${PO_REMINDER}`;
+                const sl = await _supabase.rpc('admin_list_sellers');
+                const targets = (sl.data || []).filter(s => s.role === 'morning_seller' && !s.is_terminated);
+                if (targets.length) {
+                    await _supabase.from('messages').insert(targets.map(s => ({
+                        sender: currentUserLabel, recipient: s.username, title: title, body: body, created_at: new Date().toISOString()
+                    })));
+                }
+                sendPushNotificationToRole(title, `${productName} — ${n.toLocaleString('fa-IR')} قلم کالا در راه است. بعد از تحویل «تایید دریافت» و بعد از پر کردن ظرف‌ها «شارژ ظرف» را بزن.`, 'morning_seller');
+                return targets.length;
+            } catch (e) { console.warn('خطا در اطلاع‌رسانی سفارش به فروشنده صبح', e); return 0; }
+        }
+
         // --- سفارشات خرید: ثبت، ویرایش، تایید دریافت با مقدار واقعی توسط مدیر یا فروشنده صبح ---
         async function loadPurchaseOrders() {
             const formBox = document.getElementById('poFormBox');
@@ -11127,7 +11151,9 @@ notify pgrst, 'reload schema';`;
             if (pending.length === 0) {
                 pendingBox.innerHTML = '<p style="color:#94a3b8; font-size:12px;">در حال حاضر هیچ سفارش بازی در راه نیست.</p>';
             } else {
-                pendingBox.innerHTML = pending.map(o => buildOrderCard(o, false)).join('');
+                const poBanner = (currentRole === 'morning_seller')
+                    ? `<div class="v78-alert v78-warn" style="line-height:1.9;">📦 مدیر ${pending.length.toLocaleString('fa-IR')} قلم کالا برای آمدن ثبت کرده است.<br><span style="font-weight:400; font-size:12px;">${PO_REMINDER.replace(/\n/g, '<br>')}</span></div>` : '';
+                pendingBox.innerHTML = poBanner + pending.map(o => buildOrderCard(o, false)).join('');
             }
 
             if (received.length === 0) {
@@ -11254,7 +11280,8 @@ notify pgrst, 'reload schema';`;
             }]);
 
             if (!error) {
-                showToast('✅ سفارش با موفقیت ثبت شد و فروشنده صبح می‌تواند آن را ببیند.');
+                showToast('✅ سفارش ثبت شد و برای فروشنده صبح اعلان فرستاده شد.');
+                notifyMorningSellersNewOrder(product.name, qty, unit);
                 document.getElementById('poProductName').value = '';
                 document.getElementById('poQty').value = '';
                 document.getElementById('poEtaDays').value = '';
@@ -11327,7 +11354,7 @@ notify pgrst, 'reload schema';`;
                 return showToast('لطفاً مقدار واقعی تحویل‌گرفته‌شده را به‌صورت عدد معتبر وارد کنید.');
             }
 
-            const sure = await showConfirm(`آیا تایید می‌کنید که مقدار ${actualQty} کیلو/عدد دریافت شده و به موجودی انبار اصلی اضافه شود؟`);
+            const sure = await showConfirm(`آیا تایید می‌کنید که مقدار ${actualQty} کیلو/عدد دریافت شده و به موجودی انبار اصلی اضافه شود؟\n\n🧴 یادت نره: بعد از پر کردن ظرف‌های غرفه، «شارژ ظرف» رو بزن تا از موجودی انبار کم بشه.`);
             if (!sure) return;
 
             const { data: order } = await _supabase.from('purchase_orders').select('*').eq('id', orderId).maybeSingle();
@@ -11353,7 +11380,7 @@ notify pgrst, 'reload schema';`;
             }).eq('id', orderId);
 
             if (!error) {
-                showToast('✅ سفارش دریافت شد و مقدار ' + actualQty.toLocaleString('fa-IR') + ' به موجودی انبار اصلی اضافه گردید.');
+                showToast('✅ سفارش دریافت شد و مقدار ' + actualQty.toLocaleString('fa-IR') + ' به موجودی انبار اصلی اضافه گردید.\n🧴 بعد از پر کردن ظرف‌ها، «شارژ ظرف» را بزن.');
                 loadPurchaseOrders();
                 loadProductDatalist();
                 if (currentRole === 'admin') checkLowStockAlertNoWeight();
@@ -16198,6 +16225,141 @@ notify pgrst, 'reload schema';`;
     window.openInstallHelp = show;
     var last = 0; try { last = +localStorage.getItem('pwaHintAt') || 0; } catch (e) {}
     if (Date.now() - last > 3 * 86400000) setTimeout(show, 5000);
+})();
+</script>
+<script>
+/* v96 — فعال‌سازی واقعی همه‌ی دسترسی‌های گوشی (اعلان، موقعیت، دوربین، میکروفون، حافظه‌ی دائمی) با پنجره‌های رسمی خود گوشی */
+(function () {
+    var ITEMS = [
+        { id: 'notif', icon: '🔔', name: 'اعلان', why: 'سفارش‌ها، هدف فروش، پیام مدیر و هشدارها؛ حتی وقتی برنامه بسته است', q: 'notifications' },
+        { id: 'geo', icon: '📍', name: 'موقعیت مکانی', why: 'ثبت موقعیت به‌جای عکس در یادداشت‌ها و حضور', q: 'geolocation' },
+        { id: 'cam', icon: '📷', name: 'دوربین', why: 'اسکن بارکد، عکس یادداشت/فاکتور و تشخیص چهره', q: 'camera' },
+        { id: 'mic', icon: '🎙️', name: 'میکروفون', why: 'ثبت فروش با صدا', q: 'microphone' },
+        { id: 'stor', icon: '💾', name: 'حافظه‌ی دائمی', why: 'جلوگیری از پاک شدن اطلاعات ذخیره‌شده روی گوشی', q: 'persistent-storage' }
+    ];
+    var ua = navigator.userAgent || '';
+    var isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    var box = null, busy = false;
+
+    function perm(name) {
+        if (!navigator.permissions || !navigator.permissions.query) return Promise.resolve('prompt');
+        return navigator.permissions.query({ name: name }).then(function (r) { return r.state; }, function () { return 'prompt'; });
+    }
+    async function getState(it) {
+        try {
+            if (it.id === 'notif') {
+                if (!('Notification' in window)) return 'unsupported';
+                var p = Notification.permission;
+                if (p === 'denied') return 'denied';
+                if (p !== 'granted') return 'prompt';
+                if ('serviceWorker' in navigator && 'PushManager' in window) {
+                    var reg = await navigator.serviceWorker.getRegistration();
+                    var sub = reg && await reg.pushManager.getSubscription();
+                    return sub ? 'granted' : 'half';
+                }
+                return 'granted';
+            }
+            if (it.id === 'geo') return navigator.geolocation ? await perm('geolocation') : 'unsupported';
+            if (it.id === 'cam') return (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) ? await perm('camera') : 'unsupported';
+            if (it.id === 'mic') return (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) ? await perm('microphone') : 'unsupported';
+            if (it.id === 'stor') {
+                if (!(navigator.storage && navigator.storage.persisted)) return 'unsupported';
+                return (await navigator.storage.persisted()) ? 'granted' : 'prompt';
+            }
+        } catch (e) {}
+        return 'prompt';
+    }
+    function media(c) {
+        return navigator.mediaDevices.getUserMedia(c).then(function (s) { s.getTracks().forEach(function (t) { t.stop(); }); return true; }, function () { return false; });
+    }
+    async function ask(it) {
+        try {
+            if (it.id === 'notif') { await subscribeToPushNotifications(currentRole); return; }
+            if (it.id === 'geo') return await new Promise(function (res) { navigator.geolocation.getCurrentPosition(function () { res(true); }, function () { res(false); }, { timeout: 20000, maximumAge: 0 }); });
+            if (it.id === 'cam') return await media({ video: { facingMode: 'user' } });
+            if (it.id === 'mic') return await media({ audio: true });
+            if (it.id === 'stor') return await navigator.storage.persist();
+        } catch (e) {}
+    }
+    var BADGE = {
+        granted: ['✅ فعال', '#34d399'], half: ['⚠️ نیمه‌فعال', '#fbbf24'], prompt: ['⏳ هنوز نپرسیده', '#94a3b8'],
+        denied: ['⛔ رد شده', '#f87171'], unsupported: ['— پشتیبانی نمی‌شود', '#64748b']
+    };
+    function helpText(denied) {
+        var l = denied.map(function (i) { return i.name; }).join('، ');
+        return 'این دسترسی‌ها قبلاً رد شده‌اند (' + l + ') و مرورگر اجازه‌ی پرسیدن دوباره نمی‌دهد؛ باید دستی روشن شوند:\n' +
+            (isIOS ? 'آیفون: تنظیمات ← Safari ← (دوربین / میکروفون / موقعیت مکانی) را روی «پرسیدن» یا «اجازه» بگذار؛ برای اعلان: تنظیمات ← اعلان‌ها ← همین برنامه.'
+                   : 'اندروید: روی 🔒 یا ⚙️ کنار آدرس ← «دسترسی‌ها / Permissions» را بزن و همان موارد را روی «اجازه» بگذار؛ اگر برنامه نصب شده: تنظیمات گوشی ← برنامه‌ها ← فامیلی فروشگاه ← دسترسی‌ها.');
+    }
+    function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+    async function render(note) {
+        if (!box) return;
+        var states = await Promise.all(ITEMS.map(getState));
+        var rows = ITEMS.map(function (it, i) {
+            var st = states[i], b = BADGE[st] || BADGE.prompt;
+            var hint = (it.id === 'notif' && st === 'unsupported' && isIOS) ? 'آیفون: اول برنامه را با «Add to Home Screen» نصب کن (iOS 16.4 به بالا)، بعد از روی آیکون باز کن.' : it.why;
+            var btn = (st === 'granted' || st === 'unsupported') ? '' : '<button type="button" data-id="' + it.id + '" style="border:0;border-radius:10px;padding:6px 12px;background:#22d3ee;color:#06121a;font:inherit;font-weight:700;cursor:pointer;">' + (st === 'denied' ? 'راهنما' : 'فعال کن') + '</button>';
+            return '<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid rgba(148,163,184,.2);"><div style="font-size:22px;">' + it.icon + '</div><div style="flex:1;min-width:0;"><div style="font-weight:700;">' + it.name + ' <span style="color:' + b[1] + ';font-size:11px;font-weight:700;">' + b[0] + '</span></div><div style="font-size:11px;opacity:.75;line-height:1.6;">' + esc(hint) + '</div></div>' + btn + '</div>';
+        }).join('');
+        var pending = states.some(function (s) { return s === 'prompt' || s === 'half'; });
+        var denied = ITEMS.filter(function (it, i) { return states[i] === 'denied'; });
+        box.querySelector('[data-body]').innerHTML = rows +
+            (note ? '<div style="margin-top:8px;font-size:12px;white-space:pre-line;color:#fbbf24;">' + esc(note) + '</div>' : '') +
+            (denied.length && !note ? '<div style="margin-top:8px;font-size:12px;white-space:pre-line;color:#fbbf24;">' + esc(helpText(denied)) + '</div>' : '');
+        var all = box.querySelector('[data-all]');
+        all.style.display = pending ? '' : 'none';
+        box.querySelector('[data-ok]').style.display = pending ? 'none' : '';
+    }
+    async function runAll() {
+        if (busy) return; busy = true;
+        var all = box.querySelector('[data-all]'); all.disabled = true; all.textContent = '⏳ در حال درخواست... پنجره‌های گوشی را تایید کن';
+        var denied = [];
+        for (var i = 0; i < ITEMS.length; i++) {
+            var it = ITEMS[i], st = await getState(it);
+            if (st === 'denied') { denied.push(it); continue; }
+            if (st === 'granted' || st === 'unsupported') continue;
+            await ask(it);
+            if ((await getState(it)) === 'denied') denied.push(it);
+            await render();
+        }
+        busy = false; all.disabled = false; all.textContent = '🔓 فعال‌سازی همه‌ی دسترسی‌ها';
+        await render(denied.length ? helpText(denied) : '');
+        if (!denied.length && typeof showToast === 'function') showToast('✅ همه‌ی دسترسی‌ها بررسی و فعال شد.');
+    }
+    function open() {
+        if (box) return;
+        box = document.createElement('div');
+        box.style.cssText = 'position:fixed;inset:0;z-index:100010;background:rgba(0,0,0,.65);display:flex;align-items:flex-end;justify-content:center;padding:10px;';
+        box.innerHTML = '<div style="width:min(96vw,460px);max-height:92vh;overflow:auto;background:var(--bg-card-solid,#0f1324);color:var(--text-primary,#fff);border:1px solid var(--border-glow,#22d3ee);border-radius:18px;padding:14px;direction:rtl;font:13px/1.7 inherit;">' +
+            '<div style="font-weight:800;font-size:15px;">🔐 دسترسی‌های گوشی</div>' +
+            '<div style="font-size:12px;opacity:.8;margin:2px 0 8px;">برای اینکه برنامه کامل کار کند، این دسترسی‌ها را فعال کن. هر مورد پنجره‌ی رسمی خود گوشی را باز می‌کند و فقط با «اجازه‌ی» تو فعال می‌شود.</div>' +
+            '<div data-body><div style="padding:12px;text-align:center;opacity:.7;">در حال بررسی...</div></div>' +
+            '<div style="display:flex;gap:8px;margin-top:12px;"><button type="button" data-all style="flex:1;border:0;border-radius:12px;padding:11px;background:#22d3ee;color:#06121a;font:inherit;font-weight:800;cursor:pointer;">🔓 فعال‌سازی همه‌ی دسترسی‌ها</button>' +
+            '<button type="button" data-ok style="display:none;flex:1;border:0;border-radius:12px;padding:11px;background:#34d399;color:#04140d;font:inherit;font-weight:800;cursor:pointer;">✅ همه فعال است</button>' +
+            '<button type="button" data-x style="border:1px solid rgba(148,163,184,.4);border-radius:12px;padding:11px 16px;background:transparent;color:inherit;font:inherit;cursor:pointer;">بستن</button></div></div>';
+        box.addEventListener('click', async function (e) {
+            var t = e.target;
+            if (t === box || (t.hasAttribute && (t.hasAttribute('data-x') || t.hasAttribute('data-ok')))) { box.remove(); box = null; return; }
+            if (t.hasAttribute && t.hasAttribute('data-all')) return runAll();
+            var id = t.getAttribute && t.getAttribute('data-id'); if (!id || busy) return;
+            var it = ITEMS.filter(function (x) { return x.id === id; })[0];
+            if ((await getState(it)) === 'denied') return render(helpText([it]));
+            busy = true; t.disabled = true; t.textContent = '...'; await ask(it); busy = false; await render();
+        });
+        document.body.appendChild(box);
+        try { localStorage.setItem('permWizardAt', String(Date.now())); } catch (e) {}
+        render();
+    }
+    window.openPermWizard = open;
+    // بعد از ورود: اگر هنوز مجوزی نپرسیده/نیمه‌فعال مانده، (حداکثر هر ۳ روز یک بار) پنجره را نشان بده
+    window.maybeShowPermWizard = async function () {
+        if (box) return;
+        var last = 0; try { last = +localStorage.getItem('permWizardAt') || 0; } catch (e) {}
+        if (Date.now() - last < 3 * 86400000) return;
+        var st = await Promise.all(ITEMS.map(getState));
+        if (st.some(function (s) { return s === 'prompt' || s === 'half'; })) open();
+    };
 })();
 </script>
 </body>
