@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v96 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v97 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2743,8 +2743,8 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v96 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
-    <div style="text-align:center; margin:8px 12px 4px;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی (اعلان، موقعیت، دوربین، میکروفون)</button></div>
+    <div class="build-tag">v97 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
         function toggleLoginPasswordVisibility() {
@@ -16187,44 +16187,107 @@ notify pgrst, 'reload schema';`;
 })();
 </script>
 <script>
-/* v89 — نصب PWA روی آیفون/اندروید/هر مرورگر: دکمه‌ی نصب مستقیم (کروم/اج/سامسونگ) یا راهنمای دقیق همان مرورگر */
+/* v97 — نصب واقعی PWA (WebAPK) روی اندروید + عیب‌یابی دقیق اگر مرورگر فقط «میانبر» می‌سازد */
 (function () {
-    var ua = navigator.userAgent || '', dp = null, box = null;
-    if (navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches)) return;
+    var ua = navigator.userAgent || '', dp = window.__dp || null, box = null;
+    var standalone = navigator.standalone === true || (window.matchMedia && (matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: minimal-ui)').matches));
     var isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    var inApp = /Instagram|Telegram|FBAN|FBAV|Line\/|Eitaa|Bale|Rubika|Soroush/i.test(ua);
-    var iosSafari = isIOS && !/CriOS|FxiOS|EdgiOS|OPiOS|OPT\//.test(ua);
-    var isFx = /Firefox|FxiOS/.test(ua);
-    function help() {
-        if (inApp) return 'این صفحه داخل یک اپ دیگر باز شده. از منوی ⋮ یا … گزینه «باز کردن در مرورگر» را بزن، بعد دوباره همین‌جا نصب کن.';
-        if (isIOS) return iosSafari
-            ? '۱) دکمه‌ی اشتراک‌گذاری (مربع با فلش رو به بالا) را بزن.\n۲) «Add to Home Screen / افزودن به صفحه اصلی» را انتخاب کن.\n۳) «Add» را بزن.'
-            : 'دکمه‌ی اشتراک‌گذاری یا منوی ⋯ مرورگر را بزن و «Add to Home Screen / افزودن به صفحه اصلی» را انتخاب کن (نیاز به iOS 16.4 یا بالاتر). اگر گزینه نبود، لینک را در Safari باز کن.';
-        if (isFx) return 'منوی ⋮ را بزن و «Install / نصب» یا «Add to Home screen» را انتخاب کن.';
-        return 'منوی ⋮ مرورگر را بزن و «Install app / نصب برنامه» یا «Add to Home screen / افزودن به صفحه اصلی» را انتخاب کن.';
+    var inApp = /Instagram|Telegram|FBAN|FBAV|Line\/|Eitaa|Bale|Rubika|Soroush|; wv\)/i.test(ua);
+    var isFx = /Firefox|FxiOS/.test(ua), isSamsung = /SamsungBrowser/i.test(ua);
+    var isChromium = /Chrome|CriOS|EdgA|OPR|SamsungBrowser/i.test(ua) && !/Firefox/.test(ua);
+    function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+    function toast(m) { try { showToast(m); } catch (e) {} }
+    function setBtn() { var w = document.getElementById('installBtnWrap'); if (w) w.style.display = standalone ? 'none' : ''; }
+    setBtn();
+    if (standalone) return;
+
+    function imgSize(src) {
+        return new Promise(function (res) { var i = new Image(); i.onload = function () { res(i.naturalWidth + 'x' + i.naturalHeight); }; i.onerror = function () { res(null); }; i.src = src + (src.indexOf('?') < 0 ? '?t=' : '&t=') + Date.now(); });
+    }
+    async function diagnose() {
+        var out = [], ok = function (t) { out.push(['✅', t]); }, bad = function (t) { out.push(['❌', t]); }, warn = function (t) { out.push(['⚠️', t]); };
+        (location.protocol === 'https:' || location.hostname === 'localhost') ? ok('آدرس امن (HTTPS) است') : bad('آدرس HTTPS نیست؛ نصب فقط روی HTTPS ممکن است');
+        if (inApp) bad('صفحه داخل مرورگر یک اپ دیگر (تلگرام/اینستاگرام/...) باز شده؛ از منوی ⋮ «باز کردن در مرورگر / Chrome» را بزن');
+        if (!('serviceWorker' in navigator)) bad('این مرورگر سرویس‌ورکر ندارد');
+        else if (navigator.serviceWorker.controller) ok('سرویس‌ورکر فعال و کنترل صفحه است');
+        else warn('سرویس‌ورکر هنوز کنترل صفحه را نگرفته؛ برنامه را کاملاً ببند، دوباره باز کن و ۱۰ ثانیه صبر کن');
+        try {
+            var link = document.querySelector('link[rel="manifest"]');
+            if (!link) bad('تگ manifest در صفحه نیست');
+            else {
+                var r = await fetch(link.href, { cache: 'no-store' });
+                if (!r.ok) bad('فایل manifest.json باز نشد (کد ' + r.status + ')');
+                else {
+                    var m = await r.json(), base = new URL(link.href);
+                    ok('فایل manifest.json خوانده شد');
+                    (m.name || m.short_name) ? ok('نام برنامه: ' + (m.short_name || m.name)) : bad('manifest نام ندارد');
+                    (['standalone', 'fullscreen', 'minimal-ui'].indexOf(m.display) >= 0) ? ok('حالت نمایش: ' + m.display) : bad('display در manifest باید standalone باشد');
+                    m.start_url ? ok('start_url تعریف شده') : bad('start_url در manifest نیست');
+                    var icons = m.icons || [], need = [192, 512];
+                    for (var k = 0; k < need.length; k++) {
+                        var n = need[k], ic = icons.filter(function (x) { return String(x.sizes || '').indexOf(n + 'x' + n) >= 0 && /png/i.test(x.type || 'image/png'); })[0];
+                        if (!ic) { bad('آیکون ' + n + '×' + n + ' (PNG) در manifest نیست'); continue; }
+                        var real = await imgSize(new URL(ic.src, base).href);
+                        if (!real) bad('فایل آیکون ' + ic.src + ' روی سایت پیدا/باز نشد');
+                        else if (real !== n + 'x' + n) bad('فایل ' + ic.src + ' اندازه‌اش ' + real + ' است ولی باید ' + n + '×' + n + ' باشد');
+                        else ok('آیکون ' + n + '×' + n + ' درست است');
+                    }
+                }
+            }
+        } catch (e) { bad('بررسی manifest ناموفق بود: ' + (e.message || e)); }
+        if (isChromium && !dp) warn('کروم هنوز «اجازه‌ی نصب مستقیم» نداده (معمولاً چند ثانیه بعد از ورود می‌آید)');
+        return out;
+    }
+    function steps() {
+        if (inApp) return 'اول از منوی ⋮ همین صفحه «باز کردن در مرورگر» را بزن و در Chrome باز کن، بعد دوباره نصب را بزن.';
+        if (isIOS) return 'آیفون: دکمه‌ی اشتراک‌گذاری (مربع با فلش) ← «Add to Home Screen / افزودن به صفحه اصلی» ← Add. (iOS 16.4 به بالا برای اعلان لازم است)';
+        if (isFx) return 'فایرفاکس: منوی ⋮ ← «Install / نصب».';
+        if (isSamsung) return 'سامسونگ: منوی ☰ ← «Add page to» ← «Home screen»، یا آیکون + کنار آدرس.';
+        return 'کروم: منوی ⋮ ← «Add to Home screen / افزودن به صفحه اصلی»؛ در پنجره‌ی بعد حتماً «Install / نصب» را بزن، نه «Create shortcut / ایجاد میانبر». اگر «Install app» را مستقیم دیدی همان را بزن.';
     }
     function hide(snooze) { if (box) { box.remove(); box = null; } if (snooze) { try { localStorage.setItem('pwaHintAt', String(Date.now())); } catch (e) {} } }
-    function show() {
+    async function openHelp() {
         if (box) return;
         box = document.createElement('div');
-        box.style.cssText = 'position:fixed;top:10px;right:10px;left:10px;max-width:420px;margin:0 auto;z-index:99990;background:var(--bg-card-solid,#0f1324);color:var(--text-primary,#fff);border:1px solid var(--border-glow,#22d3ee);border-radius:16px;padding:12px 14px;box-shadow:0 12px 40px rgba(0,0,0,.5);direction:rtl;font:13px/1.7 inherit;';
-        var btn = dp ? '<button type="button" data-a="i" style="border:0;border-radius:10px;padding:8px 16px;background:#22d3ee;color:#06121a;font:inherit;font-weight:700;cursor:pointer;">نصب</button>'
-                     : '<button type="button" data-a="h" style="border:0;border-radius:10px;padding:8px 16px;background:#22d3ee;color:#06121a;font:inherit;font-weight:700;cursor:pointer;">راهنمای نصب</button>';
-        box.innerHTML = '<div style="display:flex;align-items:center;gap:10px;"><span style="flex:1;">📲 برنامه را روی گوشی نصب کن تا مثل اپ و سریع‌تر باز شود.</span>' + btn +
-            '<button type="button" data-a="x" aria-label="بستن" style="border:0;background:transparent;color:inherit;font-size:20px;cursor:pointer;">×</button></div><div data-h style="display:none;white-space:pre-line;margin-top:8px;"></div>';
-        box.addEventListener('click', function (e) {
-            var a = e.target.getAttribute && e.target.getAttribute('data-a');
-            if (a === 'x') hide(true);
-            else if (a === 'i' && dp) { dp.prompt(); dp.userChoice.then(function () { dp = null; hide(); }); }
-            else if (a === 'h') { var h = box.querySelector('[data-h]'); h.textContent = help(); h.style.display = 'block'; }
-        });
+        box.style.cssText = 'position:fixed;inset:0;z-index:100020;background:rgba(0,0,0,.65);display:flex;align-items:flex-end;justify-content:center;padding:10px;';
+        box.innerHTML = '<div style="width:min(96vw,460px);max-height:92vh;overflow:auto;background:var(--bg-card-solid,#0f1324);color:var(--text-primary,#fff);border:1px solid var(--border-glow,#22d3ee);border-radius:18px;padding:14px;direction:rtl;font:13px/1.8 inherit;"><div style="font-weight:800;font-size:15px;">📲 نصب برنامه روی گوشی</div><div data-b style="margin:8px 0;opacity:.8;">در حال بررسی...</div><div style="display:flex;gap:8px;margin-top:10px;"><button type="button" data-x style="flex:1;border:1px solid rgba(148,163,184,.4);border-radius:12px;padding:11px;background:transparent;color:inherit;font:inherit;cursor:pointer;">بستن</button></div></div>';
+        box.addEventListener('click', function (e) { if (e.target === box || (e.target.hasAttribute && e.target.hasAttribute('data-x'))) hide(); });
         document.body.appendChild(box);
+        var res = await diagnose(), allOk = res.every(function (x) { return x[0] !== '❌'; });
+        var list = res.map(function (x) { return '<div>' + x[0] + ' ' + esc(x[1]) + '</div>'; }).join('');
+        box.querySelector('[data-b]').innerHTML = '<div style="font-size:12px;">' + list + '</div>' +
+            '<div style="margin-top:10px;padding:10px;border-radius:12px;background:rgba(34,211,238,.1);">' +
+            (allOk ? '<b>همه‌چیز درست است.</b> ' : '<b>اول موارد ❌ را درست کن.</b> ') + esc(steps()) + '</div>';
     }
-    window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); dp = e; if (box) { hide(); } show(); });
-    window.addEventListener('appinstalled', function () { dp = null; hide(); });
-    window.openInstallHelp = show;
-    var last = 0; try { last = +localStorage.getItem('pwaHintAt') || 0; } catch (e) {}
-    if (Date.now() - last > 3 * 86400000) setTimeout(show, 5000);
+    async function install() {
+        if (dp) {
+            try {
+                dp.prompt();
+                var c = await dp.userChoice; dp = null; window.__dp = null;
+                if (c && c.outcome === 'accepted') toast('⏳ در حال نصب... چند ثانیه‌ی دیگر آیکون برنامه روی صفحه‌ی اصلی می‌آید؛ از همان آیکون باز کن.');
+                else toast('نصب لغو شد؛ هر وقت خواستی دوباره «نصب برنامه» را بزن.');
+                return;
+            } catch (e) {}
+        }
+        openHelp();
+    }
+    function banner() {
+        var last = 0; try { last = +localStorage.getItem('pwaHintAt') || 0; } catch (e) {}
+        if (Date.now() - last < 2 * 86400000 || document.getElementById('pwaBanner')) return;
+        var b = document.createElement('div'); b.id = 'pwaBanner';
+        b.style.cssText = 'position:fixed;top:10px;right:10px;left:10px;max-width:420px;margin:0 auto;z-index:99990;background:var(--bg-card-solid,#0f1324);color:var(--text-primary,#fff);border:1px solid var(--border-glow,#22d3ee);border-radius:16px;padding:10px 12px;box-shadow:0 12px 40px rgba(0,0,0,.5);direction:rtl;font:13px/1.7 inherit;display:flex;align-items:center;gap:10px;';
+        b.innerHTML = '<span style="flex:1;">📲 برنامه را نصب کن تا مثل اپ، سریع و تمام‌صفحه باز شود.</span><button type="button" data-i style="border:0;border-radius:10px;padding:8px 16px;background:#22d3ee;color:#06121a;font:inherit;font-weight:700;cursor:pointer;">نصب</button><button type="button" data-x aria-label="بستن" style="border:0;background:transparent;color:inherit;font-size:20px;cursor:pointer;">×</button>';
+        b.addEventListener('click', function (e) {
+            if (e.target.hasAttribute('data-x')) { b.remove(); try { localStorage.setItem('pwaHintAt', String(Date.now())); } catch (er) {} }
+            else if (e.target.hasAttribute('data-i')) { b.remove(); install(); }
+        });
+        document.body.appendChild(b);
+    }
+    window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); dp = e; window.__dp = e; banner(); });
+    window.addEventListener('appinstalled', function () { dp = null; standalone = true; setBtn(); var b = document.getElementById('pwaBanner'); if (b) b.remove(); hide(); toast('✅ برنامه نصب شد! از آیکون «' + 'فامیلی فروشگاه' + '» روی صفحه‌ی اصلی باز کن.'); });
+    window.installPWA = install;
+    window.openInstallHelp = openHelp;
+    if (isIOS) setTimeout(banner, 5000);
 })();
 </script>
 <script>
@@ -16310,6 +16373,9 @@ notify pgrst, 'reload schema';`;
         var all = box.querySelector('[data-all]');
         all.style.display = pending ? '' : 'none';
         box.querySelector('[data-ok]').style.display = pending ? 'none' : '';
+        var finished = !pending && !denied.length;
+        refreshBtn();
+        if (finished) setTimeout(function () { if (box) { box.remove(); box = null; } }, 1600);
     }
     async function runAll() {
         if (busy) return; busy = true;
@@ -16351,6 +16417,17 @@ notify pgrst, 'reload schema';`;
         try { localStorage.setItem('permWizardAt', String(Date.now())); } catch (e) {}
         render();
     }
+    async function refreshBtn() {
+        try {
+            var st = await Promise.all(ITEMS.map(getState));
+            var done = st.every(function (s) { return s === 'granted' || s === 'unsupported'; });
+            var w = document.getElementById('permBtnWrap'); if (w) w.style.display = done ? 'none' : '';
+            return done;
+        } catch (e) { return false; }
+    }
+    window.refreshPermBtn = refreshBtn;
+    setTimeout(refreshBtn, 1500);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) refreshBtn(); });
     window.openPermWizard = open;
     // بعد از ورود: اگر هنوز مجوزی نپرسیده/نیمه‌فعال مانده، (حداکثر هر ۳ روز یک بار) پنجره را نشان بده
     window.maybeShowPermWizard = async function () {

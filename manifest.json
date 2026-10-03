@@ -1,7 +1,7 @@
 {
   "name": "لبنیات و ترشیجات فله فامیلی",
   "short_name": "فامیلی فروشگاه",
-  "description": "سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فروشگاه فامیلی - شعبه بیرجند",
+  "description": "سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فروشگاه فامیلی - شعبه بیرجند: ثبت سریع فروش، هدف و پاداش شیفت، حضور و غیاب و گزارش‌های فروش.",
   "id": "./",
   "start_url": "./",
   "scope": "./",
@@ -12,8 +12,17 @@
   "orientation": "portrait",
   "dir": "rtl",
   "lang": "fa",
+  "categories": ["business", "shopping", "productivity"],
+  "prefer_related_applications": false,
   "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "screenshots": [
+    { "src": "shot-1.jpg", "sizes": "1080x2160", "type": "image/jpeg", "form_factor": "narrow", "label": "ثبت فروش سریع" },
+    { "src": "shot-2.jpg", "sizes": "1080x2160", "type": "image/jpeg", "form_factor": "narrow", "label": "هدف و پاداش شیفت" },
+    { "src": "shot-3.jpg", "sizes": "1080x2160", "type": "image/jpeg", "form_factor": "narrow", "label": "گزارش و تحلیل فروش" }
   ]
 }
