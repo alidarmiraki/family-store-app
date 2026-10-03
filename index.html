@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v92 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v94 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2743,7 +2743,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v92 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v94 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
 
     <script>
         function toggleLoginPasswordVisibility() {
@@ -4074,7 +4074,7 @@ function getTehranMinutesOfDay(dateObj = new Date()) {
         };
 
         // v92 — فروشنده‌های اخراج‌شده: از لیست‌های فعال حذف می‌شوند و در گزارش‌های قدیمی «اخراج شده + تاریخ» کنار نامشان می‌آید
-        const FIRED = { map: {}, loaded: 0, noTable: false };
+        const FIRED = { map: {}, loaded: 0, noTable: false, active: null, tails: {}, activeTails: new Set(), asAdmin: null };
         const FIRED_SQL = `create table if not exists public.staff_terminations (
   username      text primary key,
   label         text not null,
@@ -4087,28 +4087,67 @@ drop policy if exists "st_all" on public.staff_terminations;
 create policy "st_all" on public.staff_terminations for all to anon, authenticated using (true) with check (true);
 notify pgrst, 'reload schema';`;
         function firedLabelOf(u) { return (roleLabels[u.role] || u.role) + ' - ' + (u.full_name || u.username); }
+        let _firedP = null;
         async function loadFiredStaff(force) {
             if (typeof _supabase === 'undefined' || !_supabase) return;
-            if (!force && Date.now() - FIRED.loaded < 60000) return;
-            FIRED.loaded = Date.now();
-            const map = {};
-            try {
-                const r = await _supabase.from('staff_terminations').select('username,label,terminated_at');
-                if (r.error) FIRED.noTable = /staff_terminations|PGRST205|42P01|schema cache|404/i.test(String(r.error.message || r.error.code || ''));
-                else { FIRED.noTable = false; (r.data || []).forEach(x => { map[x.label] = { at: x.terminated_at, username: x.username }; }); }
-            } catch (e) {}
-            try {
-                if (typeof currentRole !== 'undefined' && currentRole === 'admin') {
-                    const r = await _supabase.rpc('admin_list_sellers');
-                    (r.data || []).filter(s => s.is_terminated).forEach(s => {
-                        const label = firedLabelOf(s), prev = map[label] || {};
-                        map[label] = { at: prev.at || s.terminated_at || null, username: s.username };
-                    });
-                }
-            } catch (e) {}
-            FIRED.map = map;
+            const isAdminNow = (typeof currentRole !== 'undefined' && currentRole === 'admin');
+            if (_firedP) { await _firedP; if (FIRED.asAdmin === isAdminNow) return; }   // بارگذاری در جریان: همه منتظر همان می‌مانند
+            if (!force && FIRED.asAdmin === isAdminNow && Date.now() - FIRED.loaded < 60000) return;
+            _firedP = (async () => {
+                const map = {}, tails = {}, activeTails = new Set();
+                let act = null;
+                try {
+                    const r = await _supabase.from('staff_terminations').select('username,label,terminated_at');
+                    if (r.error) FIRED.noTable = /staff_terminations|PGRST205|42P01|schema cache|404/i.test(String(r.error.message || r.error.code || ''));
+                    else { FIRED.noTable = false; (r.data || []).forEach(x => { map[x.label] = { at: x.terminated_at, username: x.username }; }); }
+                } catch (e) {}
+                try {
+                    if (typeof currentRole !== 'undefined' && currentRole === 'admin') {
+                        // دو منبع: تابع admin_list_sellers و خود جدول users (هرکدام که فیلد بیشتری داشته باشد)
+                        const rows = [];
+                        try { const r = await _supabase.rpc('admin_list_sellers'); if (!r.error && r.data) r.data.forEach(x => rows.push(Object.assign({}, x))); } catch (e) {}
+                        try {
+                            const u = await _supabase.from('users').select('*').in('role', ['morning_seller', 'evening_seller']);
+                            if (!u.error && u.data) u.data.forEach(x => {
+                                const y = rows.find(z => z.username === x.username);
+                                if (!y) rows.push(Object.assign({}, x));
+                                else Object.keys(x).forEach(k => { if (y[k] == null && x[k] != null) y[k] = x[k]; });
+                            });
+                        } catch (e) {}
+                        if (rows.length) {
+                            act = new Set();
+                            rows.forEach(s => {
+                                const label = firedLabelOf(s);
+                                if (s.is_terminated) {
+                                    const prev = map[label] || {};
+                                    map[label] = { at: prev.at || s.terminated_at || null, username: s.username };
+                                    [s.full_name, s.username].forEach(t => { if (t) tails[String(t).trim()] = map[label]; });
+                                } else {
+                                    act.add(label);
+                                    [s.full_name, s.username].forEach(t => { if (t) activeTails.add(String(t).trim()); });
+                                }
+                            });
+                        }
+                    }
+                } catch (e) { act = null; }
+                Object.keys(map).forEach(l => { const t = l.split(' - ').slice(1).join(' - ').trim(); if (t && !tails[t]) tails[t] = map[l]; });
+                FIRED.map = map; FIRED.active = act; FIRED.tails = tails; FIRED.activeTails = activeTails; FIRED.loaded = Date.now(); FIRED.asAdmin = isAdminNow;
+            })().finally(() => { _firedP = null; });
+            return _firedP;
         }
-        function firedInfo(name) { return name ? (FIRED.map[String(name).trim()] || null) : null; }
+        function firedInfo(name) {
+            if (!name) return null; name = String(name).trim();
+            if (FIRED.active && FIRED.active.has(name)) return null;      // الان فعال است (مثلاً دوباره استخدام شده)
+            if (FIRED.map[name]) return FIRED.map[name];
+            const tail = name.split(' - ').slice(1).join(' - ').trim();
+            return (tail && !FIRED.activeTails.has(tail) && FIRED.tails[tail]) || null;
+        }
+        // برای داشبوردها: اخراج‌شده، یا فروشنده‌ای که در لیست پرسنل فعال فعلی نیست
+        function isInactiveStaff(name) {
+            if (!name) return false; name = String(name).trim();
+            if (firedInfo(name)) return true;
+            return !!(FIRED.active && FIRED.active.size > 0 && /^فروشنده (صبح|شب)/.test(name) && !FIRED.active.has(name));
+        }
         function firedDateText(info) {
             if (!info || !info.at) return '';
             try { return jalaliLabelForISODate(getTehranISODate(new Date(info.at))); } catch (e) { return ''; }
@@ -6062,14 +6101,17 @@ notify pgrst, 'reload schema';`;
 
         async function v81SelfCard() {
             const isAdmin = (currentRole === 'admin');
+            if (isAdmin) { try { await loadFiredStaff(); } catch (e) {} }
             const since = new Date(Date.now() - 60 * 86400000).toISOString();
             const r = await sstFetchAll(() => { let q = _supabase.from('sales').select('sell_price, created_at, seller_name'); if (!isAdmin) q = q.eq('seller_name', currentUserLabel); return q.gte('created_at', since).order('created_at', { ascending: false }); });
             const by = {}; (r.data || []).forEach(x => { if (v79ShiftOf(x.seller_name)) (by[x.seller_name] = by[x.seller_name] || []).push(x); });
             if (!isAdmin && !by[currentUserLabel]) by[currentUserLabel] = [];
             const recent = Date.now() - 14 * 86400000;
-            const names = Object.keys(by).filter(n => isAdmin ? by[n].some(x => new Date(x.created_at) >= recent) : true).sort((a, b) => by[b].length - by[a].length).slice(0, 4);
-            if (!names.length) return '';
-            return names.map(n => v81PersonCard(n, by[n], n === currentUserLabel)).join('');
+            const hidden = isAdmin ? Object.keys(by).filter(n => by[n].some(x => new Date(x.created_at) >= recent) && isInactiveStaff(n)) : [];
+            const names = Object.keys(by).filter(n => isAdmin ? (by[n].some(x => new Date(x.created_at) >= recent) && !isInactiveStaff(n)) : true).sort((a, b) => by[b].length - by[a].length).slice(0, 4);
+            const note = hidden.length ? `<div class="hint" style="font-size:11px; margin:6px 4px; color:#94a3b8;">🚫 از خلاصه‌ی روز حذف شد: ${hidden.map(n => v77Esc(v80Name(n)) + (firedInfo(n) ? ' (اخراج شده)' : ' (در لیست پرسنل فعال نیست)')).join('، ')}</div>` : '';
+            if (!names.length) return note;
+            return names.map(n => v81PersonCard(n, by[n], n === currentUserLabel)).join('') + note;
         }
 
         // v79 — خلاصه‌ی روز هوشمند: تشخیص خودکار شیفت + مقایسه با میانگین همان شیفت در روزهای قبل
@@ -6119,7 +6161,7 @@ notify pgrst, 'reload schema';`;
                 if (todaySales.length) L.push(`🧾 امروز ${v82Fa(todaySales.length)} فاکتور ثبت کرده‌ای؛ آخرینش ساعت ${v82Txt(v82Min(new Date(todaySales[0].created_at).getTime()))}.`);
             } else {
                 const by = {}; rows.forEach(x => { const n = x.seller_name || 'نامشخص'; (by[n] = by[n] || []).push(x); });
-                const flagged = Object.entries(by).map(([n, r]) => [n, v82BatchStats(r)]).filter(([n, s]) => bad(s));
+                const flagged = Object.entries(by).filter(([n]) => !isInactiveStaff(n)).map(([n, r]) => [n, v82BatchStats(r)]).filter(([n, s]) => bad(s));
                 L.push('🧑‍💼 <b>نگاه مدیر (۱۴ روز اخیر):</b>');
                 L.push(flagged.length ? '🕵️ فروشنده‌هایی که فاکتورها را یک‌جا ثبت می‌کنند، نه لحظه‌ی فروش:<br>' + flagged.map(([n, s]) => `• ${v77Esc(v80Name(n))} — ${v82Fa(s.batch)} از ${v82Fa(s.days)} روز، حدود ساعت ${v82Txt(s.at)}`).join('<br>') : '✅ هیچ فروشنده‌ای فاکتورها را دسته‌ای ثبت نکرده؛ ثبت‌ها هم‌زمان با فروش است.');
                 if (todaySales.length) L.push(`🧾 امروز ${v82Fa(todaySales.length)} فاکتور از ${v82Fa(new Set(todaySales.map(x => x.seller_name)).size)} فروشنده ثبت شده؛ آخرین ثبت ساعت ${v82Txt(v82Min(new Date(todaySales[0].created_at).getTime()))}.`);
@@ -15564,8 +15606,10 @@ notify pgrst, 'reload schema';`;
             const pb = sstPeriodBounds(_sstPeriod);
             const sinceISO = new Date(new Date(pb.startISO + 'T00:00:00+03:30').getTime() - 86400000).toISOString();
             const bySeller = {};
-            _sstTargets.forEach(t => { (bySeller[t.seller_label] = bySeller[t.seller_label] || []).push(t); });
+            if (isAdmin) { try { await loadFiredStaff(); } catch (e) {} }
+            _sstTargets.forEach(t => { if (isAdmin && isInactiveStaff(t.seller_label)) return; (bySeller[t.seller_label] = bySeller[t.seller_label] || []).push(t); });
             const labels = Object.keys(bySeller);
+            if (!labels.length) { panel.innerHTML = '<p style="font-size:12px; color:#94a3b8; margin-top:10px;">هنوز برای هیچ فروشنده‌ی فعالی هدفی تعیین نشده.</p>'; return; }
             const dataBySeller = {};
             await Promise.all(labels.filter(l => bySeller[l].some(t => t.active)).map(async l => {
                 const [sRes, aRes] = await Promise.all([
