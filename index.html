@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v90 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v92 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -1184,6 +1184,7 @@
 .v78-act{display:flex;gap:6px;margin-top:10px}.v78-act button{flex:1;border:0;border-radius:12px;padding:10px 4px;font-size:12px;font-weight:700;color:#fff;background:linear-gradient(135deg,#0ea5e9,#6366f1);font-family:inherit}
 .v78-top{display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px dashed rgba(148,163,184,.25)}
 .sst-words{font-size:12px;color:#38bdf8;font-weight:700;margin:4px 2px 0;min-height:16px;line-height:1.7}
+.fired-tag{color:#ef4444;font-size:11px;font-weight:700;white-space:nowrap}
 .v78-alert{border-radius:14px;padding:10px 12px;margin:8px 0;font-size:13px;font-weight:700}
 .v78-ok{background:rgba(16,185,129,.15);border:1px solid #10b981;color:#34d399}.v78-warn{background:rgba(245,158,11,.15);border:1px solid #f59e0b;color:#fbbf24}.v78-bad{background:rgba(239,68,68,.15);border:1px solid #ef4444;color:#f87171}
 
@@ -2742,7 +2743,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v90 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v92 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
 
     <script>
         function toggleLoginPasswordVisibility() {
@@ -4072,6 +4073,101 @@ function getTehranMinutesOfDay(dateObj = new Date()) {
             admin: "مدیر"
         };
 
+        // v92 — فروشنده‌های اخراج‌شده: از لیست‌های فعال حذف می‌شوند و در گزارش‌های قدیمی «اخراج شده + تاریخ» کنار نامشان می‌آید
+        const FIRED = { map: {}, loaded: 0, noTable: false };
+        const FIRED_SQL = `create table if not exists public.staff_terminations (
+  username      text primary key,
+  label         text not null,
+  full_name     text,
+  role          text,
+  terminated_at timestamptz not null default now()
+);
+alter table public.staff_terminations enable row level security;
+drop policy if exists "st_all" on public.staff_terminations;
+create policy "st_all" on public.staff_terminations for all to anon, authenticated using (true) with check (true);
+notify pgrst, 'reload schema';`;
+        function firedLabelOf(u) { return (roleLabels[u.role] || u.role) + ' - ' + (u.full_name || u.username); }
+        async function loadFiredStaff(force) {
+            if (typeof _supabase === 'undefined' || !_supabase) return;
+            if (!force && Date.now() - FIRED.loaded < 60000) return;
+            FIRED.loaded = Date.now();
+            const map = {};
+            try {
+                const r = await _supabase.from('staff_terminations').select('username,label,terminated_at');
+                if (r.error) FIRED.noTable = /staff_terminations|PGRST205|42P01|schema cache|404/i.test(String(r.error.message || r.error.code || ''));
+                else { FIRED.noTable = false; (r.data || []).forEach(x => { map[x.label] = { at: x.terminated_at, username: x.username }; }); }
+            } catch (e) {}
+            try {
+                if (typeof currentRole !== 'undefined' && currentRole === 'admin') {
+                    const r = await _supabase.rpc('admin_list_sellers');
+                    (r.data || []).filter(s => s.is_terminated).forEach(s => {
+                        const label = firedLabelOf(s), prev = map[label] || {};
+                        map[label] = { at: prev.at || s.terminated_at || null, username: s.username };
+                    });
+                }
+            } catch (e) {}
+            FIRED.map = map;
+        }
+        function firedInfo(name) { return name ? (FIRED.map[String(name).trim()] || null) : null; }
+        function firedDateText(info) {
+            if (!info || !info.at) return '';
+            try { return jalaliLabelForISODate(getTehranISODate(new Date(info.at))); } catch (e) { return ''; }
+        }
+        function firedTag(name) {
+            const f = firedInfo(name); if (!f) return '';
+            const d = firedDateText(f);
+            return ' <span class="fired-tag">🚫 اخراج شده' + (d ? ' (' + d + ')' : '') + '</span>';
+        }
+        // برای ردیف کاربر (جدول users یا admin_list_sellers)؛ اگر تاریخ ثبت نشده باشد مدیر دکمه‌ی ثبت تاریخ می‌بیند
+        function firedTagUser(u) {
+            if (!u || !u.is_terminated) return '';
+            const f = firedInfo(firedLabelOf(u)) || (u.terminated_at ? { at: u.terminated_at } : null);
+            const d = firedDateText(f);
+            const btn = (!d && typeof currentRole !== 'undefined' && currentRole === 'admin')
+                ? ` <button type="button" class="row-btn" style="padding:2px 8px; font-size:10px; width:auto;" onclick="firedSetDate('${String(u.username).replace(/'/g, '')}')">📅 ثبت تاریخ</button>` : '';
+            return ' <span class="fired-tag">🚫 اخراج شده' + (d ? ' (' + d + ')' : '') + '</span>' + btn;
+        }
+        function _j2g(jy, jm, jd) {
+            jy += 1595;
+            let days = -355668 + (365 * jy) + (Math.floor(jy / 33) * 8) + Math.floor(((jy % 33) + 3) / 4) + jd + ((jm < 7) ? (jm - 1) * 31 : ((jm - 7) * 30) + 186);
+            let gy = 400 * Math.floor(days / 146097); days %= 146097;
+            if (days > 36524) { gy += 100 * Math.floor(--days / 36524); days %= 36524; if (days >= 365) days++; }
+            gy += 4 * Math.floor(days / 1461); days %= 1461;
+            if (days > 365) { gy += Math.floor((days - 1) / 365); days = (days - 1) % 365; }
+            let gd = days + 1;
+            const sal = [0, 31, ((gy % 4 === 0 && gy % 100 !== 0) || (gy % 400 === 0)) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+            let gm = 0; for (gm = 0; gm < 13 && gd > sal[gm]; gm++) gd -= sal[gm];
+            return [gy, gm, gd];
+        }
+        function firedShowSql() {
+            const o = document.createElement('div');
+            o.style.cssText = 'position:fixed;inset:0;z-index:100003;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:12px;';
+            o.innerHTML = '<div style="width:min(94vw,420px);background:var(--bg-card-solid);color:var(--text-primary);border-radius:16px;padding:14px;direction:rtl;"><div class="hint" style="margin:0 0 6px;">برای ثبت <b>تاریخ اخراج</b> یک‌بار این کد را در Supabase (SQL Editor) اجرا کن؛ بعدش دوباره امتحان کن.</div><textarea readonly style="width:100%;height:190px;direction:ltr;font-size:11px;"></textarea><div style="display:flex;gap:8px;margin-top:8px;"><button type="button" class="row-btn" id="frCopy" style="flex:1;">📋 کپی</button><button type="button" class="row-btn" id="frClose" style="flex:1;">بستن</button></div></div>';
+            o.querySelector('textarea').value = FIRED_SQL; document.body.appendChild(o);
+            o.querySelector('#frCopy').onclick = () => { const ta = o.querySelector('textarea'); ta.select(); try { navigator.clipboard.writeText(FIRED_SQL); } catch (e) { document.execCommand('copy'); } showToast('📋 کپی شد'); };
+            o.querySelector('#frClose').onclick = () => o.remove();
+        }
+        async function firedSave(u, isoDate) {
+            const at = isoDate ? new Date(isoDate + 'T12:00:00+03:30').toISOString() : new Date().toISOString();
+            const r = await _supabase.from('staff_terminations').upsert([{ username: u.username, label: firedLabelOf(u), full_name: u.full_name || null, role: u.role || null, terminated_at: at }]);
+            if (r.error) { FIRED.noTable = true; firedShowSql(); return false; }
+            await loadFiredStaff(true); return true;
+        }
+        window.firedSetDate = async function (username) {
+            const v = prompt('تاریخ اخراج را به شمسی بنویس (مثال: 1405/07/10):'); if (!v) return;
+            const m = String(v).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})/);
+            if (!m) return showToast('⚠️ فرمت تاریخ درست نیست. مثال: 1405/07/10');
+            const [gy, gm, gd] = _j2g(+m[1], +m[2], +m[3]);
+            const iso = gy + '-' + String(gm).padStart(2, '0') + '-' + String(gd).padStart(2, '0');
+            const sl = await _supabase.rpc('admin_list_sellers');
+            const u = (sl.data || []).find(x => x.username === username) || { username, role: 'morning_seller' };
+            if (await firedSave(u, iso)) {
+                showToast('✅ تاریخ اخراج ثبت شد: ' + jalaliLabelForISODate(iso));
+                try { if (typeof loadContractAdminTab === 'function') loadContractAdminTab(); } catch (e) {}
+                try { if (typeof loadPersonnelTab === 'function' && document.getElementById('personnelList')) loadPersonnelTab(); } catch (e) {}
+            }
+        };
+
         // --- مدیریت نمایش صفحه ورود / ثبت‌نام ---
         function showLoginScreen() {
             document.getElementById('registrationScreen').style.display = 'none';
@@ -4496,6 +4592,7 @@ function getTehranMinutesOfDay(dateObj = new Date()) {
             }
 
             const now = new Date();
+            await loadFiredStaff(true);
 
             box.innerHTML = sellers.map(s => {
                 const roleLabel = (s.role === 'evening_seller') ? 'فروشنده شب' : 'فروشنده صبح';
@@ -4520,7 +4617,7 @@ function getTehranMinutesOfDay(dateObj = new Date()) {
                 if (isTerminated) {
                     return `
                         <div class="report-card" style="opacity:0.75;">
-                            <h3>👤 ${s.full_name || s.username} <span style="font-size:11px; color:#94a3b8;">(${roleLabel} - ${s.username})</span></h3>
+                            <h3>👤 ${s.full_name || s.username} <span style="font-size:11px; color:#94a3b8;">(${roleLabel} - ${s.username})</span>${firedTagUser(s)}</h3>
                             <p>${deadlineHtml}</p>
                         </div>
                     `;
@@ -4654,6 +4751,8 @@ function getTehranMinutesOfDay(dateObj = new Date()) {
             const step2 = await showConfirm(`این عملیات قابل بازگشت نیست. برای تایید نهایی دوباره تایید کن که واقعاً می‌خواهی «${username}» اخراج شود.`);
             if (!step2) return;
 
+            let _fu = null;
+            try { const sl = await _supabase.rpc('admin_list_sellers'); _fu = (sl.data || []).find(x => x.username === username) || null; } catch (e) {}
             const { error } = await _supabase.rpc('admin_terminate_seller', { p_username: username });
 
             if (error) {
@@ -4661,6 +4760,7 @@ function getTehranMinutesOfDay(dateObj = new Date()) {
                 return;
             }
 
+            try { await firedSave(_fu || { username, role: (roleLabel === 'فروشنده شب' ? 'evening_seller' : 'morning_seller') }, null); } catch (e) {}
             showToast(`✅ همکاری با «${username}» پایان یافت. حساب کاربری‌اش دیگر قابل ورود نیست؛ گزارش‌های فروش و حضور او سالم باقی مانده است.`);
             loadContractAdminTab();
         }
@@ -4866,6 +4966,7 @@ function getTehranMinutesOfDay(dateObj = new Date()) {
 
             currentSessionUser = { ...currentSessionUser, username: updatedUser.username || currentSessionUser.username, full_name: updatedUser.full_name || fullName, phone_number: phone };
             currentUserLabel = (roleLabels[currentSessionUser.role] || currentSessionUser.role) + ' - ' + (currentSessionUser.full_name || currentSessionUser.username);
+            try { loadFiredStaff(true); } catch (e) {}
 
             const badge = document.getElementById('userBadge');
             const displayName = currentSessionUser.full_name || currentSessionUser.username;
@@ -5005,6 +5106,7 @@ function getTehranMinutesOfDay(dateObj = new Date()) {
         function proceedToDashboardAfterLogin(user) {
             currentRole = user.role;
             currentUserLabel = (roleLabels[user.role] || user.role) + ' - ' + (user.full_name || user.username);
+            try { loadFiredStaff(true); } catch (e) {}
             currentSessionUser = user;
             alertDismissedThisSession = false;
             reminderDismissedThisSession = false;
@@ -5646,7 +5748,7 @@ function getTehranMinutesOfDay(dateObj = new Date()) {
                 .sort((a, b) => b[1].sum - a[1].sum)
                 .map(([name, v]) => `
                     <div class="summary-mini">
-                        <span>👤 ${name}</span>
+                        <span>👤 ${name}${firedTag(name)}</span>
                         <span style="color:#38bdf8; font-weight:bold;">${v.sum.toLocaleString('fa-IR')} تومان <span style="color:#94a3b8; font-weight:normal; font-size:11px;">(${v.count.toLocaleString('fa-IR')} فاکتور)</span></span>
                     </div>
                 `).join('');
@@ -5834,7 +5936,7 @@ function getTehranMinutesOfDay(dateObj = new Date()) {
                 }
                 if (hl) tags += '<span class="v80-tag y">🕐 مرخصی ساعتی</span>';
                 const me = (n === currentUserLabel);
-                return `<div class="v80-row" ${me ? 'style="background:rgba(99,102,241,.1);border-radius:12px;padding:9px;"' : ''}><div class="v80-line"><span style="display:flex;align-items:center;gap:8px;"><span class="v80-ava">${v77Esc(v80Name(n).charAt(0))}</span><span>${v80Shift(n)} ${v77Esc(v80Name(n))}${me ? ' <span class="v80-tag b">تو</span>' : ''}</span></span>${badge}</div><div class="v80-tags">${tags}</div></div>`;
+                return `<div class="v80-row" ${me ? 'style="background:rgba(99,102,241,.1);border-radius:12px;padding:9px;"' : ''}><div class="v80-line"><span style="display:flex;align-items:center;gap:8px;"><span class="v80-ava">${v77Esc(v80Name(n).charAt(0))}</span><span>${v80Shift(n)} ${v77Esc(v80Name(n))}${firedTag(n)}${me ? ' <span class="v80-tag b">تو</span>' : ''}</span></span>${badge}</div><div class="v80-tags">${tags}</div></div>`;
             }).join('');
             const missing = ['morning', 'evening'].filter(k => !names.some(n => v79ShiftOf(n) === k)).map(k => `<div class="v78-alert v78-bad" style="margin:8px 0 0;">⛔ ${V79_SHIFT[k].icon} ${V79_SHIFT[k].prefix}: هنوز ورود نزده</div>`).join('');
             const inNow = names.filter(n => { const ev = by[n], en = ev.find(e => e.type === 'entry'), ex = ev.filter(e => e.type === 'exit').pop(); return en && !ev.some(e => e.type === 'leave') && !(ex && new Date(ex.created_at) > new Date(en.created_at)); }).length;
@@ -8182,7 +8284,10 @@ function getTehranMinutesOfDay(dateObj = new Date()) {
             const box = document.getElementById('staffDevicesList');
             if (!box) return;
             box.innerHTML = skeletonCards(2);
-            const { data, error } = await _supabase.from('staff_devices').select('*').order('registered_at', { ascending: false });
+            await loadFiredStaff();
+            const _firedU = new Set(Object.values(FIRED.map).map(x => x.username));
+            const { data: _all, error } = await _supabase.from('staff_devices').select('*').order('registered_at', { ascending: false });
+            const data = (_all || []).filter(d => !_firedU.has(d.username));
             if (error) {
                 box.innerHTML = `<p style="color:#ef4444;">❌ خطا در دریافت فهرست: ${error.message}<br>مطمئن شوید جدول staff_devices در Supabase ساخته شده است.</p>`;
                 return;
@@ -8885,7 +8990,7 @@ function getTehranMinutesOfDay(dateObj = new Date()) {
 
             return `
                 <tr>
-                    <td style="font-weight:bold; color:#38bdf8;">${(r.seller_name || '-').replace(/^.*?-\s*/, '')}</td>
+                    <td style="font-weight:bold; color:#38bdf8;">${(r.seller_name || '-').replace(/^.*?-\s*/, '')}${firedTag(r.seller_name)}</td>
                     <td>${fullStr}</td>
                     <td>${typeTitle}</td>
                     <td>${delayCell}</td>
@@ -9283,9 +9388,11 @@ function getTehranMinutesOfDay(dateObj = new Date()) {
             // seller_name ذخیره می‌شه — هر تفاوتی (حتی یک ایموجی اضافه) باعث می‌شه فیلتر دقیق
             // هیچ رکوردی رو پیدا نکنه و انگار همه‌چیز خالی/پاک‌شده به نظر برسه.
             try {
+                await loadFiredStaff();
                 const { data, error } = await _supabase.from('users').select('*').in('role', ['morning_seller', 'evening_seller']);
                 if (error || !data || data.length === 0) return; // خطا یا خالی بودن: گزینه‌های فعلی دست‌نخورده می‌مانند
                 const sorted = data.slice().sort((a, b) => {
+                    if (!!a.is_terminated !== !!b.is_terminated) return a.is_terminated ? 1 : -1;
                     if (a.role !== b.role) return a.role === 'morning_seller' ? -1 : 1;
                     return String(a.full_name || a.username).localeCompare(String(b.full_name || b.username), 'fa');
                 });
@@ -9294,7 +9401,8 @@ function getTehranMinutesOfDay(dateObj = new Date()) {
                 const previousValue = select.value;
                 select.innerHTML = sorted.map(u => {
                     const label = `${roleLabels[u.role] || u.role} - ${u.full_name || u.username}`;
-                    return `<option value="${escapeHtmlAttr(label)}">${escapeHtmlForToast(label)}</option>`;
+                    const fi = u.is_terminated ? (firedInfo(label) || (u.terminated_at ? { at: u.terminated_at } : null)) : null, fd = firedDateText(fi);
+                    return `<option value="${escapeHtmlAttr(label)}">${escapeHtmlForToast(label)}${u.is_terminated ? ' 🚫 اخراج شده' + (fd ? ' (' + fd + ')' : '') : ''}</option>`;
                 }).join('');
                 const labels = sorted.map(u => `${roleLabels[u.role] || u.role} - ${u.full_name || u.username}`);
                 const match = [saved, previousValue].filter(Boolean).find(v => labels.includes(v));
@@ -11759,7 +11867,7 @@ function getTehranMinutesOfDay(dateObj = new Date()) {
                     if (names.length === 0) return `<p style="font-size:11px; color:#64748b;">${emptyText}</p>`;
                     names.sort((a, b) => sellersObj[b].sum - sellersObj[a].sum);
                     return `<div style="margin-top:6px; padding:8px 10px; background:rgba(15,23,42,0.6); border-radius:8px;">
-                        ${names.map(n => `<p style="font-size:12px; margin:3px 0;">👤 <b>${n}</b>: ${sellersObj[n].sum.toLocaleString('fa-IR')} تومان (${sellersObj[n].count} فاکتور)</p>`).join('')}
+                        ${names.map(n => `<p style="font-size:12px; margin:3px 0;">👤 <b>${n}</b>${firedTag(n)}: ${sellersObj[n].sum.toLocaleString('fa-IR')} تومان (${sellersObj[n].count} فاکتور)</p>`).join('')}
                     </div>`;
                 };
 
@@ -12750,7 +12858,7 @@ function getTehranMinutesOfDay(dateObj = new Date()) {
             const personEntries = Object.entries(personTotals).sort((a, b) => b[1].total - a[1].total);
             const personRows = personEntries.map(([pname, v]) => `
                 <tr>
-                    <td>${pname}</td>
+                    <td>${pname}${firedTag(pname)}</td>
                     <td>${v.count.toLocaleString('fa-IR')}</td>
                     <td>${v.total.toLocaleString('fa-IR')} تومان</td>
                 </tr>
@@ -14160,7 +14268,7 @@ function getTehranMinutesOfDay(dateObj = new Date()) {
             let html = '';
             Object.entries(perSeller).forEach(([seller, info]) => {
                 html += `<div class="report-card">
-                    <h3>👤 ${seller}</h3>
+                    <h3>👤 ${seller}${firedTag(seller)}</h3>
                     <p style="font-size:15px; color:#f87171; font-weight:bold;">مجموع قابل کسر از حقوق: ${info.total.toLocaleString('fa-IR')} تومان (${info.items.length} مورد)</p>
                     ${info.items.map(t => `
                         <div class="summary-mini">
@@ -14409,6 +14517,7 @@ function getTehranMinutesOfDay(dateObj = new Date()) {
         async function loadPersonnelTab() {
             const box = document.getElementById('personnelList');
             box.innerHTML = skeletonCards(3);
+            await loadFiredStaff(true);
             const { data, error } = await _supabase.from('users').select('*');
             if (error) {
                 box.innerHTML = '<p style="color:#ef4444;">خطا در بارگذاری اطلاعات پرسنل: ' + error.message + '</p>';
@@ -14420,14 +14529,14 @@ function getTehranMinutesOfDay(dateObj = new Date()) {
             }
             lastPersonnelData = data;
             const roleLabels = { admin: '👑 مدیر', morning_seller: '🌅 فروشنده صبح', evening_seller: '🌙 فروشنده شب' };
-            box.innerHTML = data.map(u => {
+            box.innerHTML = data.slice().sort((a, b) => (a.is_terminated ? 1 : 0) - (b.is_terminated ? 1 : 0)).map(u => {
                 const idPhoto = u.national_id_photo_url || u.id_photo_url || u.national_id_photo;
                 const sig = u.signature_url || u.signature;
                 const phone = u.phone || u.phone_number || u.mobile || '-';
                 const nationalId = u.national_id || u.national_id_code || '-';
                 return `
-                <div class="report-card">
-                    <h3>${roleLabels[u.role] || u.role} — ${u.full_name || u.username}</h3>
+                <div class="report-card" ${u.is_terminated ? 'style="opacity:.7; border-color:#7f1d1d;"' : ''}>
+                    <h3>${roleLabels[u.role] || u.role} — ${u.full_name || u.username}${firedTagUser(u)}</h3>
                     <p>👤 نام کاربری: ${u.username}</p>
                     <p>🪪 کد ملی: ${nationalId}</p>
                     <p>📱 شماره تماس: ${phone}</p>
@@ -15670,7 +15779,7 @@ notify pgrst, 'reload schema';`;
                     return `<div class="qn-item ${at && !isToday(at) ? 'old' : 'ok'}"><div class="qn-head"><span>🕒 ${at ? getTehranTimeString(new Date(at)) + (!isToday(at) ? ' — ' + dateLbl(at) + ' (روز قبل)' : '') : ''}</span><span>${TYPE_LBL[r.type] || ''}</span></div>
                         <div class="qn-title">${r.nm ? esc(r.nm) : '<span style="opacity:.6">بدون نام</span>'}</div>
                         <div class="qn-sub">مقدار: <b>${qt}</b>${price ? ' · مبلغ: <b>' + FA(price) + '</b> تومان' : ''}${r.note ? '<br>📌 ' + esc(r.note) : ''}</div>
-                        ${r.hp ? `<button type="button" class="row-btn" style="margin-top:6px;" onclick="qnAdminPhoto('${r.id}')">📷 دیدن عکس</button>` : ''}</div>`;
+                        ${Number(r.hp) === 1 ? `<button type="button" class="row-btn" style="margin-top:6px;" onclick="qnAdminPhoto('${r.id}')">📷 دیدن عکس</button>` : '<div style="font-size:11px; opacity:.6; margin-top:6px;">📷 بدون عکس</div>'}</div>`;
                 }).join('');
                 return `<div style="margin:10px 0 4px; color:var(--text-primary); font-weight:700;">👤 ${esc(who)} — ${FA(by[who].length)} یادداشت${sum ? ' · جمع تقریبی ' + FA(sum) + ' تومان' : ''}${old ? ' <span style="color:#f43f5e;">· ' + FA(old) + ' مال روز قبل ⚠️</span>' : ''}</div>${rows}`;
             }).join('');
@@ -15680,8 +15789,20 @@ notify pgrst, 'reload schema';`;
         }
     };
     window.qnAdminPhoto = async function (id) {
-        try { const { data } = await _supabase.from('quick_notes').select('ph:data->>photo').eq('id', id).maybeSingle(); if (data && data.ph) qnViewPhoto(data.ph); else showToast('عکس پیدا نشد.'); }
-        catch (e) { showToast('⚠️ عکس با این اینترنت باز نشد؛ دوباره امتحان کن.'); }
+        showToast('⏳ در حال بارگذاری عکس...');
+        let lastErr = null;
+        for (let i = 0; i < 2; i++) {
+            try {
+                let r = await _supabase.from('quick_notes').select('ph:data->>photo').eq('id', id).maybeSingle();
+                if (r.error) { lastErr = r.error; r = await _supabase.from('quick_notes').select('data').eq('id', id).maybeSingle(); }
+                if (r.error) { lastErr = r.error; continue; }
+                const ph = r.data && (r.data.ph || (r.data.data && r.data.data.photo));
+                if (ph) { qnViewPhoto(ph); return; }
+                showToast('📷 این یادداشت عکسی روی سرور ندارد (شاید فروشنده بعد از ثبت، عکس را حذف کرده یا هنوز همگام نشده).');
+                return;
+            } catch (e) { lastErr = e; }
+        }
+        showToast('⚠️ عکس باز نشد' + (lastErr && lastErr.message ? ': ' + String(lastErr.message).slice(0, 80) : '') + ' — دوباره امتحان کن.');
     };
     setInterval(() => { try { const c = $('qnAdminCard'); if (!document.hidden && c && c.offsetParent) qnAdminLoad(); } catch (e) {} }, 60000);
     window.addEventListener('online', () => qnSyncSoon());
