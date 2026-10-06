@@ -2771,7 +2771,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v98 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v99 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -8821,6 +8821,9 @@ notify pgrst, 'reload schema';`;
                 }
                 if (isMakeupExit) {
                     successMsg += `\n\n⏮️ خروج جاافتاده‌ی دفعه قبل ثبت شد. دفعه بعد حتماً همون شب یادت باشه خروج بزنی، خودم بهت یادآوری می‌کنم. الان می‌تونی ورود امروزت رو هم بزنی.`;
+                }
+                if (window.__lateExitNote) {
+                    successMsg += `\n\n✅ مشکل قبلی برطرف شد — خروج دیرهنگامت با موفقیت ثبت شد. از این به بعد هر وقت بزنی، دیگه گیر نمی‌کنی.`;
                 }
                 if (type === 'leave' && leaveReason) {
                     successMsg += `\n\n🏖️ مرخصی امروزت با دلیل «${leaveReason}» برای مدیر ارسال شد.`;
@@ -15611,11 +15614,21 @@ notify pgrst, 'reload schema';`;
         // شیفت‌های یک فروشنده: هر «ورود» تا اولین «خروج» بعدیش. فروش داخل همین بازه = فروش شیفت.
         // اگه هنوز خروج نزده: شیفت «در جریان» است (تا ۱۸ ساعت از ورود). اگه خروج را فراموش کرده: تا پایان همان روز.
         // روز مرخصی (leave) و روزهایی که ورود ثبت نشده، نه پاداش دارند نه جریمه.
-        function sstComputeShifts(sales, events, nowMs) {
+        function sstComputeShifts(sales, events, nowMs, sellerLabel) {
             const evs = events.slice().sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
             const leaveDays = new Set();
             evs.forEach(e => { if (e.type === 'leave') leaveDays.add(getTehranISODate(new Date(e.created_at))); });
             const sm = sales.map(x => ({ t: new Date(x.created_at).getTime(), v: Number(x.sell_price) || 0 }));
+            // ساعت پایان شیفت برنامه‌ریزی‌شده (از تنظیمات) — برای بستن خودکار هدف بعد از پایان ساعت
+            let schedEndStr = null;
+            try {
+                const sk = v79ShiftOf(sellerLabel || '');
+                const s = window.__cachedShiftSettings;
+                if (s) {
+                    if (sk === 'morning') schedEndStr = s.mEnd || '15:30';
+                    else if (sk === 'evening') schedEndStr = s.eEnd || '23:00';
+                }
+            } catch (_) {}
             const days = {};
             for (let i = 0; i < evs.length; i++) {
                 const e = evs[i];
@@ -15626,18 +15639,32 @@ notify pgrst, 'reload schema';`;
                     if (evs[j].type === 'exit') { end = new Date(evs[j].created_at).getTime(); hasExit = true; break; }
                     if (evs[j].type === 'entry') break;
                 }
-                let live = false;
+                let live = false, autoClosedByShiftEnd = false;
                 const dayISO = getTehranISODate(new Date(start));
                 if (!hasExit) {
-                    if (nowMs - start < 18 * 3600000) { end = nowMs; live = true; }
-                    else end = new Date(dayISO + 'T23:59:59+03:30').getTime();
+                    // v99: اگر ساعت پایان شیفت گذشته و هنوز خروج نزده، هدف دیگر «در جریان» نیست
+                    // — فروش فقط تا ساعت پایان شیفت حساب می‌شود و به فروشنده گفته می‌شود فقط خروج بزند
+                    let schedEndMs = null;
+                    if (schedEndStr) {
+                        try { schedEndMs = new Date(dayISO + 'T' + schedEndStr + ':00+03:30').getTime(); } catch (_) {}
+                    }
+                    if (schedEndMs && nowMs > schedEndMs) {
+                        end = schedEndMs;
+                        live = false;
+                        autoClosedByShiftEnd = true;
+                    } else if (nowMs - start < 18 * 3600000) {
+                        end = nowMs; live = true;
+                    } else {
+                        end = new Date(dayISO + 'T23:59:59+03:30').getTime();
+                    }
                 }
                 let amount = 0;
                 sm.forEach(x => { if (x.t >= start && x.t <= end) amount += x.v; });
-                const d = days[dayISO] || (days[dayISO] = { dayISO, amount: 0, live: false, start, end, parts: [], sm });
+                const d = days[dayISO] || (days[dayISO] = { dayISO, amount: 0, live: false, start, end, parts: [], sm, autoClosedByShiftEnd: false });
                 d.parts.push({ s: start, e: end });
                 d.amount += amount;
                 d.live = d.live || live;
+                d.autoClosedByShiftEnd = d.autoClosedByShiftEnd || autoClosedByShiftEnd;
                 d.end = Math.max(d.end, end);
             }
             return Object.values(days).filter(d => !leaveDays.has(d.dayISO)).sort((a, b) => a.dayISO < b.dayISO ? 1 : -1);
@@ -15753,12 +15780,13 @@ notify pgrst, 'reload schema';`;
             } else {
                 const sentence = sstPickMsg(reached ? SST_HIT_MSGS : SST_MISS_MSGS, currentUserLabel, d.dayISO, sstKey(t));
                 const closed = d.closedByPeriod ? '<br><span style="font-size:11px; color:#94a3b8;">🏁 بازه‌ی هدف تمام شد؛ نتیجه تا پایان همان بازه حساب شد.</span>' : '';
+                const autoExitHint = d.autoClosedByShiftEnd ? '<br><span style="font-size:12px; color:#fbbf24; font-weight:bold;">⏰ ساعت شیفت تموم شد — هدف بسته شد. فقط «خروج» رو ثبت کن (فروش بعد از پایان شیفت دیگه تو هدف حساب نمی‌شه).</span>' : '';
                 msg = reached
-                    ? `<p style="color:#10b981; font-weight:bold; margin:6px 0 0;">🎉 هدف این شیفت زده شد: <b>+${bonusTxt}</b>${closed}<br><span style="font-weight:700; font-size:12px;">«${sentence}»</span></p>`
-                    : `<p style="color:#f87171; margin:6px 0 0; font-size:12px;">😔 متأسفانه این شیفت به هدف نرسید${penTxt ? ': <b>−' + penTxt + '</b>' : ' (بدون جریمه)'}${closed}<br><b>«${sentence}»</b></p>`;
+                    ? `<p style="color:#10b981; font-weight:bold; margin:6px 0 0;">🎉 هدف این شیفت زده شد: <b>+${bonusTxt}</b>${closed}${autoExitHint}<br><span style="font-weight:700; font-size:12px;">«${sentence}»</span></p>`
+                    : `<p style="color:#f87171; margin:6px 0 0; font-size:12px;">😔 متأسفانه این شیفت به هدف نرسید${penTxt ? ': <b>−' + penTxt + '</b>' : ' (بدون جریمه)'}${closed}${autoExitHint}<br><b>«${sentence}»</b></p>`;
             }
             return `<div>
-                <div style="display:flex; justify-content:space-between; font-size:12px;"><span>${d.live ? '⏱️ شیفت در جریان' : '✅ شیفت تمام‌شده'}</span><b style="color:${col};">${v77Toman(d.amount)} از ${v77Toman(target)} (${v77Fa(pct)}٪)</b></div>
+                <div style="display:flex; justify-content:space-between; font-size:12px;"><span>${d.live ? '⏱️ شیفت در جریان' : (d.autoClosedByShiftEnd ? '⏰ شیفت بسته‌شده (خروج ثبت نشده)' : '✅ شیفت تمام‌شده')}</span><b style="color:${col};">${v77Toman(d.amount)} از ${v77Toman(target)} (${v77Fa(pct)}٪)</b></div>
                 <div class="st-prog"><i style="width:${pct}%; background:${col};"></i></div>
                 ${msg}
             </div>`;
@@ -15851,7 +15879,8 @@ notify pgrst, 'reload schema';`;
                     sstFetchAll(() => _supabase.from('sales').select('sell_price, created_at').eq('seller_name', l).gte('created_at', sinceISO).order('created_at', { ascending: false })),
                     sstFetchAll(() => _supabase.from('attendance').select('type, created_at').eq('seller_name', l).gte('created_at', sinceISO).order('created_at', { ascending: true }))
                 ]);
-                dataBySeller[l] = sstComputeShifts(sRes.data || [], aRes.data || [], Date.now());
+                try { window.__cachedShiftSettings = await getShiftSettings(); } catch (_) {}
+                dataBySeller[l] = sstComputeShifts(sRes.data || [], aRes.data || [], Date.now(), l);
             }));
 
             panel.innerHTML = `<div style="font-size:12px; color:var(--text-secondary); margin-top:10px;">📅 نتیجه‌ی <b>${pb.label}</b> (شیفت‌های تمام‌شده؛ شیفت در جریان بعد از خروج حساب می‌شود)</div>` +
@@ -15872,8 +15901,32 @@ notify pgrst, 'reload schema';`;
             if (shift.live && hrs >= 4 && pct < 40) return {lvl:'warn', key:'w4', title:'⏰ سرعت فروش پایین است (' + v77Fa(pct) + '٪)', msg:v77Toman(left) + ' تا هدف مانده؛ فرصت هنوز هست.'};
             return null;
         }
+        async function sstNotifyExitOnly(shift) {
+            // وقتی ساعت شیفت تموم شده ولی خروج نزده: یک‌بار پیام بده که فقط خروج بزند
+            if (!shift || !shift.autoClosedByShiftEnd) return;
+            const k = 'sstExitOnly_' + currentUserLabel + '_' + shift.dayISO;
+            if (localStorage.getItem(k)) return;
+            localStorage.setItem(k, '1');
+            const title = '⏰ ساعت شیفتت تموم شد';
+            const msg = 'هدف و پاداش این شیفت بسته شد. فقط کافیه «خروج» رو از تب حضور و غیاب ثبت کنی — بعد از اون دیگه گیر نمی‌کنی.';
+            try { showToast(title + '\n' + msg); } catch (e) {}
+            try { navigator.vibrate && navigator.vibrate([150, 80, 150]); } catch (e) {}
+            try {
+                const un = currentSessionUser && currentSessionUser.username;
+                if (un) {
+                    await _supabase.from('messages').insert([{
+                        sender: 'سیستم هدف فروش',
+                        recipient: un,
+                        title: title,
+                        body: msg,
+                        created_at: new Date().toISOString()
+                    }]);
+                }
+            } catch (e) {}
+        }
         async function sstNotifySeller(t, shift) {
             try {
+                if (shift && shift.autoClosedByShiftEnd) { await sstNotifyExitOnly(shift); }
                 const a = sstAlertHtml(t, shift); if (!a) return null;
                 const k = 'sstN_' + currentUserLabel + '_' + shift.dayISO + '_' + a.key;
                 if (!localStorage.getItem(k)) {
@@ -15904,7 +15957,8 @@ notify pgrst, 'reload schema';`;
                 _supabase.from('sales').select('sell_price, created_at').eq('seller_name', currentUserLabel).gte('created_at', since).limit(3000),
                 _supabase.from('attendance').select('type, created_at').eq('seller_name', currentUserLabel).gte('created_at', since).order('created_at', { ascending: true }).limit(80)
             ]);
-            return sstComputeShifts(sRes.data || [], aRes.data || [], Date.now());
+            try { window.__cachedShiftSettings = await getShiftSettings(); } catch (_) {}
+            return sstComputeShifts(sRes.data || [], aRes.data || [], Date.now(), currentUserLabel);
         }
         async function buildMyShiftTargetCard() {
             const { data: all, error } = await _supabase.from('seller_shift_targets').select('*').eq('seller_label', currentUserLabel);
