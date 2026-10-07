@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v100 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v101 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2008,7 +2008,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <input type="text" id="pName" dir="auto" placeholder="مثلاً پنیر محلی">
 
         <label>نوع کالا:</label>
-        <select id="pCategory">
+        <select id="pCategory" onchange="updatePricingAdvisor()">
             <option value="general">🧀 لبنیات و ترشیجات (عادی)</option>
             <option value="sausage">🌭 سوسیس و کالباس</option>
         </select>
@@ -2071,13 +2071,30 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div class="hint">اگر این کالا پرفروش باشد، به محض تمام‌شدن انبار اصلی (حتی اگر هنوز مقداری در غرفه باشد) بلافاصله به مدیر هشدار داده می‌شود. اگر کم‌فروش باشد، وقتی انبار اصلی خالی شود ابتدا پیام «عجله‌ای نیست» ارسال می‌شود و اگر تا ۲ روز بعد هنوز انبار پر نشده باشد، هشدار فوری «دیگر شارژ کن» ارسال می‌شود. تشخیص پرفروش/کم‌فروش به‌صورت خودکار و بر اساس فروش ۳۰ روز اخیر انجام می‌شود.</div>
 
         <label>قیمت فروش هر کیلو/عدد (تومان):</label>
-        <input type="text" inputmode="decimal" id="pSellPrice" placeholder="مثلاً 120000" oninput="formatPrice(this, 'pSellPriceFormatted')">
+        <input type="text" inputmode="decimal" id="pSellPrice" placeholder="مثلاً 120000" oninput="formatPrice(this, 'pSellPriceFormatted'); updatePricingAdvisor();">
         <div id="pSellPriceFormatted" class="price-display"></div>
 
         <div id="buyPriceField" style="display:none;">
             <label>قیمت خرید هر کیلو/عدد (تومان) - ویژه مدیر:</label>
-            <input type="text" inputmode="decimal" id="pBuyPrice" placeholder="مثلاً 90000" oninput="formatPrice(this, 'pBuyPriceFormatted')">
+            <input type="text" inputmode="decimal" id="pBuyPrice" placeholder="مثلاً 90000" oninput="formatPrice(this, 'pBuyPriceFormatted'); updatePricingAdvisor();">
             <div id="pBuyPriceFormatted" class="price-display"></div>
+        </div>
+
+        <!-- v100: مشاور قیمت‌گذاری خودکار -->
+        <div id="pricingAdvisorBox" class="report-card" style="display:none; margin-top:12px; border-color:rgba(34,211,238,.45);">
+            <h3 style="margin:0 0 6px; font-size:14px; color:var(--accent);">💡 مشاور قیمت‌گذاری خودکار</h3>
+            <div class="hint" style="margin-top:0;">با وارد کردن قیمت خرید، سیستم با احتساب سهم پیمانکار/مغازه و حاشیه سود هدف، سه قیمت پیشنهادی می‌دهد. می‌توانی با یک لمس روی قیمت فروش بگذاری.</div>
+            <div class="grid-2" style="margin-top:8px;">
+                <div>
+                    <label>سهم مغازه / پیمانکار از فروش (٪):</label>
+                    <input type="text" inputmode="decimal" id="priceCommissionPct" value="24" oninput="updatePricingAdvisor()">
+                </div>
+                <div>
+                    <label>سود هدف بعد از سهم مغازه (٪ روی خرید):</label>
+                    <input type="text" inputmode="decimal" id="priceTargetMarginPct" value="15" oninput="updatePricingAdvisor()">
+                </div>
+            </div>
+            <div id="pricingAdvisorResult" style="margin-top:10px;"></div>
         </div>
 
         <button class="submit-btn" id="productSubmitBtn" style="background: linear-gradient(90deg, #0284c7, #2563eb);" onclick="saveProduct()">ذخیره در انبار</button>
@@ -2771,7 +2788,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v100 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v101 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -5199,6 +5216,14 @@ notify pgrst, 'reload schema';`;
             updateConnectionStatusIndicator();
 
             document.getElementById('buyPriceField').style.display = (currentRole === 'admin') ? 'block' : 'none';
+            try {
+                const p = loadPricingPrefs();
+                const c = document.getElementById('priceCommissionPct');
+                const m = document.getElementById('priceTargetMarginPct');
+                if (c) c.value = String(p.commission);
+                if (m) m.value = String(p.targetMargin);
+                updatePricingAdvisor();
+            } catch (e) {}
 
             if (currentRole === 'admin') {
                 setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnQuickNote', 'btnInbox', 'btnStaffMessage', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnShiftSettings', 'btnTelegramSettings', 'btnDebtLedger', 'btnContractAdmin', 'btnGrowthReport', 'btnPurchaseInvoices', 'btnTakeoutAdmin', 'btnGoals', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnDeletedSales', 'btnWeeklyReports', 'btnPersonnel', 'btnMyAccount'], 'dashboardTab');
@@ -5418,6 +5443,144 @@ notify pgrst, 'reload schema';`;
             const formatted = Number(val).toLocaleString('fa-IR');
             document.getElementById(displayId).innerText = formatted + ' تومان';
         }
+
+        // --- v100 مشاور قیمت‌گذاری: از قیمت خرید + سهم مغازه → پیشنهاد قیمت فروش ---
+        function loadPricingPrefs() {
+            try {
+                const j = JSON.parse(localStorage.getItem('pricingAdvisorPrefs') || '{}');
+                return {
+                    commission: (j.commission != null && j.commission !== '') ? Number(j.commission) : 24,
+                    targetMargin: (j.targetMargin != null && j.targetMargin !== '') ? Number(j.targetMargin) : 15
+                };
+            } catch (e) { return { commission: 24, targetMargin: 15 }; }
+        }
+        function savePricingPrefs(commission, targetMargin) {
+            try {
+                localStorage.setItem('pricingAdvisorPrefs', JSON.stringify({ commission, targetMargin }));
+            } catch (e) {}
+        }
+        function parsePriceNum(raw) {
+            const s = String(raw || '')
+                .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
+                .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
+                .replace(/[٬,\s]/g, '')
+                .replace(/[٫]/g, '.')
+                .trim();
+            const n = parseFloat(s);
+            return (n > 0 && isFinite(n)) ? n : 0;
+        }
+        function roundSellPrice(n) {
+            // گرد کردن به هزار تومان برای خوانایی در مغازه
+            if (n >= 100000) return Math.round(n / 1000) * 1000;
+            if (n >= 10000) return Math.round(n / 500) * 500;
+            return Math.round(n / 100) * 100;
+        }
+        function computePricingAdvice(buy, commissionPct, targetMarginPct, category) {
+            const keep = Math.max(0.01, 1 - (commissionPct / 100)); // سهم باقی‌مانده بعد از مغازه
+            const breakEven = buy / keep; // فقط جبران خرید بعد از ۲۴٪
+            // سود هدف: درصد روی بهای خرید، بعد از کسر سهم مغازه
+            // sell * keep = buy * (1 + margin/100)  =>  sell = buy * (1+m) / keep
+            const margin = Math.max(0, targetMarginPct) / 100;
+            const good = buy * (1 + margin) / keep;
+            // پیشنهاد محتاط (سود کمتر) و پیشنهاد قوی (سود بیشتر)
+            const low = buy * (1 + margin * 0.5) / keep;
+            const strong = buy * (1 + margin * 1.4) / keep;
+            // برای سوسیس/کالباس کمی حاشیه بیشتر پیشنهاد می‌شود (رقابت کمتر روی بعضی اقلام)
+            const catBoost = (category === 'sausage') ? 1.03 : 1;
+            return {
+                breakEven: roundSellPrice(breakEven),
+                low: roundSellPrice(low * catBoost),
+                good: roundSellPrice(good * catBoost),
+                strong: roundSellPrice(strong * catBoost),
+                keepPct: Math.round(keep * 1000) / 10
+            };
+        }
+        function applySuggestedSellPrice(n) {
+            const el = document.getElementById('pSellPrice');
+            if (!el) return;
+            el.value = String(n);
+            formatPrice(el, 'pSellPriceFormatted');
+            updatePricingAdvisor();
+            try { showToast('✅ قیمت فروش روی ' + Number(n).toLocaleString('fa-IR') + ' تومان گذاشته شد.'); } catch (e) {}
+        }
+        function updatePricingAdvisor() {
+            const box = document.getElementById('pricingAdvisorBox');
+            const out = document.getElementById('pricingAdvisorResult');
+            if (!box || !out) return;
+            // فقط برای مدیر معنا دارد (فیلد خرید مال مدیر است)
+            if (currentRole !== 'admin') { box.style.display = 'none'; return; }
+            box.style.display = 'block';
+
+            const buy = parsePriceNum(document.getElementById('pBuyPrice') && document.getElementById('pBuyPrice').value);
+            const sell = parsePriceNum(document.getElementById('pSellPrice') && document.getElementById('pSellPrice').value);
+            let commission = parsePriceNum(document.getElementById('priceCommissionPct') && document.getElementById('priceCommissionPct').value);
+            let targetMargin = parsePriceNum(document.getElementById('priceTargetMarginPct') && document.getElementById('priceTargetMarginPct').value);
+            if (!(commission >= 0)) commission = 24;
+            if (!(targetMargin >= 0)) targetMargin = 15;
+            if (commission > 80) commission = 80;
+            savePricingPrefs(commission, targetMargin);
+
+            const catEl = document.getElementById('pCategory');
+            const category = catEl ? catEl.value : 'general';
+
+            if (!(buy > 0)) {
+                out.innerHTML = '<p class="hint" style="margin:0;">قیمت خرید را وارد کن تا پیشنهاد فروش خودکار بیاید (مثلاً از روی فاکتور عمده).</p>';
+                return;
+            }
+
+            const adv = computePricingAdvice(buy, commission, targetMargin, category);
+            const keep = Math.max(0.01, 1 - commission / 100);
+
+            let currentHtml = '';
+            if (sell > 0) {
+                const net = sell * keep;
+                const profit = net - buy;
+                const profitPctOnBuy = buy > 0 ? (profit / buy * 100) : 0;
+                const ok = profit >= 0;
+                const goodEnough = profitPctOnBuy >= targetMargin * 0.85;
+                currentHtml = `<div style="margin-top:8px; padding:10px; border-radius:12px; border:1px solid ${ok ? (goodEnough ? 'rgba(16,185,129,.45)' : 'rgba(251,191,36,.45)') : 'rgba(239,68,68,.5)'}; background:rgba(15,23,42,.25);">
+                    <b>قیمت فروش فعلی:</b> ${sell.toLocaleString('fa-IR')} تومان<br>
+                    بعد از ${commission.toLocaleString('fa-IR')}٪ مغازه می‌ماند: <b>${Math.round(net).toLocaleString('fa-IR')}</b> تومان<br>
+                    ${ok
+                        ? `سود تقریبی هر واحد: <b style="color:#34d399;">${Math.round(profit).toLocaleString('fa-IR')}</b> تومان (${profitPctOnBuy.toFixed(1)}٪ روی خرید)`
+                        : `⚠️ ضرر تقریبی هر واحد: <b style="color:#f87171;">${Math.round(-profit).toLocaleString('fa-IR')}</b> تومان — قیمت فروش را بالا ببر`}
+                </div>`;
+            }
+
+            out.innerHTML = `
+                <div style="font-size:12px; line-height:1.9;">
+                    <div>بهای خرید: <b>${buy.toLocaleString('fa-IR')}</b> تومان — سهم مغازه: <b>${commission.toLocaleString('fa-IR')}٪</b> (حدود <b>${adv.keepPct}٪</b> دست تو می‌ماند)</div>
+                    <div style="margin-top:8px; display:grid; gap:6px;">
+                        <button type="button" class="row-btn" style="width:100%; padding:10px; text-align:right; background:var(--bg-input); color:var(--text-primary); border:1px solid var(--border-color);" onclick="applySuggestedSellPrice(${adv.breakEven})">
+                            ⚖️ حداقل سر به سر: <b>${adv.breakEven.toLocaleString('fa-IR')}</b> تومان
+                            <span style="display:block; font-size:10px; opacity:.75; font-weight:normal;">فقط جبران خرید بعد از سهم مغازه — سود صفر</span>
+                        </button>
+                        <button type="button" class="row-btn" style="width:100%; padding:10px; text-align:right; background:linear-gradient(100deg,#0284c7,#6366f1); color:#fff;" onclick="applySuggestedSellPrice(${adv.good})">
+                            ✅ پیشنهاد اصلی (سود هدف): <b>${adv.good.toLocaleString('fa-IR')}</b> تومان
+                            <span style="display:block; font-size:10px; opacity:.9; font-weight:normal;">حدود ${targetMargin.toLocaleString('fa-IR')}٪ سود روی خرید بعد از سهم مغازه${category === 'sausage' ? ' · دسته سوسیس/کالباس' : ''}</span>
+                        </button>
+                        <button type="button" class="row-btn" style="width:100%; padding:10px; text-align:right; background:linear-gradient(100deg,#059669,#10b981); color:#fff;" onclick="applySuggestedSellPrice(${adv.strong})">
+                            🚀 پیشنهاد قوی‌تر: <b>${adv.strong.toLocaleString('fa-IR')}</b> تومان
+                            <span style="display:block; font-size:10px; opacity:.9; font-weight:normal;">اگر بازار بکشد و رقابت کم باشد</span>
+                        </button>
+                        <button type="button" class="row-btn" style="width:100%; padding:10px; text-align:right; background:var(--bg-input); color:var(--text-secondary); border:1px solid var(--border-color);" onclick="applySuggestedSellPrice(${adv.low})">
+                            📉 حاشیه کمتر (رقابتی): <b>${adv.low.toLocaleString('fa-IR')}</b> تومان
+                        </button>
+                    </div>
+                    ${currentHtml}
+                    <p class="hint" style="margin-top:8px;">نکته: ضایعات و پلاستیک جداگانه است؛ اگر ضایعات زیاد داری، همان پیشنهاد «قوی‌تر» را انتخاب کن یا سود هدف را کمی بالا ببر.</p>
+                </div>`;
+        }
+        // بازیابی تنظیمات مشاور موقع لود
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                const p = loadPricingPrefs();
+                const c = document.getElementById('priceCommissionPct');
+                const m = document.getElementById('priceTargetMarginPct');
+                if (c) c.value = String(p.commission);
+                if (m) m.value = String(p.targetMargin);
+            } catch (e) {}
+        });
 
         // --- نوار پایین صفحه: بر اساس نقش کاربر، میانبر به ۴-۵ بخش پرکاربرد رو می‌سازه ---
         const BOTTOM_NAV_ITEMS = {
@@ -10185,6 +10348,7 @@ notify pgrst, 'reload schema';`;
             document.getElementById('cancelEditBtn').style.display = 'block';
 
             switchTab('product');
+            try { updatePricingAdvisor(); } catch (e) {}
         }
 
         function cancelEdit() {
