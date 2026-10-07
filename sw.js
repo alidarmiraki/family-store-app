@@ -1,7 +1,7 @@
 // v89 — اضافه‌شده نسبت به نسخه‌ی قبلی: کش پوسته‌ی برنامه و کتابخانه‌های CDN (برای بازشدن بدون فیلترشکن) + اعلان Push.
 // درخواست‌های Supabase و پروکسی‌ها مثل قبل کاملاً دست‌نخورده می‌مانند (فقط CDNهای jsdelivr/unpkg/cdnjs و خود سایت).
 /* v89 — Service Worker: نصب PWA، بازشدن بدون فیلترشکن (کش پوسته و کتابخانه‌ها)، اعلان Push */
-const V = 'v102', SHELL = 'shell-' + V, LIBS = 'libs-v1';
+const V = 'v103', SHELL = 'shell-' + V, LIBS = 'libs-v1';
 const CDN = /(^|\.)(cdn\.jsdelivr\.net|unpkg\.com|cdnjs\.cloudflare\.com)$/;
 
 self.addEventListener('install', e => {

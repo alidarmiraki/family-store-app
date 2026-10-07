@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v102 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v103 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2789,7 +2789,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v102 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v103 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -11851,19 +11851,11 @@ notify pgrst, 'reload schema';`;
                     refreshPriceChangeBanner();
                     return;
                 }
-                showToast('⏳ در حال ساخت فایل اکسل لیست تغییر قیمت...');
-                if (typeof XLSX === 'undefined') {
-                    showToast('⏳ در حال بارگذاری کتابخانه اکسل...');
-                    const ok = (typeof ensureExcelLibLoaded === 'function')
-                        ? await ensureExcelLibLoaded()
-                        : await ensureLibraryLoaded('xlsx', () => typeof XLSX !== 'undefined', [
-                            'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
-                            'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js'
-                          ]);
-                    if (!ok || typeof XLSX === 'undefined') {
-                        showToast('❌ کتابخانه اکسل لود نشد. اینترنت را چک کن و دوباره بزن.');
-                        return;
-                    }
+                showToast('⏳ در حال ساخت فایل اکسل رنگی لیست تغییر قیمت...');
+                const okJs = await ensureExcelJsLoaded();
+                if (!okJs || typeof ExcelJS === 'undefined') {
+                    showToast('❌ کتابخانه اکسل رنگی لود نشد. اینترنت را چک کن و دوباره بزن.');
+                    return;
                 }
 
                 const todayFa = (typeof getTehranDateString === 'function')
@@ -11873,34 +11865,139 @@ notify pgrst, 'reload schema';`;
                     ? getTehranISODate(new Date())
                     : new Date().toISOString().slice(0, 10);
 
-                // ردیف عنوان + هدر + داده
-                const aoa = [
-                    ['لیست تغییر قیمت جزیره سرد'],
-                    ['تاریخ تهیه لیست:', todayFa, 'سهم مغازه (٪):', commission, 'سود هدف (٪):', targetMargin],
-                    [],
-                    ['نام محصول', 'کد کالا', 'قیمت جدید (ریال)', 'تاریخ']
-                ];
-                needChange.forEach(row => {
-                    aoa.push([
-                        row.product.name || '',
-                        row.product.code || '',
-                        row.newSellRial,
-                        todayFa
-                    ]);
+                const C = {
+                    titleBg: 'FF0F172A',
+                    titleFg: 'FFFFFFFF',
+                    subBg: 'FFE0F2FE',
+                    subFg: 'FF0C4A6E',
+                    headerBg: 'FF0369A1',
+                    headerFg: 'FFFFFFFF',
+                    band: 'FFF0F9FF',
+                    white: 'FFFFFFFF',
+                    priceBg: 'FFECFDF5',
+                    priceFg: 'FF065F46',
+                    border: { style: 'thin', color: { argb: 'FF94A3B8' } },
+                    thick: { style: 'medium', color: { argb: 'FF0369A1' } }
+                };
+                const thin = { top: C.border, bottom: C.border, left: C.border, right: C.border };
+
+                const wb = new ExcelJS.Workbook();
+                wb.creator = 'سیستم غرفه فامیلی — جزیره سرد';
+                wb.created = new Date();
+                wb.keywords = 'تغییر قیمت,جزیره سرد,فامیلی';
+
+                const ws = wb.addWorksheet('لیست تغییر قیمت', {
+                    views: [{ rightToLeft: true, showGridLines: false }],
+                    pageSetup: { orientation: 'portrait', fitToPage: true, fitToWidth: 1, paperSize: 9 }
                 });
 
-                const ws = XLSX.utils.aoa_to_sheet(aoa);
+                // --- عنوان رسمی ---
+                ws.mergeCells('A1:D1');
+                const t1 = ws.getCell('A1');
+                t1.value = '📋 لیست تغییر قیمت جزیره سرد';
+                t1.font = { bold: true, size: 16, color: { argb: C.titleFg }, name: 'Tahoma' };
+                t1.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.titleBg } };
+                t1.alignment = { horizontal: 'center', vertical: 'middle' };
+                ws.getRow(1).height = 34;
+
+                ws.mergeCells('A2:D2');
+                const t2 = ws.getCell('A2');
+                t2.value = 'فروشگاه فامیلی — لاین غذایی / دره میرکی';
+                t2.font = { bold: true, size: 11, color: { argb: C.subFg }, name: 'Tahoma' };
+                t2.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.subBg } };
+                t2.alignment = { horizontal: 'center', vertical: 'middle' };
+                ws.getRow(2).height = 22;
+
+                // --- اطلاعات لیست ---
+                ws.mergeCells('A3:D3');
+                const t3 = ws.getCell('A3');
+                t3.value = `تاریخ تهیه: ${todayFa}   |   تعداد کالا: ${needChange.length.toLocaleString('fa-IR')}   |   سهم مغازه: ${Number(commission).toLocaleString('fa-IR')}٪   |   سود هدف: ${Number(targetMargin).toLocaleString('fa-IR')}٪`;
+                t3.font = { size: 10, color: { argb: 'FF334155' }, name: 'Tahoma' };
+                t3.alignment = { horizontal: 'center', vertical: 'middle' };
+                t3.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+                ws.getRow(3).height = 20;
+
+                ws.addRow([]);
+
+                // --- هدر جدول ---
+                const headerRow = ws.addRow(['ردیف', 'نام محصول', 'کد کالا', 'قیمت جدید (ریال)']);
+                headerRow.height = 26;
+                headerRow.eachCell((cell, col) => {
+                    cell.font = { bold: true, size: 11, color: { argb: C.headerFg }, name: 'Tahoma' };
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.headerBg } };
+                    cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+                    cell.border = {
+                        top: C.thick, bottom: C.thick, left: C.border, right: C.border
+                    };
+                });
+
+                // --- ردیف‌های داده ---
+                needChange.forEach((row, idx) => {
+                    const r = ws.addRow([
+                        idx + 1,
+                        row.product.name || '',
+                        row.product.code || '',
+                        row.newSellRial
+                    ]);
+                    r.height = 22;
+                    const even = idx % 2 === 0;
+                    r.eachCell((cell, colNumber) => {
+                        cell.border = thin;
+                        cell.font = { size: 11, name: 'Tahoma', color: { argb: 'FF0F172A' } };
+                        cell.alignment = {
+                            horizontal: colNumber === 2 ? 'right' : 'center',
+                            vertical: 'middle'
+                        };
+                        if (even) {
+                            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.band } };
+                        } else {
+                            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.white } };
+                        }
+                    });
+                    // ستون قیمت جدید برجسته و سبز
+                    const priceCell = r.getCell(4);
+                    priceCell.numFmt = '#,##0';
+                    priceCell.font = { bold: true, size: 11, name: 'Tahoma', color: { argb: C.priceFg } };
+                    priceCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.priceBg } };
+                    priceCell.alignment = { horizontal: 'center', vertical: 'middle' };
+                });
+
+                // --- جمع / پاورقی ---
+                const footerRow = ws.addRow([]);
+                ws.mergeCells(`A${footerRow.number}:D${footerRow.number}`);
+                const foot = ws.getCell(`A${footerRow.number}`);
+                foot.value = `✅ این لیست بر اساس قیمت خرید ثبت‌شده در سیستم و سهم مغازه ${Number(commission).toLocaleString('fa-IR')}٪ محاسبه شده است. قیمت‌ها به ریال هستند.`;
+                foot.font = { size: 9, italic: true, color: { argb: 'FF64748B' }, name: 'Tahoma' };
+                foot.alignment = { horizontal: 'right', vertical: 'middle', wrapText: true };
+                ws.getRow(footerRow.number).height = 28;
+
+                const noteRow = ws.addRow([]);
+                ws.mergeCells(`A${noteRow.number}:D${noteRow.number}`);
+                const note = ws.getCell(`A${noteRow.number}`);
+                note.value = `تهیه‌شده توسط سیستم مدیریت غرفه فامیلی — ${todayFa}`;
+                note.font = { size: 9, color: { argb: 'FF94A3B8' }, name: 'Tahoma' };
+                note.alignment = { horizontal: 'center', vertical: 'middle' };
+
                 // عرض ستون‌ها
-                ws['!cols'] = [{ wch: 36 }, { wch: 16 }, { wch: 18 }, { wch: 16 }];
-                // ادغام عنوان
-                ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }];
+                ws.getColumn(1).width = 8;
+                ws.getColumn(2).width = 38;
+                ws.getColumn(3).width = 16;
+                ws.getColumn(4).width = 20;
 
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, 'لیست تغییر قیمت');
+                // چاپ: تکرار هدر
+                ws.pageSetup.printTitlesRow = '5:5';
 
-                const fileName = `لیست-تغییر-قیمت-جزیره-سرد_${todayISO}.xlsx`;
-                XLSX.writeFile(wb, fileName);
-                showToast('✅ اکسل آماده شد: ' + needChange.length.toLocaleString('fa-IR') + ' کالا\n📋 لیست تغییر قیمت جزیره سرد');
+                const buffer = await wb.xlsx.writeBuffer();
+                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `لیست-تغییر-قیمت-جزیره-سرد_${todayISO}.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => { try { URL.revokeObjectURL(url); a.remove(); } catch (e) {} }, 1500);
+
+                showToast('✅ اکسل رنگی آماده شد: ' + needChange.length.toLocaleString('fa-IR') + ' کالا\n📋 لیست تغییر قیمت جزیره سرد');
             } catch (e) {
                 console.error(e);
                 showToast('❌ خطا در ساخت اکسل: ' + (e && e.message ? e.message : e));
