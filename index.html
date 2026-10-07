@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v101 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v102 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2106,6 +2106,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <h2>📦 لیست کالاهای انبار</h2>
         <div class="low-stock-banner" id="lowStockBanner"></div>
         <div class="reminder-banner" id="depletionForecastBanner"></div>
+        <div id="priceChangeBanner" style="display:none; margin-bottom:10px;"></div>
         <div class="mode-selector">
             <button class="mode-btn active" id="invCatBtn_general" onclick="switchInventoryCategory('general')">🧀 لبنیات و ترشیجات</button>
             <button class="mode-btn" id="invCatBtn_sausage" onclick="switchInventoryCategory('sausage')">🌭 سوسیس و کالباس</button>
@@ -2788,7 +2789,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v101 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v102 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -10240,6 +10241,7 @@ notify pgrst, 'reload schema';`;
                 } else {
                     showToast('✅ کالا با موفقیت به‌روزرسانی شد');
                     logInventoryChange(name, 'ویرایش کالا', `موجودی انبار: ${stock} کیلوگرم | موجودی غرفه: ${boothStock} کیلوگرم`);
+                    try { if (cachedInventoryFull) { const ix = cachedInventoryFull.findIndex(x => String(x.id) === String(editingProductId)); if (ix >= 0) { cachedInventoryFull[ix] = Object.assign({}, cachedInventoryFull[ix], { name, code, sell_price, buy_price, category }); } } refreshPriceChangeBanner(); } catch (e) {}
                     // cancelEdit خودش restoreInventoryView را صدا می‌زند اگر invReturnState باشد
                     const hadReturn = !!invReturnState;
                     cancelEdit();
@@ -10260,6 +10262,7 @@ notify pgrst, 'reload schema';`;
                     showToast('✅ کالای جدید با موفقیت ذخیره شد');
                     clearProductForm();
                     loadProductDatalist();
+                    try { loadInventory(true); } catch (e) {}
                 }
             }
         }
@@ -11772,7 +11775,140 @@ notify pgrst, 'reload schema';`;
 
         let inventoryCategoryFilter = 'general';
 
+
+        // --- v101: لیست تغییر قیمت جزیره سرد (کالاهایی که با قیمت خرید فعلی باید فروش‌شان عوض شود) ---
+        function getPriceChangeCandidates() {
+            const prefs = (typeof loadPricingPrefs === 'function') ? loadPricingPrefs() : { commission: 24, targetMargin: 15 };
+            const commission = Number(prefs.commission);
+            const targetMargin = Number(prefs.targetMargin);
+            const list = cachedInventoryFull || cachedProductsList || [];
+            const needChange = [];
+            const missingBuy = [];
+            list.forEach(p => {
+                const buy = Number(p.buy_price) || 0;
+                const sell = Number(p.sell_price) || 0;
+                if (!(buy > 0)) {
+                    if (p.code || p.name) missingBuy.push(p);
+                    return;
+                }
+                const adv = (typeof computePricingAdvice === 'function')
+                    ? computePricingAdvice(buy, isFinite(commission) ? commission : 24, isFinite(targetMargin) ? targetMargin : 15, p.category || 'general')
+                    : null;
+                if (!adv) return;
+                // نیاز به تغییر: فروش فعلی صفر/کمتر از سر به سر، یا به‌طور محسوس کمتر از پیشنهاد اصلی
+                const belowBreakEven = sell < adv.breakEven;
+                const belowGood = sell < Math.round(adv.good * 0.97);
+                if (belowBreakEven || belowGood) {
+                    needChange.push({
+                        product: p,
+                        buy,
+                        sell,
+                        newSellToman: adv.good,
+                        newSellRial: Math.round(adv.good * 10),
+                        breakEven: adv.breakEven,
+                        reason: belowBreakEven ? 'زیر سر به سر' : 'زیر پیشنهاد سود'
+                    });
+                }
+            });
+            needChange.sort((a, b) => String(a.product.name || '').localeCompare(String(b.product.name || ''), 'fa'));
+            missingBuy.sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'fa'));
+            return { needChange, missingBuy, commission, targetMargin };
+        }
+
+        function refreshPriceChangeBanner() {
+            const box = document.getElementById('priceChangeBanner');
+            if (!box) return;
+            if (currentRole !== 'admin') { box.style.display = 'none'; box.innerHTML = ''; return; }
+            const { needChange, missingBuy } = getPriceChangeCandidates();
+            const fa = n => Number(n).toLocaleString('fa-IR');
+            if (!needChange.length && !missingBuy.length) {
+                box.style.display = 'block';
+                box.innerHTML = `<div class="report-card" style="margin:0; border-color:rgba(16,185,129,.45);">
+                    <p style="margin:0; font-size:13px; color:#34d399;">✅ همه کالاهایی که قیمت خرید دارند، از نظر قیمت فروش وضعیت قابل‌قبولی دارند.</p>
+                    <p class="hint" style="margin:6px 0 0;">اگر کالای جدیدی خریدی، اول قیمت خرید را در ویرایش کالا وارد کن تا اینجا بررسی شود.</p>
+                </div>`;
+                return;
+            }
+            box.style.display = 'block';
+            let html = '';
+            if (needChange.length) {
+                html += `<button type="button" class="submit-btn" style="background:linear-gradient(100deg,#f59e0b,#ea580c); margin-top:0;" onclick="exportPriceChangeExcel()">
+                    📋 ${fa(needChange.length)} کالا نیاز به تغییر قیمت دارند — دانلود اکسل «لیست تغییر قیمت جزیره سرد»
+                </button>`;
+                html += `<div class="hint" style="margin-top:6px;">با کلیک، فایل اکسل به‌روز با نام محصول، کد کالا، قیمت جدید (ریال) و تاریخ ساخته می‌شود. لیست همیشه از روی قیمت خرید/فروش فعلی انبار محاسبه می‌شود.</div>`;
+            }
+            if (missingBuy.length) {
+                html += `<div class="bz-strip" style="margin-top:8px;">ℹ️ ${fa(missingBuy.length)} کالا هنوز قیمت خرید ندارند — برای پیشنهاد قیمت فروش، از ویرایش کالا قیمت خرید فاکتور را وارد کن.</div>`;
+            }
+            box.innerHTML = html;
+        }
+
+        async function exportPriceChangeExcel() {
+            try {
+                const { needChange, commission, targetMargin } = getPriceChangeCandidates();
+                if (!needChange.length) {
+                    showToast('هیچ کالایی برای تغییر قیمت در صف نیست.');
+                    refreshPriceChangeBanner();
+                    return;
+                }
+                showToast('⏳ در حال ساخت فایل اکسل لیست تغییر قیمت...');
+                if (typeof XLSX === 'undefined') {
+                    showToast('⏳ در حال بارگذاری کتابخانه اکسل...');
+                    const ok = (typeof ensureExcelLibLoaded === 'function')
+                        ? await ensureExcelLibLoaded()
+                        : await ensureLibraryLoaded('xlsx', () => typeof XLSX !== 'undefined', [
+                            'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
+                            'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js'
+                          ]);
+                    if (!ok || typeof XLSX === 'undefined') {
+                        showToast('❌ کتابخانه اکسل لود نشد. اینترنت را چک کن و دوباره بزن.');
+                        return;
+                    }
+                }
+
+                const todayFa = (typeof getTehranDateString === 'function')
+                    ? getTehranDateString(new Date())
+                    : new Date().toLocaleDateString('fa-IR');
+                const todayISO = (typeof getTehranISODate === 'function')
+                    ? getTehranISODate(new Date())
+                    : new Date().toISOString().slice(0, 10);
+
+                // ردیف عنوان + هدر + داده
+                const aoa = [
+                    ['لیست تغییر قیمت جزیره سرد'],
+                    ['تاریخ تهیه لیست:', todayFa, 'سهم مغازه (٪):', commission, 'سود هدف (٪):', targetMargin],
+                    [],
+                    ['نام محصول', 'کد کالا', 'قیمت جدید (ریال)', 'تاریخ']
+                ];
+                needChange.forEach(row => {
+                    aoa.push([
+                        row.product.name || '',
+                        row.product.code || '',
+                        row.newSellRial,
+                        todayFa
+                    ]);
+                });
+
+                const ws = XLSX.utils.aoa_to_sheet(aoa);
+                // عرض ستون‌ها
+                ws['!cols'] = [{ wch: 36 }, { wch: 16 }, { wch: 18 }, { wch: 16 }];
+                // ادغام عنوان
+                ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }];
+
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'لیست تغییر قیمت');
+
+                const fileName = `لیست-تغییر-قیمت-جزیره-سرد_${todayISO}.xlsx`;
+                XLSX.writeFile(wb, fileName);
+                showToast('✅ اکسل آماده شد: ' + needChange.length.toLocaleString('fa-IR') + ' کالا\n📋 لیست تغییر قیمت جزیره سرد');
+            } catch (e) {
+                console.error(e);
+                showToast('❌ خطا در ساخت اکسل: ' + (e && e.message ? e.message : e));
+            }
+        }
+
         async function loadInventory(preserveFilters) {
+
             const [prodRes, vel] = await Promise.all([
                 _supabase.from('products')
                     .select('id, code, name, stock, booth_stock, min_stock, booth_min_stock, sell_price, buy_price, container_capacity, category, no_restock, booth_only'),
@@ -11799,6 +11935,7 @@ notify pgrst, 'reload schema';`;
 
             renderInventoryCategoryView();
             loadDepletionForecast();
+            try { refreshPriceChangeBanner(); } catch (e) {}
         }
 
         // --- پیش‌بینی اتمام موجودی بر اساس میانگین فروش ۱۴ روز اخیر ---
