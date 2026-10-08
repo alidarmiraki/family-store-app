@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v103 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v104 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2789,7 +2789,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v103 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v104 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -7319,74 +7319,115 @@ notify pgrst, 'reload schema';`;
             return cachedTelegramSettings;
         }
 
-        // آدرس پایه‌ی تلگرام که همین الان باید استفاده بشه — دقیقاً مثل Supabase، اول مستقیم
-        // امتحان می‌شه و اگه جواب نداد (فیلتر بود)، خودش سوییچ می‌کنه به پروکسی روی دامنه‌ی خودمون.
+        // آدرس‌های تلگرام: پروکسی اول (بدون فیلترشکن)، بعد بقیه، در آخر مستقیم
         const TELEGRAM_REAL_BASE = "https://api.telegram.org";
         const TELEGRAM_PROXY_ENDPOINTS = [
-            TELEGRAM_REAL_BASE,
-            "https://proxy.ali8001.ir/telegram", // همون Worker مشترکی که Supabase رو هم پروکسی می‌کند
+            "https://proxy.ali8001.ir/telegram",
+            "https://shop-proxy-1.adarmiraki.workers.dev/telegram",
+            TELEGRAM_REAL_BASE
         ];
+        try {
+            JSON.parse(localStorage.getItem('extraProxies') || '[]').forEach(u => {
+                if (!u || typeof u !== 'string') return;
+                const base = u.replace(/\/+$/, '');
+                const tg = /\/telegram$/i.test(base) ? base : (base + '/telegram');
+                if (TELEGRAM_PROXY_ENDPOINTS.indexOf(tg) === -1) TELEGRAM_PROXY_ENDPOINTS.push(tg);
+            });
+        } catch (e) {}
         let activeTelegramBase = TELEGRAM_PROXY_ENDPOINTS[0];
+        try {
+            const savedTg = localStorage.getItem('lastGoodTelegramBase');
+            if (savedTg && TELEGRAM_PROXY_ENDPOINTS.indexOf(savedTg) !== -1) activeTelegramBase = savedTg;
+        } catch (e) {}
 
-        // درخواست به تلگرام رو از آدرس فعال فعلی امتحان می‌کنه؛ اگه شکست خورد (فیلتر/قطعی)،
-        // بقیه‌ی آدرس‌های پروکسی رو هم امتحان می‌کنه و اولین موردی که جواب داد رو برای
-        // درخواست‌های بعدی «فعال» نگه می‌داره — بدون نیاز به رفرش یا کار دستی کاربر.
+        function _tgRememberBase(base) {
+            activeTelegramBase = base;
+            try { localStorage.setItem('lastGoodTelegramBase', base); } catch (e) {}
+        }
+        function _tgBasesOrdered() {
+            const ordered = [activeTelegramBase];
+            TELEGRAM_PROXY_ENDPOINTS.forEach(u => { if (ordered.indexOf(u) === -1) ordered.push(u); });
+            return ordered;
+        }
+
+        // درخواست به تلگرام با سوییچ خودکار بین همه‌ی پروکسی‌ها
         async function telegramFetch(path, init, timeoutMs) {
-            try {
-                return await fetchWithTimeout(activeTelegramBase + path, init, timeoutMs || 6000);
-            } catch (firstErr) {
-                for (const candidate of TELEGRAM_PROXY_ENDPOINTS) {
-                    if (candidate === activeTelegramBase) continue;
-                    try {
-                        const res = await fetchWithTimeout(candidate + path, init, Math.max(timeoutMs || 6000, 7000));
-                        activeTelegramBase = candidate;
-                        console.warn('📡 اتصال مستقیم به تلگرام برقرار نشد؛ سوییچ خودکار به پروکسی:', candidate);
-                        return res;
-                    } catch (e) { /* برو سراغ پروکسی بعدی */ }
+            let lastErr = null;
+            const bases = _tgBasesOrdered();
+            for (let i = 0; i < bases.length; i++) {
+                const base = bases[i];
+                try {
+                    const res = await fetchWithTimeout(base + path, init, timeoutMs || 12000);
+                    _tgRememberBase(base);
+                    if (i > 0) console.warn('📡 تلگرام از طریق پروکسی وصل شد:', base);
+                    return res;
+                } catch (e) {
+                    lastErr = e;
+                    console.warn('تلگرام از این پایه وصل نشد:', base, e && e.message);
                 }
-                throw firstErr;
             }
+            throw lastErr || new Error('Failed to fetch');
         }
 
         async function sendTelegramNotification(text) {
             try {
                 const s = await getTelegramSettings();
                 if (!s.enabled || !s.botToken || !s.chatId) return;
-                // این درخواست به سرور تلگرام می‌رود که ممکن است بدون فیلترشکن در دسترس نباشد؛
-                // telegramFetch خودش هم سقف زمانی می‌گذارد و هم در صورت شکست به‌طور خودکار
-                // پروکسی را امتحان می‌کند — کارکرد اصلی برنامه هیچ وابستگی به موفقیت این ندارد.
                 await telegramFetch(`/bot${s.botToken}/sendMessage`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ chat_id: s.chatId, text: text })
-                }, 6000);
+                }, 12000);
             } catch (e) {
-                console.warn('خطا در ارسال پیام تلگرام (بدون اشکال برای کارکرد اصلی برنامه) — احتمالاً بدون فیلترشکن قابل دسترس نیست', e);
+                console.warn('خطا در ارسال پیام تلگرام (بدون اشکال برای کارکرد اصلی برنامه)', e);
             }
         }
 
-        // ارسال یک فایل (مثلاً اکسل گزارش هفتگی) مستقیم به تلگرام، همراه یک کپشن توضیحی.
-        // برخلاف پیام متنی ساده (sendMessage)، ارسال فایل (sendDocument) حجمش بیشتره و به
-        // فیلترینگ/کندی اینترنت حساس‌تره؛ برای همین اینجا: ۱) زمان بیشتری می‌دیم، ۲) اگه بار
-        // اول شکست خورد یک‌بار دیگه هم امتحان می‌کنیم، و ۳) دلیل دقیق شکست رو برمی‌گردونیم
-        // (نه فقط true/false) تا کاربر بفهمه واقعاً چی شده.
-        async function sendTelegramDocumentAttempt(blob, filename, caption, timeoutMs) {
+        // روش ۱: sendDocument با URL عمومی فایل (JSON کوچک — بهترین برای اینترنت فیلترشده)
+        async function sendTelegramDocumentByUrl(fileUrl, filename, caption, timeoutMs) {
             try {
-                const s = await getTelegramSettings(true); // همیشه آخرین تنظیمات ذخیره‌شده رو بخون، نه نسخه‌ی کش‌شده
+                const s = await getTelegramSettings(true);
                 if (!s.enabled) return { ok: false, error: 'ارسال پیام‌های تلگرام غیرفعاله (توی تب «تنظیمات تلگرام» فعالش کن).' };
                 if (!s.botToken || !s.chatId) return { ok: false, error: 'توکن ربات یا شناسه چت هنوز ثبت نشده.' };
+                if (!fileUrl) return { ok: false, error: 'لینک عمومی فایل موجود نیست.' };
+
+                const res = await telegramFetch(`/bot${s.botToken}/sendDocument`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: s.chatId,
+                        document: fileUrl,
+                        caption: caption || ''
+                    })
+                }, timeoutMs || 25000);
+                const json = await res.json().catch(() => null);
+                if (json && json.ok) return { ok: true, method: 'url' };
+                return { ok: false, error: (json && json.description) ? json.description : `پاسخ نامعتبر از تلگرام (کد ${res.status})` };
+            } catch (e) {
+                const isAbort = e && e.name === 'AbortError';
+                return { ok: false, error: isAbort ? 'اتصال به تلگرام طول کشید (فیلتر/کندی).' : ('خطای شبکه: ' + (e.message || e)) };
+            }
+        }
+
+        // روش ۲: آپلود مستقیم فایل از گوشی
+        async function sendTelegramDocumentAttempt(blob, filename, caption, timeoutMs) {
+            try {
+                const s = await getTelegramSettings(true);
+                if (!s.enabled) return { ok: false, error: 'ارسال پیام‌های تلگرام غیرفعاله (توی تب «تنظیمات تلگرام» فعالش کن).' };
+                if (!s.botToken || !s.chatId) return { ok: false, error: 'توکن ربات یا شناسه چت هنوز ثبت نشده.' };
+                if (!blob) return { ok: false, error: 'فایل برای ارسال موجود نیست.' };
 
                 const form = new FormData();
                 form.append('chat_id', s.chatId);
                 form.append('caption', caption || '');
-                form.append('document', blob, filename);
+                form.append('document', blob, filename || 'report.xlsx');
 
                 const res = await telegramFetch(`/bot${s.botToken}/sendDocument`, {
                     method: 'POST',
                     body: form
-                }, timeoutMs);
+                }, timeoutMs || 45000);
                 const json = await res.json().catch(() => null);
-                if (json && json.ok) return { ok: true };
+                if (json && json.ok) return { ok: true, method: 'upload' };
                 return { ok: false, error: (json && json.description) ? json.description : `پاسخ نامعتبر از تلگرام (کد ${res.status})` };
             } catch (e) {
                 const isAbort = e && e.name === 'AbortError';
@@ -7394,14 +7435,66 @@ notify pgrst, 'reload schema';`;
             }
         }
 
-        async function sendTelegramDocument(blob, filename, caption) {
-            let result = await sendTelegramDocumentAttempt(blob, filename, caption, 45000);
-            if (!result.ok) {
-                // بار دوم، بعد از یه مکث کوتاه، دوباره امتحان کن — روی اینترنت فیلترشده معمولاً بار دوم جواب می‌ده
-                await new Promise(r => setTimeout(r, 2500));
-                result = await sendTelegramDocumentAttempt(blob, filename, caption, 45000);
+        // روش ۳: فقط پیام متنی با لینک دانلود
+        async function sendTelegramFileLinkMessage(fileUrl, filename, caption) {
+            try {
+                const s = await getTelegramSettings(true);
+                if (!s.enabled) return { ok: false, error: 'ارسال پیام‌های تلگرام غیرفعاله.' };
+                if (!s.botToken || !s.chatId) return { ok: false, error: 'توکن ربات یا شناسه چت ثبت نشده.' };
+                if (!fileUrl) return { ok: false, error: 'لینک فایل موجود نیست.' };
+                const text = (caption ? caption + '\n\n' : '') +
+                    '📥 دانلود فایل: ' + (filename || 'گزارش') + '\n' + fileUrl;
+                const res = await telegramFetch(`/bot${s.botToken}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: s.chatId, text: text, disable_web_page_preview: false })
+                }, 15000);
+                const json = await res.json().catch(() => null);
+                if (json && json.ok) return { ok: true, method: 'link' };
+                return { ok: false, error: (json && json.description) ? json.description : `پاسخ نامعتبر (کد ${res.status})` };
+            } catch (e) {
+                return { ok: false, error: 'خطای شبکه: ' + (e.message || e) };
             }
-            return result; // { ok: true } یا { ok: false, error: '...' }
+        }
+
+        /**
+         * ارسال فایل به تلگرام — چند لایه، بدون نیاز به فیلترشکن:
+         * 1) لینک عمومی Supabase → sendDocument با URL
+         * 2) آپلود مستقیم blob
+         * 3) پیام متنی با لینک دانلود
+         * options: { fileUrl: 'https://...' }
+         */
+        async function sendTelegramDocument(blob, filename, caption, options) {
+            const fileUrl = options && options.fileUrl ? options.fileUrl : null;
+            const errors = [];
+
+            if (fileUrl) {
+                let r = await sendTelegramDocumentByUrl(fileUrl, filename, caption, 25000);
+                if (r.ok) return r;
+                errors.push('لینک‌فایل: ' + r.error);
+                await new Promise(x => setTimeout(x, 800));
+                r = await sendTelegramDocumentByUrl(fileUrl, filename, caption, 30000);
+                if (r.ok) return r;
+                errors.push('لینک‌فایل(۲): ' + r.error);
+            }
+
+            if (blob) {
+                let r = await sendTelegramDocumentAttempt(blob, filename, caption, 45000);
+                if (r.ok) return r;
+                errors.push('آپلود: ' + r.error);
+                await new Promise(x => setTimeout(x, 1500));
+                r = await sendTelegramDocumentAttempt(blob, filename, caption, 50000);
+                if (r.ok) return r;
+                errors.push('آپلود(۲): ' + r.error);
+            }
+
+            if (fileUrl) {
+                const r = await sendTelegramFileLinkMessage(fileUrl, filename, caption);
+                if (r.ok) return r;
+                errors.push('پیام‌لینک: ' + r.error);
+            }
+
+            return { ok: false, error: errors.filter(Boolean).join(' | ') || 'ارسال به تلگرام ناموفق بود.' };
         }
 
         async function loadTelegramSettings() {
@@ -13245,8 +13338,22 @@ notify pgrst, 'reload schema';`;
             if (uploadGeneral.error) throw new Error('خطا در آپلود فایل کلی: ' + uploadGeneral.error.message + '\n\nمطمئن شوید باکت weekly-reports در Supabase ساخته شده و public است.');
             if (uploadDetailed.error) throw new Error('خطا در آپلود فایل جزئیات: ' + uploadDetailed.error.message);
 
-            const generalUrl = _supabase.storage.from(WEEKLY_REPORTS_BUCKET).getPublicUrl(generalPath).data?.publicUrl || null;
-            const detailedUrl = _supabase.storage.from(WEEKLY_REPORTS_BUCKET).getPublicUrl(detailedPath).data?.publicUrl || null;
+            // لینک عمومی باید روی دامنه‌ی مستقیم Supabase باشد تا سرور تلگرام (خارج ایران) بتواند فایل را بگیرد؛
+            // اگر کلاینت از پروکسی استفاده کند getPublicUrl ممکن است آدرس پروکسی بدهد که برای تلگرام کار نمی‌کند.
+            function weeklyPublicUrl(path) {
+                const raw = _supabase.storage.from(WEEKLY_REPORTS_BUCKET).getPublicUrl(path).data?.publicUrl || '';
+                if (!raw) return null;
+                try {
+                    const u = new URL(raw);
+                    // هر هاست پروکسی را با دامنه واقعی جایگزین کن
+                    if (u.hostname !== 'kinjpmvoyioaslpdzujg.supabase.co') {
+                        return `https://kinjpmvoyioaslpdzujg.supabase.co/storage/v1/object/public/${WEEKLY_REPORTS_BUCKET}/${path}`;
+                    }
+                } catch (e) {}
+                return raw;
+            }
+            const generalUrl = weeklyPublicUrl(generalPath);
+            const detailedUrl = weeklyPublicUrl(detailedPath);
 
             await _supabase.from('weekly_reports').upsert([{
                 week_start_date: startISODate,
@@ -13276,8 +13383,8 @@ notify pgrst, 'reload schema';`;
                     telegramOk: true, telegramErrors: []
                 };
             }
-            const generalSendResult = await sendTelegramDocument(general.blob, general.fileName, `📊 گزارش کلی هفتگی غرفه فامیلی\n${baseCaption}`);
-            const detailedSendResult = await sendTelegramDocument(detailed.blob, detailed.fileName, `📋 گزارش با جزئیات هفتگی غرفه فامیلی\n${baseCaption}`);
+            const generalSendResult = await sendTelegramDocument(general.blob, general.fileName, `📊 گزارش کلی هفتگی غرفه فامیلی\n${baseCaption}`, { fileUrl: generalUrl });
+            const detailedSendResult = await sendTelegramDocument(detailed.blob, detailed.fileName, `📋 گزارش با جزئیات هفتگی غرفه فامیلی\n${baseCaption}`, { fileUrl: detailedUrl });
             const telegramErrors = [];
             if (!generalSendResult.ok) telegramErrors.push('گزارش کلی: ' + generalSendResult.error);
             if (!detailedSendResult.ok) telegramErrors.push('گزارش جزئیات: ' + detailedSendResult.error);
@@ -13389,18 +13496,16 @@ notify pgrst, 'reload schema';`;
         async function resendWeeklyReportToTelegram(startISODate, endISODate) {
             showToast('⏳ در حال ساخت دوباره‌ی فایل‌ها و ارسال به تلگرام...');
             try {
-                const { ctx, general, detailed } = await generateWeeklyReportFiles(startISODate, endISODate);
-                const baseCaption = `📅 از ${jalaliLabelForISODate(startISODate)} تا ${jalaliLabelForISODate(endISODate)} (ارسال مجدد)\n\n🧾 تعداد فاکتور فروش: ${ctx.sales.length.toLocaleString('fa-IR')}\n💰 مجموع فروش: ${ctx.totalSales.toLocaleString('fa-IR')} تومان\n💸 مجموع هزینه‌ها: ${ctx.totalExpenses.toLocaleString('fa-IR')} تومان\n🛒 مجموع برداشتی پرسنل: ${ctx.totalTakeouts.toLocaleString('fa-IR')} تومان`;
-                const res1 = await sendTelegramDocument(general.blob, general.fileName, `📊 گزارش کلی هفتگی\n${baseCaption}`);
-                const res2 = await sendTelegramDocument(detailed.blob, detailed.fileName, `📋 گزارش جزئیات هفتگی\n${baseCaption}`);
-                if (res1.ok && res2.ok) {
+                // از مسیر کامل ذخیره+ارسال استفاده کن تا لینک عمومی Supabase هم ساخته شود
+                // و بدون فیلترشکن از طریق پروکسی/لینک ارسال شود
+                const result = await buildStoreAndSendWeeklyReport(startISODate, endISODate, false, true);
+                if (result.telegramOk) {
                     showToast('✅ هر دو فایل دوباره به تلگرام ارسال شد.');
                 } else {
-                    const errs = [];
-                    if (!res1.ok) errs.push('گزارش کلی: ' + res1.error);
-                    if (!res2.ok) errs.push('گزارش جزئیات: ' + res2.error);
-                    showToast('❌ ارسال به تلگرام ناموفق بود:\n' + errs.join('\n'));
+                    showToast('❌ ارسال به تلگرام ناموفق بود:\n' + (result.telegramErrors || []).join('\n'));
                 }
+                const tab = document.getElementById('weeklyReportsTab');
+                if (tab && tab.classList.contains('active')) loadWeeklyReportsList();
             } catch (e) {
                 showToast('❌ خطا: ' + e.message);
             }
