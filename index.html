@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v105 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v106 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2789,7 +2789,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v105 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v106 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -6053,9 +6053,15 @@ notify pgrst, 'reload schema';`;
 
             let personalAlarmCard = '';
             if (currentRole === 'morning_seller' || currentRole === 'evening_seller') {
-                const myEntered = todayAttendance.some(a => a.seller_name === currentUserLabel && a.type === 'entry');
-                const myExited = todayAttendance.some(a => a.seller_name === currentUserLabel && a.type === 'exit');
-                const myOnLeave = todayAttendance.some(a => a.seller_name === currentUserLabel && a.type === 'leave');
+                const myAtt = todayAttendance.filter(a => attendanceBelongsToMe(a.seller_name));
+                const myEntered = myAtt.some(a => a.type === 'entry') || !!(getLocalAttDone(todayISO).entry);
+                const myExits = myAtt.filter(a => a.type === 'exit');
+                const myEntries = myAtt.filter(a => a.type === 'entry');
+                const lastMyEntry = myEntries.sort((a,b)=>new Date(a.created_at)-new Date(b.created_at)).pop();
+                const lastMyExit = myExits.sort((a,b)=>new Date(a.created_at)-new Date(b.created_at)).pop();
+                const myExited = (lastMyExit && lastMyEntry && new Date(lastMyExit.created_at) >= new Date(lastMyEntry.created_at))
+                    || (!!getLocalAttDone(todayISO).exit && myEntered);
+                const myOnLeave = myAtt.some(a => a.type === 'leave') || !!(getLocalAttDone(todayISO).leave);
                 if (!myOnLeave && !myEntered) {
                     personalAlarmCard = `<div class="report-card escalated" style="border-color:#ef4444; animation: escalatedPulse 1.1s ease-in-out infinite;">
                         <h3 style="color:#ef4444;">⛔ یادت نره! هنوز ورودت رو نزدی</h3>
@@ -7897,8 +7903,50 @@ notify pgrst, 'reload schema';`;
             showToast('✅ پیام فوری برای مدیر ارسال شد؛ منتظر بمانید تا مدیر بررسی کند.');
         }
 
+        // --- وضعیت ورود/خروج امروز: تطبیق انعطاف‌پذیر نام + کش محلی + بازه دقیق روز تهران ---
+        function attendanceBelongsToMe(sellerName) {
+            if (!sellerName) return false;
+            if (sellerName === currentUserLabel) return true;
+            try {
+                const u = currentSessionUser || {};
+                const fname = (u.full_name || '').trim();
+                const uname = (u.username || '').trim();
+                if (fname && sellerName.indexOf(fname) !== -1) return true;
+                if (uname && sellerName.indexOf(uname) !== -1) return true;
+                // برچسب نقش + نام (مثلاً «فروشنده صبح - …»)
+                if (fname && currentUserLabel && currentUserLabel.indexOf(fname) !== -1 && sellerName.indexOf(fname) !== -1) return true;
+            } catch (e) {}
+            return false;
+        }
+        function attLocalKey(dayISO) {
+            return 'attDayDone_' + (currentUserLabel || 'x') + '_' + (dayISO || getTehranISODate());
+        }
+        function getLocalAttDone(dayISO) {
+            try {
+                return JSON.parse(localStorage.getItem(attLocalKey(dayISO)) || '{}') || {};
+            } catch (e) { return {}; }
+        }
+        function markLocalAttDone(type, dayISO) {
+            try {
+                const st = getLocalAttDone(dayISO);
+                if (type === 'entry') st.entry = true;
+                if (type === 'exit') st.exit = true;
+                if (type === 'leave' || type === 'leave_hourly') st.leave = true;
+                st.ts = Date.now();
+                localStorage.setItem(attLocalKey(dayISO), JSON.stringify(st));
+            } catch (e) {}
+        }
+        function clearForceAndReminderUi() {
+            try { hideForceEntryLock(); } catch (e) {}
+            try {
+                const panel = document.getElementById('attendanceReminderBanner');
+                if (panel) { panel.style.display = 'none'; panel.innerHTML = ''; panel.classList.remove('escalated'); }
+            } catch (e) {}
+        }
+
         let _attendanceReminderCallId = 0;
         async function checkAttendanceReminders() {
+
             if (currentRole !== 'morning_seller' && currentRole !== 'evening_seller') { hideForceEntryLock(); return; }
             if (Date.now() < reminderSnoozeUntil) return;
             const myCallId = ++_attendanceReminderCallId;
@@ -7912,22 +7960,42 @@ notify pgrst, 'reload schema';`;
             const endMinutes = timeStrToMinutes(shiftEnd);
             const reminderAfter = settings.reminderMinutes;
 
+            // بازه دقیق «امروز تهران» تا رکورد ورود ۶ ساعت پیش از دست نرود
+            const dayStartISO = new Date(todayISO + 'T00:00:00+03:30').toISOString();
+            const dayEndISO = new Date(todayISO + 'T23:59:59.999+03:30').toISOString();
+
+            // بدون فیلتر سخت‌گیرانه روی seller_name (ممکن است برچسب نام کمی فرق کرده باشد)
             const { data: records } = await _supabase
                 .from('attendance')
-                .select('type, created_at, note')
-                .eq('seller_name', currentUserLabel)
+                .select('type, created_at, note, seller_name')
+                .gte('created_at', dayStartISO)
+                .lte('created_at', dayEndISO)
                 .order('created_at', { ascending: false })
-                .limit(20);
+                .limit(200);
 
-            // اگه توی این فاصله یه فراخوانی جدیدتر (مثلاً از تعویض تب) شروع شده، این جواب دیگه
-            // قدیمیه و نباید چیزی رو رو صفحه بازنویسی کنه — جلوی چشمک‌زدن و نمایش لحظه‌ای اطلاعات
-            // کهنه رو می‌گیره
             if (myCallId !== _attendanceReminderCallId) return;
 
-            const todayRecords = (records || []).filter(r => getTehranISODate(new Date(r.created_at)) === todayISO);
-            const hasEntry = todayRecords.some(r => r.type === 'entry');
-            const hasExit = todayRecords.some(r => r.type === 'exit');
-            const hasLeave = todayRecords.some(r => r.type === 'leave');
+            const todayRecords = (records || []).filter(r =>
+                attendanceBelongsToMe(r.seller_name) &&
+                getTehranISODate(new Date(r.created_at)) === todayISO
+            );
+            const localDone = getLocalAttDone(todayISO);
+
+            // آخرین ورود/خروج امروز (ترتیب زمانی)
+            const entries = todayRecords.filter(r => r.type === 'entry').sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+            const exits = todayRecords.filter(r => r.type === 'exit').sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+            const lastEntry = entries.length ? entries[entries.length - 1] : null;
+            const lastExit = exits.length ? exits[exits.length - 1] : null;
+
+            // اگر ورود ثبت شده و بعدش خروجی بعد از آن ورود نیست → هنوز داخل شیفت است
+            const hasEntryDb = !!lastEntry;
+            const hasExitDb = !!(lastExit && lastEntry && new Date(lastExit.created_at) >= new Date(lastEntry.created_at))
+                || (!!lastExit && !lastEntry);
+            const hasLeave = todayRecords.some(r => r.type === 'leave') || !!localDone.leave;
+
+            const hasEntry = hasEntryDb || !!localDone.entry;
+            // خروج فقط وقتی «کامل» است که بعد از آخرین ورود باشد، یا کش محلی بگوید خروج زده
+            const hasExit = hasExitDb || (!!localDone.exit && hasEntry);
 
             const panel = document.getElementById('attendanceReminderBanner');
             if (!panel) return;
@@ -9303,6 +9371,12 @@ notify pgrst, 'reload schema';`;
 
                 showToast(successMsg);
 
+                // فوری: وضعیت محلی را علامت بزن و قفل/بنر را بردار تا دیگر «ورودت رو ثبت کن» نگوید
+                try {
+                    markLocalAttDone(type === 'leave_hourly' ? 'leave' : type, getTehranISODate(now));
+                    if (type === 'entry' || type === 'exit' || type === 'leave') clearForceAndReminderUi();
+                } catch (e) {}
+
                 document.getElementById('attNote').value = '';
                 document.getElementById('attPhoto').value = '';
                 document.getElementById('photoPreview').style.display = 'none';
@@ -9312,7 +9386,9 @@ notify pgrst, 'reload schema';`;
                 const locStatus = document.getElementById('locationStatus');
                 locStatus.style.display = 'none';
                 locStatus.innerText = '';
-                checkAttendanceReminders();
+                // کمی تأخیر تا رکورد در سرور دیده شود، بعد دوباره چک کن
+                setTimeout(() => { try { checkAttendanceReminders(); } catch (e) {} }, 800);
+                try { checkAttendanceReminders(); } catch (e) {}
                 syncAttendanceTypeSelector();
             } else {
                 showToast(`❌ ثبت حضور و غیاب ذخیره نشد.\n\n📶 دلیل احتمالی: قطعی یا ضعف اینترنت شما در این لحظه بوده است.\n\nلطفاً چند ثانیه صبر کنید و دوباره روی دکمه «ثبت در سیستم حضور و غیاب» بزنید. اگر چند بار امتحان کردید و باز هم ثبت نشد، می‌توانید به مدیر اطلاع دهید.\n\n(جزئیات فنی: ${error.message})`);
