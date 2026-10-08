@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v104 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v105 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2789,7 +2789,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v104 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v105 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -7319,54 +7319,110 @@ notify pgrst, 'reload schema';`;
             return cachedTelegramSettings;
         }
 
-        // آدرس‌های تلگرام: پروکسی اول (بدون فیلترشکن)، بعد بقیه، در آخر مستقیم
+        // آدرس‌های تلگرام — چند الگوی مسیر برای پروکسی‌های مختلف (404 یعنی مسیر اشتباه است نه قطع شبکه)
         const TELEGRAM_REAL_BASE = "https://api.telegram.org";
-        const TELEGRAM_PROXY_ENDPOINTS = [
-            "https://proxy.ali8001.ir/telegram",
-            "https://shop-proxy-1.adarmiraki.workers.dev/telegram",
-            TELEGRAM_REAL_BASE
+        const TELEGRAM_PROXY_HOSTS = [
+            "https://proxy.ali8001.ir",
+            "https://shop-proxy-1.adarmiraki.workers.dev"
         ];
         try {
             JSON.parse(localStorage.getItem('extraProxies') || '[]').forEach(u => {
                 if (!u || typeof u !== 'string') return;
-                const base = u.replace(/\/+$/, '');
-                const tg = /\/telegram$/i.test(base) ? base : (base + '/telegram');
-                if (TELEGRAM_PROXY_ENDPOINTS.indexOf(tg) === -1) TELEGRAM_PROXY_ENDPOINTS.push(tg);
+                const base = u.replace(/\/+$/, '').replace(/\/telegram$/i, '').replace(/\/supabase$/i, '');
+                if (/^https:\/\//i.test(base) && TELEGRAM_PROXY_HOSTS.indexOf(base) === -1) TELEGRAM_PROXY_HOSTS.push(base);
             });
         } catch (e) {}
-        let activeTelegramBase = TELEGRAM_PROXY_ENDPOINTS[0];
+
+        // برای هر هاست چند الگوی رایج Worker را می‌سازیم
+        function buildTelegramEndpointCandidates() {
+            const list = [];
+            const add = (u) => { if (u && list.indexOf(u) === -1) list.push(u); };
+            TELEGRAM_PROXY_HOSTS.forEach(host => {
+                const h = host.replace(/\/+$/, '');
+                add(h + '/telegram');           // /telegram/botTOKEN/method
+                add(h + '/api/telegram');        // /api/telegram/botTOKEN/method
+                add(h);                          // /botTOKEN/method مستقیم روی worker
+            });
+            add(TELEGRAM_REAL_BASE);
+            return list;
+        }
+
+        let activeTelegramBase = null;
         try {
             const savedTg = localStorage.getItem('lastGoodTelegramBase');
-            if (savedTg && TELEGRAM_PROXY_ENDPOINTS.indexOf(savedTg) !== -1) activeTelegramBase = savedTg;
+            if (savedTg) activeTelegramBase = savedTg;
         } catch (e) {}
 
         function _tgRememberBase(base) {
             activeTelegramBase = base;
             try { localStorage.setItem('lastGoodTelegramBase', base); } catch (e) {}
         }
+
         function _tgBasesOrdered() {
-            const ordered = [activeTelegramBase];
-            TELEGRAM_PROXY_ENDPOINTS.forEach(u => { if (ordered.indexOf(u) === -1) ordered.push(u); });
+            const all = buildTelegramEndpointCandidates();
+            const ordered = [];
+            if (activeTelegramBase && all.indexOf(activeTelegramBase) !== -1) ordered.push(activeTelegramBase);
+            all.forEach(u => { if (ordered.indexOf(u) === -1) ordered.push(u); });
             return ordered;
         }
 
-        // درخواست به تلگرام با سوییچ خودکار بین همه‌ی پروکسی‌ها
+        // پاسخ معتبر تلگرام: JSON با فیلد ok (true/false). صفحه 404 پروکسی معمولاً HTML است.
+        function _tgLooksLikeTelegramJson(status, text) {
+            if (!text) return false;
+            const t = text.trim();
+            if (t.charAt(0) !== '{' && t.charAt(0) !== '[') return false;
+            try {
+                const j = JSON.parse(t);
+                return j && typeof j === 'object' && ('ok' in j || 'description' in j || 'error_code' in j);
+            } catch (e) { return false; }
+        }
+
+        /**
+         * درخواست به تلگرام با امتحان چند پایه/مسیر.
+         * 404 یا HTML پروکسی = این پایه بد است، بعدی را امتحان کن.
+         * JSON تلگرام (حتی با ok:false مثل توکن اشتباه) = پایه درست است.
+         */
         async function telegramFetch(path, init, timeoutMs) {
             let lastErr = null;
+            let lastBad = null;
             const bases = _tgBasesOrdered();
+            const p = path.startsWith('/') ? path : ('/' + path);
+
             for (let i = 0; i < bases.length; i++) {
-                const base = bases[i];
+                const base = bases[i].replace(/\/+$/, '');
+                const url = base + p;
                 try {
-                    const res = await fetchWithTimeout(base + path, init, timeoutMs || 12000);
+                    const res = await fetchWithTimeout(url, init, timeoutMs || 15000);
+                    const status = res.status;
+                    // بدنه را یک‌بار می‌خوانیم؛ برای caller یک Response جدید می‌سازیم
+                    const rawText = await res.text().catch(() => '');
+                    const isTg = _tgLooksLikeTelegramJson(status, rawText);
+
+                    if (status === 404 || status === 502 || status === 503 || status === 520 || status === 521 || status === 522) {
+                        // مسیر پروکسی اشتباه یا worker خواب است
+                        lastBad = new Error('پاسخ نامعتبر از مسیر ' + base + ' (کد ' + status + ')');
+                        console.warn('تلگرام مسیر نامعتبر:', url, status);
+                        continue;
+                    }
+                    if (!isTg && status >= 400) {
+                        lastBad = new Error('پاسخ غیرتلگرامی از ' + base + ' (کد ' + status + ')');
+                        console.warn('تلگرام پاسخ غیر JSON:', url, status, rawText.slice(0, 120));
+                        continue;
+                    }
+                    // پایه درست
                     _tgRememberBase(base);
-                    if (i > 0) console.warn('📡 تلگرام از طریق پروکسی وصل شد:', base);
-                    return res;
+                    if (i > 0) console.warn('📡 تلگرام از این پایه وصل شد:', base);
+                    return new Response(rawText, {
+                        status: status,
+                        statusText: res.statusText,
+                        headers: res.headers
+                    });
                 } catch (e) {
                     lastErr = e;
                     console.warn('تلگرام از این پایه وصل نشد:', base, e && e.message);
                 }
             }
-            throw lastErr || new Error('Failed to fetch');
+            throw lastErr || lastBad || new Error('Failed to fetch');
         }
 
         async function sendTelegramNotification(text) {
@@ -7377,13 +7433,20 @@ notify pgrst, 'reload schema';`;
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ chat_id: s.chatId, text: text })
-                }, 12000);
+                }, 15000);
             } catch (e) {
-                console.warn('خطا در ارسال پیام تلگرام (بدون اشکال برای کارکرد اصلی برنامه)', e);
+                console.warn('خطا در ارسال پیام تلگرام', e);
             }
         }
 
-        // روش ۱: sendDocument با URL عمومی فایل (JSON کوچک — بهترین برای اینترنت فیلترشده)
+        function _tgParseResult(res, json) {
+            if (json && json.ok) return { ok: true };
+            if (json && json.description) return { ok: false, error: json.description };
+            if (res && res.status === 404) return { ok: false, error: 'مسیر پروکسی تلگرام پیدا نشد (404). پروکسی را بررسی کنید.' };
+            return { ok: false, error: `پاسخ نامعتبر از تلگرام (کد ${res ? res.status : '?'})` };
+        }
+
+        // روش ۱: sendDocument با URL عمومی فایل
         async function sendTelegramDocumentByUrl(fileUrl, filename, caption, timeoutMs) {
             try {
                 const s = await getTelegramSettings(true);
@@ -7391,25 +7454,27 @@ notify pgrst, 'reload schema';`;
                 if (!s.botToken || !s.chatId) return { ok: false, error: 'توکن ربات یا شناسه چت هنوز ثبت نشده.' };
                 if (!fileUrl) return { ok: false, error: 'لینک عمومی فایل موجود نیست.' };
 
-                const res = await telegramFetch(`/bot${s.botToken}/sendDocument`, {
+                // توکن را تمیز کن (فاصله/خط جدید)
+                const token = String(s.botToken).trim();
+                const res = await telegramFetch(`/bot${token}/sendDocument`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        chat_id: s.chatId,
+                        chat_id: String(s.chatId).trim(),
                         document: fileUrl,
-                        caption: caption || ''
+                        caption: (caption || '').slice(0, 1024)
                     })
-                }, timeoutMs || 25000);
+                }, timeoutMs || 30000);
                 const json = await res.json().catch(() => null);
                 if (json && json.ok) return { ok: true, method: 'url' };
-                return { ok: false, error: (json && json.description) ? json.description : `پاسخ نامعتبر از تلگرام (کد ${res.status})` };
+                return _tgParseResult(res, json);
             } catch (e) {
                 const isAbort = e && e.name === 'AbortError';
                 return { ok: false, error: isAbort ? 'اتصال به تلگرام طول کشید (فیلتر/کندی).' : ('خطای شبکه: ' + (e.message || e)) };
             }
         }
 
-        // روش ۲: آپلود مستقیم فایل از گوشی
+        // روش ۲: آپلود مستقیم فایل
         async function sendTelegramDocumentAttempt(blob, filename, caption, timeoutMs) {
             try {
                 const s = await getTelegramSettings(true);
@@ -7417,41 +7482,47 @@ notify pgrst, 'reload schema';`;
                 if (!s.botToken || !s.chatId) return { ok: false, error: 'توکن ربات یا شناسه چت هنوز ثبت نشده.' };
                 if (!blob) return { ok: false, error: 'فایل برای ارسال موجود نیست.' };
 
+                const token = String(s.botToken).trim();
                 const form = new FormData();
-                form.append('chat_id', s.chatId);
-                form.append('caption', caption || '');
+                form.append('chat_id', String(s.chatId).trim());
+                form.append('caption', (caption || '').slice(0, 1024));
                 form.append('document', blob, filename || 'report.xlsx');
 
-                const res = await telegramFetch(`/bot${s.botToken}/sendDocument`, {
+                const res = await telegramFetch(`/bot${token}/sendDocument`, {
                     method: 'POST',
                     body: form
-                }, timeoutMs || 45000);
+                }, timeoutMs || 50000);
                 const json = await res.json().catch(() => null);
                 if (json && json.ok) return { ok: true, method: 'upload' };
-                return { ok: false, error: (json && json.description) ? json.description : `پاسخ نامعتبر از تلگرام (کد ${res.status})` };
+                return _tgParseResult(res, json);
             } catch (e) {
                 const isAbort = e && e.name === 'AbortError';
                 return { ok: false, error: isAbort ? 'اتصال به تلگرام طول کشید و قطع شد (احتمالاً به‌خاطر فیلترینگ/کندی اینترنت).' : ('خطای شبکه: ' + (e.message || e)) };
             }
         }
 
-        // روش ۳: فقط پیام متنی با لینک دانلود
+        // روش ۳: پیام متنی با لینک دانلود
         async function sendTelegramFileLinkMessage(fileUrl, filename, caption) {
             try {
                 const s = await getTelegramSettings(true);
                 if (!s.enabled) return { ok: false, error: 'ارسال پیام‌های تلگرام غیرفعاله.' };
                 if (!s.botToken || !s.chatId) return { ok: false, error: 'توکن ربات یا شناسه چت ثبت نشده.' };
                 if (!fileUrl) return { ok: false, error: 'لینک فایل موجود نیست.' };
+                const token = String(s.botToken).trim();
                 const text = (caption ? caption + '\n\n' : '') +
                     '📥 دانلود فایل: ' + (filename || 'گزارش') + '\n' + fileUrl;
-                const res = await telegramFetch(`/bot${s.botToken}/sendMessage`, {
+                const res = await telegramFetch(`/bot${token}/sendMessage`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chat_id: s.chatId, text: text, disable_web_page_preview: false })
+                    body: JSON.stringify({
+                        chat_id: String(s.chatId).trim(),
+                        text: text.slice(0, 4000),
+                        disable_web_page_preview: false
+                    })
                 }, 15000);
                 const json = await res.json().catch(() => null);
                 if (json && json.ok) return { ok: true, method: 'link' };
-                return { ok: false, error: (json && json.description) ? json.description : `پاسخ نامعتبر (کد ${res.status})` };
+                return _tgParseResult(res, json);
             } catch (e) {
                 return { ok: false, error: 'خطای شبکه: ' + (e.message || e) };
             }
@@ -7468,24 +7539,17 @@ notify pgrst, 'reload schema';`;
             const fileUrl = options && options.fileUrl ? options.fileUrl : null;
             const errors = [];
 
+            // اول یک تست خیلی کوچک sendMessage نزن؛ مستقیم روش‌ها را برو
             if (fileUrl) {
-                let r = await sendTelegramDocumentByUrl(fileUrl, filename, caption, 25000);
+                let r = await sendTelegramDocumentByUrl(fileUrl, filename, caption, 30000);
                 if (r.ok) return r;
                 errors.push('لینک‌فایل: ' + r.error);
-                await new Promise(x => setTimeout(x, 800));
-                r = await sendTelegramDocumentByUrl(fileUrl, filename, caption, 30000);
-                if (r.ok) return r;
-                errors.push('لینک‌فایل(۲): ' + r.error);
             }
 
             if (blob) {
-                let r = await sendTelegramDocumentAttempt(blob, filename, caption, 45000);
+                let r = await sendTelegramDocumentAttempt(blob, filename, caption, 50000);
                 if (r.ok) return r;
                 errors.push('آپلود: ' + r.error);
-                await new Promise(x => setTimeout(x, 1500));
-                r = await sendTelegramDocumentAttempt(blob, filename, caption, 50000);
-                if (r.ok) return r;
-                errors.push('آپلود(۲): ' + r.error);
             }
 
             if (fileUrl) {
@@ -7522,11 +7586,31 @@ notify pgrst, 'reload schema';`;
             showToast('✅ تنظیمات تلگرام ذخیره شد.');
         }
 
-        async function testTelegramMessage() {
-            await saveTelegramSettings();
-            const now = new Date();
-            await sendTelegramNotification(`🧪 پیام آزمایشی از سیستم مدیریت غرفه\nزمان: ${getTehranFullDateTimeString(now)}\nاگر این پیام را می‌بینی، اتصال تلگرام درست کار می‌کند ✅`);
-            showToast('✅ پیام آزمایشی ارسال شد؛ تلگرام را چک کن.');
+                async function testTelegramMessage() {
+            try {
+                const s = await getTelegramSettings(true);
+                if (!s.enabled) { showToast('⛔ اول تیک «ارسال پیام‌های تلگرام فعال باشد» را بزن و ذخیره کن.'); return; }
+                if (!s.botToken || !s.chatId) { showToast('⛔ توکن ربات و Chat ID را پر کن و ذخیره کن.'); return; }
+                showToast('⏳ در حال تست اتصال تلگرام از چند مسیر پروکسی...');
+                const token = String(s.botToken).trim();
+                const chatId = String(s.chatId).trim();
+                const now = new Date();
+                const msg = `🧪 پیام آزمایشی از سیستم مدیریت غرفه\nزمان: ${getTehranFullDateTimeString(now)}\nاگر این پیام را می‌بینی، اتصال تلگرام درست کار می‌کند ✅`;
+                const res = await telegramFetch(`/bot${token}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: chatId, text: msg })
+                }, 20000);
+                const json = await res.json().catch(() => null);
+                if (json && json.ok) {
+                    showToast('✅ پیام آزمایشی ارسال شد.\nمسیر فعال: ' + (activeTelegramBase || 'نامشخص') + '\nتلگرام را چک کن.');
+                } else {
+                    const err = (json && json.description) ? json.description : ('کد ' + res.status);
+                    showToast('❌ تلگرام جواب نداد: ' + err + '\n\nاگر همه مسیرها 404 است، Worker پروکسی تلگرام را طبق راهنما بساز.');
+                }
+            } catch (e) {
+                showToast('❌ تست تلگرام ناموفق: ' + (e.message || e) + '\n\nبدون فیلترشکن نیاز به Worker پروکسی تلگرام داری.');
+            }
         }
 
         async function loadShiftSettings() {
