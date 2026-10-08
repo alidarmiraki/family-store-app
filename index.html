@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v106 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v107 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2789,7 +2789,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v106 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v107 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -2911,11 +2911,38 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         })();
 
         // ثبت Service Worker برای قابلیت نصب روی صفحه اصلی گوشی (PWA)
-        // اگر فایل sw.js کنار همین HTML آپلود نشده باشد، این فقط یک خطای بی‌اهمیت در کنسول می‌دهد
+        // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(r => { try { r.update(); } catch (e) {} }).catch(() => {
+                navigator.serviceWorker.register('sw.js?v=107', { updateViaCache: 'none' }).then(reg => {
+                    try { reg.update(); } catch (e) {}
+                    // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
+                    if (reg.waiting) {
+                        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+                    }
+                    reg.addEventListener('updatefound', () => {
+                        const nw = reg.installing;
+                        if (!nw) return;
+                        nw.addEventListener('statechange', () => {
+                            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+                                try { nw.postMessage({ type: 'SKIP_WAITING' }); } catch (e) {}
+                            }
+                        });
+                    });
+                }).catch(() => {
                     console.warn('Service Worker ثبت نشد (فایل sw.js کنار HTML موجود نیست؛ برای نصب PWA لازم است).');
+                });
+                // وقتی کنترلر عوض شد (نسخه جدید فعال شد)، یک‌بار رفرش
+                let refreshing = false;
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    if (refreshing) return;
+                    refreshing = true;
+                    try { location.reload(); } catch (e) {}
+                });
+                navigator.serviceWorker.addEventListener('message', (ev) => {
+                    if (ev && ev.data && ev.data.type === 'SW_UPDATED') {
+                        try { location.reload(); } catch (e) {}
+                    }
                 });
             });
         }

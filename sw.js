@@ -1,71 +1,99 @@
-// v89 — اضافه‌شده نسبت به نسخه‌ی قبلی: کش پوسته‌ی برنامه و کتابخانه‌های CDN (برای بازشدن بدون فیلترشکن) + اعلان Push.
-// درخواست‌های Supabase و پروکسی‌ها مثل قبل کاملاً دست‌نخورده می‌مانند (فقط CDNهای jsdelivr/unpkg/cdnjs و خود سایت).
-/* v89 — Service Worker: نصب PWA، بازشدن بدون فیلترشکن (کش پوسته و کتابخانه‌ها)، اعلان Push */
-const V = 'v106', SHELL = 'shell-' + V, LIBS = 'libs-v1';
+// v107 — Service Worker: نصب PWA، بازشدن بدون فیلترشکن، اعلان Push + اجبار به‌روزرسانی نسخه
+const V = 'v107', SHELL = 'shell-' + V, LIBS = 'libs-v1';
 const CDN = /(^|\.)(cdn\.jsdelivr\.net|unpkg\.com|cdnjs\.cloudflare\.com)$/;
 
-self.addEventListener('install', e => {
-  e.waitUntil((async () => {
-    const c = await caches.open(SHELL);
-    await Promise.all(['./', 'manifest.json', 'icon-192.png', 'icon-512.png', 'vendor/supabase.js']
-      .map(u => c.add(new Request(u, { cache: 'reload' })).catch(() => {})));
-    await self.skipWaiting();
-  })());
+self.addEventListener('message', (e) => {
+  if (e && e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
-self.addEventListener('activate', e => {
+
+self.addEventListener('install', (e) => {
+  self.skipWaiting();
   e.waitUntil((async () => {
-    for (const k of await caches.keys()) if (k !== SHELL && k !== LIBS) await caches.delete(k);
-    await self.clients.claim();
+    try {
+      const c = await caches.open(SHELL);
+      await c.addAll(['./', './index.html', './sw.js'].map(u => new Request(u, { cache: 'reload' })));
+    } catch (err) { /* ignore offline install issues */ }
   })());
 });
 
-// اول شبکه (تا نسخه‌ی جدید همیشه بیاید)؛ اگر ۳.۵ ثانیه جواب نداد یا قطع بود، نسخه‌ی کش‌شده
+self.addEventListener('activate', (e) => {
+  e.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys.filter(k => k !== SHELL && k !== LIBS).map(k => caches.delete(k)));
+    await self.clients.claim();
+    // به همه تب‌های باز بگو نسخه عوض شده تا رفرش کنند
+    const clients = await self.clients.matchAll({ type: 'window' });
+    clients.forEach(c => c.postMessage({ type: 'SW_UPDATED', version: V }));
+  })());
+});
+
 async function netFirst(req, nav) {
-  const cache = await caches.open(SHELL);
+  const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 3500);
   try {
-    const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 3500);
-    const res = await fetch(req, { signal: ctl.signal }).finally(() => clearTimeout(t));
-    const isHtml = /text\/html/.test(res.headers.get('content-type') || '');
-    if (res.ok && (nav || !isHtml)) cache.put(req, res.clone());
+    const res = await fetch(req, { signal: ctl.signal, cache: 'no-store' });
+    clearTimeout(t);
+    if (res && res.ok) {
+      try {
+        const c = await caches.open(SHELL);
+        c.put(req, res.clone());
+      } catch (e) {}
+    }
     return res;
-  } catch (err) {
-    const hit = await cache.match(req, { ignoreSearch: true }) || (nav && await cache.match('./'));
-    if (hit) return hit;
-    throw err;
+  } catch (e) {
+    clearTimeout(t);
+    const cached = await caches.match(req);
+    if (cached) return cached;
+    if (nav) {
+      const shell = await caches.match('./index.html') || await caches.match('./');
+      if (shell) return shell;
+    }
+    throw e;
   }
 }
-// کتابخانه‌های CDN: بار اول که لود شد برای همیشه کش می‌شود تا بعدش حتی با فیلتر بودن CDN هم کار کند
+
 async function cacheFirst(req) {
-  const cache = await caches.open(LIBS);
-  const hit = await cache.match(req.url);
-  if (hit) return hit;
-  try {
-    const res = await fetch(new Request(req.url, { mode: 'cors', credentials: 'omit' }));
-    if (res.ok) cache.put(req.url, res.clone());
-    return res;
-  } catch (e) { return fetch(req); }
+  const cached = await caches.match(req);
+  if (cached) return cached;
+  const res = await fetch(req);
+  if (res && res.ok) {
+    try {
+      const c = await caches.open(LIBS);
+      c.put(req, res.clone());
+    } catch (e) {}
+  }
+  return res;
 }
-self.addEventListener('fetch', e => {
-  const req = e.request;
-  if (req.method !== 'GET') return;
-  const url = new URL(req.url);
-  if (url.origin === location.origin) e.respondWith(netFirst(req, req.mode === 'navigate'));
-  else if (CDN.test(url.hostname)) e.respondWith(cacheFirst(req));
-  // بقیه (Supabase، پروکسی‌ها، تلگرام) دست‌نخورده می‌ماند
+
+self.addEventListener('fetch', (e) => {
+  const url = new URL(e.request.url);
+  if (e.request.method !== 'GET') return;
+  // همیشه sw.js را تازه بگیر
+  if (url.pathname.endsWith('/sw.js') || url.pathname.endsWith('sw.js')) {
+    e.respondWith(fetch(e.request, { cache: 'no-store' }));
+    return;
+  }
+  // index.html را net-first با no-store تا نسخه جدید زود بیاید
+  if (url.origin === self.location.origin) {
+    const isNav = e.request.mode === 'navigate' || url.pathname.endsWith('/') || url.pathname.endsWith('index.html');
+    e.respondWith(netFirst(e.request, isNav));
+    return;
+  }
+  if (CDN.test(url.hostname)) {
+    e.respondWith(cacheFirst(e.request));
+  }
 });
 
-self.addEventListener('push', e => {
-  let d = {};
-  try { d = e.data ? e.data.json() : {}; } catch (_) { try { d = { body: e.data.text() }; } catch (__) {} }
-  e.waitUntil(self.registration.showNotification(d.title || 'غرفه فامیلی', {
-    body: d.body || '', icon: 'icon-192.png', badge: 'icon-192.png', dir: 'rtl', lang: 'fa', tag: d.tag, data: { url: d.url || './' }
+self.addEventListener('push', (e) => {
+  let data = { title: 'غرفه فامیلی', body: 'پیام جدید' };
+  try { if (e.data) data = Object.assign(data, e.data.json()); } catch (err) {}
+  e.waitUntil(self.registration.showNotification(data.title || 'غرفه فامیلی', {
+    body: data.body || '',
+    icon: data.icon || './icon-192.png',
+    data: data.data || {}
   }));
 });
-self.addEventListener('notificationclick', e => {
+
+self.addEventListener('notificationclick', (e) => {
   e.notification.close();
-  e.waitUntil((async () => {
-    const all = await clients.matchAll({ type: 'window', includeUncontrolled: true });
-    for (const c of all) if ('focus' in c) return c.focus();
-    return clients.openWindow((e.notification.data && e.notification.data.url) || './');
-  })());
+  e.waitUntil(clients.openWindow(e.notification.data && e.notification.data.url ? e.notification.data.url : './'));
 });
