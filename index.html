@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v110 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v111 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -1788,8 +1788,10 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             <input type="text" id="qnNote" dir="auto" placeholder="توضیح کوتاه (اختیاری)" style="margin-top:6px;">
 
             <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-                <label class="qn-photo-btn" for="qnPhotoInput">📷 عکس لیبل / برگه</label>
-                <input type="file" id="qnPhotoInput" accept="image/*" capture="environment" style="display:none;" onchange="qnPickPhoto(this)">
+                <label class="qn-photo-btn" for="qnPhotoCamera">📷 دوربین</label>
+                <label class="qn-photo-btn" for="qnPhotoGallery" style="border-color:rgba(167,139,250,.5);">🖼️ گالری</label>
+                <input type="file" id="qnPhotoCamera" accept="image/*" capture="environment" style="display:none;" onchange="qnPickPhoto(this)">
+                <input type="file" id="qnPhotoGallery" accept="image/*" style="display:none;" onchange="qnPickPhoto(this)">
                 <img id="qnPhotoPreview" class="qn-thumb" style="display:none; margin-top:6px;" onclick="qnViewPhoto(this.src)">
                 <button type="button" id="qnPhotoClear" class="row-btn delete-btn" style="display:none; margin-top:6px;" onclick="qnClearPhoto()">حذف عکس</button>
                 <button type="button" id="qnOcrRetryBtn" class="row-btn edit-btn" style="display:none; margin-top:6px;" onclick="qnRetryOcr()">🔍 دوباره بخوان از عکس</button>
@@ -2791,7 +2793,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v110 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v111 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -2916,7 +2918,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=110', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=111', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -17085,27 +17087,44 @@ notify pgrst, 'reload schema';`;
     function qnExtractPrices(text) {
         const t = qnNormalizeDigits(text);
         const prices = [];
-        const pushPrice = (n, raw, weight) => {
+        const pushPrice = (n, raw, weight, kind) => {
             n = Math.round(Number(n));
             if (!isFinite(n)) return;
-            if (n < 1000 || n > 2500000) return;
+            if (n < 500 || n > 2500000) return;
             if (String(n).length >= 10) return;
-            prices.push({ value: n, raw: raw || String(n), weight: weight || 1 });
+            // رد بارکدهای بلند که اشتباهاً کوتاه شده‌اند
+            if (/^\d{12,}$/.test(String(raw || '').replace(/\D/g, ''))) return;
+            prices.push({ value: n, raw: raw || String(n), weight: weight || 1, kind: kind || 'any' });
         };
         let m;
+        // قیمت کل (مبلغ فاکتور این تکه) — برای دفترچه مهم‌تر است
+        const reTotal = /قیمت\s*کل\s*[:=\-]?\s*(\d{1,3}(?:[.,]\d{3}){0,2}|\d{4,7})/gi;
+        while ((m = reTotal.exec(t)) !== null) {
+            pushPrice(parseFloat(String(m[1]).replace(/,/g, '')), m[0], 20, 'total');
+        }
+        // قیمت واحد
+        const reUnit = /قیمت\s*واحد\s*[:=\-]?\s*(\d{1,3}(?:[.,]\d{3}){0,2}|\d{4,7})/gi;
+        while ((m = reUnit.exec(t)) !== null) {
+            pushPrice(parseFloat(String(m[1]).replace(/,/g, '')), m[0], 15, 'unit');
+        }
+        // عدد بزرگ پررنگ نزدیک تومان (اغلب قیمت کل روی لیبل ترازو)
         const reToman = /(\d{1,3}(?:[.,]\d{3}){0,2}|\d{4,7})\s*(?:تومان|تومن)/gi;
         while ((m = reToman.exec(t)) !== null) {
-            pushPrice(parseFloat(String(m[1]).replace(/,/g, '')), m[0], 10);
+            pushPrice(parseFloat(String(m[1]).replace(/,/g, '')), m[0], 10, 'toman');
         }
         const reRial = /(\d{1,3}(?:[.,]\d{3}){0,3}|\d{5,9})\s*(?:ريال|ریال)/gi;
         while ((m = reRial.exec(t)) !== null) {
             let n = parseFloat(String(m[1]).replace(/,/g, ''));
             if (n >= 10000) n = Math.round(n / 10);
-            pushPrice(n, m[0], 8);
+            pushPrice(n, m[0], 8, 'rial');
         }
-        const reNum = /(?:^|[^\d])(\d{4,7})(?:[^\d]|$)/g;
+        // اعداد ۴–۶ رقمی جدا (قیمت کل معمولاً ۵ رقمی مثل 32340)
+        const reNum = /(?:^|[^\d])(\d{4,6})(?:[^\d]|$)/g;
         while ((m = reNum.exec(t)) !== null) {
-            pushPrice(parseInt(m[1], 10), m[1], 2);
+            const n = parseInt(m[1], 10);
+            // بارکد جزئی را رد کن
+            if (n > 2500000) continue;
+            pushPrice(n, m[1], 3, 'num');
         }
         const byVal = {};
         prices.forEach(p => {
@@ -17116,13 +17135,35 @@ notify pgrst, 'reload schema';`;
 
     function qnExtractQty(text) {
         const t = qnNormalizeDigits(text);
-        let m = t.match(/(\d+(?:\.\d+)?)\s*(?:کیلوگرم|کیلو|kg|KG)\b/i);
-        if (m) return { qty: parseFloat(m[1]), unit: 'kg' };
+        // وزن روی لیبل ترازو: "0.245" کنار کیلوگرم / وزن
+        let m = t.match(/(?:وزن|Weight)?\s*[:=\-]?\s*(\d+[.,]\d{2,3})\s*(?:کیلوگرم|کیلو|kg)?/i);
+        if (m) {
+            const q = parseFloat(String(m[1]).replace(',', '.'));
+            if (q > 0 && q < 50) return { qty: q, unit: 'kg' };
+        }
+        m = t.match(/(\d+[.,]\d{2,3})\s*(?:کیلوگرم|کیلو|kg)\b/i);
+        if (m) {
+            const q = parseFloat(String(m[1]).replace(',', '.'));
+            if (q > 0 && q < 50) return { qty: q, unit: 'kg' };
+        }
+        m = t.match(/(\d+(?:\.\d+)?)\s*(?:کیلوگرم|کیلو|kg)\b/i);
+        if (m) {
+            const q = parseFloat(m[1]);
+            if (q > 0 && q < 50) return { qty: q, unit: 'kg' };
+        }
         m = t.match(/(\d+(?:\.\d+)?)\s*(?:گرم|gr|g)\b/i);
         if (m) {
             const g = parseFloat(m[1]);
             if (g >= 1000) return { qty: g / 1000, unit: 'kg' };
-            return { qty: g, unit: 'gram' };
+            if (g > 0) return { qty: g, unit: 'gram' };
+        }
+        // عدد اعشاری کوچک تنها (مثلاً 0.245) اگر متن لیبل ترازو باشد
+        if (/وزن|کیلو|قیمت\s*کل|قیمت\s*واحد/.test(t)) {
+            m = t.match(/\b(0\.\d{2,3})\b/);
+            if (m) {
+                const q = parseFloat(m[1]);
+                if (q > 0 && q < 20) return { qty: q, unit: 'kg' };
+            }
         }
         return null;
     }
@@ -17187,14 +17228,37 @@ notify pgrst, 'reload schema';`;
                 $('qnQty').value = String(res.qty);
             } else {
                 document.querySelector('input[name="qnUnit"][value="kg"]').checked = true;
-                $('qnQty').value = String(res.qty);
+                // تا ۳ رقم اعشار برای وزن ترازو
+                $('qnQty').value = String(Math.round(res.qty * 1000) / 1000);
             }
             try { qnPreview(); } catch (e) {}
         }
-        if (res.priceHint && !$('qnNote').value) {
-            $('qnNote').value = 'قیمت خوانده‌شده از لیبل: ' + Number(res.priceHint).toLocaleString('fa-IR') + ' تومان';
-        }
-        showToast('✅ از روی لیبل پر شد — لطفاً چک کن و اگر درست بود به دفترچه اضافه کن.');
+        const noteParts = [];
+        if (res.unitPriceHint) noteParts.push('قیمت واحد لیبل: ' + Number(res.unitPriceHint).toLocaleString('fa-IR'));
+        if (res.totalPriceHint) noteParts.push('قیمت کل لیبل: ' + Number(res.totalPriceHint).toLocaleString('fa-IR'));
+        if (noteParts.length && !$('qnNote').value) $('qnNote').value = noteParts.join(' | ');
+        showToast('✅ از روی لیبل پر شد — لطفاً چک کن و تایید کن.');
+    }
+
+    function qnGuessNameFromScaleLabel(raw) {
+        if (!raw) return '';
+        const lines = raw.split(/\n+/).map(l => l.trim()).filter(Boolean);
+        // خطوط بی‌فایده لیبل ترازو
+        const skip = /هایپرفامیلی|بیرجند|زعفرانیه|وزن|قیمت|واحد|کل|تومان|تومن|کیلو|تاریخ|تولید|barcode|kg|http|www/i;
+        const candidates = [];
+        lines.forEach(l => {
+            const clean = l.replace(/[^\u0600-\u06FF\s\d]/g, ' ').replace(/\s+/g, ' ').trim();
+            if (clean.length < 3 || clean.length > 45) return;
+            if (skip.test(clean)) return;
+            if (/^\d+([.,]\d+)?$/.test(clean)) return;
+            if (!/[\u0600-\u06FF]{3,}/.test(clean)) return;
+            candidates.push(clean);
+        });
+        // ترجیح خط‌هایی که کلمه خوراکی رایج دارند
+        const food = /شور|مخلوط|ماست|پنیر|زیتون|ترشی|کره|خامه|دوغ|کشک|حلوا|عسل|روغن|سوسیس|کالباس|جگر|مرغ|گوشت|فله/;
+        const scored = candidates.map(c => ({ c, s: (food.test(c) ? 10 : 0) + Math.min(c.length, 20) }));
+        scored.sort((a, b) => b.s - a.s);
+        return scored.length ? scored[0].c : '';
     }
 
     function qnBuildResultFromText(raw) {
@@ -17202,33 +17266,69 @@ notify pgrst, 'reload schema';`;
         const prices = qnExtractPrices(raw);
         const qtyInfo = qnExtractQty(raw);
         const catalogPrice = match && match.product.sell_price ? Number(match.product.sell_price) : null;
-        let priceHint = null;
-        if (prices.length) {
-            if (catalogPrice && catalogPrice > 0) {
-                const near = prices.find(p => {
-                    const ratio = p.value / catalogPrice;
-                    return ratio >= 0.5 && ratio <= 2.0;
-                });
-                priceHint = near ? near.value : null;
+
+        // قیمت کل vs واحد
+        const totalP = prices.find(p => p.kind === 'total');
+        const unitP = prices.find(p => p.kind === 'unit');
+        let unitPriceHint = unitP ? unitP.value : null;
+        let totalPriceHint = totalP ? totalP.value : null;
+
+        // اگر قیمت واحد پیدا نشد ولی کاتالوگ داریم
+        if (!unitPriceHint && catalogPrice) unitPriceHint = catalogPrice;
+
+        // اگر فقط یک عدد معقول کنار تومان بود و وزن هم داریم، عدد بزرگ‌تر = واحد، کوچک‌تر = کل (یا برعکس)
+        if (!totalPriceHint && !unitPriceHint && prices.length) {
+            const sorted = prices.slice().sort((a, b) => b.value - a.value);
+            if (qtyInfo && qtyInfo.qty > 0 && sorted.length >= 2) {
+                // قیمت واحد معمولاً بزرگ‌تر از قیمت کل برای وزن زیر ۱ کیلو است
+                unitPriceHint = sorted[0].value;
+                totalPriceHint = sorted[1].value;
             } else {
-                const good = prices.find(p => p.weight >= 8) || prices[0];
-                priceHint = good ? good.value : null;
+                totalPriceHint = sorted[0].value;
             }
         }
+
+        // اگر وزن و قیمت واحد داریم، قیمت کل را حساب کن
+        if (qtyInfo && qtyInfo.qty > 0 && unitPriceHint && !totalPriceHint) {
+            totalPriceHint = Math.round(qtyInfo.qty * unitPriceHint);
+        }
+        // اگر وزن و قیمت کل داریم، قیمت واحد تقریبی
+        if (qtyInfo && qtyInfo.qty > 0 && totalPriceHint && !unitPriceHint) {
+            unitPriceHint = Math.round(totalPriceHint / qtyInfo.qty);
+        }
+
+        // فیلتر: اگر واحد با کاتالوگ خیلی فرق دارد، کاتالوگ را مبنا بگیر
+        if (catalogPrice && unitPriceHint) {
+            const ratio = unitPriceHint / catalogPrice;
+            if (ratio < 0.4 || ratio > 2.5) unitPriceHint = catalogPrice;
+        }
+
+        let name = match ? match.product.name : '';
+        if (!name) name = qnGuessNameFromScaleLabel(raw);
+        // اگر حدس نام با انبار نزدیک بود، همان کالای انبار
         const res = {
-            name: match ? match.product.name : '',
+            name: name,
             matched: !!match,
-            matchScore: match ? match.score : 0,
-            priceHint: priceHint,
-            catalogPrice: catalogPrice,
+            matchScore: match ? match.score : (name ? 40 : 0),
+            priceHint: unitPriceHint || totalPriceHint,
+            totalPriceHint: totalPriceHint,
+            unitPriceHint: unitPriceHint,
+            catalogPrice: catalogPrice || unitPriceHint || null,
             qty: qtyInfo ? qtyInfo.qty : null,
             unit: qtyInfo ? qtyInfo.unit : 'kg'
         };
-        if (!res.name && raw) {
-            const lines = raw.split(/\n+/).map(l => l.trim())
-                .filter(l => l.length >= 4 && l.length <= 40 && /[\u0600-\u06FF]{3,}/.test(l))
-                .filter(l => !/^\d+$/.test(l));
-            if (lines.length === 1) res.name = lines[0].slice(0, 50);
+        // جلوگیری از recursion: matched را درست کن بدون فراخوانی دوباره
+        if (!match && name) {
+            const list = (typeof cachedProductsList !== 'undefined' && cachedProductsList) ? cachedProductsList : [];
+            const found = list.find(p => p && p.name && (name.indexOf(p.name) !== -1 || p.name.indexOf(name) !== -1));
+            if (found) {
+                res.name = found.name;
+                res.matched = true;
+                res.matchScore = 70;
+                res.catalogPrice = Number(found.sell_price) || res.catalogPrice;
+                if (res.catalogPrice && !res.unitPriceHint) res.unitPriceHint = res.catalogPrice;
+                if (res.qty && res.unitPriceHint && !res.totalPriceHint) res.totalPriceHint = Math.round(res.qty * res.unitPriceHint);
+            }
         }
         return res;
     }
@@ -17243,11 +17343,12 @@ notify pgrst, 'reload schema';`;
             return;
         }
         html += '<div style="font-size:13px; line-height:1.9;">';
-        if (res.name) html += '<div>📦 نام پیشنهادی: <b>' + esc(res.name) + '</b>' + (res.matched ? ' <span style="color:#34d399;">(از انبار)</span>' : '') + '</div>';
-        if (res.catalogPrice) html += '<div>💰 قیمت سیستم (انبار): <b>' + fa(res.catalogPrice) + '</b> تومان</div>';
-        if (res.priceHint && res.priceHint !== res.catalogPrice) html += '<div class="hint">قیمت تقریبی از روی لیبل: ' + fa(res.priceHint) + ' تومان</div>';
-        if (!res.catalogPrice && res.priceHint) html += '<div>💰 قیمت خوانده‌شده از لیبل: <b>' + fa(res.priceHint) + '</b> تومان</div>';
-        if (res.qty != null) html += '<div>⚖️ مقدار: <b>' + fa(res.qty) + '</b> ' + (res.unit === 'gram' ? 'گرم' : 'کیلو') + '</div>';
+        if (res.name) html += '<div>📦 نام: <b>' + esc(res.name) + '</b>' + (res.matched ? ' <span style="color:#34d399;">(از انبار)</span>' : '') + '</div>';
+        else html += '<div class="hint">📦 نام از لیبل خوانده نشد — دستی انتخاب کن</div>';
+        if (res.qty != null) html += '<div>⚖️ وزن: <b>' + fa(res.qty) + '</b> ' + (res.unit === 'gram' ? 'گرم' : 'کیلو') + '</div>';
+        if (res.unitPriceHint) html += '<div>💵 قیمت واحد: <b>' + fa(res.unitPriceHint) + '</b> تومان' + (res.catalogPrice && res.catalogPrice !== res.unitPriceHint ? ' (سیستم: ' + fa(res.catalogPrice) + ')' : '') + '</div>';
+        else if (res.catalogPrice) html += '<div>💵 قیمت واحد (انبار): <b>' + fa(res.catalogPrice) + '</b> تومان</div>';
+        if (res.totalPriceHint) html += '<div>💰 قیمت کل: <b>' + fa(res.totalPriceHint) + '</b> تومان</div>';
         html += '</div>';
         html += '<div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;">';
         html += '<button type="button" class="row-btn confirm-btn" style="flex:1; min-width:120px;" onclick="qnAcceptOcr()">✅ همین‌ها را در فرم بگذار</button>';
