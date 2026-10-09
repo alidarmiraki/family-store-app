@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v111 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v112 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2793,7 +2793,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v111 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v112 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -2918,7 +2918,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=111', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=112', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -17333,6 +17333,223 @@ notify pgrst, 'reload schema';`;
         return res;
     }
 
+    /* ---------- استخراج چندقلمی از برگه دفترچه دست‌نویس ---------- */
+    let ocrMultiItems = [];
+
+    function qnParseNotebookLines(raw) {
+        const list = (typeof cachedProductsList !== 'undefined' && cachedProductsList) ? cachedProductsList : [];
+        const lines = String(raw || '').split(/\n+/).map(l => l.trim()).filter(l => l.length >= 2);
+        const items = [];
+        const used = new Set();
+
+        function matchName(fragment) {
+            if (!fragment || fragment.length < 2) return null;
+            const frag = fragment.replace(/\s+/g, ' ').trim();
+            let best = null, bestScore = 0;
+            list.forEach(p => {
+                if (!p || !p.name) return;
+                const name = String(p.name).trim();
+                let score = 0;
+                if (frag.indexOf(name) !== -1 || name.indexOf(frag) !== -1) score = 100 + name.length;
+                else {
+                    const words = name.split(/\s+/).filter(w => w.length >= 2);
+                    let hit = 0;
+                    words.forEach(w => { if (frag.indexOf(w) !== -1) hit++; });
+                    if (words.length && hit / words.length >= 0.5) score = hit * 25 + frag.length;
+                }
+                if (score > bestScore) { bestScore = score; best = p; }
+            });
+            return (best && bestScore >= 40) ? best : null;
+        }
+
+        lines.forEach((line, li) => {
+            const t = qnNormalizeDigits(line);
+            // رد خطوط خیلی بی‌معنی
+            if (!/[\u0600-\u06FF\d]/.test(t)) return;
+
+            // وزن: 240g / 240 g / 1.145kg / 1,145 kg / ۱۶۰۰g
+            let qty = null, unit = 'kg';
+            let m = t.match(/(\d+[.,]?\d*)\s*(kg|KG|کیلوگرم|کیلو)\b/);
+            if (m) {
+                qty = parseFloat(String(m[1]).replace(',', '.'));
+                unit = 'kg';
+            } else {
+                m = t.match(/(\d+[.,]?\d*)\s*(g|gr|G|گرم)\b/);
+                if (m) {
+                    const g = parseFloat(String(m[1]).replace(',', '.'));
+                    if (g >= 1000) { qty = g / 1000; unit = 'kg'; }
+                    else { qty = g; unit = 'gram'; }
+                }
+            }
+
+            // قیمت‌های احتمالی در خط (اعداد ۴–۷ رقمی یا ۲–۴ رقمی که ممکن است «به هزار» باشد)
+            const nums = [];
+            const reN = /(?:^|[^\d])(\d{2,7})(?:[^\d]|$)/g;
+            let nm;
+            while ((nm = reN.exec(t)) !== null) {
+                const n = parseInt(nm[1], 10);
+                // رد کردن وزن‌هایی که قبلاً به‌عنوان g خوانده شد
+                if (qty != null && unit === 'gram' && n === Math.round(qty)) continue;
+                if (qty != null && unit === 'kg' && Math.abs(n - qty) < 0.01) continue;
+                if (n >= 10 && n <= 2500000) nums.push(n);
+            }
+
+            // تکه فارسی نام
+            let namePart = t
+                .replace(/(\d+[.,]?\d*)\s*(kg|KG|g|gr|G|کیلوگرم|کیلو|گرم)/gi, ' ')
+                .replace(/\d+/g, ' ')
+                .replace(/[^\u0600-\u06FF\s]/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+            // حذف کلمات عمومی
+            namePart = namePart.replace(/\b(وزن|قیمت|تومان|تومن|کیلو|گرم|فله)\b/g, '').replace(/\s+/g, ' ').trim();
+
+            const prod = matchName(namePart);
+            let price = null;
+            // اگر چند عدد بود، بزرگ‌تر معمولاً قیمت است
+            if (nums.length) {
+                nums.sort((a, b) => b - a);
+                price = nums[0];
+                // اعداد ۲–۴ رقمی روی دفترچه اغلب «به هزار تومان» نوشته می‌شوند (مثلاً ۸۵۰ = ۸۵۰٬۰۰۰)
+                // فقط وقتی کالای انبار داریم و با قیمت واحد جور درمی‌آید
+                if (prod && prod.sell_price) {
+                    const sp = Number(prod.sell_price) || 0;
+                    if (sp > 0) {
+                        // اگر price خیلی کوچک‌تر از قیمت واحد است، شاید به هزار باشد
+                        if (price < sp * 0.3 && price * 1000 >= sp * 0.3 && price * 1000 <= sp * 5) {
+                            // احتمالاً قیمت کل به هزار نیست؛ شاید وزن اشتباه است
+                        }
+                        // اگر فقط قیمت داریم و وزن نداریم: مقدار = قیمت / قیمت‌واحد
+                    }
+                }
+            }
+
+            // اگر وزن نبود ولی قیمت بود و کالا پیدا شد → وزن را از مبلغ بساز
+            if (qty == null && price != null && prod && Number(prod.sell_price) > 0) {
+                let pay = price;
+                const sp = Number(prod.sell_price);
+                // اگر مبلغ نوشته‌شده خیلی کوچک است نسبت به یک کیلو، شاید «به هزار» است
+                if (pay < sp * 0.15 && pay * 1000 / sp >= 0.05 && pay * 1000 / sp <= 30) {
+                    pay = pay * 1000;
+                }
+                // اگر مبلغ نزدیک چند برابر قیمت واحد است
+                qty = Math.round((pay / sp) * 1000) / 1000;
+                unit = 'kg';
+                if (qty > 0 && qty < 50) {
+                    items.push({
+                        line: li,
+                        name: prod.name,
+                        product: prod,
+                        qty: qty,
+                        unit: unit,
+                        price: Math.round(qty * sp),
+                        source: 'price→weight',
+                        raw: line
+                    });
+                    return;
+                }
+            }
+
+            // اگر وزن داریم
+            if (qty != null && qty > 0) {
+                let qtyKg = unit === 'gram' ? qty / 1000 : qty;
+                if (qtyKg <= 0 || qtyKg > 80) return;
+                const name = prod ? prod.name : (namePart || '');
+                const sp = prod ? Number(prod.sell_price) || 0 : 0;
+                let linePrice = sp > 0 ? Math.round(qtyKg * sp) : (price || null);
+                // اگر قیمت نوشته‌شده با وزن×واحد خیلی فرق داشت، همان نوشته را نگه ندار؛ وزن مبناست
+                items.push({
+                    line: li,
+                    name: name,
+                    product: prod || null,
+                    qty: unit === 'gram' ? qty : qtyKg,
+                    unit: unit === 'gram' ? 'gram' : 'kg',
+                    price: linePrice,
+                    source: 'weight',
+                    raw: line
+                });
+            }
+        });
+
+        // ادغام خطوط تکراری خیلی شبیه
+        const uniq = [];
+        items.forEach(it => {
+            const key = (it.name || '') + '|' + it.qty + '|' + it.unit;
+            if (used.has(key)) return;
+            used.add(key);
+            if (!it.name && !it.qty) return;
+            uniq.push(it);
+        });
+        return uniq;
+    }
+
+    function qnRenderMultiOcr(items, rawText) {
+        ocrMultiItems = items || [];
+        const fa = n => Number(n).toLocaleString('fa-IR');
+        let html = '<h3 style="margin:0 0 6px; font-size:14px; color:var(--accent);">📒 استخراج از برگه دفترچه</h3>';
+        if (!items.length) {
+            html += '<p class="hint" style="margin:0;">نتونستم ردیف واضحی از برگه بخونم. عکس صاف‌تر/نور بهتر بگیر یا دستی وارد کن.</p>';
+            if (rawText) html += '<details style="margin-top:6px;"><summary class="hint">متن خام</summary><pre style="white-space:pre-wrap;font-size:11px;direction:rtl;max-height:120px;overflow:auto;">' + esc(rawText.slice(0, 1200)) + '</pre></details>';
+            qnShowOcrStatus(html, true);
+            return;
+        }
+        html += '<p class="hint" style="margin:0 0 8px;">' + fa(items.length) + ' ردیف پیدا شد. تیک بزن و تایید کن تا بره تو دفترچه.</p>';
+        html += '<div style="max-height:280px; overflow:auto; display:flex; flex-direction:column; gap:6px;">';
+        items.forEach((it, i) => {
+            const ok = !!(it.name && it.qty);
+            const qtyLabel = it.unit === 'gram' ? (fa(it.qty) + ' گرم') : (fa(it.qty) + ' کیلو');
+            const priceLabel = it.price ? (fa(it.price) + ' ت') : '—';
+            html += '<label style="display:flex; gap:8px; align-items:flex-start; background:rgba(15,23,42,.55); border:1px solid rgba(148,163,184,.2); border-radius:10px; padding:8px; cursor:pointer;">';
+            html += '<input type="checkbox" class="qn-multi-cb" data-i="' + i + '" ' + (ok ? 'checked' : '') + ' style="margin-top:4px;">';
+            html += '<div style="flex:1; font-size:12px; line-height:1.7;">';
+            html += '<div><b>' + esc(it.name || '⚠️ نام نامشخص') + '</b>' + (it.product ? ' <span style="color:#34d399;">✓</span>' : '') + '</div>';
+            html += '<div class="hint" style="margin:0;">وزن: ' + qtyLabel + ' — مبلغ: ' + priceLabel + (it.source === 'price→weight' ? ' <span style="color:#fbbf24;">(از روی مبلغ)</span>' : '') + '</div>';
+            if (!ok) html += '<div style="color:#f87171; font-size:11px;">این ردیف ناقصه — قبل از تایید اسم/وزن را دستی درست کن</div>';
+            html += '</div></label>';
+        });
+        html += '</div>';
+        html += '<div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:10px;">';
+        html += '<button type="button" class="row-btn confirm-btn" style="flex:1; min-width:140px;" onclick="qnAcceptMultiOcr()">✅ افزودن موارد تیک‌خورده به دفترچه</button>';
+        html += '<button type="button" class="row-btn" style="flex:1; min-width:100px;" onclick="qnDismissOcr()">رد کردن</button>';
+        html += '</div>';
+        html += '<details style="margin-top:6px;"><summary class="hint">متن خام OCR</summary><pre style="white-space:pre-wrap;font-size:11px;direction:rtl;max-height:100px;overflow:auto;">' + esc((rawText || '').slice(0, 1500)) + '</pre></details>';
+        qnShowOcrStatus(html, true);
+    }
+
+    window.qnAcceptMultiOcr = function () {
+        const cbs = document.querySelectorAll('.qn-multi-cb:checked');
+        if (!cbs.length) { showToast('حداقل یک ردیف را تیک بزن.'); return; }
+        const type = $('qnType').value;
+        const list = load();
+        let added = 0;
+        cbs.forEach(cb => {
+            const i = parseInt(cb.getAttribute('data-i'), 10);
+            const it = ocrMultiItems[i];
+            if (!it || !it.name || !(it.qty > 0)) return;
+            const qtyStr = String(it.qty);
+            const unit = it.unit === 'gram' ? 'gram' : 'kg';
+            const note = it.price ? ('مبلغ تقریبی از برگه: ' + Number(it.price).toLocaleString('fa-IR') + ' تومان') : (it.source === 'price→weight' ? 'وزن از روی مبلغ برگه محاسبه شد' : '');
+            list.unshift({
+                id: 'qn_' + Date.now() + '_' + i + '_' + Math.random().toString(36).slice(2, 7),
+                type: type,
+                name: it.name,
+                qty: qtyStr,
+                unit: unit,
+                note: note,
+                photo: photo,
+                at: Date.now(),
+                hp: false
+            });
+            added++;
+        });
+        if (!added) { showToast('ردیاف معتبری برای افزودن نبود.'); return; }
+        if (!save(list)) return;
+        qnShowOcrStatus('', false);
+        ocrMultiItems = [];
+        try { qnRender(); qnUpdateBadge(); qnPreview(); } catch (e) {}
+        showToast('✅ ' + added + ' ردیف به دفترچه اضافه شد. قبل از پایان شیفت تاییدشان کن.');
+    };
+
     function qnRenderOcrCard(res, rawText) {
         const fa = n => Number(n).toLocaleString('fa-IR');
         let html = '<h3 style="margin:0 0 6px; font-size:14px; color:var(--accent);">🔍 خواندن خودکار لیبل</h3>';
@@ -17373,30 +17590,42 @@ notify pgrst, 'reload schema';`;
         ocrBusy = true;
         const retryBtn = $('qnOcrRetryBtn');
         if (retryBtn) retryBtn.style.display = 'inline-block';
-        qnShowOcrStatus('<p style="margin:0;">⏳ خواندن سریع لیبل...</p>', true);
+        qnShowOcrStatus('<p style="margin:0;">⏳ در حال خواندن برگه/لیبل...</p>', true);
         const t0 = Date.now();
         try {
             const worker = await getOcrWorker('fas');
-            // سقف زمانی تا گیر نکند
+            try {
+                await worker.setParameters({ tessedit_pageseg_mode: '6' });
+            } catch (e) {}
             const recognizePromise = worker.recognize(dataUrl);
-            const timeoutPromise = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 18000));
+            const timeoutPromise = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 45000));
             const result = await Promise.race([recognizePromise, timeoutPromise]);
             const raw = (result && result.data && result.data.text) ? result.data.text : '';
             ocrLastText = raw;
-            const res = qnBuildResultFromText(raw);
             const ms = Date.now() - t0;
-            qnRenderOcrCard(res, raw);
-            // فقط با تطبیق خیلی قوی خودکار پر کن؛ وگرنه فروشنده باید تایید کند
-            if (res.matched && res.matchScore >= 100) {
-                qnApplyOcrResult(res);
-            } else if (res.name || res.priceHint || res.catalogPrice) {
-                const sec = Math.max(1, Math.round(ms / 1000));
-                showToast('🔍 خواندم (' + sec + ' ثانیه) — لطفاً پیشنهاد را چک کن.');
+
+            // اگر چند خط با وزن/عدد دارد → حالت دفترچه چندقلمی
+            const lineCount = (raw.match(/\n/g) || []).length + 1;
+            const hasManyWeights = ((raw.match(/\d+\s*(g|gr|kg|گرم|کیلو)/gi) || []).length >= 3)
+                || (lineCount >= 6 && (raw.match(/\d{2,}/g) || []).length >= 5);
+
+            if (hasManyWeights) {
+                const items = qnParseNotebookLines(raw);
+                qnRenderMultiOcr(items, raw);
+                showToast('📒 ' + items.length + ' ردیف از برگه استخراج شد — چک کن و تایید کن.');
+            } else {
+                const res = qnBuildResultFromText(raw);
+                qnRenderOcrCard(res, raw);
+                if (res.matched && res.matchScore >= 100) {
+                    qnApplyOcrResult(res);
+                } else if (res.name || res.priceHint || res.catalogPrice || res.qty) {
+                    showToast('🔍 خواندم (' + Math.max(1, Math.round(ms / 1000)) + ' ثانیه) — لطفاً چک کن.');
+                }
             }
         } catch (e) {
             console.error(e);
             if (String(e.message || e).indexOf('timeout') !== -1) {
-                qnShowOcrStatus('<p class="hint" style="margin:0;">⏱️ خیلی طول کشید. عکس واضح‌تر/نزدیک‌تر بگیر یا دستی پر کن.</p>', true);
+                qnShowOcrStatus('<p class="hint" style="margin:0;">⏱️ خیلی طول کشید. عکس صاف‌تر و روشن‌تر بگیر یا دستی پر کن.</p>', true);
             } else {
                 qnShowOcrStatus('<p class="hint" style="margin:0;">❌ خواندن ناموفق: ' + esc(String(e.message || e)) + '</p>', true);
             }
@@ -17407,7 +17636,8 @@ notify pgrst, 'reload schema';`;
 
     // تصویر کوچک‌تر + خاکستری = OCR خیلی سریع‌تر
     function compressForOcrAndDisplay(img) {
-        const ocrMax = 800, dispMax = 640;
+        // برگه‌های دفترچه نیاز به رزولوشن بالاتر دارند
+        const ocrMax = 1200, dispMax = 720;
         const make = (max, q, gray) => {
             const r = Math.min(1, max / Math.max(img.width, img.height));
             const c = document.createElement('canvas');

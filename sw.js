@@ -1,5 +1,5 @@
 // v109 — Service Worker: نصب PWA، بازشدن بدون فیلترشکن، اعلان Push + اجبار به‌روزرسانی نسخه
-const V = 'v111', SHELL = 'shell-' + V, LIBS = 'libs-v1';
+const V = 'v112', SHELL = 'shell-' + V, LIBS = 'libs-v1';
 const CDN = /(^|\.)(cdn\.jsdelivr\.net|unpkg\.com|cdnjs\.cloudflare\.com)$/;
 
 self.addEventListener('message', (e) => {
