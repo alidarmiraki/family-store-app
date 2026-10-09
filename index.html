@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v107 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v108 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -1761,7 +1761,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
     <!-- فرم حضور و غیاب -->
     <div id="quickNoteTab" class="card">
         <h2>📝 دفترچه فروش سریع</h2>
-        <div class="hint" style="margin-top:0;">وقت نداری درجا فاکتور بزنی؟ هر چی فروختی همون لحظه اینجا یادداشت کن (اسم + مقدار، یا فقط یک عکس از لیبل/برگه). <b>ساعت یادداشت خودکار ثبت می‌شه.</b> بعداً هر وقت وقت داشتی، درستیش رو چک کن و «✅ تایید» بزن؛ همون لحظه به‌عنوان فروش واقعی و با <b>همون ساعتی که یادداشت کردی</b> ثبت می‌شه.</div>
+        <div class="hint" style="margin-top:0;">وقت نداری درجا فاکتور بزنی؟ هر چی فروختی همون لحظه اینجا یادداشت کن. <b>عکس لیبل</b> بگیری، خودش سعی می‌کنه <b>اسم و قیمت</b> را از روی عکس بخواند و پر کند؛ تو فقط چک کن و تایید کن. ساعت یادداشت خودکار ثبت می‌شود. بعداً با «✅ تایید» به‌عنوان فروش واقعی با همان ساعت ثبت می‌شود.</div>
 
         <div class="tare-box" style="margin-top:10px;">
             <label style="margin-top:0;">نوع فروش:</label>
@@ -1792,7 +1792,9 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
                 <input type="file" id="qnPhotoInput" accept="image/*" capture="environment" style="display:none;" onchange="qnPickPhoto(this)">
                 <img id="qnPhotoPreview" class="qn-thumb" style="display:none; margin-top:6px;" onclick="qnViewPhoto(this.src)">
                 <button type="button" id="qnPhotoClear" class="row-btn delete-btn" style="display:none; margin-top:6px;" onclick="qnClearPhoto()">حذف عکس</button>
+                <button type="button" id="qnOcrRetryBtn" class="row-btn edit-btn" style="display:none; margin-top:6px;" onclick="qnRetryOcr()">🔍 دوباره بخوان از عکس</button>
             </div>
+            <div id="qnOcrBox" class="report-card" style="display:none; margin-top:10px; border-color:rgba(56,189,248,.45);"></div>
 
             <button class="submit-btn" id="qnSubmitBtn" onclick="qnSubmit()">➕ افزودن به دفترچه</button>
             <button class="cancel-edit-btn" id="qnCancelEditBtn" style="display:none;" onclick="qnCancelEdit()">لغو ویرایش</button>
@@ -2789,7 +2791,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v107 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v108 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -2914,7 +2916,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=107', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=108', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -17019,25 +17021,250 @@ notify pgrst, 'reload schema';`;
         el.innerText = (p && q > 0) ? ('مبلغ تقریبی: ' + FA(Math.round(q * (p.sell_price || 0))) + ' تومان') : '';
     };
 
-    /* ---------- عکس ---------- */
+    /* ---------- عکس + OCR لیبل (خواندن خودکار اسم و قیمت) ---------- */
+    let ocrBusy = false, ocrLastText = '', ocrLastResult = null;
+
+    function ensureTesseractLoaded() {
+        return ensureLibraryLoaded('tesseract', () => typeof Tesseract !== 'undefined', [
+            'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js',
+            'https://unpkg.com/tesseract.js@5.1.1/dist/tesseract.min.js'
+        ], 20000);
+    }
+
+    function qnNormalizeDigits(s) {
+        return String(s || '')
+            .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
+            .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
+            .replace(/[٬,]/g, '')
+            .replace(/[٫]/g, '.');
+    }
+
+    function qnExtractPrices(text) {
+        const t = qnNormalizeDigits(text);
+        const prices = [];
+        // اعداد نزدیک به تومان/ریال/تومن
+        const reNear = /(\d{1,3}(?:[.,]\d{3})+|\d{4,12})\s*(?:تومان|تومن|ريال|ریال|ریالی|Toman|Rial)?/gi;
+        let m;
+        while ((m = reNear.exec(t)) !== null) {
+            let n = parseFloat(String(m[1]).replace(/,/g, '').replace(/\.(?=.*\.)/g, ''));
+            if (!isFinite(n) || n < 100) continue;
+            // اگر خیلی بزرگ و شبیه ریال است (مثلاً بیشتر از ۵ میلیون برای یک لیبل خرده‌فروشی)، به تومان تبدیل نکن مگر واضح ریال باشد
+            const nearRial = /ریال|ريال|Rial/i.test(m[0]);
+            if (nearRial && n >= 1000) n = Math.round(n / 10);
+            prices.push({ value: Math.round(n), raw: m[0] });
+        }
+        // اعداد ۴+ رقمی جدا
+        const reNum = /\b(\d{4,9})\b/g;
+        while ((m = reNum.exec(t)) !== null) {
+            const n = parseInt(m[1], 10);
+            if (n >= 1000 && n <= 50000000) prices.push({ value: n, raw: m[1] });
+        }
+        // یکتا و مرتب
+        const seen = new Set();
+        return prices.filter(p => { if (seen.has(p.value)) return false; seen.add(p.value); return true; })
+            .sort((a, b) => b.value - a.value);
+    }
+
+    function qnExtractQty(text) {
+        const t = qnNormalizeDigits(text);
+        let m = t.match(/(\d+(?:\.\d+)?)\s*(?:کیلوگرم|کیلو|kg|KG)\b/i);
+        if (m) return { qty: parseFloat(m[1]), unit: 'kg' };
+        m = t.match(/(\d+(?:\.\d+)?)\s*(?:گرم|gr|g)\b/i);
+        if (m) {
+            const g = parseFloat(m[1]);
+            if (g >= 1000) return { qty: g / 1000, unit: 'kg' };
+            return { qty: g, unit: 'gram' };
+        }
+        return null;
+    }
+
+    function qnMatchProductFromText(text) {
+        const list = (typeof cachedProductsList !== 'undefined' && cachedProductsList) ? cachedProductsList : [];
+        if (!list.length || !text) return null;
+        const raw = text.replace(/\s+/g, ' ');
+        const lower = raw.toLowerCase();
+        let best = null, bestScore = 0;
+        list.forEach(p => {
+            if (!p || !p.name) return;
+            const name = String(p.name).trim();
+            if (name.length < 2) return;
+            let score = 0;
+            if (raw.indexOf(name) !== -1) score = 100 + name.length;
+            else {
+                // تطبیق کلمه‌ای
+                const words = name.split(/\s+/).filter(w => w.length >= 2);
+                let hit = 0;
+                words.forEach(w => { if (raw.indexOf(w) !== -1 || lower.indexOf(w.toLowerCase()) !== -1) hit++; });
+                if (words.length) score = Math.round((hit / words.length) * 80) + hit * 2;
+            }
+            if (p.code && (raw.indexOf(String(p.code)) !== -1 || lower.indexOf(String(p.code).toLowerCase()) !== -1)) score += 40;
+            if (score > bestScore) { bestScore = score; best = p; }
+        });
+        if (best && bestScore >= 35) return { product: best, score: bestScore };
+        return null;
+    }
+
+    function qnShowOcrStatus(html, show) {
+        const box = $('qnOcrBox');
+        if (!box) return;
+        if (!show) { box.style.display = 'none'; box.innerHTML = ''; return; }
+        box.style.display = 'block';
+        box.innerHTML = html;
+    }
+
+    function qnApplyOcrResult(res) {
+        if (!res) return;
+        if (res.name) {
+            $('qnName').value = res.name;
+            try { qnPreview(); } catch (e) {}
+        }
+        if (res.qty != null && res.qty > 0) {
+            if (res.unit === 'gram') {
+                document.querySelector('input[name="qnUnit"][value="gram"]').checked = true;
+                $('qnQty').value = String(res.qty);
+            } else {
+                document.querySelector('input[name="qnUnit"][value="kg"]').checked = true;
+                $('qnQty').value = String(res.qty);
+            }
+            try { qnPreview(); } catch (e) {}
+        }
+        if (res.priceHint && !$('qnNote').value) {
+            $('qnNote').value = 'قیمت خوانده‌شده از لیبل: ' + Number(res.priceHint).toLocaleString('fa-IR') + ' تومان';
+        }
+        showToast('✅ از روی لیبل پر شد — لطفاً چک کن و اگر درست بود به دفترچه اضافه کن.');
+    }
+
+    function qnRenderOcrCard(res, rawText) {
+        const fa = n => Number(n).toLocaleString('fa-IR');
+        let html = '<h3 style="margin:0 0 6px; font-size:14px; color:var(--accent);">🔍 خواندن خودکار لیبل</h3>';
+        if (!res || (!res.name && !res.priceHint && res.qty == null)) {
+            html += '<p class="hint" style="margin:0;">نتونستم اسم/قیمت واضحی از عکس بخونم. می‌تونی دستی پر کنی یا عکس واضح‌تری بگیری.</p>';
+            if (rawText) html += '<details style="margin-top:6px;"><summary class="hint">متن خام خوانده‌شده</summary><pre style="white-space:pre-wrap;font-size:11px;direction:rtl;">' + esc(rawText.slice(0, 800)) + '</pre></details>';
+            qnShowOcrStatus(html, true);
+            return;
+        }
+        html += '<div style="font-size:13px; line-height:1.9;">';
+        if (res.name) html += '<div>📦 نام پیشنهادی: <b>' + esc(res.name) + '</b>' + (res.matched ? ' <span style="color:#34d399;">(از انبار)</span>' : '') + '</div>';
+        if (res.priceHint) html += '<div>💰 قیمت خوانده‌شده: <b>' + fa(res.priceHint) + '</b> تومان' + (res.catalogPrice ? ' — قیمت سیستم: <b>' + fa(res.catalogPrice) + '</b>' : '') + '</div>';
+        if (res.qty != null) html += '<div>⚖️ مقدار: <b>' + fa(res.qty) + '</b> ' + (res.unit === 'gram' ? 'گرم' : 'کیلو') + '</div>';
+        html += '</div>';
+        html += '<div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;">';
+        html += '<button type="button" class="row-btn confirm-btn" style="flex:1; min-width:120px;" onclick="qnAcceptOcr()">✅ همین‌ها را در فرم بگذار</button>';
+        html += '<button type="button" class="row-btn" style="flex:1; min-width:120px;" onclick="qnDismissOcr()">رد کردن</button>';
+        html += '</div>';
+        if (rawText) html += '<details style="margin-top:6px;"><summary class="hint">متن خام</summary><pre style="white-space:pre-wrap;font-size:11px;direction:rtl;">' + esc(rawText.slice(0, 800)) + '</pre></details>';
+        ocrLastResult = res;
+        qnShowOcrStatus(html, true);
+    }
+
+    window.qnAcceptOcr = function () {
+        if (ocrLastResult) qnApplyOcrResult(ocrLastResult);
+        qnShowOcrStatus('', false);
+    };
+    window.qnDismissOcr = function () { ocrLastResult = null; qnShowOcrStatus('', false); };
+
+    window.qnRetryOcr = function () {
+        if (!photo) { showToast('اول یک عکس بگیر.'); return; }
+        qnRunOcr(photo);
+    };
+
+    async function qnRunOcr(dataUrl) {
+        if (ocrBusy) return;
+        ocrBusy = true;
+        const retryBtn = $('qnOcrRetryBtn');
+        if (retryBtn) retryBtn.style.display = 'inline-block';
+        qnShowOcrStatus('<p style="margin:0;">⏳ در حال خواندن متن لیبل... (اولین بار ممکن است کمی طول بکشد)</p>', true);
+        try {
+            const ok = await ensureTesseractLoaded();
+            if (!ok || typeof Tesseract === 'undefined') {
+                qnShowOcrStatus('<p class="hint" style="margin:0;">❌ موتور خواندن متن لود نشد. اینترنت را چک کن یا دستی پر کن.</p>', true);
+                return;
+            }
+            // فارسی + انگلیسی برای لیبل‌های مخلوط
+            const result = await Tesseract.recognize(dataUrl, 'fas+eng', {
+                logger: m => {
+                    if (m && m.status === 'recognizing text' && m.progress != null) {
+                        const pct = Math.round(m.progress * 100);
+                        qnShowOcrStatus('<p style="margin:0;">⏳ خواندن لیبل... ' + pct + '٪</p>', true);
+                    }
+                }
+            });
+            const raw = (result && result.data && result.data.text) ? result.data.text : '';
+            ocrLastText = raw;
+            const match = qnMatchProductFromText(raw);
+            const prices = qnExtractPrices(raw);
+            const qtyInfo = qnExtractQty(raw);
+            const res = {
+                name: match ? match.product.name : '',
+                matched: !!match,
+                priceHint: prices.length ? prices[0].value : null,
+                catalogPrice: match && match.product.sell_price ? Number(match.product.sell_price) : null,
+                qty: qtyInfo ? qtyInfo.qty : null,
+                unit: qtyInfo ? qtyInfo.unit : 'kg'
+            };
+            // اگر نام از انبار پیدا نشد، سعی کن خط‌های فارسی معنادار را به‌عنوان نام پیشنهاد بده
+            if (!res.name && raw) {
+                const lines = raw.split(/\n+/).map(l => l.trim()).filter(l => l.length >= 3 && /[\u0600-\u06FF]/.test(l));
+                if (lines.length) res.name = lines[0].slice(0, 60);
+            }
+            qnRenderOcrCard(res, raw);
+            // اگر تطبیق انبار قوی بود، خودکار اعمال کن
+            if (match && match.score >= 70) {
+                qnApplyOcrResult(res);
+            }
+        } catch (e) {
+            console.error(e);
+            qnShowOcrStatus('<p class="hint" style="margin:0;">❌ خواندن لیبل ناموفق بود: ' + esc(String(e.message || e)) + '</p>', true);
+        } finally {
+            ocrBusy = false;
+        }
+    }
+
+    function compressForOcrAndDisplay(img) {
+        // برای OCR رزولوشن بالاتر، برای نمایش فشرده‌تر
+        const ocrMax = 1400, dispMax = 720;
+        const make = (max, q) => {
+            const r = Math.min(1, max / Math.max(img.width, img.height));
+            const c = document.createElement('canvas');
+            c.width = Math.max(1, Math.round(img.width * r));
+            c.height = Math.max(1, Math.round(img.height * r));
+            c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+            return c.toDataURL('image/jpeg', q);
+        };
+        return { ocr: make(ocrMax, 0.85), display: make(dispMax, 0.55) };
+    }
+
     window.qnPickPhoto = function (inp) {
         const f = inp.files && inp.files[0]; if (!f) return;
         const img = new Image(), url = URL.createObjectURL(f);
         img.onload = () => {
-            const max = 720, r = Math.min(1, max / Math.max(img.width, img.height));
-            const c = document.createElement('canvas'); c.width = Math.round(img.width * r); c.height = Math.round(img.height * r);
-            c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-            photo = c.toDataURL('image/jpeg', 0.55); URL.revokeObjectURL(url); inp.value = ''; showPhoto();
+            try {
+                const both = compressForOcrAndDisplay(img);
+                photo = both.display;
+                URL.revokeObjectURL(url); inp.value = '';
+                showPhoto();
+                // شروع OCR در پس‌زمینه
+                qnRunOcr(both.ocr);
+            } catch (e) {
+                URL.revokeObjectURL(url);
+                showToast('❌ پردازش عکس ناموفق بود.');
+            }
         };
         img.onerror = () => { URL.revokeObjectURL(url); showToast('❌ عکس خونده نشد، دوباره امتحان کن.'); };
         img.src = url;
     };
     function showPhoto() {
-        const im = $('qnPhotoPreview'), cl = $('qnPhotoClear');
-        if (photo) { im.src = photo; im.style.display = 'block'; cl.style.display = 'inline-block'; }
-        else { im.removeAttribute('src'); im.style.display = 'none'; cl.style.display = 'none'; }
+        const im = $('qnPhotoPreview'), cl = $('qnPhotoClear'), rb = $('qnOcrRetryBtn');
+        if (photo) {
+            im.src = photo; im.style.display = 'block'; cl.style.display = 'inline-block';
+            if (rb) rb.style.display = 'inline-block';
+        } else {
+            im.removeAttribute('src'); im.style.display = 'none'; cl.style.display = 'none';
+            if (rb) rb.style.display = 'none';
+            qnShowOcrStatus('', false);
+        }
     }
-    window.qnClearPhoto = function () { photo = null; showPhoto(); };
+    window.qnClearPhoto = function () { photo = null; ocrLastResult = null; ocrLastText = ''; showPhoto(); };
     window.qnViewPhoto = function (src) {
         if (!src) return;
         const v = document.createElement('div'); v.className = 'qn-viewer'; v.innerHTML = '<img>'; v.firstChild.src = src;
