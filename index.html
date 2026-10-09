@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v109 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v110 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2791,7 +2791,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v109 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v110 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -2916,7 +2916,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=109', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=110', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -17085,23 +17085,33 @@ notify pgrst, 'reload schema';`;
     function qnExtractPrices(text) {
         const t = qnNormalizeDigits(text);
         const prices = [];
-        const reNear = /(\d{1,3}(?:[.,]\d{3})+|\d{4,12})\s*(?:تومان|تومن|ريال|ریال|ریالی|Toman|Rial)?/gi;
+        const pushPrice = (n, raw, weight) => {
+            n = Math.round(Number(n));
+            if (!isFinite(n)) return;
+            if (n < 1000 || n > 2500000) return;
+            if (String(n).length >= 10) return;
+            prices.push({ value: n, raw: raw || String(n), weight: weight || 1 });
+        };
         let m;
-        while ((m = reNear.exec(t)) !== null) {
-            let n = parseFloat(String(m[1]).replace(/,/g, '').replace(/\.(?=.*\.)/g, ''));
-            if (!isFinite(n) || n < 100) continue;
-            const nearRial = /ریال|ريال|Rial/i.test(m[0]);
-            if (nearRial && n >= 1000) n = Math.round(n / 10);
-            prices.push({ value: Math.round(n), raw: m[0] });
+        const reToman = /(\d{1,3}(?:[.,]\d{3}){0,2}|\d{4,7})\s*(?:تومان|تومن)/gi;
+        while ((m = reToman.exec(t)) !== null) {
+            pushPrice(parseFloat(String(m[1]).replace(/,/g, '')), m[0], 10);
         }
-        const reNum = /\b(\d{4,9})\b/g;
+        const reRial = /(\d{1,3}(?:[.,]\d{3}){0,3}|\d{5,9})\s*(?:ريال|ریال)/gi;
+        while ((m = reRial.exec(t)) !== null) {
+            let n = parseFloat(String(m[1]).replace(/,/g, ''));
+            if (n >= 10000) n = Math.round(n / 10);
+            pushPrice(n, m[0], 8);
+        }
+        const reNum = /(?:^|[^\d])(\d{4,7})(?:[^\d]|$)/g;
         while ((m = reNum.exec(t)) !== null) {
-            const n = parseInt(m[1], 10);
-            if (n >= 1000 && n <= 50000000) prices.push({ value: n, raw: m[1] });
+            pushPrice(parseInt(m[1], 10), m[1], 2);
         }
-        const seen = new Set();
-        return prices.filter(p => { if (seen.has(p.value)) return false; seen.add(p.value); return true; })
-            .sort((a, b) => b.value - a.value);
+        const byVal = {};
+        prices.forEach(p => {
+            if (!byVal[p.value] || byVal[p.value].weight < p.weight) byVal[p.value] = p;
+        });
+        return Object.values(byVal).sort((a, b) => b.weight - a.weight || a.value - b.value);
     }
 
     function qnExtractQty(text) {
@@ -17120,7 +17130,8 @@ notify pgrst, 'reload schema';`;
     function qnMatchProductFromText(text) {
         const list = (typeof cachedProductsList !== 'undefined' && cachedProductsList) ? cachedProductsList : [];
         if (!list.length || !text) return null;
-        const raw = text.replace(/\s+/g, ' ');
+        const raw = text.replace(/\s+/g, ' ').trim();
+        if (raw.length < 3) return null;
         const lower = raw.toLowerCase();
         let best = null, bestScore = 0;
         list.forEach(p => {
@@ -17128,17 +17139,31 @@ notify pgrst, 'reload schema';`;
             const name = String(p.name).trim();
             if (name.length < 2) return;
             let score = 0;
-            if (raw.indexOf(name) !== -1) score = 100 + name.length;
-            else {
-                const words = name.split(/\s+/).filter(w => w.length >= 2);
+            // تطبیق کامل نام
+            if (raw.indexOf(name) !== -1) {
+                score = 120 + Math.min(name.length, 40);
+            } else {
+                // فقط کلمه‌های معنادار (≥۳ حرف) — کلمات کوتاه مثل «از» اشتباه می‌سازند
+                const words = name.split(/\s+/).filter(w => w.length >= 3);
+                if (!words.length) return;
                 let hit = 0;
-                words.forEach(w => { if (raw.indexOf(w) !== -1 || lower.indexOf(w.toLowerCase()) !== -1) hit++; });
-                if (words.length) score = Math.round((hit / words.length) * 80) + hit * 2;
+                words.forEach(w => {
+                    if (raw.indexOf(w) !== -1) hit += 1;
+                    else if (lower.indexOf(w.toLowerCase()) !== -1) hit += 0.8;
+                });
+                const ratio = hit / words.length;
+                // حداقل نیمی از کلمه‌ها باید پیدا شوند
+                if (ratio < 0.5) return;
+                score = Math.round(ratio * 90) + hit * 5;
             }
-            if (p.code && (raw.indexOf(String(p.code)) !== -1 || lower.indexOf(String(p.code).toLowerCase()) !== -1)) score += 40;
+            if (p.code) {
+                const code = String(p.code).trim();
+                if (code.length >= 4 && (raw.indexOf(code) !== -1 || lower.indexOf(code.toLowerCase()) !== -1)) score += 50;
+            }
             if (score > bestScore) { bestScore = score; best = p; }
         });
-        if (best && bestScore >= 35) return { product: best, score: bestScore };
+        // آستانه بالاتر تا کالای اشتباه پیشنهاد نشود
+        if (best && bestScore >= 55) return { product: best, score: bestScore };
         return null;
     }
 
@@ -17176,18 +17201,34 @@ notify pgrst, 'reload schema';`;
         const match = qnMatchProductFromText(raw);
         const prices = qnExtractPrices(raw);
         const qtyInfo = qnExtractQty(raw);
+        const catalogPrice = match && match.product.sell_price ? Number(match.product.sell_price) : null;
+        let priceHint = null;
+        if (prices.length) {
+            if (catalogPrice && catalogPrice > 0) {
+                const near = prices.find(p => {
+                    const ratio = p.value / catalogPrice;
+                    return ratio >= 0.5 && ratio <= 2.0;
+                });
+                priceHint = near ? near.value : null;
+            } else {
+                const good = prices.find(p => p.weight >= 8) || prices[0];
+                priceHint = good ? good.value : null;
+            }
+        }
         const res = {
             name: match ? match.product.name : '',
             matched: !!match,
             matchScore: match ? match.score : 0,
-            priceHint: prices.length ? prices[0].value : null,
-            catalogPrice: match && match.product.sell_price ? Number(match.product.sell_price) : null,
+            priceHint: priceHint,
+            catalogPrice: catalogPrice,
             qty: qtyInfo ? qtyInfo.qty : null,
             unit: qtyInfo ? qtyInfo.unit : 'kg'
         };
         if (!res.name && raw) {
-            const lines = raw.split(/\n+/).map(l => l.trim()).filter(l => l.length >= 3 && /[\u0600-\u06FF]/.test(l));
-            if (lines.length) res.name = lines[0].slice(0, 60);
+            const lines = raw.split(/\n+/).map(l => l.trim())
+                .filter(l => l.length >= 4 && l.length <= 40 && /[\u0600-\u06FF]{3,}/.test(l))
+                .filter(l => !/^\d+$/.test(l));
+            if (lines.length === 1) res.name = lines[0].slice(0, 50);
         }
         return res;
     }
@@ -17195,7 +17236,7 @@ notify pgrst, 'reload schema';`;
     function qnRenderOcrCard(res, rawText) {
         const fa = n => Number(n).toLocaleString('fa-IR');
         let html = '<h3 style="margin:0 0 6px; font-size:14px; color:var(--accent);">🔍 خواندن خودکار لیبل</h3>';
-        if (!res || (!res.name && !res.priceHint && res.qty == null)) {
+        if (!res || (!res.name && !res.priceHint && !res.catalogPrice && res.qty == null)) {
             html += '<p class="hint" style="margin:0;">نتونستم اسم/قیمت واضحی از عکس بخونم. می‌تونی دستی پر کنی یا عکس واضح‌تری بگیری.</p>';
             if (rawText) html += '<details style="margin-top:6px;"><summary class="hint">متن خام خوانده‌شده</summary><pre style="white-space:pre-wrap;font-size:11px;direction:rtl;">' + esc(rawText.slice(0, 600)) + '</pre></details>';
             qnShowOcrStatus(html, true);
@@ -17203,7 +17244,9 @@ notify pgrst, 'reload schema';`;
         }
         html += '<div style="font-size:13px; line-height:1.9;">';
         if (res.name) html += '<div>📦 نام پیشنهادی: <b>' + esc(res.name) + '</b>' + (res.matched ? ' <span style="color:#34d399;">(از انبار)</span>' : '') + '</div>';
-        if (res.priceHint) html += '<div>💰 قیمت خوانده‌شده: <b>' + fa(res.priceHint) + '</b> تومان' + (res.catalogPrice ? ' — قیمت سیستم: <b>' + fa(res.catalogPrice) + '</b>' : '') + '</div>';
+        if (res.catalogPrice) html += '<div>💰 قیمت سیستم (انبار): <b>' + fa(res.catalogPrice) + '</b> تومان</div>';
+        if (res.priceHint && res.priceHint !== res.catalogPrice) html += '<div class="hint">قیمت تقریبی از روی لیبل: ' + fa(res.priceHint) + ' تومان</div>';
+        if (!res.catalogPrice && res.priceHint) html += '<div>💰 قیمت خوانده‌شده از لیبل: <b>' + fa(res.priceHint) + '</b> تومان</div>';
         if (res.qty != null) html += '<div>⚖️ مقدار: <b>' + fa(res.qty) + '</b> ' + (res.unit === 'gram' ? 'گرم' : 'کیلو') + '</div>';
         html += '</div>';
         html += '<div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;">';
@@ -17242,10 +17285,12 @@ notify pgrst, 'reload schema';`;
             const res = qnBuildResultFromText(raw);
             const ms = Date.now() - t0;
             qnRenderOcrCard(res, raw);
-            if (res.matched && res.matchScore >= 60) {
+            // فقط با تطبیق خیلی قوی خودکار پر کن؛ وگرنه فروشنده باید تایید کند
+            if (res.matched && res.matchScore >= 100) {
                 qnApplyOcrResult(res);
-            } else if (res.name || res.priceHint) {
-                showToast('🔍 در ' + Math.round(ms / 1000) + ' ثانیه خواندم — لطفاً چک کن.');
+            } else if (res.name || res.priceHint || res.catalogPrice) {
+                const sec = Math.max(1, Math.round(ms / 1000));
+                showToast('🔍 خواندم (' + sec + ' ثانیه) — لطفاً پیشنهاد را چک کن.');
             }
         } catch (e) {
             console.error(e);
