@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v112 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v113 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2793,7 +2793,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v112 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v113 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -2918,7 +2918,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=112', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=113', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -17367,7 +17367,7 @@ notify pgrst, 'reload schema';`;
             // رد خطوط خیلی بی‌معنی
             if (!/[\u0600-\u06FF\d]/.test(t)) return;
 
-            // وزن: 240g / 240 g / 1.145kg / 1,145 kg / ۱۶۰۰g
+            // وزن: 240g / 1.145kg / یا عدد لخت ۲–۴ رقمی (دست‌نویس بدون g)
             let qty = null, unit = 'kg';
             let m = t.match(/(\d+[.,]?\d*)\s*(kg|KG|کیلوگرم|کیلو)\b/);
             if (m) {
@@ -17379,6 +17379,23 @@ notify pgrst, 'reload schema';`;
                     const g = parseFloat(String(m[1]).replace(',', '.'));
                     if (g >= 1000) { qty = g / 1000; unit = 'kg'; }
                     else { qty = g; unit = 'gram'; }
+                } else {
+                    // دست‌نویس: "240" یا "1600" بدون واحد — اگر خط فارسی دارد
+                    const hasFa = /[\u0600-\u06FF]{2,}/.test(t);
+                    const bare = t.match(/(?:^|[^\d])(\d{2,4})(?:[^\d]|$)/);
+                    if (hasFa && bare) {
+                        const g = parseInt(bare[1], 10);
+                        if (g >= 30 && g <= 5000) {
+                            if (g >= 1000) { qty = g / 1000; unit = 'kg'; }
+                            else { qty = g; unit = 'gram'; }
+                        }
+                    }
+                    // 1.145 سبک
+                    const dec = t.match(/(?:^|[^\d])(0?\.\d{2,3}|1\.\d{2,3}|2\.\d{2,3})(?:[^\d]|$)/);
+                    if (qty == null && dec) {
+                        const q = parseFloat(dec[1]);
+                        if (q > 0 && q < 30) { qty = q; unit = 'kg'; }
+                    }
                 }
             }
 
@@ -17604,18 +17621,51 @@ notify pgrst, 'reload schema';`;
             ocrLastText = raw;
             const ms = Date.now() - t0;
 
-            // اگر چند خط با وزن/عدد دارد → حالت دفترچه چندقلمی
+            // تصمیم: لیبل ترازو تکی یا برگه دفترچه چندقلمی؟
             const lineCount = (raw.match(/\n/g) || []).length + 1;
-            const hasManyWeights = ((raw.match(/\d+\s*(g|gr|kg|گرم|کیلو)/gi) || []).length >= 3)
-                || (lineCount >= 6 && (raw.match(/\d{2,}/g) || []).length >= 5);
+            const digitGroups = (raw.match(/\d{2,}/g) || []).length;
+            const weightMarks = (raw.match(/\d+\s*(g|gr|kg|G|گرم|کیلو)/gi) || []).length;
+            const looksLikeScaleLabel = /قیمت\s*کل|قیمت\s*واحد|هایپرفامیلی|تاریخ\s*تولید/.test(raw)
+                && lineCount <= 12 && weightMarks <= 2;
+            // همیشه اول چندقلمی را امتحان کن
+            const multiItems = qnParseNotebookLines(raw);
+            const forceNotebook = !looksLikeScaleLabel && (
+                multiItems.length >= 2
+                || lineCount >= 5
+                || digitGroups >= 6
+                || weightMarks >= 2
+            );
 
-            if (hasManyWeights) {
-                const items = qnParseNotebookLines(raw);
-                qnRenderMultiOcr(items, raw);
-                showToast('📒 ' + items.length + ' ردیف از برگه استخراج شد — چک کن و تایید کن.');
+            // ذخیره برای دکمه «این برگه دفترچه است»
+            window.__qnLastOcrRaw = raw;
+            window.__qnLastOcrMs = ms;
+
+            if (forceNotebook) {
+                qnRenderMultiOcr(multiItems, raw);
+                if (multiItems.length) {
+                    showToast('📒 ' + multiItems.length + ' ردیف از برگه — تیک بزن و تایید کن.');
+                } else {
+                    showToast('📒 برگه دفترچه تشخیص داده شد؛ ردیف واضحی پیدا نشد. متن خام را ببین یا دوباره عکس بگیر.');
+                }
             } else {
                 const res = qnBuildResultFromText(raw);
                 qnRenderOcrCard(res, raw);
+                // دکمه تبدیل به حالت دفترچه
+                try {
+                    const box = document.getElementById('qnOcrBox');
+                    if (box && box.style.display !== 'none') {
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className = 'row-btn edit-btn';
+                        btn.style.cssText = 'width:100%;margin-top:8px;';
+                        btn.textContent = '📒 این برگه دفترچه است — چند ردیفی استخراج کن';
+                        btn.onclick = function () {
+                            const items = qnParseNotebookLines(window.__qnLastOcrRaw || raw);
+                            qnRenderMultiOcr(items, window.__qnLastOcrRaw || raw);
+                        };
+                        box.appendChild(btn);
+                    }
+                } catch (e) {}
                 if (res.matched && res.matchScore >= 100) {
                     qnApplyOcrResult(res);
                 } else if (res.name || res.priceHint || res.catalogPrice || res.qty) {
