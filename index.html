@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v124 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v126 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -1503,7 +1503,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <button class="tab-btn" id="btnSale" onclick="switchTab('sale'); loadProductDatalist(); loadRecentSales('instore');"><span class="tab-ico">🧀</span><span class="tab-label">ثبت فروش لبنیات</span></button>
         <button class="tab-btn" id="btnSaleEkala" onclick="switchTab('saleEkala'); loadProductDatalist(); loadRecentSales('ekala');"><span class="tab-ico">🛒</span><span class="tab-label">ثبت فروش اکالا</span></button>
         <button class="tab-btn" id="btnSaleSausage" onclick="switchTab('saleSausage'); loadProductDatalist(); loadRecentSales('sausage');"><span class="tab-ico">🌭</span><span class="tab-label">ثبت فروش سوسیس و کالباس</span></button>
-        <button class="tab-btn" id="btnSausagePriceCompare" onclick="switchTab('sausagePriceCompare'); loadSausagePriceCompare();"><span class="tab-ico">⚖️</span><span class="tab-label">قیمت سوسیس کد ۲۲</span></button>
+        <button class="tab-btn" id="btnSausagePriceCompare" onclick="switchTab('sausagePriceCompare'); loadSausagePriceCompare();"><span class="tab-ico">🏷️</span><span class="tab-label">راهنمای لیبل سوسیس‌ها</span></button>
         <button class="tab-btn" id="btnQuickNote" onclick="switchTab('quickNote');"><span class="tab-ico">📝</span><span class="tab-label">دفترچه فروش سریع</span><span class="qn-badge" id="qnTabBadge"></span></button>
         <button class="tab-btn" id="btnAttendance" onclick="switchTab('attendance'); loadFingerprintStatus();"><span class="tab-ico">⏰</span><span class="tab-label">حضور و غیاب</span></button>
         <button class="tab-btn" id="btnMessage" onclick="switchTab('message');"><span class="tab-ico">📩</span><span class="tab-label">ارسال پیام به مدیر</span></button>
@@ -2006,36 +2006,19 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
 
     <!-- مقایسه قیمت سوسیس/کالباس کد ۲۲ -->
     <div id="sausagePriceCompareTab" class="card">
-        <h2>🌭 راهنمای لیبل سوسیس و کالباس (کد ۲۲)</h2>
-        <div class="hint" style="line-height:1.85;">
-            وقتی مشتری سوسیس/کالباسی می‌خواهد که <b>روی ترازو کد ۲۲ ندارد</b>، از این لیست ببین:
-            <br>① <b>سمت چپ:</b> کالای مشتری (کد غیر ۲۲ یا بدون کد) و قیمتش
-            <br>② <b>سمت راست:</b> همان کالا با <b>کد ۲۲ ترازو</b> که باید روی ترازو بزنی و لیبل بدهی
-            <br>③ ستون وسط می‌گوید: اگر قیمت ترازو از قیمت فروش کمتر بود <b>لیبل را بالاتر بزن</b>، اگر بیشتر بود <b>پایین‌تر بزن</b>.
+        <h2>🏷️ راهنمای لیبل سوسیس‌ها</h2>
+        <div class="hint" style="line-height:1.9;">
+            وقتی مشتری سوسیس یا کالباسی خواست که <b>کد ۲۲ ترازو ندارد</b>، از این لیست ببین:
+            <br>① <b>سمت راست:</b> کالای مشتری و <b>قیمت کیلوی</b> آن
+            <br>② <b>سمت چپ:</b> کدام <b>کد ۲۲</b> را روی ترازو بزنی
+            <br>③ <b>وسط:</b> لیبل را <b>بالاتر</b> بزن یا <b>پایین‌تر</b> — تا به همان قیمت فروش برسی
+            <br><span style="opacity:.85;">این صفحه فقط راهنماست؛ قیمت‌ها از اینجا عوض نمی‌شوند.</span>
         </div>
-
-        <div id="spcAdminControls" style="display:none;">
-            <div class="grid-2" style="gap:10px; margin-bottom:12px;">
-                <div>
-                    <label>حد اختلاف قیمت برای جفت‌کردن (تومان):</label>
-                    <input type="text" inputmode="numeric" id="spcNearTol" value="15000" placeholder="مثلاً 15000" onchange="loadSausagePriceCompare()">
-                </div>
-                <div>
-                    <label>اختلاف پیشنهادی کد ۲۲ نسبت به غیر ۲۲ (٪):</label>
-                    <input type="text" inputmode="decimal" id="spcMarkupPct" value="3" placeholder="مثلاً 3" onchange="loadSausagePriceCompare()">
-                </div>
-            </div>
-            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
-                <button type="button" class="row-btn confirm-btn" onclick="loadSausagePriceCompare()">🔄 بروزرسانی لیست</button>
-                <button type="button" class="row-btn edit-btn" id="spcApplyAllBtn" onclick="spcApplyAllSuggestions()" style="display:none;">✅ اعمال همه پیشنهادهای قیمت (فقط مدیر)</button>
-            </div>
-        </div>
-        <div id="spcSellerRefresh" style="margin-bottom:12px;">
-            <button type="button" class="row-btn confirm-btn" onclick="loadSausagePriceCompare()" style="width:100%;">🔄 بروزرسانی لیست</button>
-        </div>
-
+        <button type="button" class="row-btn confirm-btn" style="width:100%; margin-bottom:12px;" onclick="loadSausagePriceCompare()">🔄 بروزرسانی لیست</button>
         <div id="spcSummary" class="hint" style="margin-bottom:10px;"></div>
         <div id="spcList"></div>
+    </div>
+
     </div>
 
     <!-- فرم تعریف / ویرایش کالا -->
@@ -2848,7 +2831,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v124 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v126 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -2973,7 +2956,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=124', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=126', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -7655,7 +7638,7 @@ notify pgrst, 'reload schema';`;
 
 
 
-        /* ========== مقایسه قیمت سوسیس کد ۲۲ ========== */
+        /* ========== راهنمای لیبل سوسیس (جفت‌های ذخیره‌شده) ========== */
         function spcNormDigits(s) {
             return String(s || '').replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
                 .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/\s+/g, '').trim();
@@ -7664,26 +7647,78 @@ notify pgrst, 'reload schema';`;
             const c = spcNormDigits(code);
             return c.length >= 2 && c.indexOf('22') === 0;
         }
-        function spcHasNoCode(p) {
-            const c = spcNormDigits(p && p.code);
-            return !c || c === '0' || c === '-' || c.toLowerCase() === 'null';
-        }
         function spcFa(n) {
             try { return Number(n).toLocaleString('fa-IR'); } catch (e) { return String(n); }
         }
+        function spcOtherKey(p) {
+            const c = spcNormDigits(p && p.code);
+            if (c) return 'c:' + c;
+            return 'n:' + String((p && p.name) || '').trim();
+        }
+
+        function spcLoadPairsLocal() {
+            try {
+                const raw = localStorage.getItem('sausageLabelPairs_v1');
+                const o = raw ? JSON.parse(raw) : {};
+                return (o && typeof o === 'object') ? o : {};
+            } catch (e) { return {}; }
+        }
+        function spcSavePairsLocal(map) {
+            try { localStorage.setItem('sausageLabelPairs_v1', JSON.stringify(map || {})); } catch (e) {}
+        }
+
+        async function spcLoadPairs() {
+            const local = spcLoadPairsLocal();
+            try {
+                const { data, error } = await _supabase.from('shop_settings').select('value').eq('key', 'sausage_label_pairs').maybeSingle();
+                if (!error && data && data.value) {
+                    let remote = data.value;
+                    if (typeof remote === 'string') {
+                        try { remote = JSON.parse(remote); } catch (e) { remote = null; }
+                    }
+                    if (remote && typeof remote === 'object') {
+                        const merged = Object.assign({}, local, remote);
+                        spcSavePairsLocal(merged);
+                        return merged;
+                    }
+                }
+            } catch (e) { /* جدول ممکن است نباشد */ }
+            return local;
+        }
+
+        async function spcPersistPairs(map) {
+            spcSavePairsLocal(map);
+            try {
+                await _supabase.from('shop_settings').upsert({
+                    key: 'sausage_label_pairs',
+                    value: map,
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'key' });
+            } catch (e) {
+                try {
+                    await _supabase.from('shop_settings').upsert({
+                        key: 'sausage_label_pairs',
+                        value: JSON.stringify(map)
+                    }, { onConflict: 'key' });
+                } catch (e2) { /* فقط localStorage */ }
+            }
+        }
+
+        window.spcSetPair = async function (otherKey, scaleCode) {
+            const isMgr = (typeof currentRole !== 'undefined' && currentRole === 'admin');
+            if (!isMgr) { showToast('فقط مدیر می‌تواند جفت را ذخیره کند.'); return; }
+            const map = await spcLoadPairs();
+            if (!scaleCode) delete map[otherKey];
+            else map[otherKey] = String(scaleCode);
+            await spcPersistPairs(map);
+            showToast('✅ جفت لیبل ذخیره شد');
+            loadSausagePriceCompare();
+        };
 
         async function loadSausagePriceCompare() {
             const box = document.getElementById('spcList');
             const sum = document.getElementById('spcSummary');
-            const applyBtn = document.getElementById('spcApplyAllBtn');
-            const adminBox = document.getElementById('spcAdminControls');
-            const sellerRef = document.getElementById('spcSellerRefresh');
             if (!box) return;
-
-            const isMgr = (typeof currentRole !== 'undefined' && currentRole === 'admin');
-            if (adminBox) adminBox.style.display = isMgr ? 'block' : 'none';
-            if (sellerRef) sellerRef.style.display = isMgr ? 'none' : 'block';
-
             box.innerHTML = '<div class="skeleton-block skeleton-card"></div>';
             if (sum) sum.textContent = 'در حال بارگذاری...';
 
@@ -7698,145 +7733,133 @@ notify pgrst, 'reload schema';`;
             const sausages = list.filter(p => p && (p.category === 'sausage' || p.category === 'سوسیس'));
 
             const coded = sausages.filter(p => spcIsCode22(p.code))
-                .sort((a, b) => (Number(a.sell_price) || 0) - (Number(b.sell_price) || 0));
+                .sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'fa'));
             const others = sausages.filter(p => !spcIsCode22(p.code))
-                .sort((a, b) => (Number(a.sell_price) || 0) - (Number(b.sell_price) || 0));
+                .sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'fa'));
 
-            const tolEl = document.getElementById('spcNearTol');
-            const pctEl = document.getElementById('spcMarkupPct');
-            const tol = parseFloat(spcNormDigits(tolEl && tolEl.value)) || 15000;
-            const markupPct = parseFloat(spcNormDigits(pctEl && pctEl.value)) || 3;
-
-            window.__spcSuggestions = [];
+            const pairs = await spcLoadPairs();
+            const isMgr = (typeof currentRole !== 'undefined' && currentRole === 'admin');
+            const tolOf = (price) => Math.max(20000, (Number(price) || 0) * 0.25);
 
             if (!coded.length && !others.length) {
                 box.innerHTML = '<div class="hint">کالای سوسیس/کالباسی در انبار نیست.</div>';
                 if (sum) sum.textContent = '';
-                if (applyBtn) applyBtn.style.display = 'none';
                 return;
             }
 
-            // برای فروشنده: هر کالای غیر ۲۲ را به نزدیک‌ترین کد ۲۲ وصل کن
             let html = '';
+            if (isMgr) {
+                html += '<div class="hint" style="margin-bottom:8px;">به‌عنوان مدیر می‌توانی برای هر کالا مشخص کنی کدام <b>کد ۲۲</b> روی ترازو زده شود؛ این انتخاب <b>ذخیره می‌ماند</b>.</div>';
+            }
+
             html += '<div style="overflow-x:auto;">';
-            html += '<table style="width:100%; border-collapse:collapse; font-size:12px; direction:rtl;">';
+            html += '<table style="width:100%; border-collapse:collapse; font-size:13px; direction:rtl;">';
             html += '<thead><tr>';
-            html += '<th style="padding:10px 6px; background:rgba(148,163,184,.18); border:1px solid rgba(148,163,184,.3);">📦 کالای مشتری<br><span style="font-weight:400;font-size:10px;">(کد غیر ۲۲ / بدون کد)</span></th>';
-            html += '<th style="padding:10px 6px; background:rgba(251,191,36,.14); border:1px solid rgba(148,163,184,.3);">لیبل را چطور بزن؟</th>';
-            html += '<th style="padding:10px 6px; background:rgba(56,189,248,.16); border:1px solid rgba(148,163,184,.3);">🏷️ روی ترازو این کد ۲۲ را بزن<br><span style="font-weight:400;font-size:10px;">نام + کد + قیمت</span></th>';
+            html += '<th style="padding:10px 6px; background:rgba(148,163,184,.2); border:1px solid rgba(148,163,184,.3);">📦 کالای مشتری</th>';
+            html += '<th style="padding:10px 6px; background:rgba(251,191,36,.18); border:1px solid rgba(148,163,184,.3); width:22%;">لیبل؟</th>';
+            html += '<th style="padding:10px 6px; background:rgba(56,189,248,.18); border:1px solid rgba(148,163,184,.3);">🏷️ کد ۲۲ ترازو</th>';
             html += '</tr></thead><tbody>';
 
-            let paired = 0, noMatch = 0;
+            let paired = 0, noMatch = 0, savedN = 0;
 
             others.forEach(op => {
                 const opPrice = Number(op.sell_price) || 0;
                 const opCode = spcNormDigits(op.code);
+                const oKey = spcOtherKey(op);
+                const tol = tolOf(opPrice);
 
-                // نزدیک‌ترین کد ۲۲ از نظر قیمت
-                let best = null, bestDiff = Infinity;
-                coded.forEach(cp => {
-                    const d = Math.abs((Number(cp.sell_price) || 0) - opPrice);
-                    if (d < bestDiff) { bestDiff = d; best = cp; }
-                });
+                // 1) جفت ذخیره‌شده توسط مدیر
+                let best = null;
+                let fromSaved = false;
+                const savedCode = pairs[oKey];
+                if (savedCode) {
+                    best = coded.find(cp => spcNormDigits(cp.code) === spcNormDigits(savedCode)) || null;
+                    if (best) { fromSaved = true; savedN++; }
+                }
+                // 2) نزدیک‌ترین از نظر قیمت
+                if (!best) {
+                    let bestDiff = Infinity;
+                    coded.forEach(cp => {
+                        const d = Math.abs((Number(cp.sell_price) || 0) - opPrice);
+                        if (d < bestDiff) { bestDiff = d; best = cp; }
+                    });
+                    if (!best || bestDiff > tol) best = null;
+                }
 
-                if (!best || bestDiff > tol) {
+                if (!best) {
                     noMatch++;
                     html += '<tr style="background:rgba(100,116,139,.06);">';
-                    html += '<td style="padding:10px 6px; border:1px solid rgba(148,163,184,.22); vertical-align:top;">';
-                    html += '<div><b dir="auto">' + escapeHtmlForToast(op.name || '') + '</b></div>';
-                    html += '<div class="hint">' + (opCode ? ('<span dir="ltr">' + escapeHtmlForToast(String(op.code || '')) + '</span> · ') : 'بدون کد · ') + spcFa(opPrice) + ' ت</div>';
+                    html += '<td style="padding:12px 8px; border:1px solid rgba(148,163,184,.22); vertical-align:top;">';
+                    html += '<div style="font-size:14px; font-weight:700;" dir="auto">' + escapeHtmlForToast(op.name || '') + '</div>';
+                    html += opCode
+                        ? ('<div class="hint" dir="ltr" style="margin-top:2px;">کد ' + escapeHtmlForToast(String(op.code || '')) + '</div>')
+                        : '<div class="hint" style="margin-top:2px;">بدون کد</div>';
+                    html += '<div style="margin-top:8px; font-size:20px; font-weight:800; color:#f8fafc;">' + spcFa(opPrice) + '</div>';
+                    html += '<div class="hint" style="font-size:11px;">تومان / کیلو</div>';
                     html += '</td>';
-                    html += '<td style="padding:10px 6px; border:1px solid rgba(148,163,184,.22); text-align:center; color:#94a3b8;">کد ۲۲ نزدیکی پیدا نشد</td>';
-                    html += '<td style="padding:10px 6px; border:1px solid rgba(148,163,184,.22); color:#64748b;">—</td>';
-                    html += '</tr>';
+                    html += '<td style="padding:12px 6px; border:1px solid rgba(148,163,184,.22); text-align:center; color:#94a3b8; font-size:12px;">کد ۲۲ مشخص نشده</td>';
+                    html += '<td style="padding:12px 8px; border:1px solid rgba(148,163,184,.22); vertical-align:top;">';
+                    if (isMgr && coded.length) {
+                        html += '<select class="spc-pair-sel" data-okey="' + escapeHtmlAttr(oKey) + '" style="width:100%; margin:0; padding:8px; font-size:12px;" onchange="spcSetPair(this.dataset.okey, this.value)">';
+                        html += '<option value="">— انتخاب کد ۲۲ —</option>';
+                        coded.forEach(cp => {
+                            html += '<option value="' + escapeHtmlAttr(String(cp.code || '')) + '">' + escapeHtmlForToast((cp.name || '') + ' · ' + String(cp.code || '')) + '</option>';
+                        });
+                        html += '</select>';
+                    } else {
+                        html += '<span style="color:#64748b;">—</span>';
+                    }
+                    html += '</td></tr>';
                     return;
                 }
 
                 paired++;
                 const cpPrice = Number(best.sell_price) || 0;
-                let tip = '', tipColor = '#34d399', rowBg = 'rgba(52,211,153,.07)';
-
-                // قیمت ترازو (کد ۲۲) را با قیمت کالای مشتری مقایسه کن:
-                // اگر ترازو ارزان‌تر است → روی ترازو بالاتر نگه دار تا به قیمت فروش برسی
-                // اگر ترازو گران‌تر است → روی ترازو پایین‌تر بزن
+                let tip = '', tipColor = '#34d399', rowBg = 'rgba(52,211,153,.08)';
                 if (cpPrice < opPrice) {
-                    tip = '⬆️ لیبل را بالاتر بزن';
-                    tipColor = '#fbbf24';
-                    rowBg = 'rgba(251,191,36,.07)';
+                    tip = '⬆️ بالاتر بزن'; tipColor = '#fbbf24'; rowBg = 'rgba(251,191,36,.08)';
                 } else if (cpPrice > opPrice) {
-                    tip = '⬇️ لیبل را پایین‌تر بزن';
-                    tipColor = '#38bdf8';
-                    rowBg = 'rgba(56,189,248,.07)';
+                    tip = '⬇️ پایین‌تر بزن'; tipColor = '#38bdf8'; rowBg = 'rgba(56,189,248,.08)';
                 } else {
                     tip = '✅ همان قیمت';
-                    tipColor = '#34d399';
-                    rowBg = 'rgba(52,211,153,.07)';
                 }
-
-                // اگر مدیر است و کد ۲۲ باید نسبت به غیر ۲۲ تنظیم شود
-                let adminExtra = '';
-                if (isMgr) {
-                    if (cpPrice <= opPrice) {
-                        const suggested = Math.ceil(opPrice * (1 + markupPct / 100) / 1000) * 1000;
-                        adminExtra = '<div style="margin-top:6px;"><button type="button" class="row-btn confirm-btn" style="width:100%;padding:5px;font-size:10px;" onclick="spcApplyOne(\'' + escapeHtmlAttr(String(best.code || '')) + '\',' + suggested + ')">مدیر: قیمت کد ۲۲ ← ' + spcFa(suggested) + '</button></div>';
-                        window.__spcSuggestions.push({ code: String(best.code || ''), name: best.name, oldPrice: cpPrice, newPrice: suggested });
-                    } else if (cpPrice > opPrice * (1 + markupPct * 3 / 100) && (cpPrice - opPrice) > tol) {
-                        const suggested = Math.ceil(opPrice * (1 + markupPct / 100) / 1000) * 1000;
-                        adminExtra = '<div style="margin-top:6px;"><button type="button" class="row-btn edit-btn" style="width:100%;padding:5px;font-size:10px;" onclick="spcApplyOne(\'' + escapeHtmlAttr(String(best.code || '')) + '\',' + suggested + ')">مدیر: تعدیل به ' + spcFa(suggested) + '</button></div>';
-                        window.__spcSuggestions.push({ code: String(best.code || ''), name: best.name, oldPrice: cpPrice, newPrice: suggested });
-                    }
-                }
+                const diff = Math.abs(cpPrice - opPrice);
 
                 html += '<tr style="background:' + rowBg + ';">';
-                // چپ: کالای مشتری
-                html += '<td style="padding:10px 6px; border:1px solid rgba(148,163,184,.22); vertical-align:top;">';
-                html += '<div><b dir="auto">' + escapeHtmlForToast(op.name || '') + '</b></div>';
-                html += '<div class="hint">' + (opCode ? ('کد <span dir="ltr">' + escapeHtmlForToast(String(op.code || '')) + '</span> · ') : 'بدون کد · ');
-                html += 'قیمت <b>' + spcFa(opPrice) + '</b> ت</div>';
+                html += '<td style="padding:12px 8px; border:1px solid rgba(148,163,184,.22); vertical-align:top;">';
+                html += '<div style="font-size:14px; font-weight:700;" dir="auto">' + escapeHtmlForToast(op.name || '') + '</div>';
+                html += opCode
+                    ? ('<div class="hint" dir="ltr" style="margin-top:2px;">کد ' + escapeHtmlForToast(String(op.code || '')) + '</div>')
+                    : '<div class="hint" style="margin-top:2px;">بدون کد</div>';
+                html += '<div style="margin-top:8px; font-size:20px; font-weight:800; color:#f8fafc;">' + spcFa(opPrice) + '</div>';
+                html += '<div class="hint" style="font-size:11px;">تومان / کیلو</div>';
                 html += '</td>';
-                // وسط: راهنمای لیبل
-                html += '<td style="padding:10px 6px; border:1px solid rgba(148,163,184,.22); text-align:center; vertical-align:middle;">';
-                html += '<div style="color:' + tipColor + '; font-weight:700; font-size:13px;">' + tip + '</div>';
-                html += adminExtra;
+                html += '<td style="padding:12px 6px; border:1px solid rgba(148,163,184,.22); text-align:center; vertical-align:middle;">';
+                html += '<div style="color:' + tipColor + '; font-weight:800; font-size:14px;">' + tip + '</div>';
+                if (diff > 0) html += '<div class="hint" style="margin-top:6px; font-size:11px;">اختلاف<br><b style="color:#e2e8f0;">' + spcFa(diff) + '</b> ت</div>';
+                if (fromSaved) html += '<div style="margin-top:4px; font-size:10px; color:#34d399;">📌 ذخیره شده</div>';
                 html += '</td>';
-                // راست: کد ۲۲ ترازو
-                html += '<td style="padding:10px 6px; border:1px solid rgba(148,163,184,.22); vertical-align:top;">';
-                html += '<div><b dir="auto">' + escapeHtmlForToast(best.name || '') + '</b></div>';
-                html += '<div class="hint">کد ترازو: <b dir="ltr" style="color:#38bdf8;">' + escapeHtmlForToast(String(best.code || '')) + '</b></div>';
-                html += '<div style="margin-top:2px;">قیمت ترازو: <b>' + spcFa(cpPrice) + '</b> ت</div>';
-                html += '</td>';
-                html += '</tr>';
+                html += '<td style="padding:12px 8px; border:1px solid rgba(148,163,184,.22); vertical-align:top;">';
+                html += '<div style="font-size:14px; font-weight:700;" dir="auto">' + escapeHtmlForToast(best.name || '') + '</div>';
+                html += '<div style="margin-top:4px; font-size:15px; font-weight:700; color:#38bdf8;" dir="ltr">' + escapeHtmlForToast(String(best.code || '')) + '</div>';
+                html += '<div style="margin-top:8px; font-size:20px; font-weight:800; color:#f8fafc;">' + spcFa(cpPrice) + '</div>';
+                html += '<div class="hint" style="font-size:11px;">تومان / کیلو روی ترازو</div>';
+                if (isMgr) {
+                    html += '<select class="spc-pair-sel" data-okey="' + escapeHtmlAttr(oKey) + '" style="width:100%; margin-top:8px; padding:6px; font-size:11px;" onchange="spcSetPair(this.dataset.okey, this.value)">';
+                    coded.forEach(cp => {
+                        const sel = spcNormDigits(cp.code) === spcNormDigits(best.code) ? ' selected' : '';
+                        html += '<option value="' + escapeHtmlAttr(String(cp.code || '')) + '"' + sel + '>' + escapeHtmlForToast((cp.name || '') + ' · ' + String(cp.code || '')) + '</option>';
+                    });
+                    html += '</select>';
+                }
+                html += '</td></tr>';
             });
 
             html += '</tbody></table></div>';
-
-            // اگر کد ۲۲ بدون جفت مانده
-            const used22 = new Set();
-            others.forEach(op => {
-                const opPrice = Number(op.sell_price) || 0;
-                let best = null, bestDiff = Infinity;
-                coded.forEach(cp => {
-                    const d = Math.abs((Number(cp.sell_price) || 0) - opPrice);
-                    if (d < bestDiff) { bestDiff = d; best = cp; }
-                });
-                if (best && bestDiff <= tol) used22.add(String(best.code));
-            });
-            const orphan22 = coded.filter(cp => !used22.has(String(cp.code)));
-            if (orphan22.length && isMgr) {
-                html += '<div class="report-card" style="margin-top:12px;">';
-                html += '<h3 style="margin:0 0 6px; font-size:12px;">🏷️ کدهای ۲۲ بدون جفت (فقط مدیر)</h3>';
-                orphan22.forEach(p => {
-                    html += '<div style="font-size:12px; padding:3px 0; border-bottom:1px solid rgba(148,163,184,.12);">';
-                    html += escapeHtmlForToast(p.name || '') + ' · <span dir="ltr">' + escapeHtmlForToast(String(p.code || '')) + '</span> · ' + spcFa(Number(p.sell_price) || 0) + ' ت</div>';
-                });
-                html += '</div>';
-            }
-
             box.innerHTML = html;
             if (sum) {
-                sum.innerHTML = 'جفت‌شده: <b>' + spcFa(paired) + '</b> · بدون جفت: <b>' + spcFa(noMatch) + '</b> · کد ۲۲ کل: ' + spcFa(coded.length) + ' · غیر ۲۲: ' + spcFa(others.length);
+                sum.innerHTML = 'جفت‌شده: <b>' + spcFa(paired) + '</b> · ذخیره‌شده مدیر: <b>' + spcFa(savedN) + '</b> · بدون جفت: <b>' + spcFa(noMatch) + '</b>';
             }
-            if (applyBtn) applyBtn.style.display = (isMgr && window.__spcSuggestions && window.__spcSuggestions.length) ? 'inline-block' : 'none';
         }
 
         async function spcApplyOne(code, newPrice) {
