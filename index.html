@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v131 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v132 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -131,17 +131,50 @@
             position: fixed;
             top: 0; left: 0; right: 0;
             z-index: 9997;
-            background: linear-gradient(90deg, #f43f5e, #dc2626);
+            background: linear-gradient(135deg, #b45309, #dc2626 55%, #9f1239);
             color: #fff;
-            text-align: center;
+            text-align: right;
             font-size: 12px;
-            font-weight: bold;
-            padding: 10px;
+            font-weight: 600;
+            padding: 10px 12px 12px;
             transform: translateY(-100%);
             transition: transform 0.3s ease;
-            box-shadow: 0 6px 20px rgba(220, 38, 38, 0.45);
+            box-shadow: 0 8px 24px rgba(220, 38, 38, 0.4);
+            max-height: 42vh;
+            overflow-y: auto;
+            direction: rtl;
         }
         .connection-banner.show { transform: translateY(0); }
+        .connection-banner .ob-title { font-size: 13px; font-weight: 800; text-align: center; margin-bottom: 6px; }
+        .connection-banner .ob-list { margin: 0; padding: 0 4px 0 0; list-style: none; line-height: 1.7; font-weight: 500; opacity: 0.95; }
+        .connection-banner .ob-list li { margin-bottom: 3px; }
+        .connection-banner .ob-list b { color: #fef08a; }
+        .login-offline-tip {
+            background: rgba(56, 189, 248, 0.12);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            border-radius: 14px;
+            padding: 12px 14px;
+            margin: 0 0 14px;
+            text-align: right;
+            direction: rtl;
+            font-size: 12px;
+            line-height: 1.75;
+            color: var(--text, #e2e8f0);
+        }
+        .login-offline-tip b { color: #38bdf8; }
+        .login-offline-tip .tip-actions { margin-top: 10px; }
+        .login-offline-tip button {
+            width: 100%;
+            border: none;
+            border-radius: 10px;
+            padding: 10px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            background: linear-gradient(90deg, #0ea5e9, #6366f1);
+            color: #fff;
+        }
+        body.offline-mode { padding-top: 8px; }
 
         /* ================== صفحه لودینگ اولیه (Splash) ================== */
         #appSplash {
@@ -1322,7 +1355,15 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
     <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="تغییر حالت روشن/تاریک">🌙</button>
 
     <!-- بنر قطعی اینترنت: فقط وقتی گوشی واقعاً آفلاین است نشان داده می‌شود -->
-    <div id="connectionBanner" class="connection-banner">🔌 اتصال اینترنت قطع شده — به‌محض وصل شدن، خودکار ادامه می‌دهد</div>
+    <div id="connectionBanner" class="connection-banner">
+        <div class="ob-title">📴 الان در حالت آفلاین هستی</div>
+        <ul class="ob-list">
+            <li>🛒 <b>ثبت فروش:</b> الان ثبت کن؛ به‌محض وصل شدن اینترنت همه بارگذاری می‌شوند</li>
+            <li>⏰ <b>ورود / خروج:</b> الان ثبت کن؛ وقتی آنلاین شدی همان لحظه برای مدیر ارسال می‌شود</li>
+            <li>📦 <b>کالا و راهنمای لیبل:</b> از آخرین لیست ذخیره‌شده روی همین گوشی</li>
+            <li>🔄 <b>وقتی آنلاین شدی:</b> صف‌ها ارسال می‌شوند و اگر سایت تغییر کرده باشد برایت به‌روز می‌شود</li>
+        </ul>
+    </div>
 
     <!-- سیستم اعلان (Toast) و تاییدیه سفارشی، جایگزین alert()/confirm() پیش‌فرض مرورگر -->
     <div id="toastContainer"></div>
@@ -1418,6 +1459,14 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <h2 class="lg-title">غرفه فامیلی</h2>
         <div class="lg-sub">سیستم مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس</div>
         <div class="lg-chips"><span>🧀 لبنیات</span><span>🥒 ترشیجات</span><span>🌭 سوسیس‌وکالباس</span></div>
+        <div id="loginOfflineTip" class="login-offline-tip" style="display:none;">
+            <div>📴 می‌تونی <b>بدون اینترنت</b> هم وارد سایت بشی و کارت رو انجام بدی.</div>
+            <div style="margin-top:4px;">فروش و ورود/خروج روی گوشی ذخیره می‌شن و وقتی <b>آنلاین</b> شدی اعمال می‌شن. اگر سایت تغییر کرده باشد هم برایت به‌روز می‌شود.</div>
+            <div class="tip-actions"><button type="button" onclick="dismissLoginOfflineTip()">متوجه شدم ✓</button></div>
+        </div>
+        <div id="loginOfflineActiveNote" class="login-offline-tip" style="display:none; border-color:rgba(251,191,36,.45); background:rgba(251,191,36,.1);">
+            <div>📴 <b>الان اینترنت قطع است.</b> اگر قبلاً روی این گوشی وارد شده‌ای، با همان نام کاربری و رمز می‌توانی آفلاین وارد شوی و کار کنی؛ وقتی آنلاین شدی همه‌چیز همگام می‌شود.</div>
+        </div>
         <label class="lg-label">نام کاربری</label>
         <div class="lg-field">
             <span class="lg-ico">👤</span>
@@ -2835,7 +2884,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v131 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v132 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -2864,16 +2913,50 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         function updateConnectionBanner() {
             const el = document.getElementById('connectionBanner');
             if (!el) return;
-            el.classList.toggle('show', !navigator.onLine);
+            const off = (typeof offlineIsDown === 'function') ? offlineIsDown() : !navigator.onLine;
+            el.classList.toggle('show', !!off);
+            try { document.body.classList.toggle('offline-mode', !!off); } catch (e) {}
+            // روی صفحه ورود هم یادآوری آفلاین
+            try {
+                const activeNote = document.getElementById('loginOfflineActiveNote');
+                if (activeNote) activeNote.style.display = off ? 'block' : 'none';
+                refreshLoginOfflineTip();
+            } catch (e) {}
         }
+        function refreshLoginOfflineTip() {
+            const tip = document.getElementById('loginOfflineTip');
+            if (!tip) return;
+            let dismissed = false;
+            try { dismissed = localStorage.getItem('loginOfflineTipDismissed_v1') === '1'; } catch (e) {}
+            // همیشه یک‌بار اول نشان بده؛ بعد از متوجه شدم دیگر نه — مگر اینکه آفلاین باشد
+            const off = (typeof offlineIsDown === 'function') ? offlineIsDown() : !navigator.onLine;
+            if (off) {
+                tip.style.display = 'none'; // وقتی آفلاین است، باکس زرد بالا نشان داده می‌شود
+                return;
+            }
+            tip.style.display = dismissed ? 'none' : 'block';
+        }
+        window.dismissLoginOfflineTip = function () {
+            try { localStorage.setItem('loginOfflineTipDismissed_v1', '1'); } catch (e) {}
+            const tip = document.getElementById('loginOfflineTip');
+            if (tip) tip.style.display = 'none';
+            showToast('باشه ✅ — هر وقت آفلاین باشی باز یادآوری می‌بینی');
+        };
         window.addEventListener('online', () => {
             updateConnectionBanner();
-            showToast('✅ اینترنت وصل شد — در حال همگام‌سازی...');
+            showToast('✅ اینترنت وصل شد — در حال ارسال صف فروش و حضور و به‌روزرسانی...');
             try { if (typeof offlineGetProducts === 'function') offlineGetProducts(true).then(list => { if (list && list.length) cachedProductsList = sortProductsAlpha(list); }).catch(()=>{}); } catch(e) {}
             if (typeof flushOfflineSaleQueue === 'function') flushOfflineSaleQueue();
+            if (typeof flushOfflineAttendanceQueue === 'function') flushOfflineAttendanceQueue();
+            // به‌روزرسانی سرویس‌ورکر / نسخه
+            try { if (navigator.serviceWorker && navigator.serviceWorker.getRegistration) navigator.serviceWorker.getRegistration().then(r => { if (r) r.update(); }); } catch (e) {}
         });
-        window.addEventListener('offline', () => { updateConnectionBanner(); showToast('📴 اینترنت قطع شد — برنامه با دادهٔ ذخیره‌شده روی گوشی کار می‌کند'); });
+        window.addEventListener('offline', () => {
+            updateConnectionBanner();
+            showToast('📴 الان آفلاین هستی — فروش و ورود/خروج روی گوشی ذخیره می‌شود');
+        });
         updateConnectionBanner();
+        try { refreshLoginOfflineTip(); } catch (e) {}
 
         // ================== خروج خودکار بعد از بی‌فعالیتی (امنیت) ==================
         // اگه گوشی روی پیشخوان جا بمونه و کسی دیگه‌ای دستش بگیره، بعد از مدتی بی‌فعالیتی
@@ -2961,7 +3044,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=131', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=132', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -9585,6 +9668,28 @@ notify pgrst, 'reload schema';`;
             // کاربر پیام خطا نشان داده می‌شود و دکمه دوباره فعال می‌شود تا بتواند امتحان کند.
             try {
 
+            // آفلاین: ورود/خروج را روی گوشی نگه می‌داریم
+            if (offlineIsDown() && (type === 'entry' || type === 'exit')) {
+                if (!selectedPhotoDataUrl && !selectedLocationText) {
+                    showToast('⛔ حتی آفلاین هم عکس یا موقعیت برای ورود/خروج لازم است.');
+                    return;
+                }
+                const payload = {
+                    seller_name: currentUserLabel,
+                    type: type,
+                    note: (note || '') + (note ? ' | ' : '') + 'ثبت آفلاین — زمان محلی: ' + new Date().toLocaleString('fa-IR'),
+                    created_at: new Date().toISOString(),
+                    location_text: selectedLocationText || null,
+                    photo_data_url: selectedPhotoDataUrl ? String(selectedPhotoDataUrl).slice(0, 500000) : null,
+                    offline_queued: true
+                };
+                queueOfflineAttendance(payload);
+                selectedPhotoDataUrl = null;
+                selectedLocationText = null;
+                try { document.getElementById('attNote').value = ''; } catch (e) {}
+                return;
+            }
+
             if (type !== 'leave' && type !== 'leave_hourly' && !selectedPhotoDataUrl && !selectedLocationText) {
                 showToast('⛔ خطا: جهت ثبت ورود و خروج ارسال عکس یا موقعیت مکانی **الزامی** می‌باشد!');
                 return;
@@ -10953,7 +11058,7 @@ notify pgrst, 'reload schema';`;
             try { queue = JSON.parse(localStorage.getItem('offlineSaleQueue') || '[]'); } catch (e) {}
             queue.push({ type, name, qtyRaw, unit, queuedAt: Date.now() });
             localStorage.setItem('offlineSaleQueue', JSON.stringify(queue));
-            showToast(`📴 اینترنت قطعه؛ فاکتور «${name}» ذخیره شد و به‌محض وصل شدن اینترنت خودکار ثبت می‌شود (${queue.length.toLocaleString('fa-IR')} فاکتور در صف).`);
+            showToast(`📴 فروش آفلاین ذخیره شد: «${name}» — وقتی آنلاین شدی خودکار بارگذاری می‌شود (${queue.length.toLocaleString('fa-IR')} فاکتور در صف).`);
             document.getElementById(ids.name).value = '';
             document.getElementById(ids.qty).value = '';
         }
@@ -11014,6 +11119,44 @@ notify pgrst, 'reload schema';`;
             const remaining = JSON.parse(localStorage.getItem('offlineSaleQueue') || '[]');
             if (remaining.length === 0) showToast('✅ همه فاکتورهای صف‌شده با موفقیت ثبت شدند.');
         }
+
+        // صف آفلاین حضور و غیاب
+        function queueOfflineAttendance(payload) {
+            let queue = [];
+            try { queue = JSON.parse(localStorage.getItem('offlineAttendanceQueue') || '[]'); } catch (e) {}
+            queue.push(Object.assign({}, payload, { queuedAt: Date.now() }));
+            localStorage.setItem('offlineAttendanceQueue', JSON.stringify(queue));
+            showToast('📴 ورود/خروج روی گوشی ذخیره شد (' + queue.length.toLocaleString('fa-IR') + ' مورد در صف). به‌محض آنلاین شدن برای مدیر ارسال می‌شود.');
+        }
+        let offlineAttFlushing = false;
+        async function flushOfflineAttendanceQueue() {
+            if (offlineAttFlushing) return;
+            let queue = [];
+            try { queue = JSON.parse(localStorage.getItem('offlineAttendanceQueue') || '[]'); } catch (e) {}
+            if (!queue.length) return;
+            if (offlineIsDown()) return;
+            offlineAttFlushing = true;
+            showToast('📶 ارسال ' + queue.length.toLocaleString('fa-IR') + ' ثبت حضور آفلاین...');
+            while (queue.length) {
+                const entry = queue[0];
+                try {
+                    const row = Object.assign({}, entry);
+                    delete row.queuedAt;
+                    const { error } = await _supabase.from('attendance').insert([row]);
+                    if (error) throw error;
+                    queue.shift();
+                    localStorage.setItem('offlineAttendanceQueue', JSON.stringify(queue));
+                } catch (e) {
+                    console.warn('offline att flush', e);
+                    break;
+                }
+            }
+            offlineAttFlushing = false;
+            const left = JSON.parse(localStorage.getItem('offlineAttendanceQueue') || '[]');
+            if (!left.length) showToast('✅ همه ثبت‌های حضور آفلاین برای مدیر ارسال شد');
+        }
+        window.flushOfflineAttendanceQueue = flushOfflineAttendanceQueue;
+
 
         // لیست مشتری‌های ثابت اخیر — برای پرشدن خودکار وقتی اسمشون رو تایپ می‌کنی
         async function loadRecentCustomers() {
