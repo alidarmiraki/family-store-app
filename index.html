@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v126 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v127 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2008,11 +2008,11 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
     <div id="sausagePriceCompareTab" class="card">
         <h2>🏷️ راهنمای لیبل سوسیس‌ها</h2>
         <div class="hint" style="line-height:1.9;">
-            وقتی مشتری سوسیس یا کالباسی خواست که <b>کد ۲۲ ترازو ندارد</b>، از این لیست ببین:
-            <br>① <b>سمت راست:</b> کالای مشتری و <b>قیمت کیلوی</b> آن
-            <br>② <b>سمت چپ:</b> کدام <b>کد ۲۲</b> را روی ترازو بزنی
-            <br>③ <b>وسط:</b> لیبل را <b>بالاتر</b> بزن یا <b>پایین‌تر</b> — تا به همان قیمت فروش برسی
-            <br><span style="opacity:.85;">این صفحه فقط راهنماست؛ قیمت‌ها از اینجا عوض نمی‌شوند.</span>
+            وقتی مشتری سوسیس/کالباسی خواست که روی ترازو کد جدا دارد، از این لیست ببین:
+            <br>① <b>سمت راست:</b> <b>کالاهایی که کد دارن</b> (کد ۲۲ ترازو) + قیمت کیلو
+            <br>② <b>سمت چپ:</b> <b>کالایی که کد ندارن</b> (یا کد غیر ۲۲) + قیمت کیلو
+            <br>③ <b>وسط:</b> لیبل را <b>بالاتر</b> بزن یا <b>پایین‌تر</b>
+            <br><span style="opacity:.85;">فقط راهنماست؛ قیمت از اینجا عوض نمی‌شود. جفت‌هایی که مدیر ذخیره کند ماندگار است.</span>
         </div>
         <button type="button" class="row-btn confirm-btn" style="width:100%; margin-bottom:12px;" onclick="loadSausagePriceCompare()">🔄 بروزرسانی لیست</button>
         <div id="spcSummary" class="hint" style="margin-bottom:10px;"></div>
@@ -2831,7 +2831,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v126 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v127 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -2956,7 +2956,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=126', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=127', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -7755,9 +7755,10 @@ notify pgrst, 'reload schema';`;
             html += '<div style="overflow-x:auto;">';
             html += '<table style="width:100%; border-collapse:collapse; font-size:13px; direction:rtl;">';
             html += '<thead><tr>';
-            html += '<th style="padding:10px 6px; background:rgba(148,163,184,.2); border:1px solid rgba(148,163,184,.3);">📦 کالای مشتری</th>';
+            // RTL: ستون اول = سمت راست
+            html += '<th style="padding:10px 6px; background:rgba(56,189,248,.18); border:1px solid rgba(148,163,184,.3);">🏷️ کالاهایی که کد دارن<br><span style="font-weight:400;font-size:10px;">کد ۲۲ ترازو</span></th>';
             html += '<th style="padding:10px 6px; background:rgba(251,191,36,.18); border:1px solid rgba(148,163,184,.3); width:22%;">لیبل؟</th>';
-            html += '<th style="padding:10px 6px; background:rgba(56,189,248,.18); border:1px solid rgba(148,163,184,.3);">🏷️ کد ۲۲ ترازو</th>';
+            html += '<th style="padding:10px 6px; background:rgba(148,163,184,.2); border:1px solid rgba(148,163,184,.3);">📦 کالایی که کد ندارن<br><span style="font-weight:400;font-size:10px;">کد غیر ۲۲ / بدون کد</span></th>';
             html += '</tr></thead><tbody>';
 
             let paired = 0, noMatch = 0, savedN = 0;
@@ -7789,19 +7790,11 @@ notify pgrst, 'reload schema';`;
                 if (!best) {
                     noMatch++;
                     html += '<tr style="background:rgba(100,116,139,.06);">';
-                    html += '<td style="padding:12px 8px; border:1px solid rgba(148,163,184,.22); vertical-align:top;">';
-                    html += '<div style="font-size:14px; font-weight:700;" dir="auto">' + escapeHtmlForToast(op.name || '') + '</div>';
-                    html += opCode
-                        ? ('<div class="hint" dir="ltr" style="margin-top:2px;">کد ' + escapeHtmlForToast(String(op.code || '')) + '</div>')
-                        : '<div class="hint" style="margin-top:2px;">بدون کد</div>';
-                    html += '<div style="margin-top:8px; font-size:20px; font-weight:800; color:#f8fafc;">' + spcFa(opPrice) + '</div>';
-                    html += '<div class="hint" style="font-size:11px;">تومان / کیلو</div>';
-                    html += '</td>';
-                    html += '<td style="padding:12px 6px; border:1px solid rgba(148,163,184,.22); text-align:center; color:#94a3b8; font-size:12px;">کد ۲۲ مشخص نشده</td>';
+                    // راست: کالاهایی که کد دارن (خالی / انتخاب مدیر)
                     html += '<td style="padding:12px 8px; border:1px solid rgba(148,163,184,.22); vertical-align:top;">';
                     if (isMgr && coded.length) {
                         html += '<select class="spc-pair-sel" data-okey="' + escapeHtmlAttr(oKey) + '" style="width:100%; margin:0; padding:8px; font-size:12px;" onchange="spcSetPair(this.dataset.okey, this.value)">';
-                        html += '<option value="">— انتخاب کد ۲۲ —</option>';
+                        html += '<option value="">— انتخاب کد‌دار —</option>';
                         coded.forEach(cp => {
                             html += '<option value="' + escapeHtmlAttr(String(cp.code || '')) + '">' + escapeHtmlForToast((cp.name || '') + ' · ' + String(cp.code || '')) + '</option>';
                         });
@@ -7809,6 +7802,16 @@ notify pgrst, 'reload schema';`;
                     } else {
                         html += '<span style="color:#64748b;">—</span>';
                     }
+                    html += '</td>';
+                    html += '<td style="padding:12px 6px; border:1px solid rgba(148,163,184,.22); text-align:center; color:#94a3b8; font-size:12px;">کد‌دار مشخص نشده</td>';
+                    // چپ: کالایی که کد ندارن
+                    html += '<td style="padding:12px 8px; border:1px solid rgba(148,163,184,.22); vertical-align:top;">';
+                    html += '<div style="font-size:14px; font-weight:700;" dir="auto">' + escapeHtmlForToast(op.name || '') + '</div>';
+                    html += opCode
+                        ? ('<div class="hint" dir="ltr" style="margin-top:2px;">کد ' + escapeHtmlForToast(String(op.code || '')) + '</div>')
+                        : '<div class="hint" style="margin-top:2px;">بدون کد</div>';
+                    html += '<div style="margin-top:8px; font-size:20px; font-weight:800; color:#f8fafc;">' + spcFa(opPrice) + '</div>';
+                    html += '<div class="hint" style="font-size:11px;">تومان / کیلو</div>';
                     html += '</td></tr>';
                     return;
                 }
@@ -7826,24 +7829,12 @@ notify pgrst, 'reload schema';`;
                 const diff = Math.abs(cpPrice - opPrice);
 
                 html += '<tr style="background:' + rowBg + ';">';
-                html += '<td style="padding:12px 8px; border:1px solid rgba(148,163,184,.22); vertical-align:top;">';
-                html += '<div style="font-size:14px; font-weight:700;" dir="auto">' + escapeHtmlForToast(op.name || '') + '</div>';
-                html += opCode
-                    ? ('<div class="hint" dir="ltr" style="margin-top:2px;">کد ' + escapeHtmlForToast(String(op.code || '')) + '</div>')
-                    : '<div class="hint" style="margin-top:2px;">بدون کد</div>';
-                html += '<div style="margin-top:8px; font-size:20px; font-weight:800; color:#f8fafc;">' + spcFa(opPrice) + '</div>';
-                html += '<div class="hint" style="font-size:11px;">تومان / کیلو</div>';
-                html += '</td>';
-                html += '<td style="padding:12px 6px; border:1px solid rgba(148,163,184,.22); text-align:center; vertical-align:middle;">';
-                html += '<div style="color:' + tipColor + '; font-weight:800; font-size:14px;">' + tip + '</div>';
-                if (diff > 0) html += '<div class="hint" style="margin-top:6px; font-size:11px;">اختلاف<br><b style="color:#e2e8f0;">' + spcFa(diff) + '</b> ت</div>';
-                if (fromSaved) html += '<div style="margin-top:4px; font-size:10px; color:#34d399;">📌 ذخیره شده</div>';
-                html += '</td>';
+                // راست: کالاهایی که کد دارن
                 html += '<td style="padding:12px 8px; border:1px solid rgba(148,163,184,.22); vertical-align:top;">';
                 html += '<div style="font-size:14px; font-weight:700;" dir="auto">' + escapeHtmlForToast(best.name || '') + '</div>';
                 html += '<div style="margin-top:4px; font-size:15px; font-weight:700; color:#38bdf8;" dir="ltr">' + escapeHtmlForToast(String(best.code || '')) + '</div>';
                 html += '<div style="margin-top:8px; font-size:20px; font-weight:800; color:#f8fafc;">' + spcFa(cpPrice) + '</div>';
-                html += '<div class="hint" style="font-size:11px;">تومان / کیلو روی ترازو</div>';
+                html += '<div class="hint" style="font-size:11px;">تومان / کیلو</div>';
                 if (isMgr) {
                     html += '<select class="spc-pair-sel" data-okey="' + escapeHtmlAttr(oKey) + '" style="width:100%; margin-top:8px; padding:6px; font-size:11px;" onchange="spcSetPair(this.dataset.okey, this.value)">';
                     coded.forEach(cp => {
@@ -7852,6 +7843,21 @@ notify pgrst, 'reload schema';`;
                     });
                     html += '</select>';
                 }
+                html += '</td>';
+                // وسط: لیبل
+                html += '<td style="padding:12px 6px; border:1px solid rgba(148,163,184,.22); text-align:center; vertical-align:middle;">';
+                html += '<div style="color:' + tipColor + '; font-weight:800; font-size:14px;">' + tip + '</div>';
+                if (diff > 0) html += '<div class="hint" style="margin-top:6px; font-size:11px;">اختلاف<br><b style="color:#e2e8f0;">' + spcFa(diff) + '</b> ت</div>';
+                if (fromSaved) html += '<div style="margin-top:4px; font-size:10px; color:#34d399;">📌 ذخیره شده</div>';
+                html += '</td>';
+                // چپ: کالایی که کد ندارن
+                html += '<td style="padding:12px 8px; border:1px solid rgba(148,163,184,.22); vertical-align:top;">';
+                html += '<div style="font-size:14px; font-weight:700;" dir="auto">' + escapeHtmlForToast(op.name || '') + '</div>';
+                html += opCode
+                    ? ('<div class="hint" dir="ltr" style="margin-top:2px;">کد ' + escapeHtmlForToast(String(op.code || '')) + '</div>')
+                    : '<div class="hint" style="margin-top:2px;">بدون کد</div>';
+                html += '<div style="margin-top:8px; font-size:20px; font-weight:800; color:#f8fafc;">' + spcFa(opPrice) + '</div>';
+                html += '<div class="hint" style="font-size:11px;">تومان / کیلو</div>';
                 html += '</td></tr>';
             });
 
