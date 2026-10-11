@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v130 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v131 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2835,7 +2835,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v130 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v131 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -2961,7 +2961,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=130', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=131', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -3593,11 +3593,27 @@ ${PROXY_ENDPOINTS.map(u => `<div class="summary-mini" data-sel="${u}" style="gap
                 return Array.isArray(arr) ? arr : [];
             } catch (e) { return []; }
         }
-        function offlineSaveSession(user, role, label) {
+        function offlineSimpleHash(s) {
+            // هش سبک فقط برای تشخیص ورود آفلاین روی همین گوشی (رمز خام ذخیره نمی‌شود)
+            s = String(s || '');
+            let h = 5381;
+            for (let i = 0; i < s.length; i++) h = ((h << 5) + h) ^ s.charCodeAt(i);
+            return ('h' + (h >>> 0).toString(16) + '_' + s.length);
+        }
+        function offlineSaveSession(user, role, label, password) {
             try {
-                localStorage.setItem(OFFLINE_KEYS.session, JSON.stringify({
-                    user, role, label, savedAt: Date.now()
-                }));
+                const payload = {
+                    user, role, label,
+                    username: user && user.username,
+                    passHash: password != null ? offlineSimpleHash(String(user.username || '') + '|' + String(password)) : null,
+                    savedAt: Date.now()
+                };
+                localStorage.setItem(OFFLINE_KEYS.session, JSON.stringify(payload));
+                // لیست چند کاربر اخیر روی همین گوشی (برای چند حساب)
+                let multi = {};
+                try { multi = JSON.parse(localStorage.getItem('offline_sessions_multi_v1') || '{}') || {}; } catch (e) { multi = {}; }
+                if (user && user.username) multi[String(user.username).toLowerCase()] = payload;
+                localStorage.setItem('offline_sessions_multi_v1', JSON.stringify(multi));
             } catch (e) {}
         }
         function offlineLoadSession() {
@@ -3606,8 +3622,30 @@ ${PROXY_ENDPOINTS.map(u => `<div class="summary-mini" data-sel="${u}" style="gap
                 return raw ? JSON.parse(raw) : null;
             } catch (e) { return null; }
         }
+        function offlineLoadSessionForUser(username) {
+            try {
+                const multi = JSON.parse(localStorage.getItem('offline_sessions_multi_v1') || '{}') || {};
+                const hit = multi[String(username || '').toLowerCase()];
+                if (hit) return hit;
+                const last = offlineLoadSession();
+                if (last && String(last.username || '').toLowerCase() === String(username || '').toLowerCase()) return last;
+                return null;
+            } catch (e) { return null; }
+        }
         function offlineClearSession() {
             try { localStorage.removeItem(OFFLINE_KEYS.session); } catch (e) {}
+        }
+        function offlineTryLogin(username, password) {
+            const sess = offlineLoadSessionForUser(username);
+            if (!sess || !sess.user) return null;
+            if (!sess.passHash) {
+                // ورود قبلی بدون هش — فقط اگر آخرین سشن همین کاربر باشد اجازه بده
+                if (String(sess.username || '').toLowerCase() === String(username || '').toLowerCase()) return sess.user;
+                return null;
+            }
+            const h = offlineSimpleHash(String(username) + '|' + String(password));
+            if (h === sess.passHash) return sess.user;
+            return null;
         }
         async function offlineGetProducts(forceNet) {
             if (!forceNet && offlineIsDown()) {
@@ -5243,14 +5281,30 @@ notify pgrst, 'reload schema';`;
             const loginBtn = document.getElementById('loginSubmitBtn');
             errBox.style.display = 'none';
 
-            if (!_supabase) {
-                errBox.innerText = '❌ اتصال به سرور برقرار نیست. لطفاً اینترنت خود را چک کنید و صفحه را رفرش (Reload) کنید.';
+            if (!username || !password) {
+                errBox.innerText = '❌ لطفاً نام کاربری و رمز عبور را وارد کنید';
                 errBox.style.display = 'block';
                 return;
             }
 
-            if (!username || !password) {
-                errBox.innerText = '❌ لطفاً نام کاربری و رمز عبور را وارد کنید';
+            // ورود آفلاین: اگر اینترنت قطع است یا سرور در دسترس نیست
+            const tryOffline = () => {
+                const u = offlineTryLogin(username, password);
+                if (u) {
+                    showToast('📴 ورود آفلاین — داده از حافظه همین گوشی');
+                    try {
+                        const localP = offlineLoadProducts();
+                        if (localP.length) cachedProductsList = sortProductsAlpha(localP);
+                    } catch (e) {}
+                    proceedToDashboardAfterLogin(u);
+                    return true;
+                }
+                return false;
+            };
+
+            if (offlineIsDown() || !_supabase) {
+                if (tryOffline()) return;
+                errBox.innerText = '📴 اینترنت قطع است و برای این کاربر قبلاً روی این گوشی ورود موفق ذخیره نشده. یک‌بار با اینترنت وارد شو تا بعداً آفلاین هم باز شود.';
                 errBox.style.display = 'block';
                 return;
             }
@@ -5295,9 +5349,11 @@ notify pgrst, 'reload schema';`;
                 if (legacyErr) outcome = 'net'; else if (legacyUser) { user = legacyUser; outcome = 'ok'; } else outcome = 'empty';
             }
             if (!user) {
+                // اگر سرور جواب نداد، ورود آفلاین از حافظه همین گوشی
+                if (outcome !== 'empty' && tryOffline()) return;
                 errBox.innerText = (outcome === 'empty')
                     ? '❌ نام کاربری یا رمز عبور اشتباه است!'
-                    : '📶 ارتباط با سرور ناقص بود (اینترنت ضعیف یا فیلتر)؛ رمز شما اشتباه تشخیص داده نشد. چند ثانیه بعد دوباره «ورود» را بزن یا اینترنت/فیلترشکن را عوض کن.';
+                    : '📶 ارتباط با سرور ناقص بود. اگر قبلاً روی این گوشی وارد شده‌ای، دوباره بزن یا اینترنت را وصل کن.';
                 errBox.style.display = 'block';
                 return;
             }
@@ -5336,7 +5392,7 @@ notify pgrst, 'reload schema';`;
             try { loadFiredStaff(true); } catch (e) {}
             try { setTimeout(() => { if (window.maybeShowPermWizard) window.maybeShowPermWizard(); }, 4000); } catch (e) {}
                         currentSessionUser = user;
-            try { offlineSaveSession(user, user.role, (roleLabels[user.role] || user.role) + ' - ' + (user.full_name || user.username)); } catch (e) {}
+            try { offlineSaveSession(user, user.role, (roleLabels[user.role] || user.role) + ' - ' + (user.full_name || user.username), (document.getElementById('accessPin') && document.getElementById('accessPin').value) || undefined); } catch (e) {}
             alertDismissedThisSession = false;
             reminderDismissedThisSession = false;
             if (typeof resetIdleTimers === 'function') resetIdleTimers(); // شروع شمارش خروج خودکار امنیتی از همین لحظه ورود
@@ -7724,43 +7780,49 @@ notify pgrst, 'reload schema';`;
             try { localStorage.setItem('sausageLabelPairs_v1', JSON.stringify(map || {})); } catch (e) {}
         }
 
-        // از روی خود کالاها + جدول سرور + local
+        // اولویت: سرور > ستون کالا > local
         async function spcLoadPairs() {
-            const map = {};
-            // 1) از فیلد scale_pair_code روی کالاهای غیر ۲۲ (قابل اعتماد بین همه گوشی‌ها)
+            const local = spcLoadPairsLocal();
+            const fromProducts = {};
             try {
-                const list = (typeof cachedProductsList !== 'undefined' && Array.isArray(cachedProductsList))
-                    ? cachedProductsList : [];
+                let list = (typeof cachedProductsList !== 'undefined' && Array.isArray(cachedProductsList)) ? cachedProductsList : [];
+                if (!list.length) {
+                    try { list = await offlineGetProducts(false); } catch (e) { list = offlineLoadProducts(); }
+                }
                 list.forEach(p => {
                     if (!p || spcIsCode22(p.code)) return;
                     const pair = p.scale_pair_code || p.scalePairCode || p.label_scale_code;
-                    if (pair) map[spcOtherKey(p)] = String(pair);
+                    if (pair) fromProducts[spcOtherKey(p)] = String(pair);
                 });
             } catch (e) {}
 
-            // 2) جدول اختصاصی سرور
-            try {
-                const { data, error } = await _supabase.from('sausage_label_pairs').select('pairs').eq('id', 1).maybeSingle();
-                if (!error && data && data.pairs) {
-                    let p = data.pairs;
-                    if (typeof p === 'string') { try { p = JSON.parse(p); } catch (e) { p = null; } }
-                    if (p && typeof p === 'object') Object.assign(map, p);
+            let remote = {};
+            if (!offlineIsDown() && _supabase) {
+                try {
+                    const { data, error } = await _supabase.from('sausage_label_pairs').select('pairs').eq('id', 1).maybeSingle();
+                    if (!error && data && data.pairs) {
+                        let p = data.pairs;
+                        if (typeof p === 'string') { try { p = JSON.parse(p); } catch (e) { p = null; } }
+                        if (p && typeof p === 'object') remote = p;
+                    }
+                } catch (e) {}
+                if (!Object.keys(remote).length) {
+                    try {
+                        const { data, error } = await _supabase.from('shop_settings').select('value').eq('key', 'sausage_label_pairs').maybeSingle();
+                        if (!error && data && data.value) {
+                            let p = data.value;
+                            if (typeof p === 'string') { try { p = JSON.parse(p); } catch (e) { p = null; } }
+                            if (p && typeof p === 'object') remote = p;
+                        }
+                    } catch (e) {}
                 }
-            } catch (e) {}
+            }
 
-            // 3) shop_settings
-            try {
-                const { data, error } = await _supabase.from('shop_settings').select('value').eq('key', 'sausage_label_pairs').maybeSingle();
-                if (!error && data && data.value) {
-                    let p = data.value;
-                    if (typeof p === 'string') { try { p = JSON.parse(p); } catch (e) { p = null; } }
-                    if (p && typeof p === 'object') Object.assign(map, p);
-                }
-            } catch (e) {}
-
-            // 4) local (کمک‌کننده)
-            Object.assign(map, spcLoadPairsLocal());
-            spcSavePairsLocal(map);
+            // remote برنده است، بعد products، بعد local
+            const map = Object.assign({}, local, fromProducts, remote);
+            if (Object.keys(remote).length || Object.keys(fromProducts).length) {
+                spcSavePairsLocal(map);
+            }
             return map;
         }
 
@@ -7791,15 +7853,19 @@ notify pgrst, 'reload schema';`;
                 }
             }
 
-            // ب) جدول sausage_label_pairs
+            // ب) جدول sausage_label_pairs — upsert + fallback insert/update
             try {
-                const { error } = await _supabase.from('sausage_label_pairs').upsert({
-                    id: 1,
-                    pairs: map,
-                    updated_at: new Date().toISOString()
-                }, { onConflict: 'id' });
+                const row = { id: 1, pairs: map, updated_at: new Date().toISOString() };
+                let { error } = await _supabase.from('sausage_label_pairs').upsert(row, { onConflict: 'id' });
+                if (error) {
+                    const u = await _supabase.from('sausage_label_pairs').update({ pairs: map, updated_at: row.updated_at }).eq('id', 1);
+                    if (u.error) {
+                        const ins = await _supabase.from('sausage_label_pairs').insert(row);
+                        error = ins.error;
+                    } else error = null;
+                }
                 if (!error) results.push('table');
-                else results.push('table_fail:' + (error.message || ''));
+                else results.push('table_fail:' + (error.message || JSON.stringify(error)));
             } catch (e) {
                 results.push('table_fail:' + (e.message || e));
             }
@@ -7834,9 +7900,10 @@ notify pgrst, 'reload schema';`;
             const res = await spcPersistPairs(map, otherProduct, scaleCode);
 
             if (res.ok) {
-                showToast('✅ ذخیره شد — روی گوشی‌های دیگر و فروشنده‌ها هم می‌آید');
+                const how = (res.results || []).filter(x => x === 'product' || x === 'table' || x === 'settings').join('+');
+                showToast('✅ ذخیره سرور شد (' + how + ') — گوشی دیگر بروزرسانی لیست بزند');
             } else {
-                showToast('⚠️ فقط روی این گوشی ذخیره شد. SQL ستون scale_pair_code را بزن.');
+                showToast('⚠️ فقط روی این گوشی ذخیره شد. SQL جدول sausage_label_pairs را در Supabase بزن.');
                 console.warn('spcPersist', res.results);
             }
             loadSausagePriceCompare();
