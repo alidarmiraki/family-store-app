@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v119 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v120 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2009,8 +2009,8 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <h2>⚖️ قیمت سوسیس و کالباس — کد ۲۲ در برابر بدون‌کد</h2>
         <div class="hint">
             کالاهایی که <b>کدشان با ۲۲ شروع می‌شود</b> معمولاً روی ترازو/بارکد فروش می‌روند.
-            باید قیمت‌شان <b>کمی بالاتر</b> از کالاهای مشابه <b>بدون کد</b> باشد.
-            این صفحه دو طرف را کنار هم نشان می‌دهد و هشدار می‌دهد اگر کد ۲۲ ارزان‌تر یا مساوی باشد.
+            باید قیمت‌شان <b>کمی بالاتر</b> از کالاهای مشابه با <b>کد غیر ۲۲</b> باشد.
+            این صفحه دو طرف را کنار هم نشان می‌دهد و هشدار می‌دهد اگر کد ۲۲ ارزان‌تر یا مساوی کالاهای غیر ۲۲ باشد.
         </div>
 
         <div class="grid-2" style="gap:10px; margin-bottom:12px;">
@@ -2843,7 +2843,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v119 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v120 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -2968,7 +2968,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=119', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=120', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -7687,7 +7687,8 @@ notify pgrst, 'reload schema';`;
 
             const coded = sausages.filter(p => spcIsCode22(p.code))
                 .sort((a, b) => (Number(a.sell_price) || 0) - (Number(b.sell_price) || 0));
-            const uncoded = sausages.filter(p => spcHasNoCode(p))
+            // همه غیر از کد ۲۲: بدون کد، کد ۱، ۲۰، ۲۰۰، ۴۸ و ...
+            const uncoded = sausages.filter(p => !spcIsCode22(p.code))
                 .sort((a, b) => (Number(a.sell_price) || 0) - (Number(b.sell_price) || 0));
 
             const tol = parseFloat(spcNormDigits(document.getElementById('spcNearTol') && document.getElementById('spcNearTol').value)) || 15000;
@@ -7720,12 +7721,14 @@ notify pgrst, 'reload schema';`;
             html += '</div></div>';
 
             html += '<div class="report-card" style="margin:0; border-color:rgba(148,163,184,.35);">';
-            html += '<h3 style="margin:0 0 6px; font-size:13px; color:#94a3b8;">📦 بدون کد — ' + spcFa(uncoded.length) + ' کالا</h3>';
+            html += '<h3 style="margin:0 0 6px; font-size:13px; color:#94a3b8;">📦 کد غیر ۲۲ — ' + spcFa(uncoded.length) + ' کالا</h3>';
             html += '<div style="max-height:160px; overflow:auto; font-size:12px;">';
             if (!uncoded.length) html += '<span class="hint">موردی نیست</span>';
             uncoded.forEach(p => {
+                const c = spcNormDigits(p.code);
                 html += '<div style="padding:4px 0; border-bottom:1px solid rgba(148,163,184,.15);">';
                 html += '<b>' + escapeHtmlForToast(p.name || '') + '</b><br>';
+                html += (c ? ('<span class="hint" dir="ltr">' + escapeHtmlForToast(String(p.code || '')) + '</span> · ') : '<span class="hint">بدون کد</span> · ');
                 html += '<span>' + spcFa(Number(p.sell_price) || 0) + ' ت</span></div>';
             });
             html += '</div></div></div>';
@@ -7747,7 +7750,7 @@ notify pgrst, 'reload schema';`;
                     html += '<div class="report-card" style="opacity:.85;">';
                     html += '<div style="font-size:13px;"><b dir="auto">' + escapeHtmlForToast(cp.name || '') + '</b>';
                     html += ' <span class="hint" dir="ltr">(' + escapeHtmlForToast(String(cp.code || '')) + ')</span></div>';
-                    html += '<div class="hint">قیمت کد ۲۲: <b>' + spcFa(price) + '</b> ت — بدون‌کد نزدیکی (±' + spcFa(tol) + ') پیدا نشد.</div>';
+                    html += '<div class="hint">قیمت کد ۲۲: <b>' + spcFa(price) + '</b> ت — کالای غیر ۲۲ نزدیکی (±' + spcFa(tol) + ') پیدا نشد.</div>';
                     html += '</div>';
                     return;
                 }
@@ -7767,12 +7770,15 @@ notify pgrst, 'reload schema';`;
                 html += '<div style="margin-top:4px; font-size:15px;">' + spcFa(price) + ' <span class="hint">تومان</span></div>';
                 html += '</div>';
                 html += '<div style="flex:1; min-width:140px;">';
-                html += '<div style="font-size:11px; color:#94a3b8; margin-bottom:2px;">📦 بدون کد (نزدیک)</div>';
+                html += '<div style="font-size:11px; color:#94a3b8; margin-bottom:2px;">📦 کد غیر ۲۲ (نزدیک)</div>';
                 near.forEach(x => {
                     const up = Number(x.u.sell_price) || 0;
                     const bad = price <= up;
+                    const uc = spcNormDigits(x.u.code);
                     html += '<div style="font-size:12px; padding:3px 0; border-bottom:1px solid rgba(148,163,184,.12);">';
                     html += '<span dir="auto">' + escapeHtmlForToast(x.u.name || '') + '</span>';
+                    if (uc) html += ' <span class="hint" dir="ltr">(' + escapeHtmlForToast(String(x.u.code || '')) + ')</span>';
+                    else html += ' <span class="hint">(بدون کد)</span>';
                     html += ' — <b style="color:' + (bad ? '#f87171' : '#e2e8f0') + ';">' + spcFa(up) + '</b>';
                     html += '</div>';
                 });
@@ -7780,13 +7786,13 @@ notify pgrst, 'reload schema';`;
 
                 if (needsRaise) {
                     html += '<div style="margin-top:8px; padding:8px; border-radius:10px; background:rgba(248,113,113,.12); font-size:12px;">';
-                    html += '⚠️ قیمت کد ۲۲ کمتر یا مساوی بدون‌کد است. پیشنهاد: <b>' + spcFa(suggested) + '</b> تومان';
+                    html += '⚠️ قیمت کد ۲۲ کمتر یا مساوی کالای غیر ۲۲ است. پیشنهاد: <b>' + spcFa(suggested) + '</b> تومان';
                     html += ' (حدود ' + spcFa(markupPct) + '٪ بالاتر از ' + spcFa(maxUncoded) + ')';
                     html += '<div style="margin-top:6px;"><button type="button" class="row-btn confirm-btn" style="width:100%;" onclick="spcApplyOne(\'' + escapeHtmlAttr(String(cp.code || '')) + '\',' + suggested + ')">اعمال قیمت ' + spcFa(suggested) + ' برای این کالا</button></div>';
                     html += '</div>';
                     window.__spcSuggestions.push({ code: String(cp.code || ''), name: cp.name, oldPrice: price, newPrice: suggested });
                 } else {
-                    html += '<div style="margin-top:8px; color:#34d399; font-size:12px;">✅ قیمت کد ۲۲ بالاتر از بدون‌کدهای نزدیک است.</div>';
+                    html += '<div style="margin-top:8px; color:#34d399; font-size:12px;">✅ قیمت کد ۲۲ بالاتر از کالاهای غیر ۲۲ نزدیک است.</div>';
                 }
                 html += '</div>';
             });
@@ -7802,7 +7808,7 @@ notify pgrst, 'reload schema';`;
 
             box.innerHTML = html;
             if (sum) {
-                sum.innerHTML = 'کد ۲۲: <b>' + spcFa(coded.length) + '</b> · بدون کد: <b>' + spcFa(uncoded.length) + '</b> · '
+                sum.innerHTML = 'کد ۲۲: <b>' + spcFa(coded.length) + '</b> · کد غیر ۲۲: <b>' + spcFa(uncoded.length) + '</b> · '
                     + 'نیاز به افزایش: <b style="color:#f87171;">' + spcFa(warnCount) + '</b> · '
                     + 'درست: <b style="color:#34d399;">' + spcFa(okCount) + '</b>'
                     + (unmatched ? (' · بدون جفت: ' + spcFa(unmatched)) : '');
