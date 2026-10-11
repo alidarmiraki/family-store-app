@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v127 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v128 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -385,6 +385,7 @@
 
         /* --- نوار پایین صفحه: میانبر به پرکاربردترین بخش‌ها، مخصوص لمس با شست روی گوشی --- */
         .bottom-nav {
+            display: none !important;
             position: fixed;
             left: 0; right: 0; bottom: 0;
             z-index: 500;
@@ -419,7 +420,7 @@
         .bottom-nav-btn.active { color: var(--accent, #6366f1); transform: translateY(-2px); }
         .bottom-nav-btn:active { transform: scale(0.92); }
         /* وقتی نوار پایین فعاله، محتوا زیرش گم نشه */
-        body.has-bottom-nav { padding-bottom: 74px; }
+        body.has-bottom-nav { padding-bottom: 0; }
         .card {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
@@ -2014,7 +2015,10 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             <br>③ <b>وسط:</b> لیبل را <b>بالاتر</b> بزن یا <b>پایین‌تر</b>
             <br><span style="opacity:.85;">فقط راهنماست؛ قیمت از اینجا عوض نمی‌شود. جفت‌هایی که مدیر ذخیره کند ماندگار است.</span>
         </div>
-        <button type="button" class="row-btn confirm-btn" style="width:100%; margin-bottom:12px;" onclick="loadSausagePriceCompare()">🔄 بروزرسانی لیست</button>
+        <button type="button" class="row-btn confirm-btn" style="width:100%; margin-bottom:10px;" onclick="loadSausagePriceCompare()">🔄 بروزرسانی لیست</button>
+        <div class="search-box" style="margin-bottom:10px;">
+            <input type="text" id="spcSearch" dir="auto" placeholder="🔎 جستجو نام یا کد کالا..." oninput="spcFilterList()" style="width:100%;">
+        </div>
         <div id="spcSummary" class="hint" style="margin-bottom:10px;"></div>
         <div id="spcList"></div>
     </div>
@@ -2831,7 +2835,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v127 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v128 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -2956,7 +2960,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=127', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=128', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -5679,20 +5683,8 @@ notify pgrst, 'reload schema';`;
         };
 
         function renderBottomNav() {
-            const nav = document.getElementById('bottomNav');
-            if (!nav) return;
-            const items = BOTTOM_NAV_ITEMS[currentRole];
-            if (!items) { nav.classList.remove('show'); document.body.classList.remove('has-bottom-nav'); return; }
-            nav.innerHTML = items.map(it => `
-                <button class="bottom-nav-btn" data-bn-tab="${it.tab}" onclick="switchTab('${it.tab}')">
-                    <span class="bn-ico">${it.icon}</span>
-                    <span>${it.label}</span>
-                </button>
-            `).join('');
-            nav.classList.add('show');
-            document.body.classList.add('has-bottom-nav');
-            syncBottomNavActiveState(document.getElementById('dashboardTab') && document.getElementById('dashboardTab').classList.contains('active') ? 'dashboard' : null);
-            try { qnUpdateBadge(); } catch (e) {}
+            // نوار پایین حذف شده — فقط از تب‌های بالا استفاده می‌شود
+            hideBottomNav();
         }
 
         function syncBottomNavActiveState(tab) {
@@ -7669,39 +7661,68 @@ notify pgrst, 'reload schema';`;
 
         async function spcLoadPairs() {
             const local = spcLoadPairsLocal();
-            try {
-                const { data, error } = await _supabase.from('shop_settings').select('value').eq('key', 'sausage_label_pairs').maybeSingle();
-                if (!error && data && data.value) {
-                    let remote = data.value;
-                    if (typeof remote === 'string') {
-                        try { remote = JSON.parse(remote); } catch (e) { remote = null; }
-                    }
-                    if (remote && typeof remote === 'object') {
-                        const merged = Object.assign({}, local, remote);
-                        spcSavePairsLocal(merged);
-                        return merged;
-                    }
+            // اولویت با سرور — تا روی گوشی دیگر هم بیاید
+            const tryTables = [
+                async () => {
+                    const { data, error } = await _supabase.from('sausage_label_pairs').select('pairs').eq('id', 1).maybeSingle();
+                    if (error) return null;
+                    let p = data && data.pairs;
+                    if (typeof p === 'string') { try { p = JSON.parse(p); } catch (e) { p = null; } }
+                    return (p && typeof p === 'object') ? p : null;
+                },
+                async () => {
+                    const { data, error } = await _supabase.from('shop_settings').select('value').eq('key', 'sausage_label_pairs').maybeSingle();
+                    if (error) return null;
+                    let p = data && data.value;
+                    if (typeof p === 'string') { try { p = JSON.parse(p); } catch (e) { p = null; } }
+                    return (p && typeof p === 'object') ? p : null;
                 }
-            } catch (e) { /* جدول ممکن است نباشد */ }
+            ];
+            for (let i = 0; i < tryTables.length; i++) {
+                try {
+                    const remote = await tryTables[i]();
+                    if (remote && Object.keys(remote).length) {
+                        // سرور مبنا؛ local فقط کلیدهای جدید محلی را اضافه می‌کند
+                        const merged = Object.assign({}, remote, local);
+                        // اگر سرور کامل‌تر بود همان را ترجیح بده
+                        const finalMap = Object.keys(remote).length >= Object.keys(local).length
+                            ? Object.assign({}, local, remote)
+                            : merged;
+                        spcSavePairsLocal(finalMap);
+                        return finalMap;
+                    }
+                } catch (e) {}
+            }
             return local;
         }
 
         async function spcPersistPairs(map) {
             spcSavePairsLocal(map);
+            let savedRemote = false;
+            let lastErr = '';
+            // جدول اختصاصی
             try {
-                await _supabase.from('shop_settings').upsert({
-                    key: 'sausage_label_pairs',
-                    value: map,
+                const { error } = await _supabase.from('sausage_label_pairs').upsert({
+                    id: 1,
+                    pairs: map,
                     updated_at: new Date().toISOString()
-                }, { onConflict: 'key' });
-            } catch (e) {
+                });
+                if (!error) savedRemote = true;
+                else lastErr = error.message || String(error);
+            } catch (e) { lastErr = e.message || String(e); }
+            // پشتیبان shop_settings
+            if (!savedRemote) {
                 try {
-                    await _supabase.from('shop_settings').upsert({
+                    const { error } = await _supabase.from('shop_settings').upsert({
                         key: 'sausage_label_pairs',
-                        value: JSON.stringify(map)
+                        value: map,
+                        updated_at: new Date().toISOString()
                     }, { onConflict: 'key' });
-                } catch (e2) { /* فقط localStorage */ }
+                    if (!error) savedRemote = true;
+                    else lastErr = error.message || String(error);
+                } catch (e) { lastErr = e.message || String(e); }
             }
+            return { ok: savedRemote, error: lastErr };
         }
 
         window.spcSetPair = async function (otherKey, scaleCode) {
@@ -7710,9 +7731,36 @@ notify pgrst, 'reload schema';`;
             const map = await spcLoadPairs();
             if (!scaleCode) delete map[otherKey];
             else map[otherKey] = String(scaleCode);
-            await spcPersistPairs(map);
-            showToast('✅ جفت لیبل ذخیره شد');
+            const res = await spcPersistPairs(map);
+            if (res && res.ok) {
+                showToast('✅ ذخیره شد (این گوشی + سرور — روی گوشی‌های دیگر هم می‌آید)');
+            } else {
+                showToast('⚠️ فقط روی این گوشی ذخیره شد. SQL جدول را در Supabase بزن.');
+                console.warn('spcPersistPairs', res && res.error);
+            }
             loadSausagePriceCompare();
+        };
+
+
+        window.spcFilterList = function () {
+            const q = (document.getElementById('spcSearch') && document.getElementById('spcSearch').value || '').trim().toLowerCase();
+            const qEn = q.replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+            const rows = document.querySelectorAll('#spcList tbody tr');
+            let shown = 0;
+            rows.forEach(tr => {
+                const t = (tr.textContent || '').toLowerCase();
+                const ok = !q || t.indexOf(q) !== -1 || t.indexOf(qEn) !== -1;
+                tr.style.display = ok ? '' : 'none';
+                if (ok) shown++;
+            });
+            const sum = document.getElementById('spcSummary');
+            if (sum && q) {
+                const base = sum.getAttribute('data-base') || sum.innerHTML;
+                if (!sum.getAttribute('data-base')) sum.setAttribute('data-base', sum.innerHTML);
+                sum.innerHTML = base + ' · نمایش: <b>' + shown + '</b>';
+            } else if (sum && sum.getAttribute('data-base')) {
+                sum.innerHTML = sum.getAttribute('data-base');
+            }
         };
 
         async function loadSausagePriceCompare() {
@@ -7864,8 +7912,11 @@ notify pgrst, 'reload schema';`;
             html += '</tbody></table></div>';
             box.innerHTML = html;
             if (sum) {
-                sum.innerHTML = 'جفت‌شده: <b>' + spcFa(paired) + '</b> · ذخیره‌شده مدیر: <b>' + spcFa(savedN) + '</b> · بدون جفت: <b>' + spcFa(noMatch) + '</b>';
+                const base = 'جفت‌شده: <b>' + spcFa(paired) + '</b> · ذخیره‌شده مدیر: <b>' + spcFa(savedN) + '</b> · بدون جفت: <b>' + spcFa(noMatch) + '</b>';
+                sum.innerHTML = base;
+                sum.setAttribute('data-base', base);
             }
+            try { spcFilterList(); } catch (e) {}
         }
 
         async function spcApplyOne(code, newPrice) {
@@ -18665,7 +18716,8 @@ notify pgrst, 'reload schema';`;
 </script>
 
     <!-- نوار پایین صفحه: میانبر پرکاربردترین بخش‌ها (محتوایش با نقش کاربر توسط JS پر می‌شه) -->
-    <div class="bottom-nav" id="bottomNav"></div>
+    <!-- bottom nav removed -->
+    <div class="bottom-nav" id="bottomNav" style="display:none!important;"></div>
 <script>
 /* v83 — تقویم شمسی برای همه‌ی فیلدهای تاریخ؛ مقدار داخلی همچنان YYYY-MM-DD میلادی می‌ماند تا بقیه‌ی کد سایت بدون تغییر کار کند */
 (function () {
