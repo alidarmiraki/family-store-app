@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v116 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v119 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -1503,6 +1503,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <button class="tab-btn" id="btnSale" onclick="switchTab('sale'); loadProductDatalist(); loadRecentSales('instore');"><span class="tab-ico">🧀</span><span class="tab-label">ثبت فروش لبنیات</span></button>
         <button class="tab-btn" id="btnSaleEkala" onclick="switchTab('saleEkala'); loadProductDatalist(); loadRecentSales('ekala');"><span class="tab-ico">🛒</span><span class="tab-label">ثبت فروش اکالا</span></button>
         <button class="tab-btn" id="btnSaleSausage" onclick="switchTab('saleSausage'); loadProductDatalist(); loadRecentSales('sausage');"><span class="tab-ico">🌭</span><span class="tab-label">ثبت فروش سوسیس و کالباس</span></button>
+        <button class="tab-btn" id="btnSausagePriceCompare" onclick="switchTab('sausagePriceCompare'); loadSausagePriceCompare();"><span class="tab-ico">⚖️</span><span class="tab-label">قیمت سوسیس کد ۲۲</span></button>
         <button class="tab-btn" id="btnQuickNote" onclick="switchTab('quickNote');"><span class="tab-ico">📝</span><span class="tab-label">دفترچه فروش سریع</span><span class="qn-badge" id="qnTabBadge"></span></button>
         <button class="tab-btn" id="btnAttendance" onclick="switchTab('attendance'); loadFingerprintStatus();"><span class="tab-ico">⏰</span><span class="tab-label">حضور و غیاب</span></button>
         <button class="tab-btn" id="btnMessage" onclick="switchTab('message');"><span class="tab-ico">📩</span><span class="tab-label">ارسال پیام به مدیر</span></button>
@@ -2001,6 +2002,35 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
 
         <h3 style="color:#38bdf8; margin-top:18px;">✅ سفارشات دریافت‌شده اخیر</h3>
         <div id="poReceivedList"></div>
+    </div>
+
+    <!-- مقایسه قیمت سوسیس/کالباس کد ۲۲ -->
+    <div id="sausagePriceCompareTab" class="card">
+        <h2>⚖️ قیمت سوسیس و کالباس — کد ۲۲ در برابر بدون‌کد</h2>
+        <div class="hint">
+            کالاهایی که <b>کدشان با ۲۲ شروع می‌شود</b> معمولاً روی ترازو/بارکد فروش می‌روند.
+            باید قیمت‌شان <b>کمی بالاتر</b> از کالاهای مشابه <b>بدون کد</b> باشد.
+            این صفحه دو طرف را کنار هم نشان می‌دهد و هشدار می‌دهد اگر کد ۲۲ ارزان‌تر یا مساوی باشد.
+        </div>
+
+        <div class="grid-2" style="gap:10px; margin-bottom:12px;">
+            <div>
+                <label>حد اختلاف قیمت برای «نزدیک» (تومان):</label>
+                <input type="text" inputmode="numeric" id="spcNearTol" value="15000" placeholder="مثلاً 15000" onchange="loadSausagePriceCompare()">
+            </div>
+            <div>
+                <label>پیشنهاد افزایش کد ۲۲ نسبت به بدون‌کد (٪):</label>
+                <input type="text" inputmode="decimal" id="spcMarkupPct" value="3" placeholder="مثلاً 3" onchange="loadSausagePriceCompare()">
+            </div>
+        </div>
+
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+            <button type="button" class="row-btn confirm-btn" onclick="loadSausagePriceCompare()">🔄 بروزرسانی لیست</button>
+            <button type="button" class="row-btn edit-btn" id="spcApplyAllBtn" onclick="spcApplyAllSuggestions()" style="display:none;">✅ اعمال همه پیشنهادها روی قیمت فروش</button>
+        </div>
+
+        <div id="spcSummary" class="hint" style="margin-bottom:10px;"></div>
+        <div id="spcList"></div>
     </div>
 
     <!-- فرم تعریف / ویرایش کالا -->
@@ -2813,7 +2843,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v116 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v119 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -2938,7 +2968,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=116', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=119', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -5278,15 +5308,15 @@ notify pgrst, 'reload schema';`;
             } catch (e) {}
 
             if (currentRole === 'admin') {
-                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnQuickNote', 'btnInbox', 'btnStaffMessage', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnShiftSettings', 'btnTelegramSettings', 'btnDebtLedger', 'btnContractAdmin', 'btnGrowthReport', 'btnPurchaseInvoices', 'btnTakeoutAdmin', 'btnGoals', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnDeletedSales', 'btnWeeklyReports', 'btnPersonnel', 'btnMyAccount'], 'dashboardTab');
+                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnSausagePriceCompare', 'btnQuickNote', 'btnInbox', 'btnStaffMessage', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnShiftSettings', 'btnTelegramSettings', 'btnDebtLedger', 'btnContractAdmin', 'btnGrowthReport', 'btnPurchaseInvoices', 'btnTakeoutAdmin', 'btnGoals', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnDeletedSales', 'btnWeeklyReports', 'btnPersonnel', 'btnMyAccount'], 'dashboardTab');
                 checkAndGenerateWeeklyReport();
                 document.getElementById('salaryAdminForm').style.display = 'block';
                 checkLowStockAlertNoWeight();
             } else if (currentRole === 'morning_seller') {
-                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnQuickNote', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnDebtLedger', 'btnPersonalTakeout', 'btnGoals', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnMyAccount'], 'dashboardTab');
+                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnSausagePriceCompare', 'btnQuickNote', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnDebtLedger', 'btnPersonalTakeout', 'btnGoals', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnMyAccount'], 'dashboardTab');
                 document.getElementById('salaryAdminForm').style.display = 'none';
             } else {
-                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnQuickNote', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnReport', 'btnDebtLedger', 'btnPersonalTakeout', 'btnGoals', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnMyAccount'], 'dashboardTab');
+                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnSausagePriceCompare', 'btnQuickNote', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnReport', 'btnDebtLedger', 'btnPersonalTakeout', 'btnGoals', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnMyAccount'], 'dashboardTab');
                 document.getElementById('salaryAdminForm').style.display = 'none';
             }
 
@@ -7619,6 +7649,211 @@ notify pgrst, 'reload schema';`;
         }
 
 
+
+        /* ========== مقایسه قیمت سوسیس کد ۲۲ ========== */
+        function spcNormDigits(s) {
+            return String(s || '').replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
+                .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/\s+/g, '').trim();
+        }
+        function spcIsCode22(code) {
+            const c = spcNormDigits(code);
+            return c.length >= 2 && c.indexOf('22') === 0;
+        }
+        function spcHasNoCode(p) {
+            const c = spcNormDigits(p && p.code);
+            return !c || c === '0' || c === '-' || c.toLowerCase() === 'null';
+        }
+        function spcFa(n) {
+            try { return Number(n).toLocaleString('fa-IR'); } catch (e) { return String(n); }
+        }
+
+        async function loadSausagePriceCompare() {
+            const box = document.getElementById('spcList');
+            const sum = document.getElementById('spcSummary');
+            const applyBtn = document.getElementById('spcApplyAllBtn');
+            if (!box) return;
+            box.innerHTML = '<div class="skeleton-block skeleton-card"></div>';
+            if (sum) sum.textContent = 'در حال بارگذاری...';
+
+            try {
+                if (typeof loadProductsCache === 'function') {
+                    try { await loadProductsCache(true); } catch (e) {}
+                }
+            } catch (e) {}
+
+            const list = (typeof cachedProductsList !== 'undefined' && Array.isArray(cachedProductsList))
+                ? cachedProductsList : [];
+            const sausages = list.filter(p => p && (p.category === 'sausage' || p.category === 'سوسیس'));
+
+            const coded = sausages.filter(p => spcIsCode22(p.code))
+                .sort((a, b) => (Number(a.sell_price) || 0) - (Number(b.sell_price) || 0));
+            const uncoded = sausages.filter(p => spcHasNoCode(p))
+                .sort((a, b) => (Number(a.sell_price) || 0) - (Number(b.sell_price) || 0));
+
+            const tol = parseFloat(spcNormDigits(document.getElementById('spcNearTol') && document.getElementById('spcNearTol').value)) || 15000;
+            const markupPct = parseFloat(spcNormDigits(document.getElementById('spcMarkupPct') && document.getElementById('spcMarkupPct').value)) || 3;
+
+            window.__spcSuggestions = [];
+            let warnCount = 0, okCount = 0, unmatched = 0;
+
+            if (!coded.length && !uncoded.length) {
+                box.innerHTML = '<div class="hint">هیچ کالای سوسیس/کالباسی در انبار نیست. اول در «تعریف کالا» نوع را سوسیس و کالباس بگذار.</div>';
+                if (sum) sum.textContent = '';
+                if (applyBtn) applyBtn.style.display = 'none';
+                return;
+            }
+
+            let html = '';
+
+            // خلاصه دو ستونه بالای صفحه
+            html += '<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">';
+            html += '<div class="report-card" style="margin:0; border-color:rgba(56,189,248,.4);">';
+            html += '<h3 style="margin:0 0 6px; font-size:13px; color:#38bdf8;">🏷️ کد ۲۲ (ترازو/بارکد) — ' + spcFa(coded.length) + ' کالا</h3>';
+            html += '<div style="max-height:160px; overflow:auto; font-size:12px;">';
+            if (!coded.length) html += '<span class="hint">موردی نیست</span>';
+            coded.forEach(p => {
+                html += '<div style="padding:4px 0; border-bottom:1px solid rgba(148,163,184,.15);">';
+                html += '<b>' + escapeHtmlForToast(p.name || '') + '</b><br>';
+                html += '<span class="hint" dir="ltr">' + escapeHtmlForToast(String(p.code || '')) + '</span> · ';
+                html += '<span>' + spcFa(Number(p.sell_price) || 0) + ' ت</span></div>';
+            });
+            html += '</div></div>';
+
+            html += '<div class="report-card" style="margin:0; border-color:rgba(148,163,184,.35);">';
+            html += '<h3 style="margin:0 0 6px; font-size:13px; color:#94a3b8;">📦 بدون کد — ' + spcFa(uncoded.length) + ' کالا</h3>';
+            html += '<div style="max-height:160px; overflow:auto; font-size:12px;">';
+            if (!uncoded.length) html += '<span class="hint">موردی نیست</span>';
+            uncoded.forEach(p => {
+                html += '<div style="padding:4px 0; border-bottom:1px solid rgba(148,163,184,.15);">';
+                html += '<b>' + escapeHtmlForToast(p.name || '') + '</b><br>';
+                html += '<span>' + spcFa(Number(p.sell_price) || 0) + ' ت</span></div>';
+            });
+            html += '</div></div></div>';
+
+            // مقایسه جفت‌ها
+            html += '<h3 style="margin:8px 0 10px; font-size:14px;">🔍 مقایسه قیمت‌های نزدیک</h3>';
+
+            coded.forEach(cp => {
+                const price = Number(cp.sell_price) || 0;
+                // نزدیک‌ترین بدون‌کدها
+                const near = uncoded
+                    .map(u => ({ u, diff: Math.abs((Number(u.sell_price) || 0) - price) }))
+                    .filter(x => x.diff <= tol)
+                    .sort((a, b) => a.diff - b.diff)
+                    .slice(0, 5);
+
+                if (!near.length) {
+                    unmatched++;
+                    html += '<div class="report-card" style="opacity:.85;">';
+                    html += '<div style="font-size:13px;"><b dir="auto">' + escapeHtmlForToast(cp.name || '') + '</b>';
+                    html += ' <span class="hint" dir="ltr">(' + escapeHtmlForToast(String(cp.code || '')) + ')</span></div>';
+                    html += '<div class="hint">قیمت کد ۲۲: <b>' + spcFa(price) + '</b> ت — بدون‌کد نزدیکی (±' + spcFa(tol) + ') پیدا نشد.</div>';
+                    html += '</div>';
+                    return;
+                }
+
+                const maxUncoded = Math.max.apply(null, near.map(x => Number(x.u.sell_price) || 0));
+                const suggested = Math.ceil(maxUncoded * (1 + markupPct / 100) / 1000) * 1000; // رند هزار
+                const needsRaise = price <= maxUncoded;
+                if (needsRaise) warnCount++; else okCount++;
+
+                const border = needsRaise ? 'rgba(248,113,113,.55)' : 'rgba(52,211,153,.4)';
+                html += '<div class="report-card" style="border-color:' + border + ';">';
+                html += '<div style="display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; align-items:flex-start;">';
+                html += '<div style="flex:1; min-width:140px;">';
+                html += '<div style="font-size:11px; color:#38bdf8; margin-bottom:2px;">🏷️ کد ۲۲ (باید گران‌تر باشد)</div>';
+                html += '<div><b dir="auto">' + escapeHtmlForToast(cp.name || '') + '</b></div>';
+                html += '<div class="hint" dir="ltr">' + escapeHtmlForToast(String(cp.code || '')) + '</div>';
+                html += '<div style="margin-top:4px; font-size:15px;">' + spcFa(price) + ' <span class="hint">تومان</span></div>';
+                html += '</div>';
+                html += '<div style="flex:1; min-width:140px;">';
+                html += '<div style="font-size:11px; color:#94a3b8; margin-bottom:2px;">📦 بدون کد (نزدیک)</div>';
+                near.forEach(x => {
+                    const up = Number(x.u.sell_price) || 0;
+                    const bad = price <= up;
+                    html += '<div style="font-size:12px; padding:3px 0; border-bottom:1px solid rgba(148,163,184,.12);">';
+                    html += '<span dir="auto">' + escapeHtmlForToast(x.u.name || '') + '</span>';
+                    html += ' — <b style="color:' + (bad ? '#f87171' : '#e2e8f0') + ';">' + spcFa(up) + '</b>';
+                    html += '</div>';
+                });
+                html += '</div></div>';
+
+                if (needsRaise) {
+                    html += '<div style="margin-top:8px; padding:8px; border-radius:10px; background:rgba(248,113,113,.12); font-size:12px;">';
+                    html += '⚠️ قیمت کد ۲۲ کمتر یا مساوی بدون‌کد است. پیشنهاد: <b>' + spcFa(suggested) + '</b> تومان';
+                    html += ' (حدود ' + spcFa(markupPct) + '٪ بالاتر از ' + spcFa(maxUncoded) + ')';
+                    html += '<div style="margin-top:6px;"><button type="button" class="row-btn confirm-btn" style="width:100%;" onclick="spcApplyOne(\'' + escapeHtmlAttr(String(cp.code || '')) + '\',' + suggested + ')">اعمال قیمت ' + spcFa(suggested) + ' برای این کالا</button></div>';
+                    html += '</div>';
+                    window.__spcSuggestions.push({ code: String(cp.code || ''), name: cp.name, oldPrice: price, newPrice: suggested });
+                } else {
+                    html += '<div style="margin-top:8px; color:#34d399; font-size:12px;">✅ قیمت کد ۲۲ بالاتر از بدون‌کدهای نزدیک است.</div>';
+                }
+                html += '</div>';
+            });
+
+            // بدون‌کدهایی که هیچ جفت کد ۲۲ ندارند
+            const usedUncoded = new Set();
+            coded.forEach(cp => {
+                const price = Number(cp.sell_price) || 0;
+                uncoded.forEach(u => {
+                    if (Math.abs((Number(u.sell_price) || 0) - price) <= tol) usedUncoded.add(u.code || u.name);
+                });
+            });
+
+            box.innerHTML = html;
+            if (sum) {
+                sum.innerHTML = 'کد ۲۲: <b>' + spcFa(coded.length) + '</b> · بدون کد: <b>' + spcFa(uncoded.length) + '</b> · '
+                    + 'نیاز به افزایش: <b style="color:#f87171;">' + spcFa(warnCount) + '</b> · '
+                    + 'درست: <b style="color:#34d399;">' + spcFa(okCount) + '</b>'
+                    + (unmatched ? (' · بدون جفت: ' + spcFa(unmatched)) : '');
+            }
+            if (applyBtn) applyBtn.style.display = (window.__spcSuggestions && window.__spcSuggestions.length) ? 'inline-block' : 'none';
+        }
+
+        async function spcApplyOne(code, newPrice) {
+            if (!code || !(newPrice > 0)) return;
+            if (!confirm('قیمت فروش «' + code + '» به ' + Number(newPrice).toLocaleString('fa-IR') + ' تومان تغییر کند؟')) return;
+            try {
+                const { error } = await _supabase.from('products').update({ sell_price: Number(newPrice) }).eq('code', code);
+                if (error) throw error;
+                // آپدیت کش
+                if (typeof cachedProductsList !== 'undefined' && Array.isArray(cachedProductsList)) {
+                    const p = cachedProductsList.find(x => String(x.code) === String(code));
+                    if (p) p.sell_price = Number(newPrice);
+                }
+                showToast('✅ قیمت به‌روز شد');
+                loadSausagePriceCompare();
+            } catch (e) {
+                showToast('❌ خطا: ' + (e.message || e));
+            }
+        }
+
+        async function spcApplyAllSuggestions() {
+            const list = window.__spcSuggestions || [];
+            if (!list.length) { showToast('پیشنهادی نیست'); return; }
+            if (!confirm(list.length + ' کالا قیمت‌شان افزایش داده شود؟')) return;
+            let ok = 0, fail = 0;
+            for (let i = 0; i < list.length; i++) {
+                const it = list[i];
+                try {
+                    const { error } = await _supabase.from('products').update({ sell_price: Number(it.newPrice) }).eq('code', it.code);
+                    if (error) throw error;
+                    if (typeof cachedProductsList !== 'undefined' && Array.isArray(cachedProductsList)) {
+                        const p = cachedProductsList.find(x => String(x.code) === String(it.code));
+                        if (p) p.sell_price = Number(it.newPrice);
+                    }
+                    ok++;
+                } catch (e) { fail++; }
+            }
+            showToast('✅ ' + ok + ' کالا به‌روز شد' + (fail ? (' · ' + fail + ' خطا') : ''));
+            loadSausagePriceCompare();
+        }
+
+        window.loadSausagePriceCompare = loadSausagePriceCompare;
+        window.spcApplyOne = spcApplyOne;
+        window.spcApplyAllSuggestions = spcApplyAllSuggestions;
+
+
         function getGeminiSettings() {
             try {
                 return {
@@ -7663,36 +7898,41 @@ notify pgrst, 'reload schema';`;
             if (st) st.innerHTML = '⏳ تست ' + (provider === 'openrouter' ? 'OpenRouter' : 'Gemini') + '...';
 
             if (provider === 'openrouter') {
+                // اگر توابع دفترچه هنوز لود نشده‌اند، تست ساده مستقیم
+                const tryRequest = async (body) => {
+                    if (typeof qnOpenRouterRequest === 'function') return qnOpenRouterRequest(key, body, 30000);
+                    const res = await fetchWithTimeout('https://openrouter.ai/api/v1/chat/completions', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + key,
+                            'HTTP-Referer': location.origin || 'https://localhost',
+                            'X-Title': 'Ghorfe Familly'
+                        },
+                        body: JSON.stringify(body)
+                    }, 30000);
+                    const json = await res.json().catch(() => null);
+                    if (res.ok && json) return { ok: true, json: json };
+                    return { ok: false, error: (json && json.error && json.error.message) || ('HTTP ' + res.status) };
+                };
                 const models = [
-                    'google/gemma-3-27b-it:free',
-                    'nvidia/nemotron-nano-12b-v2-vl:free',
-                    'qwen/qwen2.5-vl-32b-instruct:free',
+                    'openrouter/free',
+                    'baidu/qianfan-ocr-fast:free',
+                    'qwen/qwen2.5-vl-7b-instruct:free',
+                    'qwen/qwen2.5-vl-3b-instruct:free',
                     'meta-llama/llama-3.2-11b-vision-instruct:free',
-                    'google/gemini-2.0-flash-exp:free'
+                    'moonshotai/kimi-vl-a3b-thinking:free'
                 ];
                 let lastErr = null, okModel = null;
                 for (let i = 0; i < models.length; i++) {
-                    try {
-                        const res = await fetchWithTimeout('https://openrouter.ai/api/v1/chat/completions', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': 'Bearer ' + key,
-                                'HTTP-Referer': location.origin || 'https://localhost',
-                                'X-Title': 'Ghorfe Familly'
-                            },
-                            body: JSON.stringify({
-                                model: models[i],
-                                messages: [{ role: 'user', content: 'Reply with only: ok' }],
-                                max_tokens: 8
-                            })
-                        }, 30000);
-                        const json = await res.json().catch(() => null);
-                        if (res.ok && json && json.choices) { okModel = models[i]; break; }
-                        lastErr = (json && json.error && (json.error.message || json.error)) || ('HTTP ' + res.status);
-                    } catch (e) {
-                        lastErr = e.message || String(e);
-                    }
+                    const result = await tryRequest({
+                        model: models[i],
+                        messages: [{ role: 'user', content: 'Reply with only: ok' }],
+                        max_tokens: 8
+                    });
+                    if (result.ok && result.json && result.json.choices) { okModel = models[i]; break; }
+                    lastErr = result.error || 'خطا';
+                    if (result.auth) break;
                 }
                 if (okModel) {
                     try {
@@ -7706,7 +7946,10 @@ notify pgrst, 'reload schema';`;
                     if (st) st.innerHTML = '✅ OpenRouter وصل شد<br>مدل: <b dir="ltr">' + okModel + '</b>';
                     showToast('✅ OpenRouter وصل شد');
                 } else {
-                    if (st) st.innerHTML = '❌ ' + (lastErr || 'خطا') + '<br>با VPN به openrouter.ai/keys برو، کلید بساز، دوباره تست کن.';
+                    const isFetch = /Failed to fetch|NetworkError|Load failed/i.test(String(lastErr || ''));
+                    if (st) st.innerHTML = '❌ ' + (lastErr || 'خطا') + (isFetch
+                        ? '<br><b>شبکه قطع است یا OpenRouter فیلتر است.</b><br>۱) Worker پروکسی OpenRouter را طبق راهنما بساز<br>۲) یا موقع تست VPN روشن کن'
+                        : '<br>کلید را در openrouter.ai/keys چک کن (اگر لو رفته، حذف و جدید بساز).');
                     showToast('❌ تست OpenRouter ناموفق');
                 }
                 return;
@@ -17835,6 +18078,74 @@ notify pgrst, 'reload schema';`;
         return out;
     }
 
+    function qnOpenRouterEndpoints(path) {
+        // path مثل: /api/v1/chat/completions
+        const p = path.startsWith('/') ? path : ('/' + path);
+        const list = [];
+        const add = (u) => { if (u && list.indexOf(u) === -1) list.push(u); };
+        // مستقیم
+        add('https://openrouter.ai' + p);
+        // پروکسی‌های فروشگاه
+        try {
+            const hosts = [];
+            if (typeof TELEGRAM_PROXY_HOSTS !== 'undefined' && Array.isArray(TELEGRAM_PROXY_HOSTS)) {
+                TELEGRAM_PROXY_HOSTS.forEach(h => hosts.push(h));
+            }
+            // Worker تلگرام کاربر
+            hosts.push('https://telegram-proxy.adarmiraki.workers.dev');
+            hosts.push('https://proxy.ali8001.ir');
+            hosts.push('https://shop-proxy-1.adarmiraki.workers.dev');
+            try {
+                JSON.parse(localStorage.getItem('extraProxies') || '[]').forEach(u => {
+                    if (u && typeof u === 'string') hosts.push(u.replace(/\/+$/, ''));
+                });
+            } catch (e) {}
+            hosts.forEach(h => {
+                const base = String(h).replace(/\/+$/, '').replace(/\/telegram$/i, '');
+                add(base + '/openrouter' + p);
+                add(base + '/api/openrouter' + p);
+                add(base + '/https://openrouter.ai' + p);
+            });
+        } catch (e) {}
+        return list;
+    }
+
+    async function qnOpenRouterRequest(apiKey, bodyObj, timeoutMs) {
+        const endpoints = qnOpenRouterEndpoints('/api/v1/chat/completions');
+        let lastErr = null;
+        for (let i = 0; i < endpoints.length; i++) {
+            try {
+                const res = await fetchWithTimeout(endpoints[i], {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + apiKey,
+                        'HTTP-Referer': (typeof location !== 'undefined' && location.origin) ? location.origin : 'https://localhost',
+                        'X-Title': 'Ghorfe Familly'
+                    },
+                    body: JSON.stringify(bodyObj)
+                }, timeoutMs || 60000);
+                const json = await res.json().catch(() => null);
+                if (res.ok && json) {
+                    if (i > 0) console.warn('OpenRouter از پروکسی وصل شد:', endpoints[i]);
+                    return { ok: true, json: json, endpoint: endpoints[i] };
+                }
+                // 401/402/403 از خود OpenRouter = کلید یا مدل مشکل دارد، پروکسی بعدی کمکی نمی‌کند اگر بدنه JSON خطای auth باشد
+                const msg = (json && json.error && (json.error.message || JSON.stringify(json.error))) || ('HTTP ' + res.status);
+                lastErr = msg;
+                if (res.status === 401 || res.status === 402 || res.status === 403) {
+                    // اگر HTML/فیلتر نیست و JSON خطای auth است، همان را برگردان
+                    if (json && json.error) return { ok: false, error: msg, auth: true };
+                }
+                // 404 روی پروکسی = مسیر اشتباه، بعدی
+                continue;
+            } catch (e) {
+                lastErr = e.message || String(e);
+            }
+        }
+        return { ok: false, error: lastErr || 'Failed to fetch' };
+    }
+
     async function qnOpenRouterFetch(apiKey, dataUrl) {
         const products = qnGetGeminiProductHint();
         const prompt =
@@ -17845,53 +18156,42 @@ notify pgrst, 'reload schema';`;
             'قوانین: هر ردیف یک item؛ g=gram؛ kg=kg؛ اعداد فارسی را انگلیسی کن؛ چیزی که نیست نساز.';
 
         const saved = localStorage.getItem('openrouterModel') || '';
+        // مدل‌های منقضی‌شده (مثل gemini-2.0-flash-exp:free) را ذخیره نکن
+        const bad = /gemini-2\.0-flash-exp|gemma-3-27b|nemotron-nano-12b|qwen2\.5-vl-32b/i;
         const models = [
-            saved,
-            'google/gemma-3-27b-it:free',
-            'nvidia/nemotron-nano-12b-v2-vl:free',
-            'qwen/qwen2.5-vl-32b-instruct:free',
+            (saved && !bad.test(saved)) ? saved : '',
+            'openrouter/free',
+            'baidu/qianfan-ocr-fast:free',
+            'qwen/qwen2.5-vl-7b-instruct:free',
+            'qwen/qwen2.5-vl-3b-instruct:free',
             'meta-llama/llama-3.2-11b-vision-instruct:free',
-            'google/gemini-2.0-flash-exp:free',
-            'openai/gpt-4o-mini'
+            'moonshotai/kimi-vl-a3b-thinking:free'
         ].filter((m, i, a) => m && a.indexOf(m) === i);
 
         let lastErr = null;
         for (let i = 0; i < models.length; i++) {
-            try {
-                const res = await fetchWithTimeout('https://openrouter.ai/api/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + apiKey,
-                        'HTTP-Referer': (typeof location !== 'undefined' && location.origin) ? location.origin : 'https://localhost',
-                        'X-Title': 'Ghorfe Familly OCR'
-                    },
-                    body: JSON.stringify({
-                        model: models[i],
-                        messages: [{
-                            role: 'user',
-                            content: [
-                                { type: 'text', text: prompt },
-                                { type: 'image_url', image_url: { url: dataUrl } }
-                            ]
-                        }],
-                        temperature: 0.1,
-                        max_tokens: 4096
-                    })
-                }, 90000);
-                const json = await res.json().catch(() => null);
-                if (!res.ok) {
-                    lastErr = (json && json.error && (json.error.message || JSON.stringify(json.error))) || ('HTTP ' + res.status);
-                    if (/not found|no endpoints|unsupported/i.test(String(lastErr))) continue;
-                    continue;
-                }
-                const text = json && json.choices && json.choices[0] && json.choices[0].message && json.choices[0].message.content;
-                if (!text) { lastErr = 'پاسخ خالی'; continue; }
-                try { localStorage.setItem('openrouterModel', models[i]); } catch (e) {}
-                return { text: text, model: models[i] };
-            } catch (e) {
-                lastErr = e.message || String(e);
+            const result = await qnOpenRouterRequest(apiKey, {
+                model: models[i],
+                messages: [{
+                    role: 'user',
+                    content: [
+                        { type: 'text', text: prompt },
+                        { type: 'image_url', image_url: { url: dataUrl } }
+                    ]
+                }],
+                temperature: 0.1,
+                max_tokens: 4096
+            }, 90000);
+            if (!result.ok) {
+                lastErr = result.error;
+                if (result.auth) break;
+                continue;
             }
+            const textOut = result.json && result.json.choices && result.json.choices[0]
+                && result.json.choices[0].message && result.json.choices[0].message.content;
+            if (!textOut) { lastErr = 'پاسخ خالی'; continue; }
+            try { localStorage.setItem('openrouterModel', models[i]); } catch (e) {}
+            return { text: textOut, model: models[i] };
         }
         throw new Error(lastErr || 'OpenRouter پاسخ نداد');
     }
