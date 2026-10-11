@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v123 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v124 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2011,7 +2011,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             وقتی مشتری سوسیس/کالباسی می‌خواهد که <b>روی ترازو کد ۲۲ ندارد</b>، از این لیست ببین:
             <br>① <b>سمت چپ:</b> کالای مشتری (کد غیر ۲۲ یا بدون کد) و قیمتش
             <br>② <b>سمت راست:</b> همان کالا با <b>کد ۲۲ ترازو</b> که باید روی ترازو بزنی و لیبل بدهی
-            <br>③ ستون وسط فقط می‌گوید لیبل را <b>کمی بالاتر</b> بزن یا <b>کمی پایین‌تر</b> — تا با قیمت قفسه جور باشد.
+            <br>③ ستون وسط می‌گوید: اگر قیمت ترازو از قیمت فروش کمتر بود <b>لیبل را بالاتر بزن</b>، اگر بیشتر بود <b>پایین‌تر بزن</b>.
         </div>
 
         <div id="spcAdminControls" style="display:none;">
@@ -2848,7 +2848,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v123 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v124 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -2973,7 +2973,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=123', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=124', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -7756,17 +7756,21 @@ notify pgrst, 'reload schema';`;
                 const cpPrice = Number(best.sell_price) || 0;
                 let tip = '', tipColor = '#34d399', rowBg = 'rgba(52,211,153,.07)';
 
-                if (cpPrice > opPrice) {
-                    tip = '⬆️ لیبل را کمی بالاتر بزن';
+                // قیمت ترازو (کد ۲۲) را با قیمت کالای مشتری مقایسه کن:
+                // اگر ترازو ارزان‌تر است → روی ترازو بالاتر نگه دار تا به قیمت فروش برسی
+                // اگر ترازو گران‌تر است → روی ترازو پایین‌تر بزن
+                if (cpPrice < opPrice) {
+                    tip = '⬆️ لیبل را بالاتر بزن';
                     tipColor = '#fbbf24';
                     rowBg = 'rgba(251,191,36,.07)';
-                } else if (cpPrice < opPrice) {
-                    tip = '⬇️ لیبل را کمی پایین‌تر بزن';
+                } else if (cpPrice > opPrice) {
+                    tip = '⬇️ لیبل را پایین‌تر بزن';
                     tipColor = '#38bdf8';
                     rowBg = 'rgba(56,189,248,.07)';
                 } else {
                     tip = '✅ همان قیمت';
                     tipColor = '#34d399';
+                    rowBg = 'rgba(52,211,153,.07)';
                 }
 
                 // اگر مدیر است و کد ۲۲ باید نسبت به غیر ۲۲ تنظیم شود
