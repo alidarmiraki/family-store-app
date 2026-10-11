@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v113 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v116 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -1796,6 +1796,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
                 <button type="button" id="qnPhotoClear" class="row-btn delete-btn" style="display:none; margin-top:6px;" onclick="qnClearPhoto()">حذف عکس</button>
                 <button type="button" id="qnOcrRetryBtn" class="row-btn edit-btn" style="display:none; margin-top:6px;" onclick="qnRetryOcr()">🔍 دوباره بخوان از عکس</button>
             </div>
+            <button type="button" class="row-btn edit-btn" style="width:100%; margin-top:8px;" onclick="qnOpenMultiManual()">⚡ ثبت سریع چند ردیفی (بدون عکس)</button>
             <div id="qnOcrBox" class="report-card" style="display:none; margin-top:10px; border-color:rgba(56,189,248,.45);"></div>
 
             <button class="submit-btn" id="qnSubmitBtn" onclick="qnSubmit()">➕ افزودن به دفترچه</button>
@@ -2330,6 +2331,25 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <button class="submit-btn" onclick="saveTelegramSettings()">💾 ذخیره تنظیمات</button>
         <button class="range-toggle-btn" onclick="testTelegramMessage()">🧪 ارسال پیام آزمایشی</button>
 
+        <div class="report-card" style="margin-top:16px; border-color:rgba(167,139,250,.45);">
+            <h3>🤖 خواندن هوشمند عکس (AI)</h3>
+            <div class="hint" style="margin-top:0;">گوگل Gemini از ایران مستقیم فعال نیست. برای خواندن <b>لیبل</b> و <b>برگه دست‌نویس</b> از <b>OpenRouter</b> استفاده کن (مدل بینایی رایگان دارد).</div>
+            <div class="hint"><b>ساخت کلید OpenRouter:</b> با VPN برو <span dir="ltr">openrouter.ai/keys</span> → Create Key → کپی کن. بعد می‌توانی VPN را خاموش کنی؛ درخواست‌ها از داخل برنامه می‌روند.</div>
+            <label>ارائه‌دهنده:</label>
+            <select id="aiVisionProvider" onchange="document.getElementById('geminiApiKeyInput').placeholder=(this.value==='openrouter'?'sk-or-v1-...':'AIza...')">
+                <option value="openrouter">OpenRouter (پیشنهادی برای ایران)</option>
+                <option value="gemini">Google Gemini مستقیم</option>
+            </select>
+            <label>API Key:</label>
+            <input type="password" id="geminiApiKeyInput" dir="ltr" placeholder="sk-or-v1-..." autocomplete="off">
+            <label style="display:flex; align-items:center; gap:6px;">
+                <input type="checkbox" id="geminiEnabled" style="width:auto;" checked> خواندن هوشمند عکس فعال باشد
+            </label>
+            <button class="submit-btn" type="button" onclick="saveGeminiSettings()">💾 ذخیره تنظیمات AI</button>
+            <button class="range-toggle-btn" type="button" onclick="testGeminiKey()">🧪 تست اتصال AI</button>
+            <div id="geminiStatus" class="hint" style="margin-top:8px;"></div>
+        </div>
+
         <div class="report-card" style="margin-top:16px;">
             <h3>🔔 اعلان فوری روی گوشی (حتی وقتی برنامه بسته است)</h3>
             <div class="hint" style="margin-top:0;">با فعال‌کردن این گزینه، هشدارهای مهم (تاخیر پرسنل، کمبود موجودی، مشکل حضور و غیاب) دقیقاً مثل اعلان تلگرام، روی همین گوشی و حتی وقتی مرورگر بسته است نمایش داده می‌شوند. باید یک‌بار روی همین گوشی که مدیر باهاش کار می‌کند فعال شود.</div>
@@ -2793,7 +2813,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v113 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v116 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -2918,7 +2938,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=113', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=116', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -7598,11 +7618,150 @@ notify pgrst, 'reload schema';`;
             return { ok: false, error: errors.filter(Boolean).join(' | ') || 'ارسال به تلگرام ناموفق بود.' };
         }
 
+
+        function getGeminiSettings() {
+            try {
+                return {
+                    apiKey: (localStorage.getItem('geminiApiKey') || '').trim(),
+                    enabled: localStorage.getItem('geminiEnabled') !== '0',
+                    provider: localStorage.getItem('aiVisionProvider') || 'openrouter'
+                };
+            } catch (e) {
+                return { apiKey: '', enabled: true, provider: 'openrouter' };
+            }
+        }
+        function saveGeminiSettings() {
+            const keyEl = document.getElementById('geminiApiKeyInput');
+            const enEl = document.getElementById('geminiEnabled');
+            const provEl = document.getElementById('aiVisionProvider');
+            const key = keyEl ? keyEl.value.trim() : '';
+            const enabled = enEl ? enEl.checked : true;
+            const provider = provEl ? provEl.value : 'openrouter';
+            try {
+                if (key) localStorage.setItem('geminiApiKey', key);
+                else localStorage.removeItem('geminiApiKey');
+                localStorage.setItem('geminiEnabled', enabled ? '1' : '0');
+                localStorage.setItem('aiVisionProvider', provider);
+            } catch (e) {
+                showToast('❌ ذخیره ناموفق');
+                return;
+            }
+            const st = document.getElementById('geminiStatus');
+            if (st) st.innerHTML = key
+                ? ('✅ ذخیره شد — ' + (provider === 'openrouter' ? 'OpenRouter' : 'Gemini') + ' (' + key.slice(0, 8) + '…)')
+                : '⚠️ کلید خالی است';
+            showToast(key ? '✅ تنظیمات AI ذخیره شد' : 'کلید پاک شد');
+        }
+        async function testGeminiKey() {
+            const keyEl = document.getElementById('geminiApiKeyInput');
+            const provEl = document.getElementById('aiVisionProvider');
+            const s = getGeminiSettings();
+            const key = (keyEl && keyEl.value.trim()) || s.apiKey;
+            const provider = (provEl && provEl.value) || s.provider || 'openrouter';
+            const st = document.getElementById('geminiStatus');
+            if (!key) { showToast('اول API Key را وارد کن'); return; }
+            if (st) st.innerHTML = '⏳ تست ' + (provider === 'openrouter' ? 'OpenRouter' : 'Gemini') + '...';
+
+            if (provider === 'openrouter') {
+                const models = [
+                    'google/gemma-3-27b-it:free',
+                    'nvidia/nemotron-nano-12b-v2-vl:free',
+                    'qwen/qwen2.5-vl-32b-instruct:free',
+                    'meta-llama/llama-3.2-11b-vision-instruct:free',
+                    'google/gemini-2.0-flash-exp:free'
+                ];
+                let lastErr = null, okModel = null;
+                for (let i = 0; i < models.length; i++) {
+                    try {
+                        const res = await fetchWithTimeout('https://openrouter.ai/api/v1/chat/completions', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': 'Bearer ' + key,
+                                'HTTP-Referer': location.origin || 'https://localhost',
+                                'X-Title': 'Ghorfe Familly'
+                            },
+                            body: JSON.stringify({
+                                model: models[i],
+                                messages: [{ role: 'user', content: 'Reply with only: ok' }],
+                                max_tokens: 8
+                            })
+                        }, 30000);
+                        const json = await res.json().catch(() => null);
+                        if (res.ok && json && json.choices) { okModel = models[i]; break; }
+                        lastErr = (json && json.error && (json.error.message || json.error)) || ('HTTP ' + res.status);
+                    } catch (e) {
+                        lastErr = e.message || String(e);
+                    }
+                }
+                if (okModel) {
+                    try {
+                        localStorage.setItem('geminiApiKey', key);
+                        localStorage.setItem('aiVisionProvider', 'openrouter');
+                        localStorage.setItem('openrouterModel', okModel);
+                        localStorage.setItem('geminiEnabled', '1');
+                        if (document.getElementById('geminiEnabled')) document.getElementById('geminiEnabled').checked = true;
+                        if (document.getElementById('aiVisionProvider')) document.getElementById('aiVisionProvider').value = 'openrouter';
+                    } catch (e) {}
+                    if (st) st.innerHTML = '✅ OpenRouter وصل شد<br>مدل: <b dir="ltr">' + okModel + '</b>';
+                    showToast('✅ OpenRouter وصل شد');
+                } else {
+                    if (st) st.innerHTML = '❌ ' + (lastErr || 'خطا') + '<br>با VPN به openrouter.ai/keys برو، کلید بساز، دوباره تست کن.';
+                    showToast('❌ تست OpenRouter ناموفق');
+                }
+                return;
+            }
+
+            // Gemini مستقیم
+            const models = ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-flash'];
+            let lastErr = null, okModel = null;
+            for (let i = 0; i < models.length; i++) {
+                try {
+                    const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + models[i] + ':generateContent?key=' + encodeURIComponent(key);
+                    const res = await fetchWithTimeout(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: 'Reply with only: ok' }] }],
+                            generationConfig: { maxOutputTokens: 8, temperature: 0 }
+                        })
+                    }, 25000);
+                    const json = await res.json().catch(() => null);
+                    if (res.ok && json && json.candidates) { okModel = models[i]; break; }
+                    lastErr = (json && json.error && json.error.message) || ('HTTP ' + res.status);
+                } catch (e) {
+                    lastErr = e.message || String(e);
+                }
+            }
+            if (okModel) {
+                try {
+                    localStorage.setItem('geminiApiKey', key);
+                    localStorage.setItem('aiVisionProvider', 'gemini');
+                    localStorage.setItem('geminiModel', okModel);
+                    localStorage.setItem('geminiEnabled', '1');
+                } catch (e) {}
+                if (st) st.innerHTML = '✅ Gemini وصل شد — <b dir="ltr">' + okModel + '</b>';
+                showToast('✅ Gemini وصل شد');
+            } else {
+                if (st) st.innerHTML = '❌ Gemini از این منطقه در دسترس نیست. ارائه‌دهنده را روی OpenRouter بگذار.';
+                showToast('❌ Gemini در ایران معمولاً کار نمی‌کند — OpenRouter را امتحان کن');
+            }
+        }
+
         async function loadTelegramSettings() {
             const s = await getTelegramSettings(true);
             document.getElementById('tgBotToken').value = s.botToken;
             document.getElementById('tgChatId').value = s.chatId;
             document.getElementById('tgEnabled').checked = s.enabled;
+            try {
+                const g = getGeminiSettings();
+                const gi = document.getElementById('geminiApiKeyInput');
+                const ge = document.getElementById('geminiEnabled');
+                if (gi && !gi.value) gi.value = g.apiKey || '';
+                if (ge) ge.checked = g.enabled;
+                const st = document.getElementById('geminiStatus');
+                if (st && g.apiKey) st.innerHTML = '🔑 کلید ذخیره شده (' + g.apiKey.slice(0, 6) + '…' + g.apiKey.slice(-4) + ')';
+            } catch (e) {}
         }
 
         async function saveTelegramSettings() {
@@ -17338,37 +17497,39 @@ notify pgrst, 'reload schema';`;
 
     function qnParseNotebookLines(raw) {
         const list = (typeof cachedProductsList !== 'undefined' && cachedProductsList) ? cachedProductsList : [];
-        const lines = String(raw || '').split(/\n+/).map(l => l.trim()).filter(l => l.length >= 2);
+        const lines = String(raw || '').split(/\n+/).map(l => l.trim()).filter(l => l.length >= 1);
         const items = [];
         const used = new Set();
 
         function matchName(fragment) {
             if (!fragment || fragment.length < 2) return null;
             const frag = fragment.replace(/\s+/g, ' ').trim();
+            // رد زباله OCR (بدون حروف فارسی کافی)
+            const faChars = (frag.match(/[\u0600-\u06FF]/g) || []).length;
+            if (faChars < 2) return null;
             let best = null, bestScore = 0;
             list.forEach(p => {
                 if (!p || !p.name) return;
                 const name = String(p.name).trim();
                 let score = 0;
-                if (frag.indexOf(name) !== -1 || name.indexOf(frag) !== -1) score = 100 + name.length;
+                if (frag.indexOf(name) !== -1 || name.indexOf(frag) !== -1) score = 120 + name.length;
                 else {
                     const words = name.split(/\s+/).filter(w => w.length >= 2);
                     let hit = 0;
                     words.forEach(w => { if (frag.indexOf(w) !== -1) hit++; });
-                    if (words.length && hit / words.length >= 0.5) score = hit * 25 + frag.length;
+                    if (words.length && hit / words.length >= 0.6) score = hit * 30;
                 }
                 if (score > bestScore) { bestScore = score; best = p; }
             });
-            return (best && bestScore >= 40) ? best : null;
+            // فقط تطبیق قوی — وگرنه نام زباله نشان داده نشود
+            return (best && bestScore >= 70) ? { product: best, score: bestScore } : null;
         }
 
         lines.forEach((line, li) => {
             const t = qnNormalizeDigits(line);
-            // رد خطوط خیلی بی‌معنی
             if (!/[\u0600-\u06FF\d]/.test(t)) return;
 
-            // وزن: 240g / 1.145kg / یا عدد لخت ۲–۴ رقمی (دست‌نویس بدون g)
-            let qty = null, unit = 'kg';
+            let qty = null, unit = 'gram';
             let m = t.match(/(\d+[.,]?\d*)\s*(kg|KG|کیلوگرم|کیلو)\b/);
             if (m) {
                 qty = parseFloat(String(m[1]).replace(',', '.'));
@@ -17380,7 +17541,6 @@ notify pgrst, 'reload schema';`;
                     if (g >= 1000) { qty = g / 1000; unit = 'kg'; }
                     else { qty = g; unit = 'gram'; }
                 } else {
-                    // دست‌نویس: "240" یا "1600" بدون واحد — اگر خط فارسی دارد
                     const hasFa = /[\u0600-\u06FF]{2,}/.test(t);
                     const bare = t.match(/(?:^|[^\d])(\d{2,4})(?:[^\d]|$)/);
                     if (hasFa && bare) {
@@ -17390,7 +17550,6 @@ notify pgrst, 'reload schema';`;
                             else { qty = g; unit = 'gram'; }
                         }
                     }
-                    // 1.145 سبک
                     const dec = t.match(/(?:^|[^\d])(0?\.\d{2,3}|1\.\d{2,3}|2\.\d{2,3})(?:[^\d]|$)/);
                     if (qty == null && dec) {
                         const q = parseFloat(dec[1]);
@@ -17399,172 +17558,174 @@ notify pgrst, 'reload schema';`;
                 }
             }
 
-            // قیمت‌های احتمالی در خط (اعداد ۴–۷ رقمی یا ۲–۴ رقمی که ممکن است «به هزار» باشد)
-            const nums = [];
-            const reN = /(?:^|[^\d])(\d{2,7})(?:[^\d]|$)/g;
-            let nm;
-            while ((nm = reN.exec(t)) !== null) {
-                const n = parseInt(nm[1], 10);
-                // رد کردن وزن‌هایی که قبلاً به‌عنوان g خوانده شد
-                if (qty != null && unit === 'gram' && n === Math.round(qty)) continue;
-                if (qty != null && unit === 'kg' && Math.abs(n - qty) < 0.01) continue;
-                if (n >= 10 && n <= 2500000) nums.push(n);
-            }
-
-            // تکه فارسی نام
             let namePart = t
                 .replace(/(\d+[.,]?\d*)\s*(kg|KG|g|gr|G|کیلوگرم|کیلو|گرم)/gi, ' ')
                 .replace(/\d+/g, ' ')
                 .replace(/[^\u0600-\u06FF\s]/g, ' ')
                 .replace(/\s+/g, ' ')
                 .trim();
-            // حذف کلمات عمومی
             namePart = namePart.replace(/\b(وزن|قیمت|تومان|تومن|کیلو|گرم|فله)\b/g, '').replace(/\s+/g, ' ').trim();
 
-            const prod = matchName(namePart);
-            let price = null;
-            // اگر چند عدد بود، بزرگ‌تر معمولاً قیمت است
-            if (nums.length) {
-                nums.sort((a, b) => b - a);
-                price = nums[0];
-                // اعداد ۲–۴ رقمی روی دفترچه اغلب «به هزار تومان» نوشته می‌شوند (مثلاً ۸۵۰ = ۸۵۰٬۰۰۰)
-                // فقط وقتی کالای انبار داریم و با قیمت واحد جور درمی‌آید
-                if (prod && prod.sell_price) {
-                    const sp = Number(prod.sell_price) || 0;
-                    if (sp > 0) {
-                        // اگر price خیلی کوچک‌تر از قیمت واحد است، شاید به هزار باشد
-                        if (price < sp * 0.3 && price * 1000 >= sp * 0.3 && price * 1000 <= sp * 5) {
-                            // احتمالاً قیمت کل به هزار نیست؛ شاید وزن اشتباه است
-                        }
-                        // اگر فقط قیمت داریم و وزن نداریم: مقدار = قیمت / قیمت‌واحد
-                    }
-                }
-            }
+            const matched = matchName(namePart);
+            if (qty == null || !(qty > 0)) return;
+            let qtyKg = unit === 'gram' ? qty / 1000 : qty;
+            if (qtyKg <= 0 || qtyKg > 80) return;
 
-            // اگر وزن نبود ولی قیمت بود و کالا پیدا شد → وزن را از مبلغ بساز
-            if (qty == null && price != null && prod && Number(prod.sell_price) > 0) {
-                let pay = price;
-                const sp = Number(prod.sell_price);
-                // اگر مبلغ نوشته‌شده خیلی کوچک است نسبت به یک کیلو، شاید «به هزار» است
-                if (pay < sp * 0.15 && pay * 1000 / sp >= 0.05 && pay * 1000 / sp <= 30) {
-                    pay = pay * 1000;
-                }
-                // اگر مبلغ نزدیک چند برابر قیمت واحد است
-                qty = Math.round((pay / sp) * 1000) / 1000;
-                unit = 'kg';
-                if (qty > 0 && qty < 50) {
-                    items.push({
-                        line: li,
-                        name: prod.name,
-                        product: prod,
-                        qty: qty,
-                        unit: unit,
-                        price: Math.round(qty * sp),
-                        source: 'price→weight',
-                        raw: line
-                    });
-                    return;
-                }
-            }
-
-            // اگر وزن داریم
-            if (qty != null && qty > 0) {
-                let qtyKg = unit === 'gram' ? qty / 1000 : qty;
-                if (qtyKg <= 0 || qtyKg > 80) return;
-                const name = prod ? prod.name : (namePart || '');
-                const sp = prod ? Number(prod.sell_price) || 0 : 0;
-                let linePrice = sp > 0 ? Math.round(qtyKg * sp) : (price || null);
-                // اگر قیمت نوشته‌شده با وزن×واحد خیلی فرق داشت، همان نوشته را نگه ندار؛ وزن مبناست
-                items.push({
-                    line: li,
-                    name: name,
-                    product: prod || null,
-                    qty: unit === 'gram' ? qty : qtyKg,
-                    unit: unit === 'gram' ? 'gram' : 'kg',
-                    price: linePrice,
-                    source: 'weight',
-                    raw: line
-                });
-            }
+            const prod = matched ? matched.product : null;
+            const name = prod ? prod.name : '';
+            const sp = prod ? Number(prod.sell_price) || 0 : 0;
+            items.push({
+                line: li,
+                name: name,
+                product: prod,
+                qty: unit === 'gram' ? qty : qtyKg,
+                unit: unit === 'gram' ? 'gram' : 'kg',
+                price: sp > 0 ? Math.round(qtyKg * sp) : null,
+                source: 'weight',
+                raw: line,
+                ocrHint: namePart || line
+            });
         });
 
-        // ادغام خطوط تکراری خیلی شبیه
         const uniq = [];
         items.forEach(it => {
-            const key = (it.name || '') + '|' + it.qty + '|' + it.unit;
+            const key = (it.name || it.ocrHint || '') + '|' + it.qty + '|' + it.unit;
             if (used.has(key)) return;
             used.add(key);
-            if (!it.name && !it.qty) return;
             uniq.push(it);
         });
         return uniq;
     }
 
+    function qnMultiChipsHtml() {
+        let freq = {};
+        try { freq = JSON.parse(localStorage.getItem('productFreq_' + ($('qnType') ? $('qnType').value : 'instore')) || '{}'); } catch (e) {}
+        const top = Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 12).map(e => e[0]);
+        const list = (typeof cachedProductsList !== 'undefined' && cachedProductsList) ? cachedProductsList : [];
+        const names = top.length ? top : list.slice(0, 12).map(p => p.name).filter(Boolean);
+        return names.map(n =>
+            '<button type="button" class="qn-chip" style="font-size:11px;padding:4px 8px;" onclick="qnMultiFillName(this.dataset.n)" data-n="' + escapeHtmlAttr(n) + '">⭐ ' + esc(n) + '</button>'
+        ).join('');
+    }
+
     function qnRenderMultiOcr(items, rawText) {
-        ocrMultiItems = items || [];
-        const fa = n => Number(n).toLocaleString('fa-IR');
-        let html = '<h3 style="margin:0 0 6px; font-size:14px; color:var(--accent);">📒 استخراج از برگه دفترچه</h3>';
-        if (!items.length) {
-            html += '<p class="hint" style="margin:0;">نتونستم ردیف واضحی از برگه بخونم. عکس صاف‌تر/نور بهتر بگیر یا دستی وارد کن.</p>';
-            if (rawText) html += '<details style="margin-top:6px;"><summary class="hint">متن خام</summary><pre style="white-space:pre-wrap;font-size:11px;direction:rtl;max-height:120px;overflow:auto;">' + esc(rawText.slice(0, 1200)) + '</pre></details>';
-            qnShowOcrStatus(html, true);
-            return;
+        // اگر OCR چیزی نداد، چند ردیف خالی برای ورود دستی
+        if (!items || !items.length) {
+            items = [];
+            for (let i = 0; i < 6; i++) items.push({ name: '', qty: '', unit: 'gram', product: null, ocrHint: '' });
+        } else {
+            // حداکثر ۱۲ ردیف + ۲ خالی برای اضافه
+            items = items.slice(0, 12);
+            items.push({ name: '', qty: '', unit: 'gram', product: null, ocrHint: '' });
+            items.push({ name: '', qty: '', unit: 'gram', product: null, ocrHint: '' });
         }
-        html += '<p class="hint" style="margin:0 0 8px;">' + fa(items.length) + ' ردیف پیدا شد. تیک بزن و تایید کن تا بره تو دفترچه.</p>';
-        html += '<div style="max-height:280px; overflow:auto; display:flex; flex-direction:column; gap:6px;">';
+        ocrMultiItems = items;
+        const fa = n => Number(n).toLocaleString('fa-IR');
+        let html = '<h3 style="margin:0 0 6px; font-size:14px; color:var(--accent);">⚡ ثبت چند ردیفی</h3>';
+        html += '<p class="hint" style="margin:0 0 6px;">دستخط معمولاً اشتباه خونده می‌شه. <b>اسم را از چیپ‌ها بزن</b>، وزن را چک کن، تیک بزن.</p>';
+        html += '<div class="qn-chips" style="margin-bottom:8px;" id="qnMultiChips">' + qnMultiChipsHtml() + '</div>';
+        html += '<div style="max-height:340px; overflow:auto; display:flex; flex-direction:column; gap:8px;" id="qnMultiRows">';
         items.forEach((it, i) => {
-            const ok = !!(it.name && it.qty);
-            const qtyLabel = it.unit === 'gram' ? (fa(it.qty) + ' گرم') : (fa(it.qty) + ' کیلو');
-            const priceLabel = it.price ? (fa(it.price) + ' ت') : '—';
-            html += '<label style="display:flex; gap:8px; align-items:flex-start; background:rgba(15,23,42,.55); border:1px solid rgba(148,163,184,.2); border-radius:10px; padding:8px; cursor:pointer;">';
-            html += '<input type="checkbox" class="qn-multi-cb" data-i="' + i + '" ' + (ok ? 'checked' : '') + ' style="margin-top:4px;">';
-            html += '<div style="flex:1; font-size:12px; line-height:1.7;">';
-            html += '<div><b>' + esc(it.name || '⚠️ نام نامشخص') + '</b>' + (it.product ? ' <span style="color:#34d399;">✓</span>' : '') + '</div>';
-            html += '<div class="hint" style="margin:0;">وزن: ' + qtyLabel + ' — مبلغ: ' + priceLabel + (it.source === 'price→weight' ? ' <span style="color:#fbbf24;">(از روی مبلغ)</span>' : '') + '</div>';
-            if (!ok) html += '<div style="color:#f87171; font-size:11px;">این ردیف ناقصه — قبل از تایید اسم/وزن را دستی درست کن</div>';
-            html += '</div></label>';
+            const hasProd = !!(it.name && it.product);
+            const qtyVal = it.qty != null && it.qty !== '' ? it.qty : '';
+            const unit = it.unit === 'kg' ? 'kg' : 'gram';
+            html += '<div class="qn-multi-row" data-i="' + i + '" style="background:rgba(15,23,42,.55); border:1px solid ' + (hasProd ? 'rgba(52,211,153,.35)' : 'rgba(148,163,184,.2)') + '; border-radius:12px; padding:8px;">';
+            html += '<div style="display:flex; gap:6px; align-items:center; margin-bottom:6px;">';
+            html += '<input type="checkbox" class="qn-multi-cb" data-i="' + i + '" ' + (hasProd && qtyVal ? 'checked' : '') + '>';
+            html += '<input type="text" class="qn-multi-name" data-i="' + i + '" list="productDatalist" dir="auto" placeholder="نام کالا را انتخاب/بنویس" value="' + escapeHtmlAttr(it.name || '') + '" style="flex:1; margin:0; padding:8px; font-size:13px;" onfocus="window.__qnMultiFocus=' + i + '">';
+            html += '</div>';
+            html += '<div style="display:flex; gap:6px; align-items:center;">';
+            html += '<input type="text" inputmode="decimal" class="qn-multi-qty" data-i="' + i + '" placeholder="وزن" value="' + escapeHtmlAttr(String(qtyVal)) + '" style="flex:1; margin:0; padding:8px; font-size:13px;" onfocus="window.__qnMultiFocus=' + i + '">';
+            html += '<select class="qn-multi-unit" data-i="' + i + '" style="width:90px; margin:0; padding:8px; font-size:12px;">';
+            html += '<option value="gram"' + (unit === 'gram' ? ' selected' : '') + '>گرم</option>';
+            html += '<option value="kg"' + (unit === 'kg' ? ' selected' : '') + '>کیلو</option>';
+            html += '</select>';
+            html += '</div>';
+            if (it.ocrHint && !hasProd) {
+                html += '<div class="hint" style="margin:4px 0 0; font-size:10px; opacity:.7;">OCR: ' + esc(String(it.ocrHint).slice(0, 40)) + '</div>';
+            }
+            if (hasProd && it.price) {
+                html += '<div class="hint" style="margin:4px 0 0;">مبلغ تقریبی: ' + fa(it.price) + ' ت</div>';
+            }
+            html += '</div>';
         });
         html += '</div>';
         html += '<div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:10px;">';
-        html += '<button type="button" class="row-btn confirm-btn" style="flex:1; min-width:140px;" onclick="qnAcceptMultiOcr()">✅ افزودن موارد تیک‌خورده به دفترچه</button>';
-        html += '<button type="button" class="row-btn" style="flex:1; min-width:100px;" onclick="qnDismissOcr()">رد کردن</button>';
+        html += '<button type="button" class="row-btn confirm-btn" style="flex:1; min-width:140px;" onclick="qnAcceptMultiOcr()">✅ افزودن تیک‌خورده‌ها</button>';
+        html += '<button type="button" class="row-btn" style="flex:1; min-width:100px;" onclick="qnDismissOcr()">بستن</button>';
         html += '</div>';
-        html += '<details style="margin-top:6px;"><summary class="hint">متن خام OCR</summary><pre style="white-space:pre-wrap;font-size:11px;direction:rtl;max-height:100px;overflow:auto;">' + esc((rawText || '').slice(0, 1500)) + '</pre></details>';
+        if (rawText) {
+            html += '<details style="margin-top:6px;"><summary class="hint">متن خام OCR (فقط برای مرجع)</summary><pre style="white-space:pre-wrap;font-size:11px;direction:rtl;max-height:80px;overflow:auto;">' + esc(String(rawText).slice(0, 1000)) + '</pre></details>';
+        }
         qnShowOcrStatus(html, true);
     }
 
+    window.qnMultiFillName = function (name) {
+        const i = (window.__qnMultiFocus != null) ? window.__qnMultiFocus : 0;
+        const inp = document.querySelector('.qn-multi-name[data-i="' + i + '"]');
+        if (inp) {
+            inp.value = name;
+            const cb = document.querySelector('.qn-multi-cb[data-i="' + i + '"]');
+            if (cb) cb.checked = true;
+            // برو ردیف بعدی
+            window.__qnMultiFocus = i + 1;
+            const next = document.querySelector('.qn-multi-qty[data-i="' + i + '"]');
+            if (next) try { next.focus(); } catch (e) {}
+        }
+        try { if (navigator.vibrate) navigator.vibrate(12); } catch (e) {}
+    };
+
+    window.qnOpenMultiManual = function () {
+        const blank = [];
+        for (let i = 0; i < 8; i++) blank.push({ name: '', qty: '', unit: 'gram', product: null, ocrHint: '' });
+        qnRenderMultiOcr(blank, '');
+        window.__qnMultiFocus = 0;
+        showToast('⚡ اسم را از ستاره‌ها بزن، وزن را بنویس، تیک بزن و تایید کن.');
+    };
+
     window.qnAcceptMultiOcr = function () {
-        const cbs = document.querySelectorAll('.qn-multi-cb:checked');
-        if (!cbs.length) { showToast('حداقل یک ردیف را تیک بزن.'); return; }
+        const rows = document.querySelectorAll('.qn-multi-row');
+        if (!rows.length) { showToast('ردیفی نیست.'); return; }
         const type = $('qnType').value;
         const list = load();
         let added = 0;
-        cbs.forEach(cb => {
-            const i = parseInt(cb.getAttribute('data-i'), 10);
-            const it = ocrMultiItems[i];
-            if (!it || !it.name || !(it.qty > 0)) return;
-            const qtyStr = String(it.qty);
-            const unit = it.unit === 'gram' ? 'gram' : 'kg';
-            const note = it.price ? ('مبلغ تقریبی از برگه: ' + Number(it.price).toLocaleString('fa-IR') + ' تومان') : (it.source === 'price→weight' ? 'وزن از روی مبلغ برگه محاسبه شد' : '');
+        rows.forEach(row => {
+            const i = row.getAttribute('data-i');
+            const cb = row.querySelector('.qn-multi-cb');
+            if (!cb || !cb.checked) return;
+            const nameEl = row.querySelector('.qn-multi-name');
+            const qtyEl = row.querySelector('.qn-multi-qty');
+            const unitEl = row.querySelector('.qn-multi-unit');
+            const name = nameEl ? nameEl.value.trim() : '';
+            const qtyRaw = qtyEl ? toEn(qtyEl.value) : '';
+            const qty = parseFloat(qtyRaw);
+            const unit = unitEl ? unitEl.value : 'gram';
+            if (!name || !(qty > 0)) return;
             list.unshift({
                 id: 'qn_' + Date.now() + '_' + i + '_' + Math.random().toString(36).slice(2, 7),
                 type: type,
-                name: it.name,
-                qty: qtyStr,
-                unit: unit,
-                note: note,
+                name: name,
+                qty: String(qty),
+                unit: unit === 'kg' ? 'kg' : 'gram',
+                note: '',
                 photo: photo,
                 at: Date.now(),
                 hp: false
             });
             added++;
+            try {
+                const fk = 'productFreq_' + type;
+                const freq = JSON.parse(localStorage.getItem(fk) || '{}');
+                freq[name] = (freq[name] || 0) + 1;
+                localStorage.setItem(fk, JSON.stringify(freq));
+            } catch (e) {}
         });
-        if (!added) { showToast('ردیاف معتبری برای افزودن نبود.'); return; }
+        if (!added) { showToast('حداقل یک ردیف با اسم و وزن معتبر تیک بزن.'); return; }
         if (!save(list)) return;
         qnShowOcrStatus('', false);
         ocrMultiItems = [];
-        try { qnRender(); qnUpdateBadge(); qnPreview(); } catch (e) {}
-        showToast('✅ ' + added + ' ردیف به دفترچه اضافه شد. قبل از پایان شیفت تاییدشان کن.');
+        try { qnRender(); qnUpdateBadge(); qnRenderChips(); qnPreview(); } catch (e) {}
+        showToast('✅ ' + added + ' ردیف اضافه شد. قبل از پایان شیفت تایید کن.');
     };
 
     function qnRenderOcrCard(res, rawText) {
@@ -17602,55 +17763,286 @@ notify pgrst, 'reload schema';`;
         qnRunOcr(photo);
     };
 
+    function qnGetGeminiProductHint() {
+        const list = (typeof cachedProductsList !== 'undefined' && cachedProductsList) ? cachedProductsList : [];
+        return list.map(p => p && p.name).filter(Boolean).slice(0, 100).join('، ');
+    }
+
+    function qnParseGeminiJson(text) {
+        if (!text) return null;
+        let t = String(text).trim();
+        // حذف markdown code fence
+        t = t.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+        const start = t.indexOf('{');
+        const end = t.lastIndexOf('}');
+        if (start >= 0 && end > start) t = t.slice(start, end + 1);
+        try { return JSON.parse(t); } catch (e) { return null; }
+    }
+
+    function qnGeminiItemsToLocal(data) {
+        const list = (typeof cachedProductsList !== 'undefined' && cachedProductsList) ? cachedProductsList : [];
+        const itemsIn = (data && Array.isArray(data.items)) ? data.items : [];
+        const out = [];
+        itemsIn.forEach((it, idx) => {
+            if (!it) return;
+            let name = String(it.name || '').trim();
+            let qty = parseFloat(it.qty);
+            let unit = (String(it.unit || '').toLowerCase().indexOf('kg') >= 0 || String(it.unit || '').indexOf('کیلو') >= 0) ? 'kg' : 'gram';
+            if (!(qty > 0) && it.weight != null) qty = parseFloat(it.weight);
+            // اگر qty به گرم بزرگ بود و unit kg اشتباه بود
+            if (unit === 'kg' && qty > 50) { unit = 'gram'; }
+            if (unit === 'gram' && qty >= 1000) { qty = qty / 1000; unit = 'kg'; }
+            if (!(qty > 0)) return;
+
+            // تطبیق با انبار
+            let prod = null, best = 0;
+            list.forEach(p => {
+                if (!p || !p.name) return;
+                const n = String(p.name);
+                let score = 0;
+                if (n === name) score = 200;
+                else if (n.indexOf(name) >= 0 || name.indexOf(n) >= 0) score = 120 + Math.min(n.length, 30);
+                else {
+                    const words = n.split(/\s+/).filter(w => w.length >= 2);
+                    let hit = 0;
+                    words.forEach(w => { if (name.indexOf(w) >= 0) hit++; });
+                    if (words.length && hit / words.length >= 0.5) score = hit * 35;
+                }
+                if (score > best) { best = score; prod = p; }
+            });
+            if (prod && best >= 50) name = prod.name;
+
+            const qtyKg = unit === 'gram' ? qty / 1000 : qty;
+            const sp = prod ? Number(prod.sell_price) || 0 : 0;
+            const unitPrice = it.unit_price != null ? Number(it.unit_price) : (sp || null);
+            const totalPrice = it.total_price != null ? Number(it.total_price)
+                : (unitPrice && qtyKg ? Math.round(unitPrice * qtyKg) : (sp && qtyKg ? Math.round(sp * qtyKg) : null));
+
+            out.push({
+                line: idx,
+                name: name,
+                product: prod,
+                qty: unit === 'gram' ? qty : qtyKg,
+                unit: unit,
+                price: totalPrice,
+                unitPriceHint: unitPrice,
+                totalPriceHint: totalPrice,
+                source: 'gemini',
+                raw: name,
+                ocrHint: ''
+            });
+        });
+        return out;
+    }
+
+    async function qnOpenRouterFetch(apiKey, dataUrl) {
+        const products = qnGetGeminiProductHint();
+        const prompt =
+            'تو سیستم استخراج فروش از عکس هستی (لیبل ترازو یا برگه دست‌نویس فارسی فروشگاه لبنیات/ترشی/فله).\n' +
+            'محصولات انبار برای تطبیق نام:\n' + products + '\n\n' +
+            'فقط JSON خالص برگردان، بدون توضیح و بدون markdown:\n' +
+            '{"type":"label"|"notebook","items":[{"name":"نام فارسی","qty":عدد,"unit":"gram یا kg","unit_price":عدد یا null,"total_price":عدد یا null}]}\n' +
+            'قوانین: هر ردیف یک item؛ g=gram؛ kg=kg؛ اعداد فارسی را انگلیسی کن؛ چیزی که نیست نساز.';
+
+        const saved = localStorage.getItem('openrouterModel') || '';
+        const models = [
+            saved,
+            'google/gemma-3-27b-it:free',
+            'nvidia/nemotron-nano-12b-v2-vl:free',
+            'qwen/qwen2.5-vl-32b-instruct:free',
+            'meta-llama/llama-3.2-11b-vision-instruct:free',
+            'google/gemini-2.0-flash-exp:free',
+            'openai/gpt-4o-mini'
+        ].filter((m, i, a) => m && a.indexOf(m) === i);
+
+        let lastErr = null;
+        for (let i = 0; i < models.length; i++) {
+            try {
+                const res = await fetchWithTimeout('https://openrouter.ai/api/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + apiKey,
+                        'HTTP-Referer': (typeof location !== 'undefined' && location.origin) ? location.origin : 'https://localhost',
+                        'X-Title': 'Ghorfe Familly OCR'
+                    },
+                    body: JSON.stringify({
+                        model: models[i],
+                        messages: [{
+                            role: 'user',
+                            content: [
+                                { type: 'text', text: prompt },
+                                { type: 'image_url', image_url: { url: dataUrl } }
+                            ]
+                        }],
+                        temperature: 0.1,
+                        max_tokens: 4096
+                    })
+                }, 90000);
+                const json = await res.json().catch(() => null);
+                if (!res.ok) {
+                    lastErr = (json && json.error && (json.error.message || JSON.stringify(json.error))) || ('HTTP ' + res.status);
+                    if (/not found|no endpoints|unsupported/i.test(String(lastErr))) continue;
+                    continue;
+                }
+                const text = json && json.choices && json.choices[0] && json.choices[0].message && json.choices[0].message.content;
+                if (!text) { lastErr = 'پاسخ خالی'; continue; }
+                try { localStorage.setItem('openrouterModel', models[i]); } catch (e) {}
+                return { text: text, model: models[i] };
+            } catch (e) {
+                lastErr = e.message || String(e);
+            }
+        }
+        throw new Error(lastErr || 'OpenRouter پاسخ نداد');
+    }
+
+    async function qnGeminiFetch(apiKey, dataUrl) {
+        const provider = (localStorage.getItem('aiVisionProvider') || 'openrouter');
+        if (provider === 'openrouter' || String(apiKey).indexOf('sk-or-') === 0) {
+            return qnOpenRouterFetch(apiKey, dataUrl);
+        }
+
+        const base64 = dataUrl.split(',')[1];
+        if (!base64) throw new Error('عکس نامعتبر');
+        const mimeMatch = dataUrl.match(/^data:([^;]+);/);
+        const mime = (mimeMatch && mimeMatch[1]) ? mimeMatch[1] : 'image/jpeg';
+        const products = qnGetGeminiProductHint();
+        const prompt =
+            'تو سیستم استخراج فروش از عکس هستی (لیبل ترازو یا برگه دست‌نویس فارسی فروشگاه لبنیات/ترشی/فله).\n' +
+            'محصولات انبار برای تطبیق نام:\n' + products + '\n\n' +
+            'فقط JSON خالص برگردان، بدون توضیح و بدون markdown:\n' +
+            '{"type":"label"|"notebook","items":[{"name":"نام فارسی","qty":عدد,"unit":"gram یا kg","unit_price":عدد یا null,"total_price":عدد یا null}]}\n' +
+            'قوانین: هر ردیف یک item؛ g=gram؛ kg=kg؛ اعداد فارسی را انگلیسی کن؛ چیزی که نیست نساز.';
+
+        const body = {
+            contents: [{
+                role: 'user',
+                parts: [
+                    { text: prompt },
+                    { inline_data: { mime_type: mime, data: base64 } }
+                ]
+            }],
+            generationConfig: { temperature: 0.1, maxOutputTokens: 4096 }
+        };
+
+        const savedModel = localStorage.getItem('geminiModel') || '';
+        const models = [savedModel, 'gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-flash']
+            .filter((m, i, a) => m && a.indexOf(m) === i);
+
+        let lastErr = null;
+        for (let mi = 0; mi < models.length; mi++) {
+            const model = models[mi];
+            const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(apiKey);
+            try {
+                const res = await fetchWithTimeout(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                }, 60000);
+                const json = await res.json().catch(() => null);
+                if (!res.ok) {
+                    lastErr = (json && json.error && json.error.message) || ('HTTP ' + res.status);
+                    continue;
+                }
+                const parts = json && json.candidates && json.candidates[0] && json.candidates[0].content && json.candidates[0].content.parts;
+                const text = parts && parts.map(p => p.text || '').join('\n');
+                if (!text) { lastErr = 'پاسخ خالی'; continue; }
+                try { localStorage.setItem('geminiModel', model); } catch (e) {}
+                return { text: text, model: model };
+            } catch (e) {
+                lastErr = e.message || String(e);
+            }
+        }
+        throw new Error(lastErr || 'Gemini پاسخ نداد — از OpenRouter استفاده کن');
+    }
+
     async function qnRunOcr(dataUrl) {
         if (ocrBusy) return;
         ocrBusy = true;
         const retryBtn = $('qnOcrRetryBtn');
         if (retryBtn) retryBtn.style.display = 'inline-block';
-        qnShowOcrStatus('<p style="margin:0;">⏳ در حال خواندن برگه/لیبل...</p>', true);
         const t0 = Date.now();
+
+        // --- مسیر ۱: Gemini (دقیق برای دستخط و لیبل) ---
         try {
+            const gs = (typeof getGeminiSettings === 'function') ? getGeminiSettings() : { apiKey: '', enabled: false };
+            if (gs.enabled && gs.apiKey) {
+                qnShowOcrStatus('<p style="margin:0;">🤖 هوش مصنوعی در حال خواندن عکس...</p>', true);
+                const gres = await qnGeminiFetch(gs.apiKey, dataUrl);
+                const parsed = qnParseGeminiJson(gres.text);
+                const ms = Date.now() - t0;
+                if (parsed && Array.isArray(parsed.items) && parsed.items.length) {
+                    const localItems = qnGeminiItemsToLocal(parsed);
+                    window.__qnLastOcrRaw = gres.text;
+                    window.__qnLastOcrMs = ms;
+                    ocrLastText = gres.text;
+
+                    const isNotebook = parsed.type === 'notebook' || localItems.length >= 2;
+                    if (isNotebook) {
+                        qnRenderMultiOcr(localItems, gres.text);
+                        showToast('🤖 Gemini: ' + localItems.length + ' ردیف (' + Math.max(1, Math.round(ms / 1000)) + 'ث) — چک کن و تایید کن.');
+                    } else {
+                        const it = localItems[0];
+                        const res = {
+                            name: it.name || '',
+                            matched: !!it.product,
+                            matchScore: it.product ? 100 : 0,
+                            priceHint: it.unitPriceHint || it.price,
+                            unitPriceHint: it.unitPriceHint,
+                            totalPriceHint: it.totalPriceHint || it.price,
+                            catalogPrice: it.product ? Number(it.product.sell_price) || null : null,
+                            qty: it.qty,
+                            unit: it.unit
+                        };
+                        qnRenderOcrCard(res, gres.text);
+                        if (res.name && res.qty) qnApplyOcrResult(res);
+                        else showToast('🤖 Gemini خواند — لطفاً چک کن.');
+                    }
+                    ocrBusy = false;
+                    return;
+                }
+                // JSON خراب بود؛ به Tesseract می‌رویم
+                console.warn('Gemini JSON parse failed', gres.text);
+            }
+        } catch (e) {
+            console.warn('Gemini OCR failed, fallback Tesseract', e);
+            qnShowOcrStatus('<p style="margin:0;">⚠️ Gemini نشد (' + esc(String(e.message || e)).slice(0, 80) + ') — تلاش با OCR معمولی...</p>', true);
+        }
+
+        // --- مسیر ۲: Tesseract (پشتیبان) ---
+        try {
+            qnShowOcrStatus('<p style="margin:0;">⏳ خواندن با OCR معمولی...</p>', true);
             const worker = await getOcrWorker('fas');
-            try {
-                await worker.setParameters({ tessedit_pageseg_mode: '6' });
-            } catch (e) {}
-            const recognizePromise = worker.recognize(dataUrl);
-            const timeoutPromise = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 45000));
-            const result = await Promise.race([recognizePromise, timeoutPromise]);
+            try { await worker.setParameters({ tessedit_pageseg_mode: '6' }); } catch (e) {}
+            const result = await Promise.race([
+                worker.recognize(dataUrl),
+                new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 45000))
+            ]);
             const raw = (result && result.data && result.data.text) ? result.data.text : '';
             ocrLastText = raw;
             const ms = Date.now() - t0;
 
-            // تصمیم: لیبل ترازو تکی یا برگه دفترچه چندقلمی؟
-            const lineCount = (raw.match(/\n/g) || []).length + 1;
-            const digitGroups = (raw.match(/\d{2,}/g) || []).length;
-            const weightMarks = (raw.match(/\d+\s*(g|gr|kg|G|گرم|کیلو)/gi) || []).length;
-            const looksLikeScaleLabel = /قیمت\s*کل|قیمت\s*واحد|هایپرفامیلی|تاریخ\s*تولید/.test(raw)
+            const lineCount = (raw.match(/\\n/g) || []).length + 1;
+            const digitGroups = (raw.match(/\\d{2,}/g) || []).length;
+            const weightMarks = (raw.match(/\\d+\\s*(g|gr|kg|G|گرم|کیلو)/gi) || []).length;
+            const looksLikeScaleLabel = /قیمت\\s*کل|قیمت\\s*واحد|هایپرفامیلی|تاریخ\\s*تولید/.test(raw)
                 && lineCount <= 12 && weightMarks <= 2;
-            // همیشه اول چندقلمی را امتحان کن
             const multiItems = qnParseNotebookLines(raw);
             const forceNotebook = !looksLikeScaleLabel && (
-                multiItems.length >= 2
-                || lineCount >= 5
-                || digitGroups >= 6
-                || weightMarks >= 2
+                multiItems.length >= 2 || lineCount >= 5 || digitGroups >= 6 || weightMarks >= 2
             );
 
-            // ذخیره برای دکمه «این برگه دفترچه است»
             window.__qnLastOcrRaw = raw;
             window.__qnLastOcrMs = ms;
 
             if (forceNotebook) {
                 qnRenderMultiOcr(multiItems, raw);
-                if (multiItems.length) {
-                    showToast('📒 ' + multiItems.length + ' ردیف از برگه — تیک بزن و تایید کن.');
-                } else {
-                    showToast('📒 برگه دفترچه تشخیص داده شد؛ ردیف واضحی پیدا نشد. متن خام را ببین یا دوباره عکس بگیر.');
-                }
+                showToast(multiItems.length
+                    ? ('📒 ' + multiItems.length + ' ردیف — تیک بزن و تایید کن.')
+                    : '📒 ردیف واضحی پیدا نشد. از ثبت سریع چند ردیفی استفاده کن.');
             } else {
                 const res = qnBuildResultFromText(raw);
                 qnRenderOcrCard(res, raw);
-                // دکمه تبدیل به حالت دفترچه
                 try {
                     const box = document.getElementById('qnOcrBox');
                     if (box && box.style.display !== 'none') {
@@ -17660,24 +18052,23 @@ notify pgrst, 'reload schema';`;
                         btn.style.cssText = 'width:100%;margin-top:8px;';
                         btn.textContent = '📒 این برگه دفترچه است — چند ردیفی استخراج کن';
                         btn.onclick = function () {
-                            const items = qnParseNotebookLines(window.__qnLastOcrRaw || raw);
-                            qnRenderMultiOcr(items, window.__qnLastOcrRaw || raw);
+                            qnRenderMultiOcr(qnParseNotebookLines(window.__qnLastOcrRaw || raw), window.__qnLastOcrRaw || raw);
                         };
                         box.appendChild(btn);
                     }
                 } catch (e) {}
-                if (res.matched && res.matchScore >= 100) {
-                    qnApplyOcrResult(res);
-                } else if (res.name || res.priceHint || res.catalogPrice || res.qty) {
-                    showToast('🔍 خواندم (' + Math.max(1, Math.round(ms / 1000)) + ' ثانیه) — لطفاً چک کن.');
+                if (res.matched && res.matchScore >= 100) qnApplyOcrResult(res);
+                else if (res.name || res.priceHint || res.catalogPrice || res.qty) {
+                    showToast('🔍 OCR معمولی (' + Math.max(1, Math.round(ms / 1000)) + 'ث) — چک کن.');
                 }
             }
         } catch (e) {
             console.error(e);
-            if (String(e.message || e).indexOf('timeout') !== -1) {
-                qnShowOcrStatus('<p class="hint" style="margin:0;">⏱️ خیلی طول کشید. عکس صاف‌تر و روشن‌تر بگیر یا دستی پر کن.</p>', true);
+            const msg = String(e.message || e);
+            if (msg.indexOf('timeout') !== -1) {
+                qnShowOcrStatus('<p class="hint" style="margin:0;">⏱️ خیلی طول کشید. کلید Gemini را در تنظیمات تلگرام چک کن یا دستی وارد کن.</p>', true);
             } else {
-                qnShowOcrStatus('<p class="hint" style="margin:0;">❌ خواندن ناموفق: ' + esc(String(e.message || e)) + '</p>', true);
+                qnShowOcrStatus('<p class="hint" style="margin:0;">❌ خواندن ناموفق: ' + esc(msg) + '</p>', true);
             }
         } finally {
             ocrBusy = false;
