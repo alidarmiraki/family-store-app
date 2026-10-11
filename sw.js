@@ -1,6 +1,6 @@
-// v109 — Service Worker: نصب PWA، بازشدن بدون فیلترشکن، اعلان Push + اجبار به‌روزرسانی نسخه
-const V = 'v128', SHELL = 'shell-' + V, LIBS = 'libs-v1';
-const CDN = /(^|\.)(cdn\.jsdelivr\.net|unpkg\.com|cdnjs\.cloudflare\.com)$/;
+// v130 — Service Worker: آفلاین کامل شل اپ + کش کتابخانه‌ها + نصب PWA
+const V = 'v130', SHELL = 'shell-' + V, LIBS = 'libs-v1';
+const CDN = /(^|\.)(cdn\.jsdelivr\.net|unpkg\.com|cdnjs\.cloudflare\.com|fonts\.googleapis\.com|fonts\.gstatic\.com)$/;
 
 self.addEventListener('message', (e) => {
   if (e && e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
@@ -12,7 +12,7 @@ self.addEventListener('install', (e) => {
     try {
       const c = await caches.open(SHELL);
       await c.addAll(['./', './index.html', './sw.js'].map(u => new Request(u, { cache: 'reload' })));
-    } catch (err) { /* ignore offline install issues */ }
+    } catch (err) {}
   })());
 });
 
@@ -21,63 +21,97 @@ self.addEventListener('activate', (e) => {
     const keys = await caches.keys();
     await Promise.all(keys.filter(k => k !== SHELL && k !== LIBS).map(k => caches.delete(k)));
     await self.clients.claim();
-    // به همه تب‌های باز بگو نسخه عوض شده تا رفرش کنند
     const clients = await self.clients.matchAll({ type: 'window' });
     clients.forEach(c => c.postMessage({ type: 'SW_UPDATED', version: V }));
   })());
 });
 
-async function netFirst(req, nav) {
-  const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 3500);
+async function fromCache(req) {
+  return (await caches.match(req)) || (await caches.match(req, { ignoreSearch: true }));
+}
+
+async function putShell(req, res) {
   try {
-    const res = await fetch(req, { signal: ctl.signal, cache: 'no-store' });
-    clearTimeout(t);
     if (res && res.ok) {
-      try {
-        const c = await caches.open(SHELL);
-        c.put(req, res.clone());
-      } catch (e) {}
+      const c = await caches.open(SHELL);
+      await c.put(req, res.clone());
     }
+  } catch (e) {}
+}
+
+async function putLibs(req, res) {
+  try {
+    if (res && res.ok) {
+      const c = await caches.open(LIBS);
+      await c.put(req, res.clone());
+    }
+  } catch (e) {}
+}
+
+// آنلاین: شبکه با تایم‌اوت کوتاه، بعد کش — آفلاین: فوری از کش
+async function networkThenCache(req, isNav) {
+  const cached = await fromCache(req);
+  if (!navigator.onLine && cached) return cached;
+
+  const ctl = new AbortController();
+  const t = setTimeout(() => ctl.abort(), isNav ? 2500 : 4000);
+  try {
+    const res = await fetch(req, { signal: ctl.signal, cache: isNav ? 'no-store' : 'default' });
+    clearTimeout(t);
+    if (res && res.ok) await putShell(req, res);
     return res;
   } catch (e) {
     clearTimeout(t);
-    const cached = await caches.match(req);
     if (cached) return cached;
-    if (nav) {
-      const shell = await caches.match('./index.html') || await caches.match('./');
+    if (isNav) {
+      const shell = await caches.match('./index.html') || await caches.match('./') || await caches.match('/index.html');
       if (shell) return shell;
     }
-    throw e;
+    // پاسخ خالی کنترل‌شده به‌جای شکست کامل
+    return new Response('آفلاین', { status: 503, statusText: 'Offline', headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
   }
 }
 
 async function cacheFirst(req) {
-  const cached = await caches.match(req);
-  if (cached) return cached;
-  const res = await fetch(req);
-  if (res && res.ok) {
-    try {
-      const c = await caches.open(LIBS);
-      c.put(req, res.clone());
-    } catch (e) {}
+  const cached = await fromCache(req);
+  if (cached) {
+    // پس‌زمینه به‌روز کن
+    fetch(req).then(res => putLibs(req, res)).catch(() => {});
+    return cached;
   }
-  return res;
+  try {
+    const res = await fetch(req);
+    await putLibs(req, res);
+    return res;
+  } catch (e) {
+    return new Response('', { status: 503, statusText: 'Offline' });
+  }
 }
 
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
   if (e.request.method !== 'GET') return;
-  // همیشه sw.js را تازه بگیر
+
+  // sw همیشه تازه (وقتی آنلاین)
   if (url.pathname.endsWith('/sw.js') || url.pathname.endsWith('sw.js')) {
-    e.respondWith(fetch(e.request, { cache: 'no-store' }));
+    e.respondWith((async () => {
+      try { return await fetch(e.request, { cache: 'no-store' }); }
+      catch (err) { return (await fromCache(e.request)) || new Response('', { status: 503 }); }
+    })());
     return;
   }
-  // index.html را net-first با no-store تا نسخه جدید زود بیاید
+
+  // API سوپابیس و تلگرام را کش نکن
+  if (/supabase\.co|openrouter\.ai|generativelanguage\.googleapis|api\.telegram|workers\.dev/i.test(url.hostname)) {
+    return;
+  }
+
   if (url.origin === self.location.origin) {
-    const isNav = e.request.mode === 'navigate' || url.pathname.endsWith('/') || url.pathname.endsWith('index.html');
-    e.respondWith(netFirst(e.request, isNav));
+    const isNav = e.request.mode === 'navigate' || url.pathname.endsWith('/') || url.pathname.endsWith('index.html') || url.pathname === '' || url.pathname.endsWith('.html');
+    e.respondWith(networkThenCache(e.request, isNav));
     return;
   }
+
   if (CDN.test(url.hostname)) {
     e.respondWith(cacheFirst(e.request));
   }

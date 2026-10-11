@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v128 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v130 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2835,7 +2835,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v128 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v130 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -2868,10 +2868,11 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         }
         window.addEventListener('online', () => {
             updateConnectionBanner();
-            showToast('✅ اتصال اینترنت دوباره برقرار شد');
+            showToast('✅ اینترنت وصل شد — در حال همگام‌سازی...');
+            try { if (typeof offlineGetProducts === 'function') offlineGetProducts(true).then(list => { if (list && list.length) cachedProductsList = sortProductsAlpha(list); }).catch(()=>{}); } catch(e) {}
             if (typeof flushOfflineSaleQueue === 'function') flushOfflineSaleQueue();
         });
-        window.addEventListener('offline', () => { updateConnectionBanner(); showToast('⚠️ اتصال اینترنت قطع شد — به‌محض وصل شدن دوباره تلاش کنید'); });
+        window.addEventListener('offline', () => { updateConnectionBanner(); showToast('📴 اینترنت قطع شد — برنامه با دادهٔ ذخیره‌شده روی گوشی کار می‌کند'); });
         updateConnectionBanner();
 
         // ================== خروج خودکار بعد از بی‌فعالیتی (امنیت) ==================
@@ -2960,7 +2961,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=128', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=130', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -3568,6 +3569,67 @@ ${PROXY_ENDPOINTS.map(u => `<div class="summary-mini" data-sel="${u}" style="gap
         })();
 
         let cachedProductsList = [];
+
+        /* ========== لایه داده آفلاین ========== */
+        const OFFLINE_KEYS = {
+            products: 'offline_products_v1',
+            session: 'offline_session_v1',
+            lastSync: 'offline_last_sync_v1'
+        };
+        function offlineIsDown() {
+            try { return navigator.onLine === false; } catch (e) { return false; }
+        }
+        function offlineSaveProducts(list) {
+            try {
+                if (!Array.isArray(list)) return;
+                localStorage.setItem(OFFLINE_KEYS.products, JSON.stringify(list));
+                localStorage.setItem(OFFLINE_KEYS.lastSync, String(Date.now()));
+            } catch (e) { console.warn('offlineSaveProducts', e); }
+        }
+        function offlineLoadProducts() {
+            try {
+                const raw = localStorage.getItem(OFFLINE_KEYS.products);
+                const arr = raw ? JSON.parse(raw) : null;
+                return Array.isArray(arr) ? arr : [];
+            } catch (e) { return []; }
+        }
+        function offlineSaveSession(user, role, label) {
+            try {
+                localStorage.setItem(OFFLINE_KEYS.session, JSON.stringify({
+                    user, role, label, savedAt: Date.now()
+                }));
+            } catch (e) {}
+        }
+        function offlineLoadSession() {
+            try {
+                const raw = localStorage.getItem(OFFLINE_KEYS.session);
+                return raw ? JSON.parse(raw) : null;
+            } catch (e) { return null; }
+        }
+        function offlineClearSession() {
+            try { localStorage.removeItem(OFFLINE_KEYS.session); } catch (e) {}
+        }
+        async function offlineGetProducts(forceNet) {
+            if (!forceNet && offlineIsDown()) {
+                const local = offlineLoadProducts();
+                if (local.length) return local;
+            }
+            try {
+                const { data, error } = await _supabase.from('products').select('*');
+                if (error) throw error;
+                const list = data || [];
+                offlineSaveProducts(list);
+                return list;
+            } catch (e) {
+                const local = offlineLoadProducts();
+                if (local.length) {
+                    if (offlineIsDown()) showToast('📴 آفلاین — لیست کالا از حافظه گوشی');
+                    return local;
+                }
+                throw e;
+            }
+        }
+
         let cachedExpensesList = [];
         let editingExpenseId = null;
 
@@ -3668,7 +3730,7 @@ ${PROXY_ENDPOINTS.map(u => `<div class="summary-mini" data-sel="${u}" style="gap
         }
         let currentRole = "";
         let currentUserLabel = "";
-        let currentSessionUser = null;
+        let currentSessionUser = null; try { offlineClearSession(); } catch (e) {}
 
         // --- تشخیص حساب آزمایشی (نیروی تازه‌استخدام در دوره‌ی آموزشی) ---
         // برای این حساب‌ها، محدودیت‌های سخت‌گیرانه‌ی ورود/خروج (مثل مسدودشدن ثبت، اجبار به نوشتن
@@ -5273,7 +5335,8 @@ notify pgrst, 'reload schema';`;
             currentUserLabel = (roleLabels[user.role] || user.role) + ' - ' + (user.full_name || user.username);
             try { loadFiredStaff(true); } catch (e) {}
             try { setTimeout(() => { if (window.maybeShowPermWizard) window.maybeShowPermWizard(); }, 4000); } catch (e) {}
-            currentSessionUser = user;
+                        currentSessionUser = user;
+            try { offlineSaveSession(user, user.role, (roleLabels[user.role] || user.role) + ' - ' + (user.full_name || user.username)); } catch (e) {}
             alertDismissedThisSession = false;
             reminderDismissedThisSession = false;
             if (typeof resetIdleTimers === 'function') resetIdleTimers(); // شروع شمارش خروج خودکار امنیتی از همین لحظه ورود
@@ -6840,8 +6903,10 @@ notify pgrst, 'reload schema';`;
             }
 
             if (cachedProductsList.length === 0) {
-                const { data } = await _supabase.from('products').select('*');
-                cachedProductsList = sortProductsAlpha(data || []);
+                let _pd = null;
+                try { const r = await _supabase.from('products').select('*'); _pd = r.data; if (!r.error) offlineSaveProducts(_pd || []); } catch (e) { _pd = offlineLoadProducts(); }
+                if (!_pd || !_pd.length) _pd = offlineLoadProducts();
+                cachedProductsList = sortProductsAlpha(_pd || []);
             }
 
             const product = cachedProductsList.find(p => p.name === nameVal || p.code === nameVal);
@@ -7659,88 +7724,123 @@ notify pgrst, 'reload schema';`;
             try { localStorage.setItem('sausageLabelPairs_v1', JSON.stringify(map || {})); } catch (e) {}
         }
 
+        // از روی خود کالاها + جدول سرور + local
         async function spcLoadPairs() {
-            const local = spcLoadPairsLocal();
-            // اولویت با سرور — تا روی گوشی دیگر هم بیاید
-            const tryTables = [
-                async () => {
-                    const { data, error } = await _supabase.from('sausage_label_pairs').select('pairs').eq('id', 1).maybeSingle();
-                    if (error) return null;
-                    let p = data && data.pairs;
+            const map = {};
+            // 1) از فیلد scale_pair_code روی کالاهای غیر ۲۲ (قابل اعتماد بین همه گوشی‌ها)
+            try {
+                const list = (typeof cachedProductsList !== 'undefined' && Array.isArray(cachedProductsList))
+                    ? cachedProductsList : [];
+                list.forEach(p => {
+                    if (!p || spcIsCode22(p.code)) return;
+                    const pair = p.scale_pair_code || p.scalePairCode || p.label_scale_code;
+                    if (pair) map[spcOtherKey(p)] = String(pair);
+                });
+            } catch (e) {}
+
+            // 2) جدول اختصاصی سرور
+            try {
+                const { data, error } = await _supabase.from('sausage_label_pairs').select('pairs').eq('id', 1).maybeSingle();
+                if (!error && data && data.pairs) {
+                    let p = data.pairs;
                     if (typeof p === 'string') { try { p = JSON.parse(p); } catch (e) { p = null; } }
-                    return (p && typeof p === 'object') ? p : null;
-                },
-                async () => {
-                    const { data, error } = await _supabase.from('shop_settings').select('value').eq('key', 'sausage_label_pairs').maybeSingle();
-                    if (error) return null;
-                    let p = data && data.value;
-                    if (typeof p === 'string') { try { p = JSON.parse(p); } catch (e) { p = null; } }
-                    return (p && typeof p === 'object') ? p : null;
+                    if (p && typeof p === 'object') Object.assign(map, p);
                 }
-            ];
-            for (let i = 0; i < tryTables.length; i++) {
-                try {
-                    const remote = await tryTables[i]();
-                    if (remote && Object.keys(remote).length) {
-                        // سرور مبنا؛ local فقط کلیدهای جدید محلی را اضافه می‌کند
-                        const merged = Object.assign({}, remote, local);
-                        // اگر سرور کامل‌تر بود همان را ترجیح بده
-                        const finalMap = Object.keys(remote).length >= Object.keys(local).length
-                            ? Object.assign({}, local, remote)
-                            : merged;
-                        spcSavePairsLocal(finalMap);
-                        return finalMap;
-                    }
-                } catch (e) {}
-            }
-            return local;
+            } catch (e) {}
+
+            // 3) shop_settings
+            try {
+                const { data, error } = await _supabase.from('shop_settings').select('value').eq('key', 'sausage_label_pairs').maybeSingle();
+                if (!error && data && data.value) {
+                    let p = data.value;
+                    if (typeof p === 'string') { try { p = JSON.parse(p); } catch (e) { p = null; } }
+                    if (p && typeof p === 'object') Object.assign(map, p);
+                }
+            } catch (e) {}
+
+            // 4) local (کمک‌کننده)
+            Object.assign(map, spcLoadPairsLocal());
+            spcSavePairsLocal(map);
+            return map;
         }
 
-        async function spcPersistPairs(map) {
+        async function spcPersistPairs(map, otherProduct, scaleCode) {
             spcSavePairsLocal(map);
-            let savedRemote = false;
-            let lastErr = '';
-            // جدول اختصاصی
+            const results = [];
+
+            // الف) ذخیره روی خود کالا — مهم‌ترین روش همگام‌سازی
+            if (otherProduct) {
+                const payload = { scale_pair_code: scaleCode ? String(scaleCode) : null };
+                let q = _supabase.from('products').update(payload);
+                const c = spcNormDigits(otherProduct.code);
+                if (c) q = q.eq('code', otherProduct.code);
+                else q = q.eq('name', otherProduct.name);
+                const { error } = await q;
+                if (!error) {
+                    results.push('product');
+                    // آپدیت کش
+                    try {
+                        if (typeof cachedProductsList !== 'undefined' && Array.isArray(cachedProductsList)) {
+                            const hit = cachedProductsList.find(p => spcOtherKey(p) === spcOtherKey(otherProduct));
+                            if (hit) hit.scale_pair_code = scaleCode ? String(scaleCode) : null;
+                        }
+                    } catch (e) {}
+                } else {
+                    console.warn('scale_pair_code update', error);
+                    results.push('product_fail:' + (error.message || ''));
+                }
+            }
+
+            // ب) جدول sausage_label_pairs
             try {
                 const { error } = await _supabase.from('sausage_label_pairs').upsert({
                     id: 1,
                     pairs: map,
                     updated_at: new Date().toISOString()
-                });
-                if (!error) savedRemote = true;
-                else lastErr = error.message || String(error);
-            } catch (e) { lastErr = e.message || String(e); }
-            // پشتیبان shop_settings
-            if (!savedRemote) {
-                try {
-                    const { error } = await _supabase.from('shop_settings').upsert({
-                        key: 'sausage_label_pairs',
-                        value: map,
-                        updated_at: new Date().toISOString()
-                    }, { onConflict: 'key' });
-                    if (!error) savedRemote = true;
-                    else lastErr = error.message || String(error);
-                } catch (e) { lastErr = e.message || String(e); }
+                }, { onConflict: 'id' });
+                if (!error) results.push('table');
+                else results.push('table_fail:' + (error.message || ''));
+            } catch (e) {
+                results.push('table_fail:' + (e.message || e));
             }
-            return { ok: savedRemote, error: lastErr };
+
+            // ج) shop_settings
+            try {
+                const { error } = await _supabase.from('shop_settings').upsert({
+                    key: 'sausage_label_pairs',
+                    value: map,
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'key' });
+                if (!error) results.push('settings');
+            } catch (e) {}
+
+            const ok = results.indexOf('product') >= 0 || results.indexOf('table') >= 0 || results.indexOf('settings') >= 0;
+            return { ok: ok, results: results };
         }
 
         window.spcSetPair = async function (otherKey, scaleCode) {
             const isMgr = (typeof currentRole !== 'undefined' && currentRole === 'admin');
             if (!isMgr) { showToast('فقط مدیر می‌تواند جفت را ذخیره کند.'); return; }
+
+            const list = (typeof cachedProductsList !== 'undefined' && Array.isArray(cachedProductsList))
+                ? cachedProductsList : [];
+            const otherProduct = list.find(p => spcOtherKey(p) === otherKey) || null;
+
             const map = await spcLoadPairs();
             if (!scaleCode) delete map[otherKey];
             else map[otherKey] = String(scaleCode);
-            const res = await spcPersistPairs(map);
-            if (res && res.ok) {
-                showToast('✅ ذخیره شد (این گوشی + سرور — روی گوشی‌های دیگر هم می‌آید)');
+
+            showToast('⏳ در حال ذخیره روی سرور...');
+            const res = await spcPersistPairs(map, otherProduct, scaleCode);
+
+            if (res.ok) {
+                showToast('✅ ذخیره شد — روی گوشی‌های دیگر و فروشنده‌ها هم می‌آید');
             } else {
-                showToast('⚠️ فقط روی این گوشی ذخیره شد. SQL جدول را در Supabase بزن.');
-                console.warn('spcPersistPairs', res && res.error);
+                showToast('⚠️ فقط روی این گوشی ذخیره شد. SQL ستون scale_pair_code را بزن.');
+                console.warn('spcPersist', res.results);
             }
             loadSausagePriceCompare();
         };
-
 
         window.spcFilterList = function () {
             const q = (document.getElementById('spcSearch') && document.getElementById('spcSearch').value || '').trim().toLowerCase();
@@ -7771,13 +7871,19 @@ notify pgrst, 'reload schema';`;
             if (sum) sum.textContent = 'در حال بارگذاری...';
 
             try {
-                if (typeof loadProductsCache === 'function') {
+                if (typeof offlineGetProducts === 'function') {
+                    const plist = await offlineGetProducts(false);
+                    if (plist && plist.length) cachedProductsList = sortProductsAlpha(plist);
+                } else if (typeof loadProductsCache === 'function') {
                     try { await loadProductsCache(true); } catch (e) {}
                 }
-            } catch (e) {}
+            } catch (e) {
+                const local = offlineLoadProducts();
+                if (local.length) cachedProductsList = sortProductsAlpha(local);
+            }
 
             const list = (typeof cachedProductsList !== 'undefined' && Array.isArray(cachedProductsList))
-                ? cachedProductsList : [];
+                ? cachedProductsList : offlineLoadProducts();
             const sausages = list.filter(p => p && (p.category === 'sausage' || p.category === 'سوسیس'));
 
             const coded = sausages.filter(p => spcIsCode22(p.code))
@@ -7817,10 +7923,10 @@ notify pgrst, 'reload schema';`;
                 const oKey = spcOtherKey(op);
                 const tol = tolOf(opPrice);
 
-                // 1) جفت ذخیره‌شده توسط مدیر
+                // 1) جفت ذخیره‌شده (روی کالا یا سرور)
                 let best = null;
                 let fromSaved = false;
-                const savedCode = pairs[oKey];
+                const savedCode = (op.scale_pair_code || op.scalePairCode || pairs[oKey] || '');
                 if (savedCode) {
                     best = coded.find(cp => spcNormDigits(cp.code) === spcNormDigits(savedCode)) || null;
                     if (best) { fromSaved = true; savedN++; }
@@ -10802,8 +10908,12 @@ notify pgrst, 'reload schema';`;
                 // معطل موندن پشت یه پنجره‌ی تاییدی که کسی پشتش نیست، این یکی رو رد می‌کنیم و
                 // مستقیم به مدیر خبر می‌دیم که دستی بررسی کنه.
                 if (cachedProductsList.length === 0) {
-                    const { data } = await _supabase.from('products').select('*');
-                    cachedProductsList = sortProductsAlpha(data || []);
+                    try {
+                        const list = await offlineGetProducts(true);
+                        cachedProductsList = sortProductsAlpha(list || []);
+                    } catch (e) {
+                        cachedProductsList = sortProductsAlpha(offlineLoadProducts());
+                    }
                 }
                 const product = cachedProductsList.find(p => p.name === entry.name);
                 const qtyKg = entry.unit === 'gram' ? Number((parseFloat(entry.qtyRaw) / 1000).toFixed(4)) : parseFloat(entry.qtyRaw);
@@ -10905,7 +11015,9 @@ notify pgrst, 'reload schema';`;
         }
 
         async function loadProductDatalist() {
-            const { data: products } = await _supabase.from('products').select('*');
+            let products = null;
+            try { const r = await _supabase.from('products').select('*'); products = r.data; if (!r.error) offlineSaveProducts(products || []); } catch (e) { products = offlineLoadProducts(); }
+            if (!products || !products.length) products = offlineLoadProducts();
             cachedProductsList = sortProductsAlpha(products || []);
 
             const datalist = document.getElementById('productDatalist');
@@ -11489,7 +11601,9 @@ notify pgrst, 'reload schema';`;
             cachedSalesList[type] = sales || [];
 
             if (cachedProductsList.length === 0) {
-                const { data: products } = await _supabase.from('products').select('*');
+                let products = null;
+                try { const r = await _supabase.from('products').select('*'); products = r.data; if (!r.error) offlineSaveProducts(products || []); } catch (e) { products = offlineLoadProducts(); }
+                if (!products || !products.length) products = offlineLoadProducts();
                 cachedProductsList = sortProductsAlpha(products || []);
             }
 
@@ -15365,8 +15479,10 @@ notify pgrst, 'reload schema';`;
             }
 
             if (cachedProductsList.length === 0) {
-                const { data } = await _supabase.from('products').select('*');
-                cachedProductsList = sortProductsAlpha(data || []);
+                let _pd = null;
+                try { const r = await _supabase.from('products').select('*'); _pd = r.data; if (!r.error) offlineSaveProducts(_pd || []); } catch (e) { _pd = offlineLoadProducts(); }
+                if (!_pd || !_pd.length) _pd = offlineLoadProducts();
+                cachedProductsList = sortProductsAlpha(_pd || []);
             }
 
             const product = cachedProductsList.find(p => p.name === itemName || p.code === itemName);
@@ -15405,8 +15521,10 @@ notify pgrst, 'reload schema';`;
             }
 
             if (cachedProductsList.length === 0) {
-                const { data } = await _supabase.from('products').select('*');
-                cachedProductsList = sortProductsAlpha(data || []);
+                let _pd = null;
+                try { const r = await _supabase.from('products').select('*'); _pd = r.data; if (!r.error) offlineSaveProducts(_pd || []); } catch (e) { _pd = offlineLoadProducts(); }
+                if (!_pd || !_pd.length) _pd = offlineLoadProducts();
+                cachedProductsList = sortProductsAlpha(_pd || []);
             }
 
             const product = cachedProductsList.find(p => p.name === itemName || p.code === itemName);
