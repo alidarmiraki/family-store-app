@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v134 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v135 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2909,7 +2909,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v134 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v135 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3093,7 +3093,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=134', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=135', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -14254,6 +14254,102 @@ notify pgrst, 'reload schema';`;
             };
         }
 
+        // خلاصه هدف/پاداش/جریمه برای گزارش هفتگی (کلی + جزئیات)
+        function weeklyBuildGoalSummary(ctx) {
+            const targets = ctx.shiftTargets || [];
+            const bySellerNet = {}; // seller -> { net, bonus, penalty, hit, miss, live }
+            const detailRows = [];
+            const startISO = ctx.startISODate;
+            const endISO = ctx.endISODate;
+            const inRange = (iso) => iso && iso >= startISO && iso <= endISO;
+            const covers = (t, iso) => {
+                if (!t || t.active === false) return false;
+                if (typeof sstInRange === 'function') return sstInRange(t, iso);
+                if (!t.start_date && !t.end_date) return true;
+                if (t.start_date && iso < t.start_date) return false;
+                if (t.end_date && iso > t.end_date) return false;
+                return true;
+            };
+            const labels = new Set();
+            targets.forEach(t => { if (t.seller_label) labels.add(t.seller_label); });
+            Array.from(ctx.allSellerNames || []).forEach(n => labels.add(n));
+
+            labels.forEach(label => {
+                const sales = (ctx.sales || []).filter(s => (s.seller_name || '') === label);
+                const events = (ctx.attendance || []).filter(a => (a.seller_name || '') === label);
+                let shifts = [];
+                try {
+                    if (typeof sstComputeShifts === 'function') {
+                        shifts = sstComputeShifts(sales, events, Date.now(), label) || [];
+                    }
+                } catch (e) { shifts = []; }
+                // فقط شیفت‌های داخل بازه گزارش
+                shifts = shifts.filter(sh => inRange(sh.dayISO || (sh.start ? getTehranISODate(new Date(sh.start)) : '')));
+
+                const sellerGoals = targets.filter(t => t.seller_label === label);
+                if (!sellerGoals.length && !shifts.length) return;
+
+                if (!bySellerNet[label]) bySellerNet[label] = { net: 0, bonus: 0, penalty: 0, hit: 0, miss: 0, live: 0 };
+
+                sellerGoals.forEach(t => {
+                    const base = Number(t.base_salary) || 0;
+                    const targetAmt = Number(t.target_amount) || 0;
+                    let gHit = 0, gMiss = 0, gLive = 0, gNet = 0, gBonus = 0, gPen = 0;
+                    const shiftLines = [];
+                    shifts.forEach(sh => {
+                        const iso = sh.dayISO || (sh.start ? getTehranISODate(new Date(sh.start)) : '');
+                        if (!covers(t, iso)) return;
+                        let r;
+                        try { r = sstDayResult(t, sh); } catch (e) {
+                            r = { status: 'miss', delta: 0 };
+                        }
+                        if (r.status === 'live') {
+                            gLive++; bySellerNet[label].live++;
+                            shiftLines.push({ iso, amount: sh.amount || 0, status: 'live', delta: 0, result: 'در جریان' });
+                        } else if (r.status === 'hit') {
+                            gHit++; gNet += r.delta; gBonus += r.delta;
+                            bySellerNet[label].hit++; bySellerNet[label].net += r.delta; bySellerNet[label].bonus += r.delta;
+                            shiftLines.push({ iso, amount: sh.amount || 0, status: 'hit', delta: r.delta, result: 'برنده 🎉' });
+                        } else {
+                            gMiss++; gNet += r.delta; gPen += Math.abs(r.delta);
+                            bySellerNet[label].miss++; bySellerNet[label].net += r.delta; bySellerNet[label].penalty += Math.abs(r.delta);
+                            shiftLines.push({ iso, amount: sh.amount || 0, status: 'miss', delta: r.delta, result: 'باخته 😔' });
+                        }
+                    });
+
+                    // وضعیت کلی هدف
+                    let overall = 'بدون شیفت در بازه';
+                    if (gLive && !gHit && !gMiss) overall = 'در جریان';
+                    else if (gHit && !gMiss) overall = 'برنده (همه شیفت‌ها)';
+                    else if (gMiss && !gHit) overall = 'باخته (همه شیفت‌ها)';
+                    else if (gHit || gMiss) overall = 'ترکیبی (بعضی برد / بعضی باخت)';
+
+                    detailRows.push({
+                        seller: label,
+                        target: targetAmt,
+                        base: base,
+                        bonusRule: (t.bonus_type === 'percent' ? ((Number(t.bonus_value)||0) + '٪') : ((Number(t.bonus_value)||0).toLocaleString('fa-IR') + ' ت')),
+                        penRule: Number(t.penalty_value) > 0 ? (t.penalty_type === 'percent' ? ((Number(t.penalty_value)||0)+'٪') : ((Number(t.penalty_value)||0).toLocaleString('fa-IR')+' ت')) : '—',
+                        rangeFrom: t.start_date || 'همیشه',
+                        rangeTo: t.end_date || '—',
+                        active: t.active === false ? 'خیر' : 'بله',
+                        hit: gHit, miss: gMiss, live: gLive,
+                        bonusTotal: gBonus, penTotal: gPen, net: gNet,
+                        overall: overall,
+                        shifts: shiftLines
+                    });
+                });
+            });
+
+            let totalBonus = 0, totalPen = 0, totalNet = 0;
+            Object.keys(bySellerNet).forEach(k => {
+                totalBonus += bySellerNet[k].bonus;
+                totalPen += bySellerNet[k].penalty;
+                totalNet += bySellerNet[k].net;
+            });
+            return { bySellerNet, detailRows, totalBonus, totalPen, totalNet };
+        }
+
         // ---------- فایل «کلی» — یک برگه‌ی داشبوردی رنگی ----------
         function buildGeneralReportWorkbook(ctx) {
             const wb = new ExcelJS.Workbook();
@@ -14320,6 +14416,54 @@ notify pgrst, 'reload schema';`;
                 row.getCell(2).numFmt = '#,##0';
                 row.getCell(6).numFmt = '#,##0';
             });
+
+            // --- هدف / پاداش / جریمه ---
+            const goalSum = weeklyBuildGoalSummary(ctx);
+            ws.addRow([]);
+            ws.mergeCells(`A${ws.rowCount + 1}:F${ws.rowCount + 1}`);
+            const gTitle = ws.addRow(['🎯 هدف فروش · پاداش و جریمه پرسنل در این هفته', '', '', '', '', '']).getCell(1);
+            gTitle.font = { bold: true, size: 12, color: { argb: 'FF7C3AED' } };
+
+            styleHeaderRow(ws.addRow(['پرسنل', 'پاداش اضافه‌شده (تومان)', 'جریمه کسرشده (تومان)', 'خالص اثر روی حقوق', 'شیفت برنده', 'شیفت باخته']), 'FFA78BFA');
+            const sellerNamesG = Object.keys(goalSum.bySellerNet).sort((a, b) => Math.abs(goalSum.bySellerNet[b].net) - Math.abs(goalSum.bySellerNet[a].net));
+            if (!sellerNamesG.length) {
+                ws.addRow(['در این بازه هدف/نتیجه‌ای محاسبه نشد', '', '', '', '', '']);
+            } else {
+                sellerNamesG.forEach((name, idx) => {
+                    const g = goalSum.bySellerNet[name];
+                    const row = ws.addRow([
+                        name,
+                        Math.round(g.bonus),
+                        Math.round(g.penalty),
+                        Math.round(g.net),
+                        g.hit,
+                        g.miss
+                    ]);
+                    styleDataRow(row, idx % 2 === 0);
+                    row.getCell(2).numFmt = '#,##0';
+                    row.getCell(3).numFmt = '#,##0';
+                    row.getCell(4).numFmt = '#,##0';
+                    // رنگ خالص
+                    if (g.net > 0) row.getCell(4).font = { bold: true, color: { argb: 'FF059669' } };
+                    else if (g.net < 0) row.getCell(4).font = { bold: true, color: { argb: 'FFDC2626' } };
+                });
+                const tot = ws.addRow([
+                    'جمع کل',
+                    Math.round(goalSum.totalBonus),
+                    Math.round(goalSum.totalPen),
+                    Math.round(goalSum.totalNet),
+                    '',
+                    ''
+                ]);
+                tot.eachCell(c => {
+                    c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFA78BFA' } };
+                    c.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+                });
+                tot.getCell(2).numFmt = '#,##0';
+                tot.getCell(3).numFmt = '#,##0';
+                tot.getCell(4).numFmt = '#,##0';
+            }
+
             ws.getColumn(1).width = 20;
             ws.getColumn(2).width = 20;
             ws.getColumn(3).width = 14;
@@ -14419,17 +14563,72 @@ notify pgrst, 'reload schema';`;
             if (ctx.takeouts.length) wsTake.autoFilter = { from: 'A1', to: `F${ctx.takeouts.length + 1}` };
 
             try {
+                const goalSum = weeklyBuildGoalSummary(ctx);
                 const wsGoals = wb.addWorksheet('هدف و پاداش و جریمه', { views: [{ rightToLeft: true }] });
-                styleHeaderRow(wsGoals.addRow(['فروشنده', 'هدف (تومان)', 'پاداش', 'جریمه', 'از تاریخ', 'تا تاریخ', 'فعال']), 'FFA78BFA');
-                (ctx.shiftTargets || []).forEach((t, ii) => {
-                    const bonus = (t.bonus_type === 'percent') ? ((Number(t.bonus_value)||0) + '٪') : ((Number(t.bonus_value)||0).toLocaleString('fa-IR') + ' ت');
-                    const pen = Number(t.penalty_value) > 0 ? ((t.penalty_type === 'percent') ? ((Number(t.penalty_value)||0)+'٪') : ((Number(t.penalty_value)||0).toLocaleString('fa-IR')+' ت')) : '—';
-                    const row = wsGoals.addRow([t.seller_label||'', Number(t.target_amount)||0, bonus, pen, t.start_date||'همیشه', t.end_date||'—', t.active===false?'خیر':'بله']);
-                    styleDataRow(row, ii % 2 === 0);
-                    row.getCell(2).numFmt = '#,##0';
+                styleHeaderRow(wsGoals.addRow([
+                    'فروشنده', 'هدف فروش', 'قانون پاداش', 'قانون جریمه', 'بازه',
+                    'نتیجه کلی', 'شیفت برنده', 'شیفت باخته', 'در جریان',
+                    'مبلغ پاداش (تومان)', 'مبلغ جریمه (تومان)', 'خالص روی حقوق'
+                ]), 'FFA78BFA');
+                if (!goalSum.detailRows.length) {
+                    wsGoals.addRow(['هدفی برای محاسبه در این بازه نبود', '', '', '', '', '', '', '', '', '', '', '']);
+                } else {
+                    goalSum.detailRows.forEach((d, ii) => {
+                        const row = wsGoals.addRow([
+                            d.seller,
+                            d.target,
+                            d.bonusRule,
+                            d.penRule,
+                            (d.rangeFrom || '') + ' تا ' + (d.rangeTo || ''),
+                            d.overall,
+                            d.hit,
+                            d.miss,
+                            d.live,
+                            Math.round(d.bonusTotal),
+                            Math.round(d.penTotal),
+                            Math.round(d.net)
+                        ]);
+                        styleDataRow(row, ii % 2 === 0);
+                        row.getCell(2).numFmt = '#,##0';
+                        row.getCell(10).numFmt = '#,##0';
+                        row.getCell(11).numFmt = '#,##0';
+                        row.getCell(12).numFmt = '#,##0';
+                        if (d.net > 0) row.getCell(12).font = { bold: true, color: { argb: 'FF059669' } };
+                        else if (d.net < 0) row.getCell(12).font = { bold: true, color: { argb: 'FFDC2626' } };
+                        if (d.overall.indexOf('برنده') === 0) row.getCell(6).font = { bold: true, color: { argb: 'FF059669' } };
+                        if (d.overall.indexOf('باخته') === 0) row.getCell(6).font = { bold: true, color: { argb: 'FFDC2626' } };
+                    });
+                }
+                wsGoals.columns = [
+                    { width: 24 }, { width: 14 }, { width: 12 }, { width: 12 }, { width: 18 },
+                    { width: 22 }, { width: 10 }, { width: 10 }, { width: 10 },
+                    { width: 14 }, { width: 14 }, { width: 14 }
+                ];
+
+                // ریز شیفت‌ها
+                const wsSh = wb.addWorksheet('ریز برد و باخت شیفت', { views: [{ rightToLeft: true }] });
+                styleHeaderRow(wsSh.addRow(['فروشنده', 'تاریخ شیفت', 'فروش شیفت', 'هدف', 'نتیجه', 'اثر روی حقوق (تومان)']), 'FF8B5CF6');
+                let ri = 0;
+                goalSum.detailRows.forEach(d => {
+                    (d.shifts || []).forEach(sh => {
+                        const row = wsSh.addRow([
+                            d.seller,
+                            jalaliLabelForISODate(sh.iso) || sh.iso,
+                            Math.round(sh.amount || 0),
+                            d.target,
+                            sh.result,
+                            Math.round(sh.delta || 0)
+                        ]);
+                        styleDataRow(row, ri % 2 === 0); ri++;
+                        row.getCell(3).numFmt = '#,##0';
+                        row.getCell(4).numFmt = '#,##0';
+                        row.getCell(6).numFmt = '#,##0';
+                        if (sh.status === 'hit') row.getCell(5).font = { bold: true, color: { argb: 'FF059669' } };
+                        if (sh.status === 'miss') row.getCell(5).font = { bold: true, color: { argb: 'FFDC2626' } };
+                    });
                 });
-                if (!(ctx.shiftTargets||[]).length) wsGoals.addRow(['هدفی ثبت نشده','','','','','','']);
-                wsGoals.columns = [{width:26},{width:14},{width:12},{width:12},{width:12},{width:12},{width:8}];
+                if (!ri) wsSh.addRow(['شیفتی در بازه نبود', '', '', '', '', '']);
+                wsSh.columns = [{ width: 24 }, { width: 14 }, { width: 14 }, { width: 14 }, { width: 14 }, { width: 16 }];
             } catch (e) { console.warn('goals sheet', e); }
 
             const fileName = `detailed-report_${jFileDate(ctx.startISODate)}_to_${jFileDate(ctx.endISODate)}.xlsx`;
