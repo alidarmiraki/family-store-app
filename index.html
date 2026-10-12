@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v135 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v136 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2909,7 +2909,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v135 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v136 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3093,7 +3093,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=135', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=136', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -14256,88 +14256,154 @@ notify pgrst, 'reload schema';`;
 
         // خلاصه هدف/پاداش/جریمه برای گزارش هفتگی (کلی + جزئیات)
         function weeklyBuildGoalSummary(ctx) {
-            const targets = ctx.shiftTargets || [];
-            const bySellerNet = {}; // seller -> { net, bonus, penalty, hit, miss, live }
+            const targets = Array.isArray(ctx.shiftTargets) ? ctx.shiftTargets.slice() : [];
+            const bySellerNet = {};
             const detailRows = [];
             const startISO = ctx.startISODate;
             const endISO = ctx.endISODate;
-            const inRange = (iso) => iso && iso >= startISO && iso <= endISO;
+            const inRange = (iso) => !!(iso && iso >= startISO && iso <= endISO);
+
+            const norm = (s) => String(s || '').replace(/\s+/g, ' ').trim();
+            const namesClose = (a, b) => {
+                a = norm(a); b = norm(b);
+                if (!a || !b) return false;
+                if (a === b) return true;
+                if (a.indexOf(b) !== -1 || b.indexOf(a) !== -1) return true;
+                // فقط نام بدون نقش
+                const strip = x => x.replace(/^فروشنده\s*(صبح|شب)?\s*[-–—]?\s*/u, '').trim();
+                return strip(a) && strip(a) === strip(b);
+            };
+
+            const ensureSeller = (label) => {
+                if (!bySellerNet[label]) bySellerNet[label] = { net: 0, bonus: 0, penalty: 0, hit: 0, miss: 0, live: 0 };
+                return bySellerNet[label];
+            };
+
+            const filterBySeller = (rows, label, field) => {
+                return (rows || []).filter(r => namesClose(r[field] || r.seller_name || r.seller_label || '', label));
+            };
+
             const covers = (t, iso) => {
-                if (!t || t.active === false) return false;
-                if (typeof sstInRange === 'function') return sstInRange(t, iso);
-                if (!t.start_date && !t.end_date) return true;
+                if (!iso) return false;
+                if (typeof sstInRange === 'function') {
+                    try { return sstInRange(t, iso); } catch (e) {}
+                }
                 if (t.start_date && iso < t.start_date) return false;
                 if (t.end_date && iso > t.end_date) return false;
                 return true;
             };
-            const labels = new Set();
-            targets.forEach(t => { if (t.seller_label) labels.add(t.seller_label); });
-            Array.from(ctx.allSellerNames || []).forEach(n => labels.add(n));
 
-            labels.forEach(label => {
-                const sales = (ctx.sales || []).filter(s => (s.seller_name || '') === label);
-                const events = (ctx.attendance || []).filter(a => (a.seller_name || '') === label);
+            // همه اهداف را می‌آوریم (حتی تمام‌شده) تا در گزارش دیده شوند
+            targets.forEach(t => {
+                const label = norm(t.seller_label) || 'نامشخص';
+                ensureSeller(label);
+
+                const sales = filterBySeller(ctx.sales, label, 'seller_name');
+                const events = filterBySeller(ctx.attendance, label, 'seller_name');
+
                 let shifts = [];
                 try {
                     if (typeof sstComputeShifts === 'function') {
                         shifts = sstComputeShifts(sales, events, Date.now(), label) || [];
                     }
-                } catch (e) { shifts = []; }
-                // فقط شیفت‌های داخل بازه گزارش
-                shifts = shifts.filter(sh => inRange(sh.dayISO || (sh.start ? getTehranISODate(new Date(sh.start)) : '')));
+                } catch (e) {
+                    console.warn('weekly goal shifts', e);
+                    shifts = [];
+                }
 
-                const sellerGoals = targets.filter(t => t.seller_label === label);
-                if (!sellerGoals.length && !shifts.length) return;
+                // شیفت‌هایی که روزشان داخل بازه گزارش است و هدف آن روز را پوشش می‌دهد
+                const usedShifts = [];
+                shifts.forEach(sh => {
+                    let iso = sh.dayISO;
+                    if (!iso && sh.start) {
+                        try { iso = getTehranISODate(new Date(sh.start)); } catch (e) { iso = ''; }
+                    }
+                    if (!inRange(iso)) return;
+                    if (!covers(t, iso)) return;
+                    usedShifts.push(Object.assign({}, sh, { dayISO: iso }));
+                });
 
-                if (!bySellerNet[label]) bySellerNet[label] = { net: 0, bonus: 0, penalty: 0, hit: 0, miss: 0, live: 0 };
+                let gHit = 0, gMiss = 0, gLive = 0, gNet = 0, gBonus = 0, gPen = 0;
+                const shiftLines = [];
+                const bag = ensureSeller(label);
 
-                sellerGoals.forEach(t => {
-                    const base = Number(t.base_salary) || 0;
-                    const targetAmt = Number(t.target_amount) || 0;
-                    let gHit = 0, gMiss = 0, gLive = 0, gNet = 0, gBonus = 0, gPen = 0;
-                    const shiftLines = [];
-                    shifts.forEach(sh => {
-                        const iso = sh.dayISO || (sh.start ? getTehranISODate(new Date(sh.start)) : '');
-                        if (!covers(t, iso)) return;
-                        let r;
-                        try { r = sstDayResult(t, sh); } catch (e) {
-                            r = { status: 'miss', delta: 0 };
+                usedShifts.forEach(sh => {
+                    let r = { status: 'miss', delta: 0 };
+                    try {
+                        if (typeof sstDayResult === 'function') r = sstDayResult(t, sh);
+                        else {
+                            const base = Number(t.base_salary) || 0;
+                            const target = Number(t.target_amount) || 0;
+                            const amt = Number(sh.amount) || 0;
+                            if (sh.live) r = { status: 'live', delta: 0 };
+                            else if (amt >= target) {
+                                const d = (t.bonus_type === 'percent') ? (base * Number(t.bonus_value) / 100) : (Number(t.bonus_value) || 0);
+                                r = { status: 'hit', delta: d };
+                            } else {
+                                const d = (t.penalty_type === 'percent') ? (base * Number(t.penalty_value) / 100) : (Number(t.penalty_value) || 0);
+                                r = { status: 'miss', delta: -d };
+                            }
                         }
-                        if (r.status === 'live') {
-                            gLive++; bySellerNet[label].live++;
-                            shiftLines.push({ iso, amount: sh.amount || 0, status: 'live', delta: 0, result: 'در جریان' });
-                        } else if (r.status === 'hit') {
-                            gHit++; gNet += r.delta; gBonus += r.delta;
-                            bySellerNet[label].hit++; bySellerNet[label].net += r.delta; bySellerNet[label].bonus += r.delta;
-                            shiftLines.push({ iso, amount: sh.amount || 0, status: 'hit', delta: r.delta, result: 'برنده 🎉' });
-                        } else {
-                            gMiss++; gNet += r.delta; gPen += Math.abs(r.delta);
-                            bySellerNet[label].miss++; bySellerNet[label].net += r.delta; bySellerNet[label].penalty += Math.abs(r.delta);
-                            shiftLines.push({ iso, amount: sh.amount || 0, status: 'miss', delta: r.delta, result: 'باخته 😔' });
-                        }
-                    });
+                    } catch (e) {}
 
-                    // وضعیت کلی هدف
-                    let overall = 'بدون شیفت در بازه';
-                    if (gLive && !gHit && !gMiss) overall = 'در جریان';
-                    else if (gHit && !gMiss) overall = 'برنده (همه شیفت‌ها)';
-                    else if (gMiss && !gHit) overall = 'باخته (همه شیفت‌ها)';
-                    else if (gHit || gMiss) overall = 'ترکیبی (بعضی برد / بعضی باخت)';
+                    const delta = Number(r.delta) || 0;
+                    if (r.status === 'live') {
+                        gLive++; bag.live++;
+                        shiftLines.push({ iso: sh.dayISO, amount: sh.amount || 0, status: 'live', delta: 0, result: 'در جریان' });
+                    } else if (r.status === 'hit') {
+                        gHit++; gNet += delta; gBonus += delta;
+                        bag.hit++; bag.net += delta; bag.bonus += delta;
+                        shiftLines.push({ iso: sh.dayISO, amount: sh.amount || 0, status: 'hit', delta: delta, result: 'برنده' });
+                    } else {
+                        gMiss++; gNet += delta; gPen += Math.abs(delta);
+                        bag.miss++; bag.net += delta; bag.penalty += Math.abs(delta);
+                        shiftLines.push({ iso: sh.dayISO, amount: sh.amount || 0, status: 'miss', delta: delta, result: 'باخته' });
+                    }
+                });
 
-                    detailRows.push({
-                        seller: label,
-                        target: targetAmt,
-                        base: base,
-                        bonusRule: (t.bonus_type === 'percent' ? ((Number(t.bonus_value)||0) + '٪') : ((Number(t.bonus_value)||0).toLocaleString('fa-IR') + ' ت')),
-                        penRule: Number(t.penalty_value) > 0 ? (t.penalty_type === 'percent' ? ((Number(t.penalty_value)||0)+'٪') : ((Number(t.penalty_value)||0).toLocaleString('fa-IR')+' ت')) : '—',
-                        rangeFrom: t.start_date || 'همیشه',
-                        rangeTo: t.end_date || '—',
-                        active: t.active === false ? 'خیر' : 'بله',
-                        hit: gHit, miss: gMiss, live: gLive,
-                        bonusTotal: gBonus, penTotal: gPen, net: gNet,
-                        overall: overall,
-                        shifts: shiftLines
-                    });
+                let overall;
+                if (!usedShifts.length) overall = 'شیفتی در این بازه برای این هدف ثبت نشده';
+                else if (gLive && !gHit && !gMiss) overall = 'در جریان';
+                else if (gHit && !gMiss) overall = 'برنده (همه شیفت‌ها)';
+                else if (gMiss && !gHit) overall = 'باخته (همه شیفت‌ها)';
+                else overall = 'ترکیبی (بعضی برد / بعضی باخت)';
+
+                // وضعیت بازه هدف
+                let rangeState = 'فعال';
+                try {
+                    if (typeof sstRangeStatus === 'function') {
+                        const st = sstRangeStatus(t);
+                        if (st && st.st === 'ended') rangeState = 'تمام‌شده';
+                        else if (st && st.st === 'upcoming') rangeState = 'هنوز شروع نشده';
+                        else if (t.active === false) rangeState = 'غیرفعال';
+                        else rangeState = 'فعال';
+                    } else if (t.end_date && t.end_date < endISO) rangeState = 'تمام‌شده';
+                    else if (t.active === false) rangeState = 'غیرفعال';
+                } catch (e) {}
+
+                const bonusRule = (t.bonus_type === 'percent')
+                    ? ((Number(t.bonus_value) || 0) + '٪ از حقوق پایه')
+                    : ((Number(t.bonus_value) || 0).toLocaleString('fa-IR') + ' تومان');
+                const penRule = Number(t.penalty_value) > 0
+                    ? ((t.penalty_type === 'percent')
+                        ? ((Number(t.penalty_value) || 0) + '٪ از حقوق پایه')
+                        : ((Number(t.penalty_value) || 0).toLocaleString('fa-IR') + ' تومان'))
+                    : 'بدون جریمه';
+
+                detailRows.push({
+                    seller: label,
+                    target: Number(t.target_amount) || 0,
+                    base: Number(t.base_salary) || 0,
+                    bonusRule: bonusRule,
+                    penRule: penRule,
+                    rangeFrom: t.start_date || 'همیشه',
+                    rangeTo: t.end_date || '—',
+                    rangeState: rangeState,
+                    active: t.active === false ? 'خیر' : 'بله',
+                    hit: gHit, miss: gMiss, live: gLive,
+                    bonusTotal: gBonus, penTotal: gPen, net: gNet,
+                    overall: overall,
+                    shifts: shiftLines
                 });
             });
 
@@ -14375,12 +14441,16 @@ notify pgrst, 'reload schema';`;
 
             ws.addRow([]);
             styleHeaderRow(ws.addRow(['شاخص', 'مقدار', '', '', '']));
+            const _goalKpi = weeklyBuildGoalSummary(ctx);
             const kpiRows = [
                 ['🧾 تعداد کل فاکتورهای فروش', ctx.sales.length],
                 ['💰 مجموع کل فروش (تومان)', ctx.totalSales],
                 ['🧺 تعداد ردیف‌های هزینه', ctx.expenses.length],
                 ['💸 مجموع کل هزینه‌ها (تومان)', ctx.totalExpenses],
                 ['🛒 مجموع برداشتی‌های حساب‌نشده پرسنل (تومان)', ctx.totalTakeouts],
+                ['🎁 جمع پاداش اضافه‌شده به حقوق‌ها (تومان)', Math.round(_goalKpi.totalBonus)],
+                ['⚠️ جمع جریمه کسرشده از حقوق‌ها (تومان)', Math.round(_goalKpi.totalPen)],
+                ['⚖️ خالص پاداش منهای جریمه (تومان)', Math.round(_goalKpi.totalNet)],
                 ['📈 سود ناخالص تخمینی (فروش − هزینه)', ctx.totalSales - ctx.totalExpenses]
             ];
             kpiRows.forEach((r, idx) => {
@@ -14566,37 +14636,38 @@ notify pgrst, 'reload schema';`;
                 const goalSum = weeklyBuildGoalSummary(ctx);
                 const wsGoals = wb.addWorksheet('هدف و پاداش و جریمه', { views: [{ rightToLeft: true }] });
                 styleHeaderRow(wsGoals.addRow([
-                    'فروشنده', 'هدف فروش', 'قانون پاداش', 'قانون جریمه', 'بازه',
-                    'نتیجه کلی', 'شیفت برنده', 'شیفت باخته', 'در جریان',
-                    'مبلغ پاداش (تومان)', 'مبلغ جریمه (تومان)', 'خالص روی حقوق'
+                    'فروشنده', 'هدف فروش (تومان)', 'قانون پاداش', 'قانون جریمه', 'بازه', 'وضعیت هدف',
+                    'نتیجه (برد/باخت)', 'شیفت برنده', 'شیفت باخته', 'در جریان',
+                    'مبلغ پاداش (تومان)', 'مبلغ جریمه (تومان)', 'خالص روی حقوق (تومان)', 'خالص (ریال)'
                 ]), 'FFA78BFA');
                 if (!goalSum.detailRows.length) {
                     wsGoals.addRow(['هدفی برای محاسبه در این بازه نبود', '', '', '', '', '', '', '', '', '', '', '']);
                 } else {
                     goalSum.detailRows.forEach((d, ii) => {
+                        const netT = Math.round(d.net);
                         const row = wsGoals.addRow([
                             d.seller,
                             d.target,
                             d.bonusRule,
                             d.penRule,
                             (d.rangeFrom || '') + ' تا ' + (d.rangeTo || ''),
+                            d.rangeState || '',
                             d.overall,
                             d.hit,
                             d.miss,
                             d.live,
                             Math.round(d.bonusTotal),
                             Math.round(d.penTotal),
-                            Math.round(d.net)
+                            netT,
+                            netT * 10
                         ]);
                         styleDataRow(row, ii % 2 === 0);
-                        row.getCell(2).numFmt = '#,##0';
-                        row.getCell(10).numFmt = '#,##0';
-                        row.getCell(11).numFmt = '#,##0';
-                        row.getCell(12).numFmt = '#,##0';
-                        if (d.net > 0) row.getCell(12).font = { bold: true, color: { argb: 'FF059669' } };
-                        else if (d.net < 0) row.getCell(12).font = { bold: true, color: { argb: 'FFDC2626' } };
-                        if (d.overall.indexOf('برنده') === 0) row.getCell(6).font = { bold: true, color: { argb: 'FF059669' } };
-                        if (d.overall.indexOf('باخته') === 0) row.getCell(6).font = { bold: true, color: { argb: 'FFDC2626' } };
+                        [2, 11, 12, 13, 14].forEach(c => { row.getCell(c).numFmt = '#,##0'; });
+                        if (netT > 0) row.getCell(13).font = { bold: true, color: { argb: 'FF059669' } };
+                        else if (netT < 0) row.getCell(13).font = { bold: true, color: { argb: 'FFDC2626' } };
+                        if ((d.overall || '').indexOf('برنده') === 0) row.getCell(7).font = { bold: true, color: { argb: 'FF059669' } };
+                        if ((d.overall || '').indexOf('باخته') === 0) row.getCell(7).font = { bold: true, color: { argb: 'FFDC2626' } };
+                        if ((d.rangeState || '') === 'تمام‌شده') row.getCell(6).font = { bold: true, color: { argb: 'FF64748B' } };
                     });
                 }
                 wsGoals.columns = [
