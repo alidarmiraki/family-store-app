@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v137 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v138 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2911,7 +2911,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v137 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v138 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3095,7 +3095,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=137', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=138', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -14181,12 +14181,20 @@ notify pgrst, 'reload schema';`;
         async function fetchWeeklyReportRawData(startISODate, endISODate) {
             const { startUTC, endUTC } = tehranDateRangeToISOBounds(startISODate, endISODate);
             const jalaliRangeLabel = `${jalaliLabelForISODate(startISODate)} تا ${jalaliLabelForISODate(endISODate)}`;
+            // حاشیه برای ورود روز قبل / خروج بعد از نیمه‌شب تا شیفت کامل بسته شود
+            let attStartUTC = startUTC, attEndUTC = endUTC, salesStartUTC = startUTC, salesEndUTC = endUTC;
+            try {
+                attStartUTC = new Date(new Date(startUTC).getTime() - 36 * 3600000).toISOString();
+                attEndUTC = new Date(new Date(endUTC).getTime() + 18 * 3600000).toISOString();
+                salesStartUTC = new Date(new Date(startUTC).getTime() - 12 * 3600000).toISOString();
+                salesEndUTC = new Date(new Date(endUTC).getTime() + 12 * 3600000).toISOString();
+            } catch (e) {}
 
             const [salesRes, expensesRes, productsRes, attendanceRes, takeoutsRes, targetsRes] = await Promise.all([
-                _supabase.from('sales').select('*').gte('created_at', startUTC).lt('created_at', endUTC).order('created_at', { ascending: true }),
+                _supabase.from('sales').select('*').gte('created_at', salesStartUTC).lt('created_at', salesEndUTC).order('created_at', { ascending: true }),
                 _supabase.from('expenses').select('*').gte('created_at', startUTC).lt('created_at', endUTC).order('created_at', { ascending: true }),
                 _supabase.from('products').select('code, name'),
-                _supabase.from('attendance').select('*').gte('created_at', startUTC).lt('created_at', endUTC).order('created_at', { ascending: true }),
+                _supabase.from('attendance').select('*').gte('created_at', attStartUTC).lt('created_at', attEndUTC).order('created_at', { ascending: true }),
                 _supabase.from('personal_takeouts').select('*').gte('created_at', startUTC).lt('created_at', endUTC).order('created_at', { ascending: true }),
                 _supabase.from('seller_shift_targets').select('*')
             ]);
@@ -14194,10 +14202,19 @@ notify pgrst, 'reload schema';`;
             if (salesRes.error) throw new Error('خطا در دریافت فروش: ' + salesRes.error.message);
             if (expensesRes.error) throw new Error('خطا در دریافت هزینه‌ها: ' + expensesRes.error.message);
 
-            const sales = salesRes.data || [];
+            const salesAll = salesRes.data || [];
+            // فروش‌های داخل بازه رسمی هفته (برای جمع کل و جداول) vs همه برای محاسبه شیفت
+            const sales = salesAll.filter(s => {
+                try {
+                    const t = new Date(s.created_at).getTime();
+                    return t >= new Date(startUTC).getTime() && t < new Date(endUTC).getTime();
+                } catch (e) { return true; }
+            });
             const expenses = expensesRes.data || [];
             const attendance = attendanceRes.error ? [] : (attendanceRes.data || []);
             const takeouts = takeoutsRes.error ? [] : (takeoutsRes.data || []);
+            // برای هدف/پاداش باید فروش و حضور با حاشیه در دسترس باشد
+            const salesForGoals = salesAll;
             const nameByCode = {};
             (productsRes.data || []).forEach(p => { nameByCode[p.code] = p.name; });
 
@@ -14249,22 +14266,20 @@ notify pgrst, 'reload schema';`;
 
             return {
                 startISODate, endISODate, jalaliRangeLabel,
-                sales, expenses, attendance, takeouts, nameByCode,
+                sales, salesForGoals, expenses, attendance, takeouts, nameByCode,
                 totalSales, totalExpenses, totalTakeouts,
                 sellerMap, productMap, attendanceSellerMap, takeoutSellerMap, allSellerNames,
                 shiftTargets
             };
         }
 
-        // خلاصه هدف/پاداش/جریمه — همان منطق خود سایت:
-        // برای هر روز/شیفت فقط یک هدف (بازه‌ی کوتاه‌تر) حساب می‌شود تا دوباره‌شماری نشود.
         function weeklyBuildGoalSummary(ctx) {
+            // عین تب هدف: هر روز فقط یک هدف + sstFinalize + sstDayResult
             const targets = Array.isArray(ctx.shiftTargets) ? ctx.shiftTargets.slice() : [];
             const bySellerNet = {};
             const detailRows = [];
             const startISO = ctx.startISODate;
             const endISO = ctx.endISODate;
-            const inRange = (iso) => !!(iso && iso >= startISO && iso <= endISO);
 
             const norm = (s) => String(s || '').replace(/\s+/g, ' ').trim();
             const namesClose = (a, b) => {
@@ -14273,7 +14288,8 @@ notify pgrst, 'reload schema';`;
                 if (a === b) return true;
                 if (a.indexOf(b) !== -1 || b.indexOf(a) !== -1) return true;
                 const strip = x => x.replace(/^فروشنده\s*(صبح|شب)?\s*[-–—]?\s*/u, '').trim();
-                return strip(a) && strip(a) === strip(b);
+                const sa = strip(a), sb = strip(b);
+                return !!(sa && sb && (sa === sb || sa.indexOf(sb) !== -1 || sb.indexOf(sa) !== -1));
             };
             const ensureSeller = (label) => {
                 if (!bySellerNet[label]) bySellerNet[label] = { net: 0, bonus: 0, penalty: 0, hit: 0, miss: 0, live: 0 };
@@ -14282,121 +14298,113 @@ notify pgrst, 'reload schema';`;
             const filterBySeller = (rows, label) =>
                 (rows || []).filter(r => namesClose(r.seller_name || r.seller_label || '', label));
 
-            // کلید پایدار برای هر هدف
             const goalKey = (t) => {
                 if (t && t.id != null) return 'id:' + String(t.id);
-                return 'k:' + norm(t.seller_label) + '|' + (t.start_date || '') + '|' + (t.end_date || '') + '|' + (t.target_amount || '');
+                return 'k:' + norm(t.seller_label) + '|' + (t.start_date || '') + '|' + (t.end_date || '') + '|' + (t.target_amount || '') + '|' + (t.bonus_value || '') + '|' + (t.penalty_value || '');
             };
 
-            // انتخاب هدف روز — عین سایت (بازه‌ی کوتاه‌تر برنده است)
             const pickGoalForDay = (sellerGoals, iso) => {
+                const act = (sellerGoals || []).filter(t => t && t.active !== false);
                 if (typeof sstPickTarget === 'function') {
                     try {
-                        const p = sstPickTarget(sellerGoals, iso);
+                        const p = sstPickTarget(act, iso);
                         if (p) return p;
                     } catch (e) {}
                 }
-                // fallback: پوشش تاریخ + بازه کوتاه‌تر (حتی اگر active=false برای هدف‌های قدیمی)
-                const c = sellerGoals.filter(t => {
+                const c = act.filter(t => {
                     if (t.start_date && iso < t.start_date) return false;
                     if (t.end_date && iso > t.end_date) return false;
                     return true;
                 });
                 c.sort((a, b) => {
+                    try { if (typeof sstSpan === 'function') return (sstSpan(a) - sstSpan(b)) || 0; } catch (e) {}
                     const sa = (a.start_date && a.end_date) ? 1 : 99999;
                     const sb = (b.start_date && b.end_date) ? 1 : 99999;
-                    try {
-                        if (typeof sstSpan === 'function') return (sstSpan(a) - sstSpan(b)) || 0;
-                    } catch (e) {}
                     return sa - sb;
                 });
                 return c[0] || null;
             };
 
-            const evalShift = (t, sh) => {
+            const evalOne = (t, d0) => {
+                let d = d0;
+                try { if (typeof sstFinalize === 'function') d = sstFinalize(t, d0); } catch (e) {}
                 try {
-                    if (typeof sstDayResult === 'function') return sstDayResult(t, sh);
+                    if (typeof sstDayResult === 'function') return { d, r: sstDayResult(t, d) };
                 } catch (e) {}
                 const base = Number(t.base_salary) || 0;
                 const target = Number(t.target_amount) || 0;
-                const amt = Number(sh.amount) || 0;
-                if (sh.live) return { status: 'live', delta: 0 };
-                const money = (type, v) => {
-                    if (type === 'percent') return base > 0 ? base * Number(v) / 100 : 0;
-                    return Number(v) || 0;
-                };
-                if (amt >= target) return { status: 'hit', delta: money(t.bonus_type, t.bonus_value) };
-                return { status: 'miss', delta: -money(t.penalty_type, t.penalty_value) };
+                const amt = Number(d.amount) || 0;
+                const money = (type, v) => (type === 'percent' ? (base > 0 ? base * Number(v) / 100 : 0) : (Number(v) || 0));
+                if (d.live) return { d, r: { status: 'live', delta: 0 } };
+                if (amt >= target) return { d, r: { status: 'hit', delta: money(t.bonus_type, t.bonus_value) } };
+                return { d, r: { status: 'miss', delta: -money(t.penalty_type, t.penalty_value) } };
             };
 
-            // گروه‌بندی اهداف به ازای فروشنده
             const byLabel = {};
             targets.forEach(t => {
                 const label = norm(t.seller_label) || 'نامشخص';
                 (byLabel[label] = byLabel[label] || []).push(t);
             });
 
-            // نتیجه هر هدف جدا (فقط شیفت‌هایی که واقعاً به همان هدف نسبت داده شده)
-            const perGoal = {}; // goalKey -> stats
+            const perGoal = {};
 
             Object.keys(byLabel).forEach(label => {
                 ensureSeller(label);
                 const sellerGoals = byLabel[label];
-                const sales = filterBySeller(ctx.sales, label);
+                const sales = filterBySeller(ctx.salesForGoals || ctx.sales, label);
                 const events = filterBySeller(ctx.attendance, label);
+
                 let shifts = [];
                 try {
                     if (typeof sstComputeShifts === 'function') {
-                        shifts = sstComputeShifts(sales, events, Date.now(), label) || [];
+                        // انتهای بازه + ۳۶ساعت تا شیفت‌های هفته live نمانند
+                        let nowMs = Date.now();
+                        try {
+                            if (endISO) {
+                                const endMs = new Date(endISO + 'T23:59:59+03:30').getTime() + 36 * 3600000;
+                                if (endMs > 0) nowMs = Math.max(nowMs, endMs);
+                            }
+                        } catch (e) {}
+                        shifts = sstComputeShifts(sales, events, nowMs, label) || [];
                     }
-                } catch (e) { shifts = []; }
+                } catch (e) {
+                    console.warn('weekly shifts', e);
+                    shifts = [];
+                }
 
-                shifts.forEach(sh => {
-                    let iso = sh.dayISO;
-                    if (!iso && sh.start) {
-                        try { iso = getTehranISODate(new Date(sh.start)); } catch (e) { iso = ''; }
-                    }
-                    if (!inRange(iso)) return;
-
-                    const t = pickGoalForDay(sellerGoals, iso);
+                shifts.filter(d0 => d0 && d0.dayISO && d0.dayISO >= startISO && d0.dayISO <= endISO).forEach(d0 => {
+                    const t = pickGoalForDay(sellerGoals, d0.dayISO);
                     if (!t) return;
-
-                    const r = evalShift(t, sh);
+                    const { d, r } = evalOne(t, d0);
                     const delta = Number(r.delta) || 0;
                     const bag = ensureSeller(label);
                     const gk = goalKey(t);
                     if (!perGoal[gk]) {
-                        perGoal[gk] = {
-                            t: t, seller: label,
-                            hit: 0, miss: 0, live: 0,
-                            bonusTotal: 0, penTotal: 0, net: 0,
-                            shifts: []
-                        };
+                        perGoal[gk] = { t: t, seller: label, hit: 0, miss: 0, live: 0, bonusTotal: 0, penTotal: 0, net: 0, shifts: [] };
                     }
                     const g = perGoal[gk];
 
                     if (r.status === 'live') {
                         bag.live++; g.live++;
-                        g.shifts.push({ iso, amount: sh.amount || 0, status: 'live', delta: 0, result: 'در جریان' });
+                        g.shifts.push({ iso: d0.dayISO, amount: d.amount || 0, status: 'live', delta: 0, result: 'در جریان' });
                     } else if (r.status === 'hit') {
-                        bag.hit++; bag.net += delta; bag.bonus += delta;
-                        g.hit++; g.net += delta; g.bonusTotal += delta;
-                        g.shifts.push({ iso, amount: sh.amount || 0, status: 'hit', delta, result: 'برنده' });
+                        bag.hit++; bag.net += delta; bag.bonus += Math.max(0, delta);
+                        g.hit++; g.net += delta; g.bonusTotal += Math.max(0, delta);
+                        g.shifts.push({ iso: d0.dayISO, amount: d.amount || 0, status: 'hit', delta, result: 'برنده' });
                     } else {
                         bag.miss++; bag.net += delta; bag.penalty += Math.abs(delta);
                         g.miss++; g.net += delta; g.penTotal += Math.abs(delta);
-                        g.shifts.push({ iso, amount: sh.amount || 0, status: 'miss', delta, result: 'باخته' });
+                        g.shifts.push({ iso: d0.dayISO, amount: d.amount || 0, status: 'miss', delta, result: 'باخته' });
                     }
                 });
             });
 
-            // ردیف جزئیات برای همه اهداف (حتی بدون شیفت در بازه)
             targets.forEach(t => {
                 const label = norm(t.seller_label) || 'نامشخص';
                 const gk = goalKey(t);
                 const g = perGoal[gk] || { hit: 0, miss: 0, live: 0, bonusTotal: 0, penTotal: 0, net: 0, shifts: [] };
                 let overall;
-                if (!g.shifts.length) overall = 'شیفتی در این بازه برای این هدف ثبت نشده';
+                if (!g.shifts.length) overall = 'شیفتی در این بازه به این هدف نسبت داده نشد';
                 else if (g.live && !g.hit && !g.miss) overall = 'در جریان';
                 else if (g.hit && !g.miss) overall = 'برنده (همه شیفت‌ها)';
                 else if (g.miss && !g.hit) overall = 'باخته (همه شیفت‌ها)';
@@ -14767,6 +14775,7 @@ notify pgrst, 'reload schema';`;
 
             const generalPath = `${startISODate}_${endISODate}_general.xlsx`;
             const detailedPath = `${startISODate}_${endISODate}_detailed.xlsx`;
+            // upsert روی همان مسیر؛ لینک دانلود با cache-buster تا گوشی فایل کهنه نشان ندهد
             const xlsxType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
             const [uploadGeneral, uploadDetailed] = await Promise.all([
@@ -14790,8 +14799,11 @@ notify pgrst, 'reload schema';`;
                 } catch (e) {}
                 return raw;
             }
-            const generalUrl = weeklyPublicUrl(generalPath);
-            const detailedUrl = weeklyPublicUrl(detailedPath);
+            const _cb = '?v=' + Date.now();
+            const generalUrlRaw = weeklyPublicUrl(generalPath);
+            const detailedUrlRaw = weeklyPublicUrl(detailedPath);
+            const generalUrl = generalUrlRaw ? (generalUrlRaw + _cb) : null;
+            const detailedUrl = detailedUrlRaw ? (detailedUrlRaw + _cb) : null;
 
             await _supabase.from('weekly_reports').upsert([{
                 week_start_date: startISODate,
@@ -14890,24 +14902,28 @@ notify pgrst, 'reload schema';`;
                 const { data, error } = await _supabase.from('weekly_reports').select('week_start_date, week_end_date, is_in_progress, jalali_range_label').order('week_start_date', { ascending: true }).limit(52);
                 if (error) throw error;
                 if (!data || !data.length) {
-                    if (st) st.innerText = 'هیچ گزارش قبلی برای بازسازی نیست.';
+                    if (st) st.innerText = 'هیچ گزارش قبلی نیست. اول یک گزارش بساز.';
                     showToast('گزارش قبلی یافت نشد.');
                     return;
                 }
                 let ok = 0, fail = 0;
+                const errors = [];
                 for (let i = 0; i < data.length; i++) {
                     const r = data[i];
-                    if (st) st.innerText = 'بازسازی ' + (i + 1).toLocaleString('fa-IR') + ' از ' + data.length.toLocaleString('fa-IR') + ' — ' + (r.jalali_range_label || r.week_start_date);
+                    if (st) st.innerText = '⏳ بازسازی ' + (i + 1).toLocaleString('fa-IR') + ' از ' + data.length.toLocaleString('fa-IR') + ' — ' + (r.jalali_range_label || r.week_start_date);
                     try {
                         await buildStoreAndSendWeeklyReport(r.week_start_date, r.week_end_date, !!r.is_in_progress, false);
                         ok++;
                     } catch (e) {
                         console.warn('rebuild week', r, e);
                         fail++;
+                        errors.push((r.jalali_range_label || r.week_start_date) + ': ' + (e.message || e));
                     }
                 }
-                if (st) st.innerText = '✅ ' + ok.toLocaleString('fa-IR') + ' گزارش بازسازی شد' + (fail ? ' — ' + fail.toLocaleString('fa-IR') + ' ناموفق' : '');
-                showToast('✅ گزارش‌های قبلی با فرمول صحیح پاداش/جریمه بازسازی شدند.');
+                let msg = '✅ ' + ok.toLocaleString('fa-IR') + ' گزارش با فرمول جدید بازسازی شد';
+                if (fail) msg += ' — ' + fail.toLocaleString('fa-IR') + ' ناموفق';
+                if (st) st.innerHTML = msg + (errors.length ? '<br><span style="color:#f87171;font-size:11px;">' + errors.slice(0,3).map(x => escapeHtmlForToast(x)).join('<br>') + '</span>' : '') + '<br><b>از دکمه‌های دانلود همین صفحه دوباره فایل را بگیر (نه از تلگرام/کش قدیمی).</b>';
+                showToast(msg + ' — دوباره از لیست همین تب دانلود کن.');
                 try { await loadWeeklyReportsList(); } catch (e) {}
             } catch (e) {
                 if (st) st.innerText = 'خطا: ' + (e.message || e);
