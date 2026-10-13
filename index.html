@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v143 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v144 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -219,6 +219,33 @@
             margin-top: 8px; width: 100%; border: none; border-radius: 10px;
             padding: 8px; font-weight: 800; background: #10b981; color: #fff; cursor: pointer;
         }
+
+        
+        .sb-explain {
+            background: linear-gradient(135deg, rgba(99,102,241,.12), rgba(16,185,129,.1));
+            border: 1px solid rgba(99,102,241,.28);
+            border-radius: 16px; padding: 12px 14px; direction: rtl; text-align: right;
+            margin-bottom: 10px;
+        }
+        .sb-explain-title { font-weight: 900; font-size: 14px; color: #a5b4fc; margin-bottom: 6px; }
+        .sb-explain p { margin: 0 0 10px; font-size: 12px; line-height: 1.8; opacity: .95; }
+        .sb-explain-grid { display: flex; flex-direction: column; gap: 8px; }
+        .sb-ex-card {
+            background: rgba(15,23,42,.35); border-radius: 12px; padding: 10px 12px;
+            font-size: 12px; line-height: 1.75;
+        }
+        .sb-ex-card b { display: block; color: #fbbf24; margin-bottom: 4px; font-size: 13px; }
+        .sb-auto-box { direction: rtl; text-align: right; }
+        .sb-auto-card {
+            background: rgba(15,23,42,.4); border: 1px solid rgba(148,163,184,.2);
+            border-radius: 14px; padding: 12px; margin-bottom: 10px;
+        }
+        .sb-auto-head { font-weight: 900; font-size: 13px; color: #7dd3fc; margin-bottom: 6px; }
+        .sb-auto-big { font-size: 22px; font-weight: 900; color: #f8fafc; margin: 4px 0 6px; }
+        .sb-auto-big small { font-size: 12px; font-weight: 600; opacity: .7; }
+        .sb-auto-list { margin: 4px 0 0; padding-right: 16px; font-size: 12px; line-height: 1.85; }
+        .sb-auto-list li { margin-bottom: 6px; }
+        .sb-how { border-color: rgba(52,211,153,.3); }
 
         .sb-banner {
             margin: 8px 0 12px;
@@ -2331,68 +2358,41 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
 
     <!-- مقایسه قیمت سوسیس/کالباس کد ۲۲ -->
 
-    <!-- افزایش فروش: پیشنهاد روز، بسته ترکیبی، جملات فروش -->
+        <!-- افزایش فروش — حالت خودکار -->
     <div id="salesBoostTab" class="card">
-        <h2>🚀 افزایش فروش غرفه</h2>
-        <div class="hint" style="line-height:1.85;">ابزارهای عملی برای بالا بردن فروش بدون پیامک گران. بخش <b>فروشنده واقعی</b> بعد از هر فروش، میانگین فاکتور و یک جمله پیشنهادی به فروشنده نشان می‌دهد.  پیشنهاد امروز، بسته ترکیبی، جمله فروش، و هدف میانگین فاکتور. فروشنده‌ها همین‌ها را موقع ثبت فروش می‌بینند.</div>
+        <h2>🚀 افزایش فروش</h2>
 
-        <div id="sbSellerView" style="display:none;"></div>
-
-        <div id="sbAdminView" style="display:none;">
-            <div class="sb-section">
-                <div class="sb-sec-title">🔥 پیشنهادهای امروز / این هفته</div>
-                <div class="hint">مثلاً: «ماست چکیده + خیارشور = ۵ هزار تخفیف» یا «سوسیس بالای نیم‌کیلو ۱۰٪»</div>
-                <div id="sbOffersList"></div>
-                <div class="sb-form">
-                    <input type="text" id="sbOfferTitle" dir="auto" placeholder="عنوان کوتاه (مثلاً پک صبحانه)">
-                    <textarea id="sbOfferBody" dir="auto" rows="2" placeholder="توضیح برای فروشنده و مشتری..."></textarea>
-                    <input type="text" id="sbOfferUntil" dir="auto" placeholder="تا کی؟ (مثلاً تا جمعه / همیشه)">
-                    <button type="button" class="row-btn confirm-btn" onclick="sbAddOffer()">➕ افزودن پیشنهاد</button>
+        <div class="sb-explain">
+            <div class="sb-explain-title">این بخش چی کار می‌کنه؟</div>
+            <p>سایت <b>خودکار</b> از روی کالاها و فروش امروز پیشنهاد می‌سازد. تو لازم نیست چیزی بنویسی.</p>
+            <div class="sb-explain-grid">
+                <div class="sb-ex-card">
+                    <b>💼 فروشنده واقعی یعنی چی؟</b>
+                    <span>یعنی فروشنده فقط جنس ندهد؛ بعد از هر فروش ببیند میانگین فاکتورش چقدر است و یک جمله کوتاه برای پیشنهاد کالای بعدی به مشتری داشته باشد تا سبد خرید بزرگ‌تر شود.</span>
+                </div>
+                <div class="sb-ex-card">
+                    <b>🤖 همه چیز اتومات</b>
+                    <span>پیشنهاد ترکیب کالا، جمله فروش، و هدف میانگین فاکتور از روی فروش‌های واقعی محاسبه می‌شود. نیازی به فرم پر کردن نیست.</span>
                 </div>
             </div>
+        </div>
 
-            <div class="sb-section">
-                <div class="sb-sec-title">📦 بسته‌های ترکیبی</div>
-                <div class="hint">کالاهایی که با هم فروخته شوند سبد خرید بزرگ‌تر می‌شود.</div>
-                <div id="sbBundlesList"></div>
-                <div class="sb-form">
-                    <input type="text" id="sbBundleTitle" dir="auto" placeholder="نام بسته (مثلاً پک کالباس مهمانی)">
-                    <input type="text" id="sbBundleItems" dir="auto" placeholder="کالاها با خط تیره (کالباس - نان - خیارشور)">
-                    <input type="text" id="sbBundleBenefit" dir="auto" placeholder="مزیت (۵۰ هزار تخفیف / یک سس رایگان)">
-                    <button type="button" class="row-btn confirm-btn" onclick="sbAddBundle()">➕ افزودن بسته</button>
-                </div>
+        <div id="rsDashPanelTab" class="rs-panel" style="margin-top:10px;"></div>
+        <div id="sbAutoBox" class="sb-auto-box">
+            <div class="hint">در حال آماده‌سازی پیشنهادهای خودکار...</div>
+        </div>
+
+        <div id="sbAdminMini" style="display:none; margin-top:12px;">
+            <div class="hint" style="margin-bottom:6px;">فقط اگر بخواهی هدف میانگین فاکتور را دستی عوض کنی (وگرنه خودش از فروش‌ها حساب می‌کند):</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                <input type="number" id="sbAvgTicket" placeholder="مثلاً 250000" style="flex:1;min-width:120px;">
+                <button type="button" class="row-btn confirm-btn" onclick="sbSaveAvgTicket()">ذخیره هدف</button>
             </div>
-
-            <div class="sb-section">
-                <div class="sb-sec-title">💬 جملات فروش (برای فروشنده)</div>
-                <div class="hint">جمله‌های کوتاه که فروشنده هنگام فروش بگوید.</div>
-                <div id="sbScriptsList"></div>
-                <div class="sb-form">
-                    <input type="text" id="sbScriptText" dir="auto" placeholder="مثلاً: با خیارشور کامل می‌شه، اضافه کنم؟">
-                    <button type="button" class="row-btn confirm-btn" onclick="sbAddScript()">➕ افزودن جمله</button>
-                </div>
-            </div>
-
-            <div class="sb-section">
-                <div class="sb-sec-title">🧾 هدف میانگین فاکتور</div>
-                <div class="hint">فروشنده سعی کند هر فاکتور حداقل این مبلغ باشد (تومان).</div>
-                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-                    <input type="number" id="sbAvgTicket" placeholder="مثلاً 250000" style="flex:1;min-width:140px;">
-                    <button type="button" class="row-btn confirm-btn" onclick="sbSaveAvgTicket()">💾 ذخیره</button>
-                </div>
-            </div>
-
-            <div class="sb-section">
-                <div class="sb-sec-title">✅ چک‌لیست ۳۰ روزه مدیر</div>
-                <div id="sbChecklist"></div>
-            </div>
-
-            <button type="button" class="row-btn fill-btn" style="width:100%;margin-top:8px;" onclick="sbSaveAll()">💾 ذخیره همه روی سرور و گوشی‌ها</button>
             <div class="hint" id="sbSaveStatus" style="margin-top:6px;"></div>
         </div>
     </div>
 
-    <div id="sausagePriceCompareTab" class="card">
+<div id="sausagePriceCompareTab" class="card">
         <h2>🏷️ راهنمای لیبل سوسیس‌ها</h2>
         <div class="spc-intro">
             <div class="spc-intro-title">چطور از این لیست استفاده کنی؟</div>
@@ -3228,7 +3228,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v143 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v144 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3412,7 +3412,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=143', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=144', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -8520,64 +8520,232 @@ notify pgrst, 'reload schema';`;
         }
 
         async function loadSalesBoostTab() {
-            const cfg = await sbLoadRemote();
             const isAdmin = (typeof currentRole !== 'undefined' && currentRole === 'admin');
-            const adminV = document.getElementById('sbAdminView');
-            const sellerV = document.getElementById('sbSellerView');
-            if (adminV) adminV.style.display = isAdmin ? 'block' : 'none';
-            if (sellerV) {
-                sellerV.style.display = 'block';
-                sellerV.innerHTML = sbRenderSellerPanel(cfg, true);
-            }
-            if (isAdmin) {
-                sbRenderAdminLists(cfg);
-                const avg = document.getElementById('sbAvgTicket');
-                if (avg) avg.value = cfg.avgTicket || '';
-            }
+            const adminMini = document.getElementById('sbAdminMini');
+            if (adminMini) adminMini.style.display = isAdmin ? 'block' : 'none';
+
+            const box = document.getElementById('sbAutoBox');
+            if (box) box.innerHTML = '<div class="hint">⏳ در حال ساخت پیشنهادهای خودکار از روی کالاها و فروش...</div>';
+
+            let cfg = sbDefaultConfig();
+            try { cfg = await sbLoadRemote(); } catch (e) {}
+            try {
+                const auto = await sbBuildAutoSuggestions();
+                if (auto) {
+                    if (auto.offers && auto.offers.length) cfg.offers = auto.offers;
+                    if (auto.bundles && auto.bundles.length) cfg.bundles = auto.bundles;
+                    if (auto.scripts && auto.scripts.length) cfg.scripts = auto.scripts;
+                    if (auto.avgTicket > 0 && !(Number(cfg.avgTicket) > 0)) cfg.avgTicket = auto.avgTicket;
+                    if (auto.avgTicket > 0 && !cfg._manualAvg) cfg.avgTicket = auto.avgTicket;
+                    sbSaveLocal(cfg);
+                }
+            } catch (e) { console.warn('sb auto', e); }
+
+            if (box) box.innerHTML = sbRenderAutoPanel(cfg);
+            const avgEl = document.getElementById('sbAvgTicket');
+            if (avgEl) avgEl.value = cfg.avgTicket || '';
+
             sbRefreshBanners(cfg);
-            try { rsRefreshPanels(); } catch (e) {}
+            try {
+                if (typeof rsRefreshPanels === 'function') rsRefreshPanels();
+                const tabPanel = document.getElementById('rsDashPanelTab');
+                if (tabPanel && typeof rsRenderPanel === 'function') tabPanel.innerHTML = rsRenderPanel(rsLoadDay());
+            } catch (e) {}
         }
 
-        function sbRenderSellerPanel(cfg, full) {
+        /** از روی کالاها و فروش امروز پیشنهاد اتومات می‌سازد — مدیر کاری ندارد */
+        async function sbBuildAutoSuggestions() {
+            let products = [];
+            try {
+                if (typeof offlineGetProducts === 'function') {
+                    products = await offlineGetProducts(false) || [];
+                } else if (typeof cachedProductsList !== 'undefined' && Array.isArray(cachedProductsList)) {
+                    products = cachedProductsList;
+                } else if (typeof offlineLoadProducts === 'function') {
+                    products = offlineLoadProducts() || [];
+                }
+            } catch (e) {}
+
+            const byCat = { sausage: [], dairy: [], pickle: [], other: [] };
+            (products || []).forEach(p => {
+                if (!p || !p.name) return;
+                const n = String(p.name);
+                const c = String(p.category || '');
+                if (c === 'sausage' || c === 'سوسیس' || /سوسیس|کالباس|هات\s*داگ|ژامبون/.test(n)) byCat.sausage.push(p);
+                else if (c === 'dairy' || c === 'لبنیات' || /ماست|پنیر|کره|شیر|خامه|دوغ/.test(n)) byCat.dairy.push(p);
+                else if (/خیار|ترشی|زیتون|شور|سیر|ليته|لیته/.test(n)) byCat.pickle.push(p);
+                else byCat.other.push(p);
+            });
+
+            const pick = (arr, n) => (arr || []).slice(0, n).map(p => p.name).filter(Boolean);
+            const sNames = pick(byCat.sausage, 3);
+            const dNames = pick(byCat.dairy, 3);
+            const pNames = pick(byCat.pickle, 2);
+
+            const offers = [];
+            if (sNames.length && pNames.length) {
+                offers.push({
+                    id: 'auto_o1', active: true, until: 'امروز',
+                    title: 'سوسیس + ترشی',
+                    body: 'وقتی مشتری «' + sNames[0] + '» گرفت، بگو: «با ' + pNames[0] + ' کامل می‌شه، اضافه کنم؟»'
+                });
+            }
+            if (dNames.length >= 2) {
+                offers.push({
+                    id: 'auto_o2', active: true, until: 'امروز',
+                    title: 'پک لبنیات',
+                    body: '«' + dNames[0] + '» را با «' + dNames[1] + '» با هم پیشنهاد بده — سبد بزرگ‌تر می‌شود.'
+                });
+            }
+            if (dNames.length && pNames.length) {
+                offers.push({
+                    id: 'auto_o3', active: true, until: 'امروز',
+                    title: 'ماست و ترشی',
+                    body: 'بعد از فروش لبنیات، یک ترشی کوچک پیشنهاد بده.'
+                });
+            }
+            if (!offers.length) {
+                offers.push({
+                    id: 'auto_o0', active: true, until: 'همیشه',
+                    title: 'یک کالای بیشتر',
+                    body: 'بعد از هر فروش بپرس: «چیز دیگه‌ای هم می‌خوای؟»'
+                });
+            }
+
+            const bundles = [];
+            if (sNames[0] && pNames[0]) {
+                bundles.push({
+                    id: 'auto_b1', active: true,
+                    title: 'پک کباب/سوسیس',
+                    items: sNames[0] + ' + ' + pNames[0],
+                    benefit: 'به مشتری بگو با هم کامل‌تر است'
+                });
+            }
+            if (dNames[0] && dNames[1]) {
+                bundles.push({
+                    id: 'auto_b2', active: true,
+                    title: 'پک صبحانه',
+                    items: dNames[0] + ' + ' + dNames[1],
+                    benefit: 'فروش دو قلم به‌جای یکی'
+                });
+            }
+
+            const scripts = [
+                { id: 'auto_s1', active: true, text: 'با این یکی کامل می‌شه، اضافه کنم؟' },
+                { id: 'auto_s2', active: true, text: 'اگه کمی بیشتر بگیری از نظر قیمت به‌صرفه‌تره.' },
+                { id: 'auto_s3', active: true, text: 'تازه‌ست؛ مشتری‌ها ازش راضی‌ان.' }
+            ];
+            if (pNames[0]) scripts.push({ id: 'auto_s4', active: true, text: 'با ' + pNames[0] + ' خیلی می‌چسبه، بذارم؟' });
+            if (dNames[0]) scripts.push({ id: 'auto_s5', active: true, text: dNames[0] + ' هم کنارش خوبه، اضافه کنم؟' });
+
+            // میانگین فاکتور از فروش ۷ روز اخیر
+            let avgTicket = 250000;
+            try {
+                if (typeof _supabase !== 'undefined' && _supabase && navigator.onLine) {
+                    const end = (typeof getTehranISODate === 'function') ? getTehranISODate() : new Date().toISOString().slice(0, 10);
+                    const startDate = new Date();
+                    startDate.setDate(startDate.getDate() - 7);
+                    const start = startDate.toISOString().slice(0, 10);
+                    const bounds = (typeof tehranDateRangeToISOBounds === 'function')
+                        ? tehranDateRangeToISOBounds(start, end)
+                        : null;
+                    let q = _supabase.from('sales').select('sell_price');
+                    if (bounds) q = q.gte('created_at', bounds.startUTC).lt('created_at', bounds.endUTC);
+                    const { data } = await q.limit(2000);
+                    if (data && data.length) {
+                        const sum = data.reduce((s, r) => s + (Number(r.sell_price) || 0), 0);
+                        const avg = sum / data.length;
+                        // هدف = حدود ۱۵٪ بالاتر از میانگین واقعی (فشار ملایم)
+                        avgTicket = Math.round(avg * 1.15 / 1000) * 1000;
+                        if (avgTicket < 100000) avgTicket = 150000;
+                    }
+                }
+            } catch (e) {}
+
+            return { offers, bundles, scripts, avgTicket };
+        }
+
+        function sbRenderAutoPanel(cfg) {
             const offers = (cfg.offers || []).filter(o => o.active !== false);
             const bundles = (cfg.bundles || []).filter(b => b.active !== false);
             const scripts = (cfg.scripts || []).filter(s => s.active !== false);
-            let h = '<div class="sb-banner-card">';
-            h += '<div class="sb-b-title">🚀 امروز چه بفروشیم؟</div>';
-            if (cfg.avgTicket) {
-                h += '<div class="sb-avg-pill">هدف میانگین فاکتور: ' + Number(cfg.avgTicket).toLocaleString('fa-IR') + ' تومان</div>';
-            }
-            if (offers.length) {
-                h += '<div class="sb-b-body" style="margin-top:8px;"><b>پیشنهادها:</b><ul style="margin:4px 0 0 0;padding-right:18px;">';
+            const fa = (n) => { try { return Number(n).toLocaleString('fa-IR'); } catch (e) { return String(n); } };
+
+            let h = '';
+            h += '<div class="sb-auto-card">';
+            h += '<div class="sb-auto-head">🎯 هدف میانگین هر فاکتور</div>';
+            h += '<div class="sb-auto-big">' + fa(cfg.avgTicket || 250000) + ' <small>تومان</small></div>';
+            h += '<div class="hint">فروشنده سعی کند هر مشتری نزدیک این مبلغ خرید کند. خودش از روی فروش هفته حساب شده.</div>';
+            h += '</div>';
+
+            h += '<div class="sb-auto-card">';
+            h += '<div class="sb-auto-head">🔥 پیشنهاد امروز (اتومات)</div>';
+            if (!offers.length) h += '<div class="hint">پیشنهادی ساخته نشد.</div>';
+            else {
+                h += '<ul class="sb-auto-list">';
                 offers.forEach(o => {
-                    h += '<li><b>' + escapeHtmlForToast(o.title || '') + '</b> — ' + escapeHtmlForToast(o.body || '');
-                    if (o.until) h += ' <span style="opacity:.7;">(' + escapeHtmlForToast(o.until) + ')</span>';
-                    h += '</li>';
+                    h += '<li><b>' + escapeHtmlForToast(o.title || '') + '</b><br>' + escapeHtmlForToast(o.body || '') + '</li>';
                 });
-                h += '</ul></div>';
+                h += '</ul>';
             }
+            h += '</div>';
+
             if (bundles.length) {
-                h += '<div class="sb-b-body" style="margin-top:8px;"><b>بسته‌ها:</b><ul style="margin:4px 0 0 0;padding-right:18px;">';
+                h += '<div class="sb-auto-card">';
+                h += '<div class="sb-auto-head">📦 بفروش با هم</div><ul class="sb-auto-list">';
                 bundles.forEach(b => {
                     h += '<li><b>' + escapeHtmlForToast(b.title || '') + '</b>: ' + escapeHtmlForToast(b.items || '');
-                    if (b.benefit) h += ' → ' + escapeHtmlForToast(b.benefit);
+                    if (b.benefit) h += ' — <span style="color:#34d399;">' + escapeHtmlForToast(b.benefit) + '</span>';
                     h += '</li>';
                 });
                 h += '</ul></div>';
             }
-            if (scripts.length) {
-                h += '<div class="sb-banner-scripts" style="margin-top:8px;"><b>💬 بگو به مشتری:</b><ul style="margin:4px 0 0 0;padding-right:18px;">';
-                scripts.forEach(s => { h += '<li>' + escapeHtmlForToast(s.text || '') + '</li>'; });
-                h += '</ul></div>';
+
+            h += '<div class="sb-auto-card">';
+            h += '<div class="sb-auto-head">💬 بعد از هر فروش این‌ها را بگو</div><ul class="sb-auto-list">';
+            scripts.forEach(s => { h += '<li>«' + escapeHtmlForToast(s.text || '') + '»</li>'; });
+            h += '</ul>';
+            h += '<div class="hint" style="margin-top:8px;">بعد از ثبت هر فاکتور، یک پنجره کوچک همین جمله‌ها را یادآوری می‌کند.</div>';
+            h += '</div>';
+
+            h += '<div class="sb-auto-card sb-how">';
+            h += '<div class="sb-auto-head">📖 فروشنده واقعی — ساده</div>';
+            h += '<ol class="sb-auto-list" style="padding-right:18px;">';
+            h += '<li>مشتری یک جنس می‌خرد و تو فاکتور را ثبت می‌کنی.</li>';
+            h += '<li>سایت نشان می‌دهد میانگین فاکتور امروزت چقدر است.</li>';
+            h += '<li>یک جمله آماده می‌دهد تا کالای بعدی را پیشنهاد کنی.</li>';
+            h += '<li>اگر مشتری بپذیرد، فاکتور بزرگ‌تر و فروش غرفه بیشتر می‌شود.</li>';
+            h += '</ol></div>';
+
+            return h;
+        }
+
+        function sbRenderSellerPanel(cfg, full) {
+            // سازگاری با بنرهای فروش — نسخه خلاصه
+            const offers = (cfg.offers || []).filter(o => o.active !== false).slice(0, 2);
+            const scripts = (cfg.scripts || []).filter(s => s.active !== false).slice(0, 2);
+            let h = '<div class="sb-banner-card">';
+            h += '<div class="sb-b-title">🚀 یادآوری فروش</div>';
+            if (cfg.avgTicket) {
+                h += '<div class="sb-avg-pill">هدف هر فاکتور: ' + Number(cfg.avgTicket).toLocaleString('fa-IR') + ' تومان</div>';
             }
-            if (!offers.length && !bundles.length && !scripts.length) {
-                h += '<div class="sb-b-body">هنوز پیشنهادی ثبت نشده. مدیر از همین تب اضافه می‌کند.</div>';
+            if (offers.length) {
+                h += '<div class="sb-b-body" style="margin-top:6px;">';
+                offers.forEach(o => {
+                    h += '• <b>' + escapeHtmlForToast(o.title || '') + '</b>: ' + escapeHtmlForToast(o.body || '') + '<br>';
+                });
+                h += '</div>';
+            }
+            if (scripts.length) {
+                h += '<div class="sb-banner-scripts" style="margin-top:6px;"><b>💬 بگو:</b> ';
+                h += scripts.map(s => '«' + escapeHtmlForToast(s.text || '') + '»').join(' · ');
+                h += '</div>';
             }
             h += '</div>';
             return h;
         }
 
-        function sbRenderAdminLists(cfg) {
+function sbRenderAdminLists(cfg) {
             const ol = document.getElementById('sbOffersList');
             if (ol) {
                 ol.innerHTML = (cfg.offers || []).map(o =>
@@ -8678,13 +8846,18 @@ notify pgrst, 'reload schema';`;
             sbSaveLocal(cfg);
         };
 
-        window.sbSaveAvgTicket = function () {
+        window.sbSaveAvgTicket = async function () {
             const cfg = sbLoadLocal();
             const v = Number((document.getElementById('sbAvgTicket') || {}).value || 0);
             cfg.avgTicket = v > 0 ? v : 0;
+            cfg._manualAvg = v > 0;
             sbSaveLocal(cfg);
             sbRefreshBanners(cfg);
+            try { await sbPushRemote(cfg); } catch (e) {}
+            const st = document.getElementById('sbSaveStatus');
+            if (st) st.textContent = v > 0 ? '✅ هدف دستی ذخیره شد.' : 'هدف به حالت اتومات برگشت.';
             showToast(v > 0 ? 'هدف میانگین فاکتور ذخیره شد.' : 'هدف پاک شد.');
+            try { loadSalesBoostTab(); } catch (e) {}
         };
 
         window.sbSaveAll = async function () {
@@ -8866,7 +9039,7 @@ notify pgrst, 'reload schema';`;
                 '<div class="rs-c-body">' +
                 'مبلغ این فاکتور: <b>' + rsFormat(payload.amount) + '</b> ت<br>' +
                 'میانگین امروز: <b>' + rsFormat(avg) + '</b> از هدف <b>' + rsFormat(target) + '</b><br>' +
-                '<span style="color:#fbbf24;">💬 برای مشتری بعدی بگو:</span><br>«' + escapeHtmlForToast(tip) + '»' +
+                '<span style="color:#fbbf24;">💬 همین الان به مشتری بگو:</span><br>«' + escapeHtmlForToast(tip) + '»' +
                 '</div>' +
                 '<button type="button">متوجه شدم</button>';
             el.querySelector('button').onclick = () => el.remove();
