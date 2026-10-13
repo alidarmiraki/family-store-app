@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v147 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v148 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -3282,7 +3282,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v147 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v148 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3466,7 +3466,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=147', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=148', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -9168,7 +9168,7 @@ function sbRenderAdminLists(cfg) {
 
 
         // ========== معرفی تخصصی محصولات برای فروشنده ==========
-        const PG_CACHE_KEY = 'productGuideTexts_v1';
+        const PG_CACHE_KEY = 'productGuideTexts_v2';
 
         function pgLoadCache() {
             try { return JSON.parse(localStorage.getItem(PG_CACHE_KEY) || '{}') || {}; } catch (e) { return {}; }
@@ -9178,30 +9178,85 @@ function sbRenderAdminLists(cfg) {
         }
 
         function pgLocalBlurb(p) {
-            const n = String(p.name || '');
-            const price = Number(p.sell_price) || 0;
-            const fa = price ? price.toLocaleString('fa-IR') : '—';
-            let type = 'فرآورده گوشتی';
-            if (/هات\s*داگ|هاتداگ/i.test(n)) type = 'هات‌داگ';
-            else if (/کالباس/.test(n)) type = 'کالباس';
-            else if (/سوسیس/.test(n)) type = 'سوسیس';
-            else if (/ژامبون/.test(n)) type = 'ژامبون';
+            const n = String(p.name || '').trim();
+            const price = Number(p.sell_price) || Number(p.unit_price) || Number(p.price) || 0;
+            const fa = price > 0 ? price.toLocaleString('fa-IR') : '—';
 
-            let meat = '';
-            if (/۹۰|90/.test(n)) meat = 'با درصد گوشت بالا (حدود ۹۰٪) — مناسب مشتری‌هایی که طعم گوشت قوی می‌خواهند.';
-            else if (/۷۰|70/.test(n)) meat = 'با تعادل خوب گوشت و بافت — پرفروش و مناسب مصرف روزانه.';
-            else if (/۵۵|55|۴۰|40|60|۶۰/.test(n)) meat = 'گزینه اقتصادی‌تر با بافت نرم — برای مصرف روزمره و مهمانی‌های بزرگ به‌صرفه است.';
-            else meat = 'از موجودی تازه غرفه — برای برش همان لحظه روی ترازو.';
+            // تشخیص نوع از روی نام
+            const isHotdog = /هات\s*داگ|هاتداگ/i.test(n);
+            const isBacon = /بیکن|بیکن/.test(n);
+            const isSteak = /استیک/.test(n);
+            const isSalami = /کالباس/.test(n);
+            const isSausage = /سوسیس/.test(n);
+            const isHam = /ژامبون/.test(n);
+            const isTurkey = /بوقلمون/.test(n);
+            const isChicken = /مرغ/.test(n);
+            const isBeef = /گوشت\s*قرمز|گوساله|گاو|اصل\s*گوشت/.test(n);
+            const isSmoked = /دودی/.test(n);
+            const isCocktail = /کوکتل/.test(n);
+            const pct = (n.match(/([۰-۹0-9]{2,3})\s*%/) || n.match(/(۹۵|۹۰|۸۵|۸۰|۷۵|۷۰|۶۵|۶۰|۵۵|۵۰|۴۰|95|90|85|80|75|70|65|60|55|50|40)/) || [])[1];
+            const pctFa = pct ? String(pct).replace(/0/g,'۰').replace(/1/g,'۱').replace(/2/g,'۲').replace(/3/g,'۳').replace(/4/g,'۴').replace(/5/g,'۵').replace(/6/g,'۶').replace(/7/g,'۷').replace(/8/g,'۸').replace(/9/g,'۹') : '';
 
-            let pair = 'با خیارشور یا نان تازه پیشنهاد بده.';
-            if (/دودی|کوکتل|ویژه/.test(n)) pair = 'طعم خاص‌تری دارد؛ برای ساندویچ و دورهمی عالی است.';
-            if (/مرغ/.test(n)) pair = 'بر پایه مرغ — سبک‌تر از گوشت قرمز؛ به مشتری‌های حساس به گوشت قرمز پیشنهاد کن.';
+            let type = 'فرآورده گوشتی فله';
+            if (isHotdog) type = 'هات‌داگ';
+            else if (isBacon) type = 'بیکن';
+            else if (isSteak) type = 'استیک گوشتی';
+            else if (isHam) type = 'ژامبون';
+            else if (isSalami) type = 'کالباس';
+            else if (isSausage) type = 'سوسیس';
 
-            return type + ' «' + n + '»\n' +
-                '• ' + meat + '\n' +
-                '• قیمت حدودی: ' + fa + ' تومان در کیلو\n' +
-                '• پیشنهاد فروش: ' + pair + '\n' +
-                '• جمله به مشتری: «تازه‌برش می‌زنم؛ اگه برای مهمونی می‌خوای کمی بیشتر به‌صرفه‌تره.»';
+            // چیست؟
+            let what = '';
+            if (isSteak && isTurkey) what = 'استیک بوقلمون؛ گوشت بوقلمون فرآوری‌شده با بافت سفت‌تر از کالباس معمولی، مناسب برش نازک یا تکه‌ای.';
+            else if (isSteak) what = 'استیک گوشتی فله؛ بافت منسجم‌تر از کالباس، برای سرخ‌کردن یا گریل و برش دلخواه روی ترازو.';
+            else if (isBacon && isChicken) what = 'بیکن مرغ؛ ورقه‌های نازک و شور-دود‌مانند بر پایه مرغ، سبک‌تر از بیکن گوشت قرمز.';
+            else if (isBacon && isBeef) what = 'بیکن اصل گوشت؛ طعم قوی و شور، مناسب صبحانه و ساندویچ.';
+            else if (isBacon) what = 'بیکن فله؛ برای سرخ‌کردن تا لبه‌ها برشته شود و روی نان یا کنار تخم‌مرغ سرو شود.';
+            else if (isHotdog) what = 'هات‌داگ؛ سوسیس مخصوص ساندویچ با بافت نرم و پخت سریع در آب یا روی حرارت.';
+            else if (isCocktail) what = 'سوسیس کوکتل؛ سایز کوچک، مناسب پیش‌غذا، مهمانی و کودک.';
+            else if (isSalami && isSmoked) what = 'کالباس دودی؛ طعم دود ملایم، مناسب ساندویچ سرد و بشقاب مزه.';
+            else if (isSalami) what = 'کالباس فله؛ برش همان لحظه روی ترازو، برای ساندویچ، صبحانه و پذیرایی.';
+            else if (isSausage) what = 'سوسیس فله؛ قابل پخت در قابلمه، تابه یا روی آتش؛ برای وعده گرم و ساندویچ.';
+            else if (isHam) what = 'ژامبون؛ بافت یکدست، معمولاً برای ساندویچ سرد و بشقاب صبحانه.';
+            else what = 'فرآورده گوشتی فله غرفه؛ برش تازه روی ترازو به وزن دلخواه مشتری.';
+
+            if (pctFa) what += ' درصد گوشت تقریبی روی نام: حدود ' + pctFa + '٪.';
+
+            // برای چه کسانی؟
+            let who = '';
+            if (isTurkey || isChicken) who = 'مناسب کسانی که گوشت سفید می‌خواهند یا گوشت قرمز کمتر مصرف می‌کنند؛ گزینه سبک‌تر برای خانواده.';
+            else if (isBacon) who = 'مناسب عاشقان صبحانه و ساندویچ؛ اگر مشتری طعم شور و برشته می‌خواهد همین را پیشنهاد بده.';
+            else if (isCocktail) who = 'مناسب مهمانی، دورهمی و سلیقه کودک؛ اگر تعداد نفرات زیاد است از این بگو.';
+            else if (pct && Number(String(pct).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))) >= 85) who = 'مناسب مشتری‌هایی که گوشت بیشتر و طعم قوی‌تر می‌خواهند؛ گزینه بالارده سبد.';
+            else if (isHotdog) who = 'مناسب ساندویچ سریع، دانشجو و وعده بیرون‌بر؛ فروش آسان کنار نان و خیارشور.';
+            else who = 'مناسب مصرف روزانه خانواده، ساندویچ و پذیرایی؛ از پرفروش‌های غرفه.';
+
+            // چطور استفاده شود؟
+            let how = '';
+            if (isBacon) how = 'ورقه‌نازک کن؛ در تابه بدون روغن زیاد سرخ کن تا لبه‌ها برشته شود. با تخم‌مرغ، نان تست یا داخل ساندویچ.';
+            else if (isSteak) how = 'می‌شود نازک برای ساندویچ یا تکه‌ای برای سرخ‌کردن. با فلفل و کمی روغن تابه یا گریل.';
+            else if (isHotdog) how = '۵–۱۰ دقیقه در آب جوش یا روی حرارت؛ داخل نان با خیارشور، رب یا سس.';
+            else if (isCocktail) how = 'آب‌پز یا سرخ‌شده به‌عنوان پیش‌غذا؛ با خلال‌دندان و سس کچاپ/خردل برای مهمانی.';
+            else if (isSausage) how = 'آب‌پز، تابه یا کنار سیب‌زمینی و تخم‌مرغ؛ برای ساندویچ بعد از پخت ورقه کن.';
+            else if (isSalami || isHam) how = 'برش نازک برای ساندویچ سرد، صبحانه و مزه؛ نیازی به پخت نیست مگر سلیقه مشتری.';
+            else how = 'بر اساس نوع: خام برای پخت یا برش‌خورده برای ساندویچ؛ همان لحظه روی ترازو وزن کن.';
+
+            // جمله فروش
+            let say = 'تازه‌برش می‌زنم؛ بگو چند گرم می‌خوای.';
+            if (isBacon) say = 'برای صبحانه عالیه؛ چند گرم برات نازک برش بزنم؟';
+            else if (isSteak && isTurkey) say = 'استیک بوقلمون؛ سبک‌تره و برای گریل خوبه — چند گرم؟';
+            else if (isHotdog) say = 'برای ساندویچ هات‌داگ تازه می‌کشم؛ خیارشور هم بذارم؟';
+            else if (isCocktail) say = 'برای مهمونی کوکتل خوبه؛ یه مقدار بیشتر به‌صرفه‌تره.';
+            else if (isTurkey || isChicken) say = 'گوشت سفیده؛ اگه گوشت قرمز کمتر می‌خوای این گزینه‌ست.';
+
+            return (
+                type + ' «' + n + '»\n\n' +
+                'چیست؟\n' + what + '\n\n' +
+                'مناسب چه کسانی؟\n' + who + '\n\n' +
+                'چطور استفاده شود؟\n' + how + '\n\n' +
+                'قیمت حدودی: ' + fa + ' تومان در کیلو\n\n' +
+                'جمله به مشتری:\n«' + say + '»'
+            );
         }
 
         async function loadProductGuideTab() {
@@ -9235,7 +9290,7 @@ function sbRenderAdminLists(cfg) {
                 const key = String(p.code || p.name || idx);
                 const textV = cache[key] || pgLocalBlurb(p);
                 if (!cache[key]) cache[key] = textV;
-                const price = Number(p.sell_price) || 0;
+                const price = Number(p.sell_price) || Number(p.unit_price) || Number(p.price) || 0;
                 html += '<div class="pg-card" data-pg-key="' + escapeHtmlAttr(key) + '" data-pg-name="' + escapeHtmlAttr(p.name || '') + '">';
                 html += '<div class="pg-head"><div class="pg-name" dir="auto">' + escapeHtmlForToast(p.name || '') + '</div>';
                 if (p.code) html += '<div class="pg-code" dir="ltr">' + escapeHtmlForToast(String(p.code)) + '</div>';
@@ -9311,7 +9366,7 @@ function sbRenderAdminLists(cfg) {
             const el = document.getElementById('pgBody_' + idx);
             if (el) el.textContent = '⏳ در حال نوشتن متن تخصصی...';
             try {
-                const prompt = 'برای فروشنده غرفه بنویس معرفی کوتاه و تخصصی محصول «' + name + '» با قیمت حدودی ' + (price || 'نامشخص') + ' تومان در کیلو. شامل: نوع محصول، برای چه مشتری مناسب است، چطور پیشنهاد ترکیب بدهد، و یک جمله آماده برای گفتن به مشتری. حداکثر ۸ خط.';
+                const prompt = 'برای فروشنده غرفه سوسیس‌وکالباس فله بنویس معرفی محصول «' + name + '» با قیمت حدود ' + (price || 'نامشخص') + ' تومان/کیلو. دقیقاً با این ساختار فارسی:\nچیست؟ (۲ خط)\nمناسب چه کسانی؟ (۱–۲ خط)\nچطور استفاده شود؟ (۱–۲ خط)\nجمله آماده برای مشتری: (۱ جمله)\nبدون مقدمه و بدون ستاره.';
                 const txt = await pgCallAI(prompt);
                 const cache = pgLoadCache();
                 cache[key] = txt;
@@ -9339,7 +9394,7 @@ function sbRenderAdminLists(cfg) {
                 const price = parseInt(String(priceTxt).replace(/[^\d]/g, ''), 10) || 0;
                 if (el) el.textContent = '⏳...';
                 try {
-                    const prompt = 'معرفی کوتاه تخصصی برای فروشنده غرفه، محصول «' + name + '»، قیمت حدود ' + price + ' تومان/کیلو. فارسی، حداکثر ۶ خط، با یک جمله آماده برای مشتری.';
+                    const prompt = 'معرفی «' + name + '» قیمت ' + price + ' ت/کیلو برای فروشنده. ساختار: چیست؟ / مناسب چه کسانی؟ / چطور استفاده شود؟ / جمله به مشتری. فارسی کوتاه.';
                     const txt = await pgCallAI(prompt);
                     const cache = pgLoadCache();
                     cache[key] = txt;
