@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v146 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v147 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -3282,7 +3282,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v146 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v147 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3466,7 +3466,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=146', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=147', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -16415,6 +16415,79 @@ function sbRenderAdminLists(cfg) {
                 preview.innerHTML = `📅 از تاریخ <b>${jalaliLabelForISODate(startISODate)}</b> تا تاریخ <b>${jalaliLabelForISODate(endISODate)}</b>${isInProgress ? ' <span style="color:#fbbf24;">(هنوز تمام نشده)</span>' : ''}${tag}`;
             }
         }
+
+
+        function updateWrCustomPreview() {
+            const s = document.getElementById('wrCustomStart');
+            const e = document.getElementById('wrCustomEnd');
+            const sp = document.getElementById('wrCustomStartPreview');
+            const ep = document.getElementById('wrCustomEndPreview');
+            const box = document.getElementById('wrCustomRangePreview');
+            const j = (iso) => {
+                try {
+                    if (typeof jalaliLabelForISODate === 'function') return jalaliLabelForISODate(iso);
+                } catch (err) {}
+                return iso;
+            };
+            if (s && sp) sp.textContent = s.value ? ('معادل شمسی: ' + j(s.value)) : '';
+            if (e && ep) ep.textContent = e.value ? ('معادل شمسی: ' + j(e.value)) : '';
+            if (box) {
+                if (!s || !e || !s.value || !e.value) box.innerHTML = '';
+                else if (s.value > e.value) box.innerHTML = '<span style="color:#ef4444;">تاریخ شروع نباید بعد از پایان باشد.</span>';
+                else box.innerHTML = '📅 از <b>' + j(s.value) + '</b> تا <b>' + j(e.value) + '</b>';
+            }
+        }
+
+        async function manualGenerateCustomWeeklyReport() {
+            const sEl = document.getElementById('wrCustomStart');
+            const eEl = document.getElementById('wrCustomEnd');
+            const btn = document.getElementById('wrCustomReportBtn');
+            if (!sEl || !eEl) {
+                showToast('فرم بازه دلخواه پیدا نشد. صفحه را کامل ببند و دوباره باز کن.');
+                return;
+            }
+            const startISO = (sEl.value || '').trim();
+            const endISO = (eEl.value || '').trim();
+            if (!startISO || !endISO) {
+                showToast('لطفاً «از تاریخ» و «تا تاریخ» را انتخاب کن.');
+                return;
+            }
+            if (startISO > endISO) {
+                showToast('تاریخ شروع نمی‌تواند بعد از تاریخ پایان باشد.');
+                return;
+            }
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = '⏳ در حال ساخت گزارش کامل...';
+            }
+            try {
+                const today = (typeof getTehranISODate === 'function')
+                    ? getTehranISODate()
+                    : new Date().toISOString().slice(0, 10);
+                const isInProgress = endISO >= today;
+                const result = await buildStoreAndSendWeeklyReport(startISO, endISO, isInProgress, true);
+                const label = (result && result.jalaliRangeLabel)
+                    ? result.jalaliRangeLabel
+                    : (startISO + ' تا ' + endISO);
+                let msg = '✅ گزارش بازه دلخواه «' + label + '» ساخته و ذخیره شد.';
+                if (result && result.telegramOk) msg += ' به تلگرام هم ارسال شد.';
+                else if (result && result.telegramErrors && result.telegramErrors.length)
+                    msg += '\n⚠️ تلگرام: ' + result.telegramErrors.join(' | ');
+                showToast(msg);
+                try { await loadWeeklyReportsList(); } catch (err) {}
+            } catch (err) {
+                console.error('custom weekly report', err);
+                showToast('❌ خطا در ساخت گزارش: ' + (err && err.message ? err.message : err));
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = '📊 ساخت گزارش بازه دلخواه (فایل + تلگرام)';
+                }
+            }
+        }
+        window.updateWrCustomPreview = updateWrCustomPreview;
+        window.manualGenerateCustomWeeklyReport = manualGenerateCustomWeeklyReport;
+
 
         async function manualGenerateWeeklyReport() {
             const btn = document.getElementById('manualWeeklyReportBtn');
