@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v145 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v146 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -246,6 +246,23 @@
         .sb-auto-list { margin: 4px 0 0; padding-right: 16px; font-size: 12px; line-height: 1.85; }
         .sb-auto-list li { margin-bottom: 6px; }
         .sb-how { border-color: rgba(52,211,153,.3); }
+
+        
+        .pg-card {
+            border: 1px solid rgba(148,163,184,.25); border-radius: 14px;
+            padding: 12px; margin-bottom: 10px; background: rgba(15,23,42,.4);
+            direction: rtl; text-align: right;
+        }
+        .pg-head { margin-bottom: 8px; }
+        .pg-name { font-weight: 900; font-size: 14px; }
+        .pg-code { font-size: 12px; color: #38bdf8; direction: ltr; margin-top: 2px; }
+        .pg-price { font-size: 13px; font-weight: 800; margin-top: 4px; color: #fbbf24; }
+        .pg-body {
+            white-space: pre-wrap; font-family: inherit; font-size: 12px; line-height: 1.85;
+            background: rgba(0,0,0,.2); border-radius: 10px; padding: 10px; margin: 0 0 8px;
+            color: #e2e8f0;
+        }
+        .pg-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 
         .sb-banner {
             margin: 8px 0 12px;
@@ -1851,6 +1868,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <button class="tab-btn" id="btnSaleEkala" onclick="switchTab('saleEkala'); loadProductDatalist(); loadRecentSales('ekala');"><span class="tab-ico">🛒</span><span class="tab-label">ثبت فروش اکالا</span></button>
         <button class="tab-btn" id="btnSaleSausage" onclick="switchTab('saleSausage'); loadProductDatalist(); loadRecentSales('sausage');"><span class="tab-ico">🌭</span><span class="tab-label">ثبت فروش سوسیس و کالباس</span></button>
         <button class="tab-btn" id="btnSausagePriceCompare" onclick="switchTab('sausagePriceCompare'); loadSausagePriceCompare();"><span class="tab-ico">🏷️</span><span class="tab-label">راهنمای لیبل سوسیس‌ها</span></button>
+        <button class="tab-btn" id="btnProductGuide" onclick="switchTab('productGuide'); loadProductGuideTab();"><span class="tab-ico">🧠</span><span class="tab-label">معرفی محصولات</span></button>
         <button class="tab-btn" id="btnQuickNote" onclick="switchTab('quickNote');"><span class="tab-ico">📝</span><span class="tab-label">دفترچه فروش سریع</span><span class="qn-badge" id="qnTabBadge"></span></button>
         <button class="tab-btn" id="btnAttendance" onclick="switchTab('attendance'); loadFingerprintStatus();"><span class="tab-ico">⏰</span><span class="tab-label">حضور و غیاب</span></button>
         <button class="tab-btn" id="btnMessage" onclick="switchTab('message');"><span class="tab-ico">📩</span><span class="tab-label">ارسال پیام به مدیر</span></button>
@@ -2392,7 +2410,22 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         </div>
     </div>
 
-<div id="sausagePriceCompareTab" class="card">
+
+    <div id="productGuideTab" class="card">
+        <h2>🧠 معرفی تخصصی محصولات (برای فروشنده)</h2>
+        <div class="hint" style="line-height:1.85;">اینجا هر سوسیس/کالباس را با زبان ساده و حرفه‌ای معرفی می‌کند تا به مشتری توضیح بدهی. می‌توانی با هوش مصنوعی متن را قوی‌تر کنی.</div>
+        <div class="search-box" style="margin-bottom:10px;">
+            <input type="text" id="pgSearch" dir="auto" placeholder="🔎 جستجوی نام محصول..." oninput="pgFilter()" style="width:100%;">
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+            <button type="button" class="row-btn confirm-btn" onclick="loadProductGuideTab()">🔄 بروزرسانی از انبار</button>
+            <button type="button" class="row-btn fill-btn" id="pgAiAllBtn" onclick="pgEnhanceAllWithAI()">✨ تقویت همه با هوش مصنوعی</button>
+        </div>
+        <div id="pgStatus" class="hint"></div>
+        <div id="pgList"></div>
+    </div>
+
+    <div id="sausagePriceCompareTab" class="card">
         <h2>🏷️ راهنمای لیبل سوسیس‌ها</h2>
         <div class="spc-intro">
             <div class="spc-intro-title">چطور از این لیست استفاده کنی؟</div>
@@ -3219,6 +3252,25 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         </div>
         <div class="price-display" id="weeklyReportRangePreview" style="margin-top:10px;"></div>
 
+        <div class="sb-section" style="margin-top:14px;">
+            <div class="sb-sec-title" style="color:#7dd3fc;">📅 بازه دلخواه (از تاریخ تا تاریخ)</div>
+            <div class="hint">هر تاریخی بخواهی انتخاب کن — گزارش کلی + جزئیات + رشد و نمودار مثل بقیه ساخته و به تلگرام فرستاده می‌شود.</div>
+            <div class="grid-2" style="margin-top:8px;">
+                <div>
+                    <label>از تاریخ:</label>
+                    <input type="date" id="wrCustomStart" oninput="updateWrCustomPreview()">
+                    <div class="hint" id="wrCustomStartPreview" style="margin-top:3px;"></div>
+                </div>
+                <div>
+                    <label>تا تاریخ:</label>
+                    <input type="date" id="wrCustomEnd" oninput="updateWrCustomPreview()">
+                    <div class="hint" id="wrCustomEndPreview" style="margin-top:3px;"></div>
+                </div>
+            </div>
+            <div class="price-display" id="wrCustomRangePreview" style="margin-top:8px;"></div>
+            <button type="button" class="submit-btn" id="wrCustomReportBtn" onclick="manualGenerateCustomWeeklyReport()" style="margin-top:10px;">📊 ساخت گزارش بازه دلخواه (فایل + تلگرام)</button>
+        </div>
+
         <button class="submit-btn" id="manualWeeklyReportBtn" onclick="manualGenerateWeeklyReport()">📊 ساخت و ارسال گزارش‌های این بازه</button>
         <div id="weeklyReportsList" style="margin-top:14px;"><div class="skeleton-block skeleton-card"></div></div>
     </div>
@@ -3230,7 +3282,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v145 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v146 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3414,7 +3466,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=145', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=146', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -3492,7 +3544,9 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         const PROXY_ENDPOINTS = [
             SUPABASE_REAL_URL, // همیشه اول همین آدرس مستقیم امتحان می‌شود
             "https://proxy.ali8001.ir/supabase", // پروکسی روی دامنه‌ی خودمان (ali8001.ir) — معمولاً از workers.dev قابل‌اعتمادتره چون فیلترکردنش هزینه‌ی بیشتری داره
-            "https://shop-proxy-1.adarmiraki.workers.dev", // پروکسی قبلی روی Cloudflare Workers، به‌عنوان پشتیبان دوم نگه داشته شده
+            "https://shop-proxy-1.adarmiraki.workers.dev",
+            // بعد از ساخت ورکر جدید (فایل worker-proxy.js) آدرس را اینجا بگذار:
+            // "https://shop-proxy-fast.YOUR_SUBDOMAIN.workers.dev",
             // اگه یه پروکسی دیگه هم ساختی، آدرسش رو همینجا اضافه کن:
             // "https://shop-proxy-2.adarmiraki.workers.dev",
         ];
@@ -5882,15 +5936,15 @@ notify pgrst, 'reload schema';`;
             } catch (e) {}
 
             if (currentRole === 'admin') {
-                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnSausagePriceCompare', 'btnQuickNote', 'btnInbox', 'btnStaffMessage', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnShiftSettings', 'btnTelegramSettings', 'btnDebtLedger', 'btnContractAdmin', 'btnGrowthReport', 'btnPurchaseInvoices', 'btnTakeoutAdmin', 'btnGoals', 'btnSalesBoost', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnDeletedSales', 'btnWeeklyReports', 'btnPersonnel', 'btnMyAccount'], 'dashboardTab');
+                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnSausagePriceCompare', 'btnProductGuide', 'btnQuickNote', 'btnInbox', 'btnStaffMessage', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnShiftSettings', 'btnTelegramSettings', 'btnDebtLedger', 'btnContractAdmin', 'btnGrowthReport', 'btnPurchaseInvoices', 'btnTakeoutAdmin', 'btnGoals', 'btnSalesBoost', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnDeletedSales', 'btnWeeklyReports', 'btnPersonnel', 'btnMyAccount'], 'dashboardTab');
                 checkAndGenerateWeeklyReport();
                 document.getElementById('salaryAdminForm').style.display = 'block';
                 checkLowStockAlertNoWeight();
             } else if (currentRole === 'morning_seller') {
-                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnSausagePriceCompare', 'btnQuickNote', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnDebtLedger', 'btnPersonalTakeout', 'btnGoals', 'btnSalesBoost', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnMyAccount'], 'dashboardTab');
+                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnSausagePriceCompare', 'btnProductGuide', 'btnQuickNote', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnDebtLedger', 'btnPersonalTakeout', 'btnGoals', 'btnSalesBoost', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnMyAccount'], 'dashboardTab');
                 document.getElementById('salaryAdminForm').style.display = 'none';
             } else {
-                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnSausagePriceCompare', 'btnQuickNote', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnReport', 'btnDebtLedger', 'btnPersonalTakeout', 'btnGoals', 'btnSalesBoost', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnMyAccount'], 'dashboardTab');
+                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnSausagePriceCompare', 'btnProductGuide', 'btnQuickNote', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnReport', 'btnDebtLedger', 'btnPersonalTakeout', 'btnGoals', 'btnSalesBoost', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnMyAccount'], 'dashboardTab');
                 document.getElementById('salaryAdminForm').style.display = 'none';
             }
 
@@ -8024,6 +8078,7 @@ notify pgrst, 'reload schema';`;
             const add = (u) => { if (u && list.indexOf(u) === -1) list.push(u); };
             TELEGRAM_PROXY_HOSTS.forEach(host => {
                 const h = host.replace(/\/+$/, '');
+                add(h + '/tg');                  // ورکر جدید: /tg/botTOKEN/method
                 add(h + '/telegram');           // /telegram/botTOKEN/method
                 add(h + '/api/telegram');        // /api/telegram/botTOKEN/method
                 add(h);                          // /botTOKEN/method مستقیم روی worker
@@ -9109,6 +9164,198 @@ function sbRenderAdminLists(cfg) {
             if (document.readyState === 'complete') setTimeout(run, 1500);
             else window.addEventListener('load', () => setTimeout(run, 1500));
         })();
+
+
+
+        // ========== معرفی تخصصی محصولات برای فروشنده ==========
+        const PG_CACHE_KEY = 'productGuideTexts_v1';
+
+        function pgLoadCache() {
+            try { return JSON.parse(localStorage.getItem(PG_CACHE_KEY) || '{}') || {}; } catch (e) { return {}; }
+        }
+        function pgSaveCache(map) {
+            try { localStorage.setItem(PG_CACHE_KEY, JSON.stringify(map)); } catch (e) {}
+        }
+
+        function pgLocalBlurb(p) {
+            const n = String(p.name || '');
+            const price = Number(p.sell_price) || 0;
+            const fa = price ? price.toLocaleString('fa-IR') : '—';
+            let type = 'فرآورده گوشتی';
+            if (/هات\s*داگ|هاتداگ/i.test(n)) type = 'هات‌داگ';
+            else if (/کالباس/.test(n)) type = 'کالباس';
+            else if (/سوسیس/.test(n)) type = 'سوسیس';
+            else if (/ژامبون/.test(n)) type = 'ژامبون';
+
+            let meat = '';
+            if (/۹۰|90/.test(n)) meat = 'با درصد گوشت بالا (حدود ۹۰٪) — مناسب مشتری‌هایی که طعم گوشت قوی می‌خواهند.';
+            else if (/۷۰|70/.test(n)) meat = 'با تعادل خوب گوشت و بافت — پرفروش و مناسب مصرف روزانه.';
+            else if (/۵۵|55|۴۰|40|60|۶۰/.test(n)) meat = 'گزینه اقتصادی‌تر با بافت نرم — برای مصرف روزمره و مهمانی‌های بزرگ به‌صرفه است.';
+            else meat = 'از موجودی تازه غرفه — برای برش همان لحظه روی ترازو.';
+
+            let pair = 'با خیارشور یا نان تازه پیشنهاد بده.';
+            if (/دودی|کوکتل|ویژه/.test(n)) pair = 'طعم خاص‌تری دارد؛ برای ساندویچ و دورهمی عالی است.';
+            if (/مرغ/.test(n)) pair = 'بر پایه مرغ — سبک‌تر از گوشت قرمز؛ به مشتری‌های حساس به گوشت قرمز پیشنهاد کن.';
+
+            return type + ' «' + n + '»\n' +
+                '• ' + meat + '\n' +
+                '• قیمت حدودی: ' + fa + ' تومان در کیلو\n' +
+                '• پیشنهاد فروش: ' + pair + '\n' +
+                '• جمله به مشتری: «تازه‌برش می‌زنم؛ اگه برای مهمونی می‌خوای کمی بیشتر به‌صرفه‌تره.»';
+        }
+
+        async function loadProductGuideTab() {
+            const box = document.getElementById('pgList');
+            const st = document.getElementById('pgStatus');
+            if (!box) return;
+            box.innerHTML = '<div class="skeleton-block skeleton-card"></div>';
+            if (st) st.textContent = 'در حال بارگذاری محصولات سوسیس/کالباس...';
+
+            let products = [];
+            try {
+                if (typeof offlineGetProducts === 'function') products = await offlineGetProducts(false) || [];
+                else if (Array.isArray(cachedProductsList)) products = cachedProductsList;
+                else if (typeof offlineLoadProducts === 'function') products = offlineLoadProducts() || [];
+            } catch (e) {}
+
+            const sausages = (products || []).filter(p => p && (
+                p.category === 'sausage' || p.category === 'سوسیس' ||
+                /سوسیس|کالباس|هات\s*داگ|ژامبون/i.test(String(p.name || ''))
+            )).sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'fa'));
+
+            const cache = pgLoadCache();
+            if (!sausages.length) {
+                box.innerHTML = '<div class="hint">محصول سوسیس/کالباس در انبار نیست.</div>';
+                if (st) st.textContent = '';
+                return;
+            }
+
+            let html = '';
+            sausages.forEach((p, idx) => {
+                const key = String(p.code || p.name || idx);
+                const textV = cache[key] || pgLocalBlurb(p);
+                if (!cache[key]) cache[key] = textV;
+                const price = Number(p.sell_price) || 0;
+                html += '<div class="pg-card" data-pg-key="' + escapeHtmlAttr(key) + '" data-pg-name="' + escapeHtmlAttr(p.name || '') + '">';
+                html += '<div class="pg-head"><div class="pg-name" dir="auto">' + escapeHtmlForToast(p.name || '') + '</div>';
+                if (p.code) html += '<div class="pg-code" dir="ltr">' + escapeHtmlForToast(String(p.code)) + '</div>';
+                html += '<div class="pg-price">' + (price ? price.toLocaleString('fa-IR') : '—') + ' ت/کیلو</div></div>';
+                html += '<pre class="pg-body" id="pgBody_' + idx + '">' + escapeHtmlForToast(textV) + '</pre>';
+                html += '<div class="pg-actions">';
+                html += '<button type="button" class="row-btn confirm-btn" onclick="pgEnhanceOne(\'' + escapeHtmlAttr(key).replace(/'/g, "\\'") + '\',' + idx + ',\'' + escapeHtmlAttr(p.name || '').replace(/'/g, "\\'") + '\',' + price + ')">✨ متن حرفه‌ای‌تر با AI</button>';
+                html += '</div></div>';
+            });
+            pgSaveCache(cache);
+            box.innerHTML = html;
+            if (st) st.textContent = sausages.length.toLocaleString('fa-IR') + ' محصول — روی هر کدام می‌توانی متن فروش را با هوش مصنوعی قوی‌تر کنی.';
+            try { pgFilter(); } catch (e) {}
+        }
+        window.loadProductGuideTab = loadProductGuideTab;
+
+        window.pgFilter = function () {
+            const q = ((document.getElementById('pgSearch') || {}).value || '').trim().toLowerCase();
+            document.querySelectorAll('#pgList .pg-card').forEach(card => {
+                const t = (card.textContent || '').toLowerCase();
+                card.style.display = !q || t.indexOf(q) !== -1 ? '' : 'none';
+            });
+        };
+
+        async function pgGetAiKey() {
+            try {
+                const inp = document.getElementById('geminiApiKeyInput') || document.getElementById('openrouterApiKey');
+                if (inp && inp.value) return inp.value.trim();
+            } catch (e) {}
+            try {
+                const k = localStorage.getItem('geminiApiKey') || localStorage.getItem('openrouterApiKey') || localStorage.getItem('qnApiKey');
+                if (k) return k.trim();
+            } catch (e) {}
+            return '';
+        }
+
+        async function pgCallAI(prompt) {
+            const key = await pgGetAiKey();
+            if (!key) throw new Error('کلید API هوش مصنوعی تنظیم نشده. از تنظیمات دفترچه/Gemini وارد کن.');
+            const body = {
+                model: 'google/gemini-2.0-flash-001',
+                messages: [
+                    { role: 'system', content: 'تو مشاور فروش غرفه سوسیس و کالباس فله در ایران هستی. جواب را فارسی، کوتاه، کاربردی و محترمانه بنویس. بدون مقدمه اضافه.' },
+                    { role: 'user', content: prompt }
+                ],
+                temperature: 0.6,
+                max_tokens: 500
+            };
+            let result;
+            if (typeof qnOpenRouterRequest === 'function') {
+                result = await qnOpenRouterRequest(key, body, 45000);
+            } else {
+                const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + key,
+                        'HTTP-Referer': location.origin || 'https://localhost',
+                        'X-Title': 'Ghorfe Product Guide'
+                    },
+                    body: JSON.stringify(body)
+                });
+                const json = await res.json().catch(() => null);
+                result = { ok: res.ok, json };
+            }
+            if (!result || !result.ok) throw new Error((result && result.json && result.json.error && result.json.error.message) || 'خطای AI');
+            const txt = result.json && result.json.choices && result.json.choices[0] && result.json.choices[0].message && result.json.choices[0].message.content;
+            if (!txt) throw new Error('پاسخ خالی از AI');
+            return String(txt).trim();
+        }
+
+        window.pgEnhanceOne = async function (key, idx, name, price) {
+            const el = document.getElementById('pgBody_' + idx);
+            if (el) el.textContent = '⏳ در حال نوشتن متن تخصصی...';
+            try {
+                const prompt = 'برای فروشنده غرفه بنویس معرفی کوتاه و تخصصی محصول «' + name + '» با قیمت حدودی ' + (price || 'نامشخص') + ' تومان در کیلو. شامل: نوع محصول، برای چه مشتری مناسب است، چطور پیشنهاد ترکیب بدهد، و یک جمله آماده برای گفتن به مشتری. حداکثر ۸ خط.';
+                const txt = await pgCallAI(prompt);
+                const cache = pgLoadCache();
+                cache[key] = txt;
+                pgSaveCache(cache);
+                if (el) el.textContent = txt;
+                showToast('✅ متن تخصصی آماده شد');
+            } catch (e) {
+                if (el) el.textContent = pgLocalBlurb({ name: name, sell_price: price });
+                showToast('❌ ' + (e.message || e));
+            }
+        };
+
+        window.pgEnhanceAllWithAI = async function () {
+            const cards = document.querySelectorAll('#pgList .pg-card');
+            if (!cards.length) { showToast('اول لیست را بروزرسانی کن.'); return; }
+            const btn = document.getElementById('pgAiAllBtn');
+            if (btn) { btn.disabled = true; btn.textContent = '⏳ در حال تقویت...'; }
+            let ok = 0, fail = 0;
+            for (let i = 0; i < cards.length; i++) {
+                const card = cards[i];
+                const key = card.getAttribute('data-pg-key');
+                const name = card.getAttribute('data-pg-name') || '';
+                const el = card.querySelector('.pg-body');
+                const priceTxt = (card.querySelector('.pg-price') || {}).textContent || '';
+                const price = parseInt(String(priceTxt).replace(/[^\d]/g, ''), 10) || 0;
+                if (el) el.textContent = '⏳...';
+                try {
+                    const prompt = 'معرفی کوتاه تخصصی برای فروشنده غرفه، محصول «' + name + '»، قیمت حدود ' + price + ' تومان/کیلو. فارسی، حداکثر ۶ خط، با یک جمله آماده برای مشتری.';
+                    const txt = await pgCallAI(prompt);
+                    const cache = pgLoadCache();
+                    cache[key] = txt;
+                    pgSaveCache(cache);
+                    if (el) el.textContent = txt;
+                    ok++;
+                } catch (e) {
+                    fail++;
+                    if (el) el.textContent = pgLocalBlurb({ name, sell_price: price });
+                }
+                // کمی فاصله تا rate limit
+                await new Promise(r => setTimeout(r, 400));
+            }
+            if (btn) { btn.disabled = false; btn.textContent = '✨ تقویت همه با هوش مصنوعی'; }
+            showToast('تمام شد: ' + ok + ' موفق' + (fail ? '، ' + fail + ' ناموفق' : ''));
+        };
 
 
     async function loadSausagePriceCompare() {
