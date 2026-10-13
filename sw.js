@@ -1,5 +1,5 @@
 // v130 — Service Worker: آفلاین کامل شل اپ + کش کتابخانه‌ها + نصب PWA
-const V = 'v138', SHELL = 'shell-' + V, LIBS = 'libs-v1';
+const V = 'v139', SHELL = 'shell-' + V, LIBS = 'libs-v1';
 const CDN = /(^|\.)(cdn\.jsdelivr\.net|unpkg\.com|cdnjs\.cloudflare\.com|fonts\.googleapis\.com|fonts\.gstatic\.com)$/;
 
 self.addEventListener('message', (e) => {
