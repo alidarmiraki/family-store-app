@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v141 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v143 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -168,6 +168,110 @@
         .spc-grow-tip.same { background: rgba(52,211,153,.15); color: #34d399; }
         .spc-grow-tip.none { background: rgba(148,163,184,.15); color: #94a3b8; }
         .spc-grow-tip .spc-diff { font-weight: 600; opacity: .8; margin-right: 4px; font-size: 10px; }
+
+        
+        /* افزایش فروش */
+        
+        /* فروشنده واقعی */
+        .rs-panel { margin: 8px 0 12px; direction: rtl; text-align: right; }
+        .rs-panel:empty { display: none; }
+        .rs-card {
+            background: linear-gradient(135deg, rgba(99,102,241,.16), rgba(16,185,129,.12));
+            border: 1px solid rgba(99,102,241,.35);
+            border-radius: 16px;
+            padding: 12px 14px;
+        }
+        .rs-card h3 { margin: 0 0 8px; font-size: 14px; color: #a5b4fc; font-weight: 900; }
+        .rs-stats {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+            margin-bottom: 8px;
+        }
+        .rs-stat {
+            background: rgba(15,23,42,.4); border-radius: 12px; padding: 8px 6px; text-align: center;
+        }
+        .rs-stat b { display: block; font-size: 14px; font-weight: 900; color: #f8fafc; }
+        .rs-stat span { font-size: 10px; opacity: .75; }
+        .rs-bar {
+            height: 8px; border-radius: 999px; background: rgba(148,163,184,.2); overflow: hidden; margin: 6px 0;
+        }
+        .rs-bar > i {
+            display: block; height: 100%; border-radius: 999px;
+            background: linear-gradient(90deg, #6366f1, #10b981);
+        }
+        .rs-tip {
+            margin-top: 8px; font-size: 12px; line-height: 1.7;
+            background: rgba(251,191,36,.1); border: 1px solid rgba(251,191,36,.3);
+            border-radius: 12px; padding: 8px 10px;
+        }
+        .rs-tip strong { color: #fbbf24; }
+        .rs-coach-toast {
+            position: fixed; left: 12px; right: 12px; bottom: 18px; z-index: 9999;
+            background: linear-gradient(135deg, #1e1b4b, #064e3b);
+            border: 1px solid rgba(165,180,252,.4);
+            border-radius: 16px; padding: 12px 14px; direction: rtl; text-align: right;
+            box-shadow: 0 12px 40px rgba(0,0,0,.45);
+            animation: rsIn .25s ease;
+        }
+        @keyframes rsIn { from { transform: translateY(20px); opacity: 0; } to { transform: none; opacity: 1; } }
+        .rs-coach-toast .rs-c-title { font-weight: 900; color: #a5b4fc; font-size: 13px; margin-bottom: 4px; }
+        .rs-coach-toast .rs-c-body { font-size: 12px; line-height: 1.75; }
+        .rs-coach-toast button {
+            margin-top: 8px; width: 100%; border: none; border-radius: 10px;
+            padding: 8px; font-weight: 800; background: #10b981; color: #fff; cursor: pointer;
+        }
+
+        .sb-banner {
+            margin: 8px 0 12px;
+            direction: rtl;
+            text-align: right;
+        }
+        .sb-banner:empty { display: none; }
+        .sb-banner-card {
+            background: linear-gradient(135deg, rgba(245,158,11,.14), rgba(16,185,129,.12));
+            border: 1px solid rgba(245,158,11,.35);
+            border-radius: 14px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+        }
+        .sb-banner-card .sb-b-title { font-weight: 900; font-size: 13px; color: #fbbf24; margin-bottom: 4px; }
+        .sb-banner-card .sb-b-body { font-size: 12px; line-height: 1.7; opacity: .95; }
+        .sb-banner-scripts {
+            background: rgba(56,189,248,.1);
+            border: 1px solid rgba(56,189,248,.25);
+            border-radius: 12px;
+            padding: 8px 10px;
+            font-size: 12px;
+        }
+        .sb-banner-scripts b { color: #7dd3fc; }
+        .sb-section {
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: 14px;
+            border: 1px solid rgba(148,163,184,.22);
+            background: rgba(15,23,42,.35);
+        }
+        .sb-sec-title { font-weight: 900; font-size: 14px; margin-bottom: 6px; color: #a5b4fc; }
+        .sb-form { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+        .sb-item {
+            display: flex; gap: 8px; align-items: flex-start;
+            padding: 8px; border-radius: 10px;
+            background: rgba(148,163,184,.08);
+            margin-bottom: 6px;
+        }
+        .sb-item-body { flex: 1; text-align: right; font-size: 12px; line-height: 1.6; }
+        .sb-item-body strong { font-size: 13px; }
+        .sb-item button { flex-shrink: 0; }
+        .sb-check {
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 6px; border-bottom: 1px solid rgba(148,163,184,.12);
+            font-size: 12px; cursor: pointer;
+        }
+        .sb-check input { width: 18px; height: 18px; }
+        .sb-avg-pill {
+            display: inline-block; margin-top: 4px;
+            background: rgba(52,211,153,.15); color: #34d399;
+            font-weight: 800; font-size: 11px; padding: 3px 10px; border-radius: 999px;
+        }
 
         .spc-intro {
             background: linear-gradient(135deg, rgba(56,189,248,.12), rgba(167,139,250,.1));
@@ -1740,6 +1844,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <button class="tab-btn" id="btnPurchaseInvoices" onclick="switchTab('purchaseInvoices'); loadPurchaseInvoices();"><span class="tab-ico">🧾</span><span class="tab-label">فاکتور خرید (مدیر)</span></button>
         <button class="tab-btn" id="btnTakeoutAdmin" onclick="switchTab('takeoutAdmin'); loadTakeoutAdminSummary();"><span class="tab-ico">🧺</span><span class="tab-label">برداشت‌های حساب‌نشده</span></button>
         <button class="tab-btn" id="btnGoals" onclick="switchTab('goals')"><span class="tab-ico">🎯</span><span class="tab-label">هدف و پاداش</span></button>
+        <button class="tab-btn" id="btnSalesBoost" onclick="switchTab('salesBoost'); loadSalesBoostTab();"><span class="tab-ico">🚀</span><span class="tab-label">افزایش فروش</span></button>
         <button class="tab-btn" id="btnSalary" onclick="switchTab('salary'); loadSalaryTab();"><span class="tab-ico">💰</span><span class="tab-label">واریز حقوق</span></button>
         <button class="tab-btn" id="btnExpenses" onclick="switchTab('expenses'); loadExpensesTab();"><span class="tab-ico">📒</span><span class="tab-label">دفترچه هزینه‌ها</span></button>
         <button class="tab-btn" id="btnWaste" onclick="switchTab('waste'); loadWasteTab();"><span class="tab-ico">🗑️</span><span class="tab-label">ضایعات</span></button>
@@ -1753,12 +1858,14 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
     <!-- تب خلاصه روز (داشبورد مدیر) -->
     <div id="dashboardTab" class="card">
         <h2>🏠 خلاصه امروز</h2>
+        <div id="rsDashPanel" class="rs-panel"></div>
         <div id="dashboardContent"><div class="skeleton-block skeleton-card"></div><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
     <!-- فرم ثبت فروش لبنیات و ترشیجات (حضوری) -->
     <div id="saleTab" class="card">
         <h2 id="saleFormTitle">🧀 ثبت فروش لبنیات روزانه</h2>
+        <div id="sbBannerSale" class="sb-banner"></div>
         <div id="sQuickPickBox" class="hint" style="margin-top:0;"></div>
         <input type="text" id="sCustomerName" dir="auto" list="recentCustomersDatalist" placeholder="🙋 نام مشتری (اختیاری، برای مشتری‌های ثابت)" style="margin-top:6px;">
         <label>انتخاب یا تایپ نام کالا:</label>
@@ -1836,6 +1943,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
     <!-- فرم ثبت فروش اکالا -->
     <div id="saleEkalaTab" class="card">
         <h2 id="saleEkalaFormTitle">🛒 ثبت فروش اکالا</h2>
+        <div id="sbBannerEkala" class="sb-banner"></div>
         <div class="hint">وقتی سفارشی از طریق اکالا می‌آید و شما کالا را وزن و آماده تحویل به پیک/مشتری می‌کنید، همین‌جا ثبت کنید. این کاملاً از فروش حضوری جدا نگهداری می‌شود.</div>
         <div id="seQuickPickBox" class="hint" style="margin-top:0;"></div>
         <input type="text" id="seCustomerName" dir="auto" list="recentCustomersDatalist" placeholder="🙋 نام مشتری (اختیاری، برای مشتری‌های ثابت)" style="margin-top:6px;">
@@ -1907,6 +2015,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
     <!-- فرم ثبت فروش سوسیس و کالباس -->
     <div id="saleSausageTab" class="card">
         <h2 id="saleSausageFormTitle">🌭 ثبت فروش سوسیس و کالباس</h2>
+        <div id="sbBannerSausage" class="sb-banner"></div>
         <div class="hint">این تب مخصوص فروش کالاهایی است که در «تعریف کالا» با نوع «سوسیس و کالباس» ثبت شده‌اند. لیست پیشنهادی این کادر فقط همین کالاها را نشان می‌دهد. این کاملاً از فروش حضوری و اکالای لبنیات/ترشیجات جدا نگهداری می‌شود.</div>
         <div id="ssQuickPickBox" class="hint" style="margin-top:0;"></div>
         <input type="text" id="ssCustomerName" dir="auto" list="recentCustomersDatalist" placeholder="🙋 نام مشتری (اختیاری، برای مشتری‌های ثابت)" style="margin-top:6px;">
@@ -2221,6 +2330,68 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
     </div>
 
     <!-- مقایسه قیمت سوسیس/کالباس کد ۲۲ -->
+
+    <!-- افزایش فروش: پیشنهاد روز، بسته ترکیبی، جملات فروش -->
+    <div id="salesBoostTab" class="card">
+        <h2>🚀 افزایش فروش غرفه</h2>
+        <div class="hint" style="line-height:1.85;">ابزارهای عملی برای بالا بردن فروش بدون پیامک گران. بخش <b>فروشنده واقعی</b> بعد از هر فروش، میانگین فاکتور و یک جمله پیشنهادی به فروشنده نشان می‌دهد.  پیشنهاد امروز، بسته ترکیبی، جمله فروش، و هدف میانگین فاکتور. فروشنده‌ها همین‌ها را موقع ثبت فروش می‌بینند.</div>
+
+        <div id="sbSellerView" style="display:none;"></div>
+
+        <div id="sbAdminView" style="display:none;">
+            <div class="sb-section">
+                <div class="sb-sec-title">🔥 پیشنهادهای امروز / این هفته</div>
+                <div class="hint">مثلاً: «ماست چکیده + خیارشور = ۵ هزار تخفیف» یا «سوسیس بالای نیم‌کیلو ۱۰٪»</div>
+                <div id="sbOffersList"></div>
+                <div class="sb-form">
+                    <input type="text" id="sbOfferTitle" dir="auto" placeholder="عنوان کوتاه (مثلاً پک صبحانه)">
+                    <textarea id="sbOfferBody" dir="auto" rows="2" placeholder="توضیح برای فروشنده و مشتری..."></textarea>
+                    <input type="text" id="sbOfferUntil" dir="auto" placeholder="تا کی؟ (مثلاً تا جمعه / همیشه)">
+                    <button type="button" class="row-btn confirm-btn" onclick="sbAddOffer()">➕ افزودن پیشنهاد</button>
+                </div>
+            </div>
+
+            <div class="sb-section">
+                <div class="sb-sec-title">📦 بسته‌های ترکیبی</div>
+                <div class="hint">کالاهایی که با هم فروخته شوند سبد خرید بزرگ‌تر می‌شود.</div>
+                <div id="sbBundlesList"></div>
+                <div class="sb-form">
+                    <input type="text" id="sbBundleTitle" dir="auto" placeholder="نام بسته (مثلاً پک کالباس مهمانی)">
+                    <input type="text" id="sbBundleItems" dir="auto" placeholder="کالاها با خط تیره (کالباس - نان - خیارشور)">
+                    <input type="text" id="sbBundleBenefit" dir="auto" placeholder="مزیت (۵۰ هزار تخفیف / یک سس رایگان)">
+                    <button type="button" class="row-btn confirm-btn" onclick="sbAddBundle()">➕ افزودن بسته</button>
+                </div>
+            </div>
+
+            <div class="sb-section">
+                <div class="sb-sec-title">💬 جملات فروش (برای فروشنده)</div>
+                <div class="hint">جمله‌های کوتاه که فروشنده هنگام فروش بگوید.</div>
+                <div id="sbScriptsList"></div>
+                <div class="sb-form">
+                    <input type="text" id="sbScriptText" dir="auto" placeholder="مثلاً: با خیارشور کامل می‌شه، اضافه کنم؟">
+                    <button type="button" class="row-btn confirm-btn" onclick="sbAddScript()">➕ افزودن جمله</button>
+                </div>
+            </div>
+
+            <div class="sb-section">
+                <div class="sb-sec-title">🧾 هدف میانگین فاکتور</div>
+                <div class="hint">فروشنده سعی کند هر فاکتور حداقل این مبلغ باشد (تومان).</div>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                    <input type="number" id="sbAvgTicket" placeholder="مثلاً 250000" style="flex:1;min-width:140px;">
+                    <button type="button" class="row-btn confirm-btn" onclick="sbSaveAvgTicket()">💾 ذخیره</button>
+                </div>
+            </div>
+
+            <div class="sb-section">
+                <div class="sb-sec-title">✅ چک‌لیست ۳۰ روزه مدیر</div>
+                <div id="sbChecklist"></div>
+            </div>
+
+            <button type="button" class="row-btn fill-btn" style="width:100%;margin-top:8px;" onclick="sbSaveAll()">💾 ذخیره همه روی سرور و گوشی‌ها</button>
+            <div class="hint" id="sbSaveStatus" style="margin-top:6px;"></div>
+        </div>
+    </div>
+
     <div id="sausagePriceCompareTab" class="card">
         <h2>🏷️ راهنمای لیبل سوسیس‌ها</h2>
         <div class="spc-intro">
@@ -3057,7 +3228,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v141 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v143 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3241,7 +3412,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=141', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=143', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -5709,15 +5880,15 @@ notify pgrst, 'reload schema';`;
             } catch (e) {}
 
             if (currentRole === 'admin') {
-                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnSausagePriceCompare', 'btnQuickNote', 'btnInbox', 'btnStaffMessage', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnShiftSettings', 'btnTelegramSettings', 'btnDebtLedger', 'btnContractAdmin', 'btnGrowthReport', 'btnPurchaseInvoices', 'btnTakeoutAdmin', 'btnGoals', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnDeletedSales', 'btnWeeklyReports', 'btnPersonnel', 'btnMyAccount'], 'dashboardTab');
+                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnSausagePriceCompare', 'btnQuickNote', 'btnInbox', 'btnStaffMessage', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnShiftSettings', 'btnTelegramSettings', 'btnDebtLedger', 'btnContractAdmin', 'btnGrowthReport', 'btnPurchaseInvoices', 'btnTakeoutAdmin', 'btnGoals', 'btnSalesBoost', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnDeletedSales', 'btnWeeklyReports', 'btnPersonnel', 'btnMyAccount'], 'dashboardTab');
                 checkAndGenerateWeeklyReport();
                 document.getElementById('salaryAdminForm').style.display = 'block';
                 checkLowStockAlertNoWeight();
             } else if (currentRole === 'morning_seller') {
-                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnSausagePriceCompare', 'btnQuickNote', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnDebtLedger', 'btnPersonalTakeout', 'btnGoals', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnMyAccount'], 'dashboardTab');
+                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnSausagePriceCompare', 'btnQuickNote', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnDebtLedger', 'btnPersonalTakeout', 'btnGoals', 'btnSalesBoost', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnMyAccount'], 'dashboardTab');
                 document.getElementById('salaryAdminForm').style.display = 'none';
             } else {
-                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnSausagePriceCompare', 'btnQuickNote', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnReport', 'btnDebtLedger', 'btnPersonalTakeout', 'btnGoals', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnMyAccount'], 'dashboardTab');
+                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnSausagePriceCompare', 'btnQuickNote', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnReport', 'btnDebtLedger', 'btnPersonalTakeout', 'btnGoals', 'btnSalesBoost', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnMyAccount'], 'dashboardTab');
                 document.getElementById('salaryAdminForm').style.display = 'none';
             }
 
@@ -6437,6 +6608,7 @@ notify pgrst, 'reload schema';`;
         }
 
         async function loadAdminDashboard() {
+            try { if (typeof rsRefreshPanels === 'function') rsRefreshPanels(); if (typeof rsSyncTodayFromServer === 'function') rsSyncTodayFromServer(); } catch (e) {}
             const box = document.getElementById('dashboardContent');
             box.innerHTML = skeletonCards(2);
 
@@ -8253,7 +8425,518 @@ notify pgrst, 'reload schema';`;
             }
         };
 
-        async function loadSausagePriceCompare() {
+    
+        // ========== افزایش فروش (پیشنهاد / بسته / جمله) ==========
+        const SB_LS_KEY = 'salesBoostConfig_v1';
+        const SB_DEFAULT_CHECKLIST = [
+            'هر روز یک پیشنهاد ترکیبی روی کاغذ سر ترازو',
+            'پرفروش‌ترین کالاها جلو ویترین و هم‌سطح چشم',
+            'ساعت شلوغی (عصر) یک نمونه چشیدن',
+            'پاداش فروشنده روی میانگین مبلغ فاکتور',
+            '۱۰ مشتری ثابت در واتساپ — هفته‌ای یک پیام شخصی',
+            'قیمت ۲–۳ کالای پرتردد رقابتی؛ سود از مکمل‌ها',
+            'بنر کوچک سر غرفه با قیمت درشت',
+            'معرفی متقابل با غرفه مجاور'
+        ];
+
+        function sbDefaultConfig() {
+            return {
+                offers: [
+                    { id: 'o1', title: 'پک لبنیات صبحانه', body: 'ماست چکیده + پنیر: به مشتری بگو با هم به‌صرفه‌تر است.', until: 'همیشه', active: true },
+                    { id: 'o2', title: 'سوسیس نیم‌کilo+', body: 'بالای نیم کیلو سوسیس/کالباس: یک جمله تعریف از تازگی بگو و پیشنهاد خیارشور بده.', until: 'همیشه', active: true }
+                ],
+                bundles: [
+                    { id: 'b1', title: 'پک کالباس مهمانی', items: 'کالباس - خیارشور - نان', benefit: 'سبد بزرگ‌تر؛ پیشنهاد به مشتری‌های خرید بالای ۳۰۰ هزار', active: true },
+                    { id: 'b2', title: 'پک ترشی با ماست', items: 'ماست چکیده - خیارشور', benefit: 'جمله: با ماست کامل می‌شه، اضافه کنم؟', active: true }
+                ],
+                scripts: [
+                    { id: 's1', text: 'با خیارشور کامل می‌شه، اضافه کنم؟', active: true },
+                    { id: 's2', text: 'این یکی الان تازه برش خورده، مشتری‌ها خیلی راضی‌ان.', active: true },
+                    { id: 's3', text: 'اگه کمی بیشتر بگیری، از نظر قیمت به‌صرفه‌تره.', active: true }
+                ],
+                avgTicket: 250000,
+                checklist: SB_DEFAULT_CHECKLIST.map((t, i) => ({ id: 'c' + i, text: t, done: false })),
+                updatedAt: null
+            };
+        }
+
+        function sbLoadLocal() {
+            try {
+                const raw = localStorage.getItem(SB_LS_KEY);
+                if (!raw) return sbDefaultConfig();
+                const o = JSON.parse(raw);
+                if (!o || !Array.isArray(o.offers)) return sbDefaultConfig();
+                if (!Array.isArray(o.checklist) || !o.checklist.length)
+                    o.checklist = SB_DEFAULT_CHECKLIST.map((t, i) => ({ id: 'c' + i, text: t, done: false }));
+                return o;
+            } catch (e) { return sbDefaultConfig(); }
+        }
+
+        function sbSaveLocal(cfg) {
+            try {
+                cfg.updatedAt = new Date().toISOString();
+                localStorage.setItem(SB_LS_KEY, JSON.stringify(cfg));
+            } catch (e) {}
+            window.__salesBoostCfg = cfg;
+        }
+
+        async function sbLoadRemote() {
+            let cfg = sbLoadLocal();
+            try {
+                if (typeof _supabase !== 'undefined' && _supabase) {
+                    const { data, error } = await _supabase.from('sales_boost').select('config, updated_at').eq('id', 1).maybeSingle();
+                    if (!error && data && data.config) {
+                        const remote = typeof data.config === 'string' ? JSON.parse(data.config) : data.config;
+                        if (remote && Array.isArray(remote.offers)) {
+                            // remote wins if newer
+                            const locT = cfg.updatedAt ? new Date(cfg.updatedAt).getTime() : 0;
+                            const remT = data.updated_at ? new Date(data.updated_at).getTime() : 0;
+                            if (remT >= locT) cfg = Object.assign(sbDefaultConfig(), remote, { updatedAt: data.updated_at });
+                        }
+                    }
+                }
+            } catch (e) { console.warn('sb remote', e); }
+            sbSaveLocal(cfg);
+            return cfg;
+        }
+
+        async function sbPushRemote(cfg) {
+            try {
+                if (typeof _supabase === 'undefined' || !_supabase) return { ok: false, msg: 'آفلاین' };
+                const { error } = await _supabase.from('sales_boost').upsert({
+                    id: 1,
+                    config: cfg,
+                    updated_at: new Date().toISOString()
+                });
+                if (error) return { ok: false, msg: error.message };
+                return { ok: true };
+            } catch (e) {
+                return { ok: false, msg: e.message || String(e) };
+            }
+        }
+
+        function sbUid(prefix) {
+            return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+        }
+
+        async function loadSalesBoostTab() {
+            const cfg = await sbLoadRemote();
+            const isAdmin = (typeof currentRole !== 'undefined' && currentRole === 'admin');
+            const adminV = document.getElementById('sbAdminView');
+            const sellerV = document.getElementById('sbSellerView');
+            if (adminV) adminV.style.display = isAdmin ? 'block' : 'none';
+            if (sellerV) {
+                sellerV.style.display = 'block';
+                sellerV.innerHTML = sbRenderSellerPanel(cfg, true);
+            }
+            if (isAdmin) {
+                sbRenderAdminLists(cfg);
+                const avg = document.getElementById('sbAvgTicket');
+                if (avg) avg.value = cfg.avgTicket || '';
+            }
+            sbRefreshBanners(cfg);
+            try { rsRefreshPanels(); } catch (e) {}
+        }
+
+        function sbRenderSellerPanel(cfg, full) {
+            const offers = (cfg.offers || []).filter(o => o.active !== false);
+            const bundles = (cfg.bundles || []).filter(b => b.active !== false);
+            const scripts = (cfg.scripts || []).filter(s => s.active !== false);
+            let h = '<div class="sb-banner-card">';
+            h += '<div class="sb-b-title">🚀 امروز چه بفروشیم؟</div>';
+            if (cfg.avgTicket) {
+                h += '<div class="sb-avg-pill">هدف میانگین فاکتور: ' + Number(cfg.avgTicket).toLocaleString('fa-IR') + ' تومان</div>';
+            }
+            if (offers.length) {
+                h += '<div class="sb-b-body" style="margin-top:8px;"><b>پیشنهادها:</b><ul style="margin:4px 0 0 0;padding-right:18px;">';
+                offers.forEach(o => {
+                    h += '<li><b>' + escapeHtmlForToast(o.title || '') + '</b> — ' + escapeHtmlForToast(o.body || '');
+                    if (o.until) h += ' <span style="opacity:.7;">(' + escapeHtmlForToast(o.until) + ')</span>';
+                    h += '</li>';
+                });
+                h += '</ul></div>';
+            }
+            if (bundles.length) {
+                h += '<div class="sb-b-body" style="margin-top:8px;"><b>بسته‌ها:</b><ul style="margin:4px 0 0 0;padding-right:18px;">';
+                bundles.forEach(b => {
+                    h += '<li><b>' + escapeHtmlForToast(b.title || '') + '</b>: ' + escapeHtmlForToast(b.items || '');
+                    if (b.benefit) h += ' → ' + escapeHtmlForToast(b.benefit);
+                    h += '</li>';
+                });
+                h += '</ul></div>';
+            }
+            if (scripts.length) {
+                h += '<div class="sb-banner-scripts" style="margin-top:8px;"><b>💬 بگو به مشتری:</b><ul style="margin:4px 0 0 0;padding-right:18px;">';
+                scripts.forEach(s => { h += '<li>' + escapeHtmlForToast(s.text || '') + '</li>'; });
+                h += '</ul></div>';
+            }
+            if (!offers.length && !bundles.length && !scripts.length) {
+                h += '<div class="sb-b-body">هنوز پیشنهادی ثبت نشده. مدیر از همین تب اضافه می‌کند.</div>';
+            }
+            h += '</div>';
+            return h;
+        }
+
+        function sbRenderAdminLists(cfg) {
+            const ol = document.getElementById('sbOffersList');
+            if (ol) {
+                ol.innerHTML = (cfg.offers || []).map(o =>
+                    '<div class="sb-item"><div class="sb-item-body"><strong>' + escapeHtmlForToast(o.title || '') + '</strong><br>' +
+                    escapeHtmlForToast(o.body || '') +
+                    (o.until ? '<br><span class="hint">' + escapeHtmlForToast(o.until) + '</span>' : '') +
+                    '</div><button type="button" class="row-btn delete-btn" onclick="sbRemoveItem(\'offers\',\'' + o.id + '\')">حذف</button></div>'
+                ).join('') || '<div class="hint">هنوز پیشنهادی نیست.</div>';
+            }
+            const bl = document.getElementById('sbBundlesList');
+            if (bl) {
+                bl.innerHTML = (cfg.bundles || []).map(b =>
+                    '<div class="sb-item"><div class="sb-item-body"><strong>' + escapeHtmlForToast(b.title || '') + '</strong><br>' +
+                    escapeHtmlForToast(b.items || '') +
+                    (b.benefit ? '<br><span style="color:#34d399;">' + escapeHtmlForToast(b.benefit) + '</span>' : '') +
+                    '</div><button type="button" class="row-btn delete-btn" onclick="sbRemoveItem(\'bundles\',\'' + b.id + '\')">حذف</button></div>'
+                ).join('') || '<div class="hint">هنوز بسته‌ای نیست.</div>';
+            }
+            const sl = document.getElementById('sbScriptsList');
+            if (sl) {
+                sl.innerHTML = (cfg.scripts || []).map(s =>
+                    '<div class="sb-item"><div class="sb-item-body">' + escapeHtmlForToast(s.text || '') +
+                    '</div><button type="button" class="row-btn delete-btn" onclick="sbRemoveItem(\'scripts\',\'' + s.id + '\')">حذف</button></div>'
+                ).join('') || '<div class="hint">هنوز جمله‌ای نیست.</div>';
+            }
+            const cl = document.getElementById('sbChecklist');
+            if (cl) {
+                cl.innerHTML = (cfg.checklist || []).map(c =>
+                    '<label class="sb-check"><input type="checkbox" ' + (c.done ? 'checked' : '') +
+                    ' onchange="sbToggleCheck(\'' + c.id + '\', this.checked)"> <span>' + escapeHtmlForToast(c.text || '') + '</span></label>'
+                ).join('');
+            }
+        }
+
+        function sbRefreshBanners(cfg) {
+            cfg = cfg || window.__salesBoostCfg || sbLoadLocal();
+            const html = sbRenderSellerPanel(cfg, false);
+            ['sbBannerSale', 'sbBannerEkala', 'sbBannerSausage'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = html;
+            });
+        }
+
+        window.sbAddOffer = function () {
+            const cfg = sbLoadLocal();
+            const title = (document.getElementById('sbOfferTitle') || {}).value || '';
+            const body = (document.getElementById('sbOfferBody') || {}).value || '';
+            const until = (document.getElementById('sbOfferUntil') || {}).value || '';
+            if (!title.trim() && !body.trim()) { showToast('عنوان یا توضیح را پر کن.'); return; }
+            cfg.offers = cfg.offers || [];
+            cfg.offers.push({ id: sbUid('o'), title: title.trim(), body: body.trim(), until: until.trim(), active: true });
+            sbSaveLocal(cfg);
+            ['sbOfferTitle', 'sbOfferBody', 'sbOfferUntil'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
+            sbRenderAdminLists(cfg);
+            sbRefreshBanners(cfg);
+            showToast('پیشنهاد اضافه شد — ذخیره همه را بزن.');
+        };
+
+        window.sbAddBundle = function () {
+            const cfg = sbLoadLocal();
+            const title = (document.getElementById('sbBundleTitle') || {}).value || '';
+            const items = (document.getElementById('sbBundleItems') || {}).value || '';
+            const benefit = (document.getElementById('sbBundleBenefit') || {}).value || '';
+            if (!title.trim()) { showToast('نام بسته را بنویس.'); return; }
+            cfg.bundles = cfg.bundles || [];
+            cfg.bundles.push({ id: sbUid('b'), title: title.trim(), items: items.trim(), benefit: benefit.trim(), active: true });
+            sbSaveLocal(cfg);
+            ['sbBundleTitle', 'sbBundleItems', 'sbBundleBenefit'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
+            sbRenderAdminLists(cfg);
+            sbRefreshBanners(cfg);
+            showToast('بسته اضافه شد.');
+        };
+
+        window.sbAddScript = function () {
+            const cfg = sbLoadLocal();
+            const textV = (document.getElementById('sbScriptText') || {}).value || '';
+            if (!textV.trim()) { showToast('جمله را بنویس.'); return; }
+            cfg.scripts = cfg.scripts || [];
+            cfg.scripts.push({ id: sbUid('s'), text: textV.trim(), active: true });
+            sbSaveLocal(cfg);
+            const e = document.getElementById('sbScriptText'); if (e) e.value = '';
+            sbRenderAdminLists(cfg);
+            sbRefreshBanners(cfg);
+            showToast('جمله اضافه شد.');
+        };
+
+        window.sbRemoveItem = function (kind, id) {
+            const cfg = sbLoadLocal();
+            cfg[kind] = (cfg[kind] || []).filter(x => x.id !== id);
+            sbSaveLocal(cfg);
+            sbRenderAdminLists(cfg);
+            sbRefreshBanners(cfg);
+        };
+
+        window.sbToggleCheck = function (id, done) {
+            const cfg = sbLoadLocal();
+            (cfg.checklist || []).forEach(c => { if (c.id === id) c.done = !!done; });
+            sbSaveLocal(cfg);
+        };
+
+        window.sbSaveAvgTicket = function () {
+            const cfg = sbLoadLocal();
+            const v = Number((document.getElementById('sbAvgTicket') || {}).value || 0);
+            cfg.avgTicket = v > 0 ? v : 0;
+            sbSaveLocal(cfg);
+            sbRefreshBanners(cfg);
+            showToast(v > 0 ? 'هدف میانگین فاکتور ذخیره شد.' : 'هدف پاک شد.');
+        };
+
+        window.sbSaveAll = async function () {
+            const st = document.getElementById('sbSaveStatus');
+            const cfg = sbLoadLocal();
+            sbSaveLocal(cfg);
+            if (st) st.textContent = 'در حال ذخیره روی سرور...';
+            const r = await sbPushRemote(cfg);
+            if (r.ok) {
+                if (st) st.textContent = '✅ ذخیره شد و برای همه گوشی‌ها در دسترس است.';
+                showToast('✅ تنظیمات افزایش فروش ذخیره شد.');
+            } else {
+                if (st) st.innerHTML = '⚠️ روی این گوشی ذخیره شد. سرور: ' + escapeHtmlForToast(r.msg || '') +
+                    '<br>اگر جدول sales_boost را در Supabase نساختی، SQL پایین را اجرا کن.';
+                showToast('محلی ذخیره شد — سرور: ' + (r.msg || ''));
+            }
+            sbRefreshBanners(cfg);
+        };
+
+        window.loadSalesBoostTab = loadSalesBoostTab;
+
+        // بعد از ورود، بنر فروش را پر کن
+        (function sbAutoInit() {
+            const boot = async () => {
+                try {
+                    const cfg = await sbLoadRemote();
+                    sbRefreshBanners(cfg);
+                } catch (e) {}
+            };
+            if (document.readyState === 'complete') setTimeout(boot, 1200);
+            else window.addEventListener('load', () => setTimeout(boot, 1200));
+        })();
+
+
+
+        // ========== فروشنده واقعی: میانگین فاکتور + مربی فروش ==========
+        const RS_DAY_KEY = 'rsSellerDayStats_v1';
+
+        function rsTodayKey() {
+            try { return (typeof getTehranISODate === 'function') ? getTehranISODate() : new Date().toISOString().slice(0, 10); }
+            catch (e) { return new Date().toISOString().slice(0, 10); }
+        }
+
+        function rsLoadDay() {
+            try {
+                const raw = localStorage.getItem(RS_DAY_KEY);
+                if (!raw) return { day: rsTodayKey(), count: 0, sum: 0, lastTips: [] };
+                const o = JSON.parse(raw);
+                if (!o || o.day !== rsTodayKey()) return { day: rsTodayKey(), count: 0, sum: 0, lastTips: [] };
+                return o;
+            } catch (e) { return { day: rsTodayKey(), count: 0, sum: 0, lastTips: [] }; }
+        }
+
+        function rsSaveDay(o) {
+            try { localStorage.setItem(RS_DAY_KEY, JSON.stringify(o)); } catch (e) {}
+        }
+
+        function rsAvgTarget() {
+            try {
+                const cfg = (typeof sbLoadLocal === 'function') ? sbLoadLocal() : (window.__salesBoostCfg || {});
+                return Number(cfg.avgTicket) || 250000;
+            } catch (e) { return 250000; }
+        }
+
+        function rsScripts() {
+            try {
+                const cfg = (typeof sbLoadLocal === 'function') ? sbLoadLocal() : {};
+                const list = (cfg.scripts || []).filter(s => s.active !== false && s.text).map(s => s.text);
+                if (list.length) return list;
+            } catch (e) {}
+            return [
+                'با خیارشور کامل می‌شه، اضافه کنم؟',
+                'این یکی الان تازه برش خورده، مشتری‌ها خیلی راضی‌ان.',
+                'اگه کمی بیشتر بگیری از نظر قیمت به‌صرفه‌تره.',
+                'با ماست چکیده ترکیبش عالیه، بذارم؟'
+            ];
+        }
+
+        function rsUpsellForProduct(productName, category) {
+            const n = String(productName || '');
+            const c = String(category || '');
+            if (c === 'sausage' || /سوسیس|کالباس|هات\s*داگ|ژامبون/.test(n)) {
+                return [
+                    'با خیارشور کامل می‌شه، اضافه کنم؟',
+                    'نان یا سس هم می‌خوای کنارش؟',
+                    'برای مهمونی یه کم بیشتر بردار، به‌صرفه‌تره.'
+                ];
+            }
+            if (/ماست|پنیر|کره|شیر|خامه/.test(n) || c === 'dairy' || c === 'لبنیات') {
+                return [
+                    'با عسل یا حلوا ترکیبش عالیه، بذارم؟',
+                    'خیارشور کنار ماست خیلی می‌چسبه، اضافه کنم؟',
+                    'یه پنیر دیگه برای تنوع برمی‌داری؟'
+                ];
+            }
+            if (/خیار|ترشی|زیتون|شور/.test(n)) {
+                return [
+                    'کنار ماست یا کالباس عالیه — ماست هم بذارم؟',
+                    'برای مهمونی یکی بزرگ‌تر به‌صرفه‌تره.'
+                ];
+            }
+            return rsScripts();
+        }
+
+        function rsPickTip(productName, category, day) {
+            const tips = rsUpsellForProduct(productName, category);
+            const recent = new Set(day.lastTips || []);
+            const fresh = tips.filter(t => !recent.has(t));
+            const pool = fresh.length ? fresh : tips;
+            const tip = pool[Math.floor(Math.random() * pool.length)] || tips[0];
+            day.lastTips = (day.lastTips || []).concat([tip]).slice(-5);
+            return tip;
+        }
+
+        function rsFormat(n) {
+            try { return Math.round(Number(n) || 0).toLocaleString('fa-IR'); } catch (e) { return String(n); }
+        }
+
+        function rsRenderPanel(day) {
+            day = day || rsLoadDay();
+            const target = rsAvgTarget();
+            const avg = day.count > 0 ? (day.sum / day.count) : 0;
+            const pct = target > 0 ? Math.min(100, Math.round((avg / target) * 100)) : 0;
+            const gap = Math.max(0, target - avg);
+            let mood = 'شروع کن — هر فاکتور را کمی بزرگ‌تر کن';
+            if (day.count === 0) mood = 'هنوز فاکتوری ثبت نکردی. اولین فروش را با یک پیشنهاد مکمل بزن.';
+            else if (avg >= target) mood = 'عالی! میانگین فاکتورت به هدفه. همین‌طور ادامه بده 💪';
+            else mood = 'تا هدف میانگین فاکتور حدود ' + rsFormat(gap) + ' تومان کم داری — یک کالای مکمل پیشنهاد بده.';
+
+            const tip = (rsScripts()[0]) || '';
+            return '<div class="rs-card">' +
+                '<h3>💼 فروشنده واقعی — امروز</h3>' +
+                '<div class="rs-stats">' +
+                '<div class="rs-stat"><b>' + rsFormat(day.count) + '</b><span>تعداد فاکتور</span></div>' +
+                '<div class="rs-stat"><b>' + rsFormat(avg) + '</b><span>میانگین فاکتور</span></div>' +
+                '<div class="rs-stat"><b>' + rsFormat(day.sum) + '</b><span>جمع فروش امروز</span></div>' +
+                '</div>' +
+                '<div style="font-size:11px;opacity:.85;">هدف میانگین: <b>' + rsFormat(target) + '</b> تومان</div>' +
+                '<div class="rs-bar"><i style="width:' + pct + '%;"></i></div>' +
+                '<div class="rs-tip"><strong>نکته مربی:</strong> ' + escapeHtmlForToast(mood) +
+                (tip ? '<br>💬 بگو: «' + escapeHtmlForToast(tip) + '»' : '') +
+                '</div></div>';
+        }
+
+        function rsRefreshPanels() {
+            const day = rsLoadDay();
+            const html = rsRenderPanel(day);
+            const dash = document.getElementById('rsDashPanel');
+            if (dash) dash.innerHTML = html;
+            // کوچک‌تر داخل بنر افزایش فروش
+            const mini = '<div style="margin-bottom:8px;">' + html + '</div>';
+            // فقط یک‌بار در seller view
+            const sv = document.getElementById('sbSellerView');
+            if (sv && sv.style.display !== 'none') {
+                // keep boost content + prepend stats if not present
+                if (!sv.querySelector('.rs-card')) {
+                    sv.innerHTML = html + sv.innerHTML;
+                } else {
+                    const old = sv.querySelector('.rs-card');
+                    if (old && old.parentElement) {
+                        const wrap = document.createElement('div');
+                        wrap.innerHTML = html;
+                        old.replaceWith(wrap.firstChild);
+                    }
+                }
+            }
+        }
+
+        function rsShowCoach(payload, day, tip) {
+            try {
+                const old = document.querySelector('.rs-coach-toast');
+                if (old) old.remove();
+            } catch (e) {}
+            const avg = day.count > 0 ? (day.sum / day.count) : 0;
+            const target = rsAvgTarget();
+            const el = document.createElement('div');
+            el.className = 'rs-coach-toast';
+            el.innerHTML = '<div class="rs-c-title">💼 مربی فروش — فاکتور ثبت شد</div>' +
+                '<div class="rs-c-body">' +
+                'مبلغ این فاکتور: <b>' + rsFormat(payload.amount) + '</b> ت<br>' +
+                'میانگین امروز: <b>' + rsFormat(avg) + '</b> از هدف <b>' + rsFormat(target) + '</b><br>' +
+                '<span style="color:#fbbf24;">💬 برای مشتری بعدی بگو:</span><br>«' + escapeHtmlForToast(tip) + '»' +
+                '</div>' +
+                '<button type="button">متوجه شدم</button>';
+            el.querySelector('button').onclick = () => el.remove();
+            document.body.appendChild(el);
+            setTimeout(() => { try { el.remove(); } catch (e) {} }, 12000);
+        }
+
+        window.rsAfterSale = function (payload) {
+            if (!payload || !(Number(payload.amount) > 0)) return;
+            // برای مدیر هم کار می‌کند اما تاکید روی فروشنده است
+            const day = rsLoadDay();
+            day.count = (day.count || 0) + 1;
+            day.sum = (day.sum || 0) + Number(payload.amount);
+            const tip = rsPickTip(payload.productName, payload.category, day);
+            rsSaveDay(day);
+            rsRefreshPanels();
+            rsShowCoach(payload, day, tip);
+            // همگام‌سازی اختیاری با سرور برای آمار امروز
+            try { rsSyncTodayFromServer(); } catch (e) {}
+        };
+
+        async function rsSyncTodayFromServer() {
+            try {
+                if (typeof _supabase === 'undefined' || !_supabase) return;
+                if (typeof navigator !== 'undefined' && !navigator.onLine) return;
+                const label = (typeof currentUserLabel !== 'undefined' && currentUserLabel) ? currentUserLabel : '';
+                if (!label) return;
+                const today = rsTodayKey();
+                const { startUTC, endUTC } = (typeof tehranDateRangeToISOBounds === 'function')
+                    ? tehranDateRangeToISOBounds(today, today)
+                    : { startUTC: today + 'T00:00:00+03:30', endUTC: today + 'T23:59:59+03:30' };
+                let q = _supabase.from('sales').select('sell_price, seller_name, created_at')
+                    .gte('created_at', startUTC).lt('created_at', endUTC);
+                const { data, error } = await q;
+                if (error || !data) return;
+                // فیلتر فروشنده فعلی (نام نزدیک)
+                const norm = (s) => String(s || '').replace(/\s+/g, ' ').trim();
+                const mine = data.filter(r => {
+                    const a = norm(r.seller_name), b = norm(label);
+                    return a === b || a.indexOf(b) !== -1 || b.indexOf(a) !== -1;
+                });
+                // اگر admin است همه را نگیر مگر label خودش
+                if (!mine.length && currentRole === 'admin') {
+                    // مدیر: کل غرفه
+                    const sum = data.reduce((s, r) => s + (Number(r.sell_price) || 0), 0);
+                    const day = { day: today, count: data.length, sum, lastTips: (rsLoadDay().lastTips || []) };
+                    rsSaveDay(day);
+                    rsRefreshPanels();
+                    return;
+                }
+                if (!mine.length) return;
+                const sum = mine.reduce((s, r) => s + (Number(r.sell_price) || 0), 0);
+                const day = { day: today, count: mine.length, sum, lastTips: (rsLoadDay().lastTips || []) };
+                rsSaveDay(day);
+                rsRefreshPanels();
+            } catch (e) { console.warn('rsSync', e); }
+        }
+
+        window.rsRefreshPanels = rsRefreshPanels;
+        window.rsSyncTodayFromServer = rsSyncTodayFromServer;
+
+        // بارگذاری اولیه آمار
+        (function rsBoot() {
+            const run = () => { try { rsRefreshPanels(); rsSyncTodayFromServer(); } catch (e) {} };
+            if (document.readyState === 'complete') setTimeout(run, 1500);
+            else window.addEventListener('load', () => setTimeout(run, 1500));
+        })();
+
+
+    async function loadSausagePriceCompare() {
             const box = document.getElementById('spcList');
             const sum = document.getElementById('spcSummary');
             if (!box) return;
@@ -12149,6 +12832,17 @@ notify pgrst, 'reload schema';`;
             } else {
                 showToast(`✅ فروش ${typeLabel} «${product.name}» در ساعت ${getTehranTimeString(now)} ثبت شد.\n💰 مبلغ کل فاکتور: ${calculatedPrice.toLocaleString('fa-IR')} تومان\n🧊 موجودی جدید ظرف غرفه: ${newBoothStock} کیلوگرم\n⏱️ زمان دقیق: ${fullTimeText}`);
             }
+
+            try {
+                if (typeof rsAfterSale === 'function') {
+                    rsAfterSale({
+                        amount: calculatedPrice,
+                        productName: product && product.name,
+                        category: product && product.category,
+                        type: type
+                    });
+                }
+            } catch (e) { console.warn('rsAfterSale', e); }
 
             document.getElementById(ids.name).value = '';
             document.getElementById(ids.qty).value = '';
