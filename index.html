@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v140 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v141 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -128,6 +128,47 @@
         }
 
         /* راهنمای لیبل سوسیس */
+        
+        .spc-gcard {
+            border-radius: 14px;
+            border: 1px solid rgba(148,163,184,.28);
+            overflow: hidden;
+            margin-bottom: 10px;
+            background: rgba(15,23,42,.45);
+        }
+        .spc-gcard.none { border-color: rgba(248,113,113,.3); }
+        .spc-ghead {
+            display: flex; justify-content: space-between; align-items: center;
+            gap: 10px; padding: 10px 12px;
+            background: linear-gradient(90deg, rgba(14,165,233,.18), rgba(99,102,241,.12));
+            border-bottom: 1px solid rgba(148,163,184,.2);
+        }
+        .spc-ghead-main { text-align: right; flex: 1; }
+        .spc-ghead-price { text-align: left; min-width: 90px; }
+        .spc-gcount {
+            font-size: 10px; opacity: .75; margin-top: 2px;
+            background: rgba(56,189,248,.2); display: inline-block;
+            padding: 2px 8px; border-radius: 999px;
+        }
+        .spc-gbody { padding: 4px 6px 8px; }
+        .spc-grow {
+            display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px;
+            padding: 8px 8px; border-bottom: 1px solid rgba(148,163,184,.12);
+        }
+        .spc-grow:last-child { border-bottom: none; }
+        .spc-grow-info { flex: 1; min-width: 120px; text-align: right; }
+        .spc-grow-name { font-weight: 800; font-size: 13px; }
+        .spc-grow-price { font-size: 13px; font-weight: 700; margin-top: 2px; }
+        .spc-grow-tip {
+            font-size: 12px; font-weight: 900; white-space: nowrap;
+            padding: 4px 10px; border-radius: 999px;
+        }
+        .spc-grow-tip.up { background: rgba(251,191,36,.15); color: #fbbf24; }
+        .spc-grow-tip.down { background: rgba(56,189,248,.15); color: #38bdf8; }
+        .spc-grow-tip.same { background: rgba(52,211,153,.15); color: #34d399; }
+        .spc-grow-tip.none { background: rgba(148,163,184,.15); color: #94a3b8; }
+        .spc-grow-tip .spc-diff { font-weight: 600; opacity: .8; margin-right: 4px; font-size: 10px; }
+
         .spc-intro {
             background: linear-gradient(135deg, rgba(56,189,248,.12), rgba(167,139,250,.1));
             border: 1px solid rgba(56,189,248,.25);
@@ -3016,7 +3057,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v140 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v141 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3200,7 +3241,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=140', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=141', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -8245,9 +8286,75 @@ notify pgrst, 'reload schema';`;
             const pairs = await spcLoadPairs();
             const isMgr = (typeof currentRole !== 'undefined' && currentRole === 'admin');
             const tolOf = (price) => Math.max(20000, (Number(price) || 0) * 0.25);
+            const codeKey = (c) => String((c && c.code) != null ? c.code : '');
 
-            // ذخیره برای پرینت
-            window.__spcPrintRows = [];
+            // هر کالای بدون‌کد → بهترین کددار
+            const assignments = []; // { op, best, saved }
+            others.forEach(op => {
+                const oKey = spcOtherKey(op);
+                const opPrice = Number(op.sell_price) || 0;
+                const savedCode = (op.scale_pair_code || op.scalePairCode || pairs[oKey] || '');
+                let best = null;
+                if (savedCode) {
+                    best = coded.find(c => String(c.code) === String(savedCode) ||
+                        (typeof spcNormDigits === 'function' && spcNormDigits(c.code) === spcNormDigits(savedCode)));
+                }
+                if (!best && coded.length) {
+                    let bestDiff = Infinity;
+                    coded.forEach(c => {
+                        const d = Math.abs((Number(c.sell_price) || 0) - opPrice);
+                        if (d < bestDiff) { bestDiff = d; best = c; }
+                    });
+                    if (best && bestDiff > tolOf(opPrice) && !savedCode) best = null;
+                }
+                assignments.push({ op, best, saved: !!savedCode, oKey });
+            });
+
+            // گروه بر اساس کد ترازو
+            const groups = new Map(); // code -> { cp, items: [{op, saved, tip, tipCls, diff}] }
+            const unmatched = [];
+            assignments.forEach(a => {
+                if (!a.best) {
+                    unmatched.push(a);
+                    return;
+                }
+                const k = codeKey(a.best);
+                if (!groups.has(k)) groups.set(k, { cp: a.best, items: [] });
+                const cpPrice = Number(a.best.sell_price) || 0;
+                const opPrice = Number(a.op.sell_price) || 0;
+                let tip = 'همان قیمت', tipCls = 'same';
+                if (cpPrice < opPrice) { tip = 'بالاتر بزن'; tipCls = 'up'; }
+                else if (cpPrice > opPrice) { tip = 'پایین‌تر بزن'; tipCls = 'down'; }
+                groups.get(k).items.push({
+                    op: a.op, saved: a.saved, oKey: a.oKey,
+                    tip, tipCls, diff: Math.abs(cpPrice - opPrice), opPrice
+                });
+            });
+
+            // مرتب‌سازی گروه‌ها بر اساس نام کددار
+            const groupList = Array.from(groups.values()).sort((a, b) =>
+                String(a.cp.name || '').localeCompare(String(b.cp.name || ''), 'fa')
+            );
+
+            // داده پرینت فشرده: یک ردیف به ازای هر گروه
+            window.__spcPrintGroups = groupList.map(g => ({
+                scaleName: g.cp.name || '',
+                scaleCode: String(g.cp.code || ''),
+                scalePrice: Number(g.cp.sell_price) || 0,
+                customers: g.items.map(it => ({
+                    name: it.op.name || '',
+                    code: String(it.op.code || ''),
+                    price: it.opPrice,
+                    tip: it.tip,
+                    tipCls: it.tipCls,
+                    diff: it.diff
+                }))
+            }));
+            window.__spcPrintUnmatched = unmatched.map(a => ({
+                name: a.op.name || '',
+                code: String(a.op.code || ''),
+                price: Number(a.op.sell_price) || 0
+            }));
 
             if (!coded.length && !others.length) {
                 box.innerHTML = '<div class="hint" style="text-align:center;padding:20px;">کالای سوسیس/کالباسی در انبار نیست.</div>';
@@ -8255,71 +8362,76 @@ notify pgrst, 'reload schema';`;
                 return;
             }
 
-            let paired = 0, savedN = 0, noMatch = 0;
             let html = '';
             if (isMgr) {
-                html += '<div class="hint" style="margin-bottom:8px;text-align:right;">به‌عنوان مدیر می‌توانی برای هر کالا مشخص کنی کدام <b>کد ۲۲</b> روی ترازو زده شود.</div>';
+                html += '<div class="hint" style="margin-bottom:8px;text-align:right;">مدیر: برای هر کالای مشتری می‌توانی کد ترازو را انتخاب و ذخیره کنی.</div>';
             }
 
-            const rowsSource = others.length ? others : [];
-            // اگر فقط کددار داریم، به صورت لیست ساده نشان بده
-            if (!rowsSource.length && coded.length) {
-                html += '<div class="spc-list">';
-                coded.forEach(cp => {
-                    const price = Number(cp.sell_price) || 0;
-                    html += '<div class="spc-card same"><div class="spc-side" style="padding:14px;">';
-                    html += '<div class="spc-label">کد ترازو ۲۲</div>';
-                    html += '<div class="spc-name" dir="auto">' + escapeHtmlForToast(cp.name || '') + '</div>';
-                    html += '<div class="spc-code" dir="ltr">' + escapeHtmlForToast(String(cp.code || '')) + '</div>';
-                    html += '<div class="spc-price">' + spcFa(price) + '</div>';
-                    html += '<div class="spc-unit">تومان / کیلو</div></div></div>';
-                    window.__spcPrintRows.push({
-                        customer: '—', customerCode: '', customerPrice: '',
-                        scaleName: cp.name || '', scaleCode: String(cp.code || ''), scalePrice: price,
-                        tip: '—', diff: 0, status: 'same'
-                    });
-                });
+            // کارت‌های فشرده: یک کارت = یک کد ترازو + لیست مشتری‌ها
+            groupList.forEach(g => {
+                const cp = g.cp;
+                const cpPrice = Number(cp.sell_price) || 0;
+                html += '<div class="spc-gcard" data-spc-row="1">';
+                html += '<div class="spc-ghead">';
+                html += '<div class="spc-ghead-main">';
+                html += '<div class="spc-label">کد ترازو ۲۲</div>';
+                html += '<div class="spc-name" dir="auto">' + escapeHtmlForToast(cp.name || '') + '</div>';
+                html += '<div class="spc-code" dir="ltr">' + escapeHtmlForToast(String(cp.code || '')) + '</div>';
                 html += '</div>';
-                box.innerHTML = html;
-                if (sum) sum.innerHTML = '<span class="spc-chip">کددار: <b>' + spcFa(coded.length) + '</b></span>';
-                return;
-            }
+                html += '<div class="spc-ghead-price">';
+                html += '<div class="spc-price">' + spcFa(cpPrice) + '</div>';
+                html += '<div class="spc-unit">تومان / کیلو</div>';
+                html += '<div class="spc-gcount">' + spcFa(g.items.length) + ' کالا</div>';
+                html += '</div></div>';
 
-            rowsSource.forEach(op => {
-                const oKey = spcOtherKey(op);
-                const opPrice = Number(op.sell_price) || 0;
-                const opCode = spcNormDigits ? spcNormDigits(op.code) : String(op.code || '');
-                const savedCode = (op.scale_pair_code || op.scalePairCode || pairs[oKey] || '');
-                if (savedCode) savedN++;
-
-                let best = null;
-                if (savedCode) {
-                    best = coded.find(c => String(c.code) === String(savedCode) || (spcNormDigits && spcNormDigits(c.code) === spcNormDigits(savedCode)));
-                }
-                if (!best && coded.length) {
-                    // نزدیک‌ترین قیمت
-                    let bestDiff = Infinity;
-                    coded.forEach(c => {
-                        const d = Math.abs((Number(c.sell_price) || 0) - opPrice);
-                        if (d < bestDiff) { bestDiff = d; best = c; }
-                    });
-                    const tol = tolOf(opPrice);
-                    if (best && bestDiff > tol && !savedCode) best = null;
-                }
-
-                if (!best) {
-                    noMatch++;
-                    html += '<div class="spc-card none" data-spc-row="1">';
-                    html += '<div class="spc-card-grid">';
-                    html += '<div class="spc-side">';
-                    html += '<div class="spc-label">کالای مشتری (بدون کد ۲۲)</div>';
-                    html += '<div class="spc-name" dir="auto">' + escapeHtmlForToast(op.name || '') + '</div>';
-                    if (opCode) html += '<div class="hint" dir="ltr" style="font-size:11px;">کد ' + escapeHtmlForToast(String(op.code || '')) + '</div>';
-                    else html += '<div class="hint" style="font-size:11px;">بدون کد</div>';
-                    html += '<div class="spc-price">' + spcFa(opPrice) + '</div>';
-                    html += '<div class="spc-unit">تومان / کیلو</div>';
+                html += '<div class="spc-gbody">';
+                g.items.forEach(it => {
+                    const op = it.op;
+                    html += '<div class="spc-grow">';
+                    html += '<div class="spc-grow-info">';
+                    html += '<div class="spc-grow-name" dir="auto">' + escapeHtmlForToast(op.name || '') + '</div>';
+                    if (op.code) html += '<div class="hint" dir="ltr" style="font-size:10px;">کد ' + escapeHtmlForToast(String(op.code)) + '</div>';
+                    html += '<div class="spc-grow-price">' + spcFa(it.opPrice) + ' <span class="spc-unit">ت/کیلو</span></div>';
+                    html += '</div>';
+                    html += '<div class="spc-grow-tip ' + it.tipCls + '">';
+                    if (it.tipCls === 'up') html += '⬆️ ' + it.tip;
+                    else if (it.tipCls === 'down') html += '⬇️ ' + it.tip;
+                    else html += '✅ ' + it.tip;
+                    if (it.diff > 0) html += '<span class="spc-diff">±' + spcFa(it.diff) + '</span>';
+                    html += '</div>';
                     if (isMgr) {
-                        html += '<select class="spc-pair-sel" data-okey="' + escapeHtmlAttr(oKey) + '" onchange="spcSetPair(this.dataset.okey, this.value)">';
+                        html += '<select class="spc-pair-sel" data-okey="' + escapeHtmlAttr(it.oKey) + '" onchange="spcSetPair(this.dataset.okey, this.value)">';
+                        html += '<option value="">— کددار —</option>';
+                        coded.forEach(c => {
+                            const sel = String(c.code) === String(cp.code) ? ' selected' : '';
+                            html += '<option value="' + escapeHtmlAttr(String(c.code || '')) + '"' + sel + '>' + escapeHtmlForToast((c.name || '') + ' · ' + (c.code || '')) + '</option>';
+                        });
+                        html += '</select>';
+                        if (it.saved) html += '<span class="spc-saved">✓</span>';
+                    }
+                    html += '</div>';
+                });
+                html += '</div></div>';
+            });
+
+            // بدون جفت
+            if (unmatched.length) {
+                html += '<div class="spc-gcard none" data-spc-row="1">';
+                html += '<div class="spc-ghead"><div class="spc-ghead-main">';
+                html += '<div class="spc-label">بدون جفت کد ترازو</div>';
+                html += '<div class="spc-name">' + spcFa(unmatched.length) + ' کالا</div>';
+                html += '</div></div><div class="spc-gbody">';
+                unmatched.forEach(a => {
+                    const op = a.op;
+                    const opPrice = Number(op.sell_price) || 0;
+                    html += '<div class="spc-grow">';
+                    html += '<div class="spc-grow-info">';
+                    html += '<div class="spc-grow-name" dir="auto">' + escapeHtmlForToast(op.name || '') + '</div>';
+                    html += '<div class="spc-grow-price">' + spcFa(opPrice) + ' <span class="spc-unit">ت/کیلو</span></div>';
+                    html += '</div>';
+                    html += '<div class="spc-grow-tip none">کد مشخص نیست</div>';
+                    if (isMgr) {
+                        html += '<select class="spc-pair-sel" data-okey="' + escapeHtmlAttr(a.oKey) + '" onchange="spcSetPair(this.dataset.okey, this.value)">';
                         html += '<option value="">— انتخاب کددار —</option>';
                         coded.forEach(c => {
                             html += '<option value="' + escapeHtmlAttr(String(c.code || '')) + '">' + escapeHtmlForToast((c.name || '') + ' · ' + (c.code || '')) + '</option>';
@@ -8327,192 +8439,126 @@ notify pgrst, 'reload schema';`;
                         html += '</select>';
                     }
                     html += '</div>';
-                    html += '<div class="spc-mid"><div class="spc-tip none">کد مشخص نیست</div></div>';
-                    html += '<div class="spc-side"><div class="spc-label">کد ترازو ۲۲</div><div class="hint">انتخاب نشده</div></div>';
-                    html += '</div></div>';
-                    window.__spcPrintRows.push({
-                        customer: op.name || '', customerCode: String(op.code || ''), customerPrice: opPrice,
-                        scaleName: '', scaleCode: '', scalePrice: '',
-                        tip: 'کد مشخص نیست', diff: 0, status: 'none'
-                    });
-                    return;
-                }
-
-                paired++;
-                const cpPrice = Number(best.sell_price) || 0;
-                let tip = '', tipCls = 'same', cardCls = 'same';
-                if (cpPrice < opPrice) { tip = '⬆️ بالاتر بزن'; tipCls = 'up'; cardCls = 'up'; }
-                else if (cpPrice > opPrice) { tip = '⬇️ پایین‌تر بزن'; tipCls = 'down'; cardCls = 'down'; }
-                else { tip = '✅ همان قیمت'; tipCls = 'same'; cardCls = 'same'; }
-                const diff = Math.abs(cpPrice - opPrice);
-
-                html += '<div class="spc-card ' + cardCls + '" data-spc-row="1">';
-                html += '<div class="spc-card-grid">';
-                // چپ در RTL = اول در DOM برای مشتری؟ در RTL grid: ستون اول سمت راست است
-                // کاربر خواسته: راست = کددار، چپ = بدون کد
-                // در direction:rtl ستون اول = راست
-                html += '<div class="spc-side">';
-                html += '<div class="spc-label">کالاهایی که کد دارن</div>';
-                html += '<div class="spc-name" dir="auto">' + escapeHtmlForToast(best.name || '') + '</div>';
-                html += '<div class="spc-code" dir="ltr">' + escapeHtmlForToast(String(best.code || '')) + '</div>';
-                html += '<div class="spc-price">' + spcFa(cpPrice) + '</div>';
-                html += '<div class="spc-unit">تومان / کیلو</div>';
-                if (isMgr) {
-                    html += '<select class="spc-pair-sel" data-okey="' + escapeHtmlAttr(oKey) + '" onchange="spcSetPair(this.dataset.okey, this.value)">';
-                    html += '<option value="">— انتخاب کددار —</option>';
-                    coded.forEach(c => {
-                        const sel = String(c.code) === String(best.code) ? ' selected' : '';
-                        html += '<option value="' + escapeHtmlAttr(String(c.code || '')) + '"' + sel + '>' + escapeHtmlForToast((c.name || '') + ' · ' + (c.code || '')) + '</option>';
-                    });
-                    html += '</select>';
-                    if (savedCode) html += '<div class="spc-saved">✓ ذخیره شده</div>';
-                }
-                html += '</div>';
-
-                html += '<div class="spc-mid">';
-                html += '<div class="spc-tip ' + tipCls + '">' + tip + '</div>';
-                if (diff > 0) html += '<div class="spc-diff">اختلاف ' + spcFa(diff) + ' ت</div>';
-                html += '</div>';
-
-                html += '<div class="spc-side">';
-                html += '<div class="spc-label">کالایی که کد ندارن</div>';
-                html += '<div class="spc-name" dir="auto">' + escapeHtmlForToast(op.name || '') + '</div>';
-                if (opCode) html += '<div class="hint" dir="ltr" style="font-size:11px;">کد ' + escapeHtmlForToast(String(op.code || '')) + '</div>';
-                else html += '<div class="hint" style="font-size:11px;">بدون کد</div>';
-                html += '<div class="spc-price">' + spcFa(opPrice) + '</div>';
-                html += '<div class="spc-unit">تومان / کیلو</div>';
-                html += '</div>';
-
-                html += '</div></div>';
-
-                window.__spcPrintRows.push({
-                    customer: op.name || '',
-                    customerCode: String(op.code || ''),
-                    customerPrice: opPrice,
-                    scaleName: best.name || '',
-                    scaleCode: String(best.code || ''),
-                    scalePrice: cpPrice,
-                    tip: tip.replace(/[⬆️⬇️✅]/g, '').trim(),
-                    diff: diff,
-                    status: tipCls
                 });
-            });
+                html += '</div></div>';
+            }
 
-            box.innerHTML = html;
+            // کددارهایی که هیچکس بهشان وصل نیست — خیلی جمع‌وجور
+            const usedCodes = new Set(groupList.map(g => codeKey(g.cp)));
+            const orphanCoded = coded.filter(c => !usedCodes.has(codeKey(c)));
+            if (orphanCoded.length && isMgr) {
+                html += '<div class="hint" style="margin-top:8px;">کددار بدون استفاده: ' +
+                    orphanCoded.map(c => escapeHtmlForToast((c.name || '') + ' (' + c.code + ')')).join(' · ') + '</div>';
+            }
+
+            box.innerHTML = html || '<div class="hint" style="text-align:center;padding:16px;">موردی برای نمایش نیست.</div>';
+
+            const paired = assignments.filter(a => a.best).length;
+            const savedN = assignments.filter(a => a.saved).length;
             if (sum) {
-                sum.innerHTML =
-                    '<span class="spc-chip">جفت‌شده: <b>' + spcFa(paired) + '</b></span>' +
-                    '<span class="spc-chip">ذخیره مدیر: <b>' + spcFa(savedN) + '</b></span>' +
-                    '<span class="spc-chip">بدون جفت: <b>' + spcFa(noMatch) + '</b></span>' +
-                    '<span class="spc-chip">کددار: <b>' + spcFa(coded.length) + '</b></span>';
+                const base =
+                    '<span class="spc-chip">کد ترازو: <b>' + spcFa(groupList.length) + '</b></span>' +
+                    '<span class="spc-chip">کالای مشتری: <b>' + spcFa(paired) + '</b></span>' +
+                    '<span class="spc-chip">ذخیره: <b>' + spcFa(savedN) + '</b></span>' +
+                    (unmatched.length ? '<span class="spc-chip">بدون جفت: <b>' + spcFa(unmatched.length) + '</b></span>' : '');
+                sum.innerHTML = base;
+                sum.setAttribute('data-base', base);
             }
             try { spcFilterList(); } catch (e) {}
         }
 
-        // دانلود / پرینت راهنمای لیبل — جدول شیک با فونت B Nazanin
+        // دانلود / پرینت فشرده — یک ردیف برای هر کد ترازو
         window.spcDownloadPrint = function () {
-            const rows = window.__spcPrintRows || [];
-            if (!rows.length) {
-                showToast('اول لیست را بروزرسانی کن تا داده برای پرینت آماده شود.');
+            const groups = window.__spcPrintGroups || [];
+            const unmatched = window.__spcPrintUnmatched || [];
+            if (!groups.length && !unmatched.length) {
+                showToast('اول لیست را بروزرسانی کن.');
                 try { loadSausagePriceCompare(); } catch (e) {}
                 return;
             }
-            const fa = (n) => {
-                try { return Number(n).toLocaleString('fa-IR'); } catch (e) { return String(n); }
-            };
-            const today = (() => {
-                try {
-                    if (typeof getTehranDateString === 'function') return getTehranDateString(new Date());
-                } catch (e) {}
-                return new Date().toLocaleDateString('fa-IR');
-            })();
+            const fa = (n) => { try { return Number(n).toLocaleString('fa-IR'); } catch (e) { return String(n); } };
+            let today = '';
+            try {
+                if (typeof jalaliLabelForISODate === 'function' && typeof getTehranISODate === 'function')
+                    today = jalaliLabelForISODate(getTehranISODate());
+                else today = new Date().toLocaleDateString('fa-IR');
+            } catch (e) { today = new Date().toLocaleDateString('fa-IR'); }
 
-            let bodyRows = rows.map((r, i) => {
-                const tipColor = r.status === 'up' ? '#b45309' : (r.status === 'down' ? '#0369a1' : (r.status === 'same' ? '#047857' : '#64748b'));
-                const bg = (i % 2 === 0) ? '#ffffff' : '#f8fafc';
+            const tipBadge = (c) => {
+                const color = c.tipCls === 'up' ? '#b45309' : (c.tipCls === 'down' ? '#0369a1' : '#047857');
+                return '<span style="color:' + color + ';font-weight:800;">' + (c.tip || '') + '</span>' +
+                    (c.diff > 0 ? ' <span style="color:#64748b;font-size:10px;">±' + fa(c.diff) + '</span>' : '');
+            };
+
+            let body = groups.map((g, i) => {
+                const custHtml = g.customers.map(c =>
+                    '<div style="padding:3px 0;border-bottom:1px dotted #e2e8f0;">' +
+                    '<b>' + (c.name || '') + '</b>' +
+                    (c.code ? ' <span style="color:#64748b;font-size:10px;direction:ltr;">(' + c.code + ')</span>' : '') +
+                    ' — <b>' + fa(c.price) + '</b> ت ' +
+                    tipBadge(c) +
+                    '</div>'
+                ).join('');
+                const bg = (i % 2 === 0) ? '#ffffff' : '#f0f9ff';
                 return '<tr style="background:' + bg + ';">' +
-                    '<td style="padding:10px 8px;border:1px solid #cbd5e1;text-align:center;font-weight:700;">' + fa(i + 1) + '</td>' +
-                    '<td style="padding:10px 8px;border:1px solid #cbd5e1;text-align:right;">' +
-                        '<div style="font-weight:700;">' + (r.customer || '—') + '</div>' +
-                        (r.customerCode ? '<div style="font-size:11px;color:#64748b;direction:ltr;">کد ' + r.customerCode + '</div>' : '') +
+                    '<td style="padding:8px 6px;border:1px solid #94a3b8;text-align:center;font-weight:700;width:36px;">' + fa(i + 1) + '</td>' +
+                    '<td style="padding:8px 6px;border:1px solid #94a3b8;text-align:right;">' +
+                        '<div style="font-weight:800;font-size:14px;">' + (g.scaleName || '') + '</div>' +
+                        '<div style="font-weight:900;color:#0369a1;direction:ltr;font-size:15px;">' + (g.scaleCode || '') + '</div>' +
+                        '<div style="font-weight:800;margin-top:2px;">' + fa(g.scalePrice) + ' <span style="font-size:10px;font-weight:600;">ت/کیلو</span></div>' +
                     '</td>' +
-                    '<td style="padding:10px 8px;border:1px solid #cbd5e1;text-align:center;font-weight:800;font-size:15px;">' +
-                        (r.customerPrice !== '' && r.customerPrice != null ? fa(r.customerPrice) : '—') +
-                    '</td>' +
-                    '<td style="padding:10px 8px;border:1px solid #cbd5e1;text-align:center;font-weight:800;color:' + tipColor + ';">' +
-                        (r.tip || '—') +
-                        (r.diff > 0 ? '<div style="font-size:11px;font-weight:600;color:#64748b;">±' + fa(r.diff) + '</div>' : '') +
-                    '</td>' +
-                    '<td style="padding:10px 8px;border:1px solid #cbd5e1;text-align:right;">' +
-                        '<div style="font-weight:700;">' + (r.scaleName || '—') + '</div>' +
-                        (r.scaleCode ? '<div style="font-size:13px;font-weight:800;color:#0369a1;direction:ltr;">' + r.scaleCode + '</div>' : '') +
-                    '</td>' +
-                    '<td style="padding:10px 8px;border:1px solid #cbd5e1;text-align:center;font-weight:800;font-size:15px;">' +
-                        (r.scalePrice !== '' && r.scalePrice != null ? fa(r.scalePrice) : '—') +
-                    '</td>' +
-                '</tr>';
+                    '<td style="padding:6px 8px;border:1px solid #94a3b8;text-align:right;">' + custHtml + '</td>' +
+                    '</tr>';
             }).join('');
 
+            if (unmatched.length) {
+                const uHtml = unmatched.map(c =>
+                    '<div style="padding:2px 0;"><b>' + (c.name || '') + '</b> — ' + fa(c.price) + ' ت</div>'
+                ).join('');
+                body += '<tr style="background:#fef2f2;">' +
+                    '<td style="padding:8px;border:1px solid #94a3b8;text-align:center;">—</td>' +
+                    '<td style="padding:8px;border:1px solid #94a3b8;font-weight:800;color:#b91c1c;">بدون جفت کد</td>' +
+                    '<td style="padding:8px;border:1px solid #94a3b8;">' + uHtml + '</td></tr>';
+            }
+
             const htmlDoc = '<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="UTF-8">' +
-                '<title>راهنمای لیبل سوسیس‌ها — غرفه فامیلی</title>' +
+                '<title>راهنمای لیبل سوسیس‌ها</title>' +
                 '<style>' +
-                '@font-face{font-family:"BNazanin";src:local("B Nazanin"),local("BNazanin"),local("Nazanin"),local("Iranian Sans");}' +
-                '*{box-sizing:border-box;}' +
-                'body{font-family:"BNazanin","B Nazanin",Tahoma,Arial,sans-serif;direction:rtl;margin:0;padding:24px;color:#0f172a;background:#fff;}' +
-                '.header{text-align:center;margin-bottom:18px;border-bottom:3px solid #0ea5e9;padding-bottom:14px;}' +
-                '.header h1{margin:0 0 6px;font-size:22px;color:#0c4a6e;}' +
-                '.header .sub{font-size:13px;color:#475569;}' +
-                '.meta{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px;font-size:12px;color:#334155;}' +
-                'table{width:100%;border-collapse:collapse;font-size:13px;}' +
-                'thead th{background:linear-gradient(180deg,#0ea5e9,#0284c7);color:#fff;padding:11px 8px;border:1px solid #0369a1;font-weight:800;}' +
-                'tbody td{vertical-align:middle;}' +
-                '.foot{margin-top:16px;font-size:11px;color:#64748b;text-align:center;border-top:1px solid #e2e8f0;padding-top:10px;}' +
-                '.actions{text-align:center;margin:16px 0;}' +
-                '.actions button{font-family:inherit;font-size:14px;font-weight:700;padding:10px 22px;margin:4px;border:none;border-radius:10px;cursor:pointer;}' +
-                '.btn-print{background:#059669;color:#fff;}' +
-                '.btn-close{background:#e2e8f0;color:#0f172a;}' +
-                '@media print{.actions{display:none;}body{padding:12px;}thead th{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}' +
+                '@font-face{font-family:"BNazanin";src:local("B Nazanin"),local("BNazanin"),local("Nazanin");}' +
+                '*{box-sizing:border-box;}body{font-family:"BNazanin","B Nazanin",Tahoma,sans-serif;direction:rtl;margin:0;padding:16px;color:#0f172a;}' +
+                'h1{margin:0 0 4px;font-size:18px;color:#0c4a6e;text-align:center;}' +
+                '.sub{text-align:center;font-size:11px;color:#475569;margin-bottom:10px;}' +
+                'table{width:100%;border-collapse:collapse;font-size:12px;}' +
+                'th{background:#0284c7;color:#fff;padding:8px 6px;border:1px solid #0369a1;font-weight:800;}' +
+                '@media print{body{padding:8px;} .noprint{display:none;} th{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}' +
                 '</style></head><body>' +
-                '<div class="header"><h1>🏷️ راهنمای لیبل سوسیس و کالباس</h1>' +
-                '<div class="sub">غرفه فامیلی (دره میرکی) — راهنمای انتخاب کد ترازو</div></div>' +
-                '<div class="meta"><span>📅 تاریخ: <b>' + today + '</b></span><span>تعداد ردیف: <b>' + fa(rows.length) + '</b></span></div>' +
-                '<div class="actions">' +
-                '<button class="btn-print" onclick="window.print()">🖨️ پرینت</button>' +
-                '<button class="btn-close" onclick="window.close()">بستن</button></div>' +
+                '<h1>راهنمای لیبل سوسیس و کالباس — غرفه فامیلی</h1>' +
+                '<div class="sub">تاریخ ' + today + ' · ' + fa(groups.length) + ' کد ترازو · فونت B Nazanin</div>' +
+                '<div class="noprint" style="text-align:center;margin:8px 0;">' +
+                '<button onclick="window.print()" style="font-family:inherit;padding:8px 18px;border:none;border-radius:8px;background:#059669;color:#fff;font-weight:700;cursor:pointer;">پرینت</button></div>' +
                 '<table><thead><tr>' +
-                '<th style="width:40px;">ردیف</th>' +
-                '<th>کالای مشتری (بدون کد ۲۲)</th>' +
-                '<th style="width:100px;">قیمت کیلو</th>' +
-                '<th style="width:110px;">لیبل ترازو</th>' +
-                '<th>کالای کددار (کد ۲۲)</th>' +
-                '<th style="width:100px;">قیمت ترازو</th>' +
-                '</tr></thead><tbody>' + bodyRows + '</tbody></table>' +
-                '<div class="foot">اگر قیمت ترازو از قیمت مشتری کمتر است «بالاتر بزن» و اگر بیشتر است «پایین‌تر بزن».<br>' +
-                'فونت پیشنهادی چاپ: B Nazanin — غرفه فامیلی</div>' +
-                '<script>setTimeout(function(){try{window.print();}catch(e){}},400);<\/script>' +
+                '<th style="width:36px;">ردیف</th>' +
+                '<th style="width:28%;">کد ترازو ۲۲ + قیمت</th>' +
+                '<th>کالاهای مشتری که از همین کد استفاده می‌کنند (قیمت + راهنما)</th>' +
+                '</tr></thead><tbody>' + body + '</tbody></table>' +
+                '<p style="font-size:10px;color:#64748b;text-align:center;margin-top:10px;">اگر قیمت ترازو کمتر از مشتری است «بالاتر بزن» و اگر بیشتر است «پایین‌تر بزن».</p>' +
+                '<script>setTimeout(function(){try{window.print();}catch(e){}},350);<\/script>' +
                 '</body></html>';
 
-            // دانلود فایل HTML
             try {
                 const blob = new Blob([htmlDoc], { type: 'text/html;charset=utf-8' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = 'rahnama-label-sosis-' + (today.replace(/[\/\s]/g, '-')) + '.html';
+                a.download = 'rahnama-label-sosis.html';
                 document.body.appendChild(a);
                 a.click();
-                setTimeout(() => { try { URL.revokeObjectURL(url); a.remove(); } catch (e) {} }, 1500);
+                setTimeout(function () { try { URL.revokeObjectURL(url); a.remove(); } catch (e) {} }, 1200);
             } catch (e) {}
 
-            // پنجره پرینت
             const w = window.open('', '_blank', 'width=900,height=700');
-            if (w) {
-                w.document.open();
-                w.document.write(htmlDoc);
-                w.document.close();
-            } else {
-                showToast('دانلود انجام شد. برای پرینت، پاپ‌آپ مرورگر را مجاز کن یا فایل HTML را باز کن.');
-            }
+            if (w) { w.document.open(); w.document.write(htmlDoc); w.document.close(); }
+            else showToast('دانلود شد. برای پرینت پاپ‌آپ را مجاز کن.');
         };
 
 
