@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v144 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v145 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -3214,6 +3214,8 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             <button type="button" class="mode-btn" id="wrOffsetBtn_2" onclick="selectWeeklyReportOffset(2)">دو هفته‌ی قبل</button>
             <button type="button" class="mode-btn" id="wrOffsetBtn_3" onclick="selectWeeklyReportOffset(3)">سه هفته‌ی قبل</button>
             <button type="button" class="mode-btn" id="wrOffsetBtn_4" onclick="selectWeeklyReportOffset(4)">چهار هفته‌ی قبل</button>
+            <button type="button" class="mode-btn" id="wrOffsetBtn_10d" onclick="selectWeeklyReportOffset('10d')">۱۰ روز اخیر</button>
+            <button type="button" class="mode-btn" id="wrOffsetBtn_10d_prev" onclick="selectWeeklyReportOffset('10d_prev')">۱۰ روز قبل‌تر</button>
         </div>
         <div class="price-display" id="weeklyReportRangePreview" style="margin-top:10px;"></div>
 
@@ -3228,7 +3230,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v144 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v145 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3412,7 +3414,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=144', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=145', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -15320,6 +15322,17 @@ function sbRenderAdminLists(cfg) {
 
         // ---------- محاسبه‌ی بازه‌ی هفته بر اساس افست (۰=هفته جاری تا امروز، ۱=هفته قبل، ۲=دو هفته قبل...) ----------
         function getTehranWeekRangeByOffset(offset, refDate = new Date()) {
+            if (offset === '10d' || offset === '10d_prev') {
+                const todayISO = getTehranISODate(refDate);
+                const todayNoon = new Date(todayISO + 'T12:00:00+03:30');
+                if (offset === '10d') {
+                    const startNoon = new Date(todayNoon.getTime() - 9 * 86400000);
+                    return { startISODate: getTehranISODate(startNoon), endISODate: todayISO, isInProgress: true };
+                }
+                const endNoon = new Date(todayNoon.getTime() - 10 * 86400000);
+                const startNoon = new Date(todayNoon.getTime() - 19 * 86400000);
+                return { startISODate: getTehranISODate(startNoon), endISODate: getTehranISODate(endNoon), isInProgress: false };
+            }
             const wd = getTehranWeekdayIndex(refDate);
             const thisWeekStartISO = getTehranISODate(new Date(refDate.getTime() - wd * 86400000));
             const thisWeekStartNoon = new Date(thisWeekStartISO + 'T12:00:00+03:30');
@@ -15350,8 +15363,22 @@ function sbRenderAdminLists(cfg) {
                 salesEndUTC = new Date(new Date(endUTC).getTime() + 12 * 3600000).toISOString();
             } catch (e) {}
 
+            async function _fetchSalesPaged(startU, endU) {
+                const pageSize = 1000; let all = [], from = 0;
+                for (let g = 0; g < 40; g++) {
+                    const { data, error } = await _supabase.from('sales').select('*')
+                        .gte('created_at', startU).lt('created_at', endU)
+                        .order('created_at', { ascending: true }).range(from, from + pageSize - 1);
+                    if (error) return { data: all, error };
+                    if (!data || !data.length) break;
+                    all = all.concat(data);
+                    if (data.length < pageSize) break;
+                    from += pageSize;
+                }
+                return { data: all, error: null };
+            }
             const [salesRes, expensesRes, productsRes, attendanceRes, takeoutsRes, targetsRes] = await Promise.all([
-                _supabase.from('sales').select('*').gte('created_at', salesStartUTC).lt('created_at', salesEndUTC).order('created_at', { ascending: true }),
+                _fetchSalesPaged(salesStartUTC, salesEndUTC),
                 _supabase.from('expenses').select('*').gte('created_at', startUTC).lt('created_at', endUTC).order('created_at', { ascending: true }),
                 _supabase.from('products').select('code, name'),
                 _supabase.from('attendance').select('*').gte('created_at', attStartUTC).lt('created_at', attEndUTC).order('created_at', { ascending: true }),
@@ -15900,6 +15927,108 @@ function sbRenderAdminLists(cfg) {
                 wsSh.columns = [{ width: 24 }, { width: 14 }, { width: 14 }, { width: 14 }, { width: 14 }, { width: 16 }];
             } catch (e) { console.warn('goals sheet', e); }
 
+            // برگه رشد و نمودار + برترین کالا
+            try {
+                const wsG = wb.addWorksheet('رشد و نمودار', { views: [{ rightToLeft: true }] });
+                const sales = Array.isArray(ctx.sales) ? ctx.sales : [];
+                const nameByCode = ctx.nameByCode || {};
+                const byDay = {};
+                sales.forEach(s => {
+                    let iso = '';
+                    try { iso = getTehranISODate(new Date(s.created_at)); } catch (e) { return; }
+                    if (!iso) return;
+                    if (!byDay[iso]) byDay[iso] = { revenue: 0, weight: 0, count: 0 };
+                    byDay[iso].revenue += Number(s.sell_price) || 0;
+                    byDay[iso].weight += Number(s.quantity) || 0;
+                    byDay[iso].count += 1;
+                });
+                const days = Object.keys(byDay).sort();
+                const maxRev = days.reduce((m, d) => Math.max(m, byDay[d].revenue), 0) || 1;
+                const maxW = days.reduce((m, d) => Math.max(m, byDay[d].weight), 0) || 1;
+
+                wsG.mergeCells('A1:G1');
+                wsG.getCell('A1').value = 'رشد و افت روزانه — مبلغ (تومان) و وزن (کیلو) | برای نمودار خطی در اکسل: ستون‌های شمسی+مبلغ+وزن را انتخاب کنید سپس Insert Chart';
+                wsG.getCell('A1').font = { bold: true, size: 12, color: { argb: 'FF0C4A6E' } };
+                wsG.getCell('A1').alignment = { horizontal: 'right', wrapText: true };
+
+                styleHeaderRow(wsG.addRow([
+                    'تاریخ میلادی', 'تاریخ شمسی', 'مبلغ فروش (تومان)', 'وزن (کیلو)', 'تعداد فاکتور', 'نمودار مبلغ', 'نمودار وزن'
+                ]), 'FF0284C7');
+
+                const avgR = days.length ? days.reduce((s, x) => s + byDay[x].revenue, 0) / days.length : 0;
+                days.forEach((iso, idx) => {
+                    const d = byDay[iso];
+                    const barR = Math.round((d.revenue / maxRev) * 20);
+                    const barW = Math.round((d.weight / maxW) * 20);
+                    const row = wsG.addRow([
+                        iso,
+                        (typeof jalaliLabelForISODate === 'function') ? jalaliLabelForISODate(iso) : iso,
+                        Math.round(d.revenue),
+                        Number(d.weight.toFixed(3)),
+                        d.count,
+                        'I'.repeat(Math.max(1, barR)) + '.'.repeat(Math.max(0, 20 - barR)),
+                        'I'.repeat(Math.max(1, barW)) + '.'.repeat(Math.max(0, 20 - barW))
+                    ]);
+                    styleDataRow(row, idx % 2 === 0);
+                    row.getCell(3).numFmt = '#,##0';
+                    row.getCell(4).numFmt = '0.000';
+                    row.getCell(3).font = { bold: true, color: { argb: d.revenue >= avgR ? 'FF059669' : 'FFDC2626' } };
+                });
+                if (days.length) {
+                    const totR = days.reduce((s, x) => s + byDay[x].revenue, 0);
+                    const totW = days.reduce((s, x) => s + byDay[x].weight, 0);
+                    const totC = days.reduce((s, x) => s + byDay[x].count, 0);
+                    const tot = wsG.addRow(['جمع', '', Math.round(totR), Number(totW.toFixed(3)), totC, '', '']);
+                    tot.eachCell(c => { c.font = { bold: true }; c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0F2FE' } }; });
+                    tot.getCell(3).numFmt = '#,##0';
+                }
+
+                wsG.addRow([]);
+                const t2 = wsG.addRow(['برترین کالاها (مبلغ و وزن)']);
+                t2.getCell(1).font = { bold: true, size: 12, color: { argb: 'FF7C3AED' } };
+                const pMap = {};
+                sales.forEach(s => {
+                    const code = s.product_code || '?';
+                    if (!pMap[code]) pMap[code] = { code, name: nameByCode[code] || code, revenue: 0, weight: 0, count: 0 };
+                    pMap[code].revenue += Number(s.sell_price) || 0;
+                    pMap[code].weight += Number(s.quantity) || 0;
+                    pMap[code].count += 1;
+                });
+                const prods = Object.values(pMap).sort((a, b) => b.revenue - a.revenue);
+                styleHeaderRow(wsG.addRow(['رتبه', 'نام کالا', 'کد', 'مبلغ (تومان)', 'وزن (کیلو)', 'تعداد', 'سهم مبلغ %']), 'FF7C3AED');
+                const grandR = prods.reduce((s, p) => s + p.revenue, 0) || 1;
+                prods.slice(0, 30).forEach((p, idx) => {
+                    const row = wsG.addRow([
+                        idx + 1, p.name, p.code, Math.round(p.revenue),
+                        Number(p.weight.toFixed(3)), p.count,
+                        Math.round((p.revenue / grandR) * 1000) / 10
+                    ]);
+                    styleDataRow(row, idx % 2 === 0);
+                    row.getCell(4).numFmt = '#,##0';
+                    row.getCell(5).numFmt = '0.000';
+                    if (idx < 3) row.getCell(1).font = { bold: true, color: { argb: 'FFD97706' } };
+                });
+
+                if (days.length >= 4) {
+                    wsG.addRow([]);
+                    const mid = Math.floor(days.length / 2);
+                    const first = days.slice(0, mid), second = days.slice(mid);
+                    const sumR = (arr) => arr.reduce((s, d) => s + byDay[d].revenue, 0);
+                    const sumW = (arr) => arr.reduce((s, d) => s + byDay[d].weight, 0);
+                    const r1 = sumR(first), r2 = sumR(second), w1 = sumW(first), w2 = sumW(second);
+                    const pctR = r1 > 0 ? ((r2 - r1) / r1 * 100) : 0;
+                    const pctW = w1 > 0 ? ((w2 - w1) / w1 * 100) : 0;
+                    const t3 = wsG.addRow(['رشد داخل بازه (نیمه دوم نسبت به نیمه اول)']);
+                    t3.getCell(1).font = { bold: true, size: 12, color: { argb: 'FFDC2626' } };
+                    styleHeaderRow(wsG.addRow(['شاخص', 'نیمه اول', 'نیمه دوم', 'تغییر %']), 'FFF43F5E');
+                    [['مبلغ (تومان)', r1, r2, pctR], ['وزن (کیلو)', w1, w2, pctW]].forEach(arr => {
+                        const row = wsG.addRow([arr[0], Math.round(arr[1] * 100) / 100, Math.round(arr[2] * 100) / 100, Math.round(arr[3] * 10) / 10]);
+                        row.getCell(4).font = { bold: true, color: { argb: arr[3] >= 0 ? 'FF059669' : 'FFDC2626' } };
+                    });
+                }
+                [12, 16, 18, 14, 12, 22, 22].forEach((w, i) => { wsG.getColumn(i + 1).width = w; });
+            } catch (e) { console.warn('growth sheet', e); }
+
             const fileName = `detailed-report_${jFileDate(ctx.startISODate)}_to_${jFileDate(ctx.endISODate)}.xlsx`;
             return { workbook: wb, fileName };
         }
@@ -16028,14 +16157,15 @@ function sbRenderAdminLists(cfg) {
 
         function selectWeeklyReportOffset(offset) {
             selectedWeeklyReportOffset = offset;
-            [0, 1, 2, 3, 4].forEach(o => {
+            [0, 1, 2, 3, 4, '10d', '10d_prev'].forEach(o => {
                 const btn = document.getElementById('wrOffsetBtn_' + o);
                 if (btn) btn.classList.toggle('active', o === offset);
             });
             const { startISODate, endISODate, isInProgress } = getTehranWeekRangeByOffset(offset);
             const preview = document.getElementById('weeklyReportRangePreview');
             if (preview) {
-                preview.innerHTML = `📅 از تاریخ <b>${jalaliLabelForISODate(startISODate)}</b> تا تاریخ <b>${jalaliLabelForISODate(endISODate)}</b>${isInProgress ? ' <span style="color:#fbbf24;">(هنوز تمام نشده)</span>' : ''}`;
+                const tag = (offset === '10d' || offset === '10d_prev') ? ' <span style="color:#38bdf8;">(۱۰ روزه)</span>' : '';
+                preview.innerHTML = `📅 از تاریخ <b>${jalaliLabelForISODate(startISODate)}</b> تا تاریخ <b>${jalaliLabelForISODate(endISODate)}</b>${isInProgress ? ' <span style="color:#fbbf24;">(هنوز تمام نشده)</span>' : ''}${tag}`;
             }
         }
 
@@ -16706,23 +16836,44 @@ function sbRenderAdminLists(cfg) {
 
             resultBox.innerHTML = 'در حال محاسبه...';
 
-            // فیلتر تاریخ رو مستقیم توی کوئری اعمال می‌کنیم (نه فقط بعد از گرفتن همه‌چی) — همون
-            // باگی که قبلاً توی داشبورد پیدا شد: بدون فیلتر، اگه کل فروش‌های ثبت‌شده از سقف
-            // پیش‌فرض Supabase بیشتر بشه، ممکنه فروش‌های بازه موردنظر اصلاً توی جواب نباشن.
-            const widestStart = [curStart, prevStart].sort()[0];
-            const widestEnd = [curEnd, prevEnd].sort()[1];
-            const widestStartUTC = new Date(Date.parse(widestStart + 'T00:00:00.000Z') - 3.5 * 60 * 60 * 1000).toISOString();
-            const widestEndUTC = new Date(Date.parse(widestEnd + 'T00:00:00.000Z') - 3.5 * 60 * 60 * 1000 + 24 * 60 * 60 * 1000).toISOString();
+            // هر بازه جدا + صفحه‌بندی تا سقف Supabase فروش بازه فعلی را حذف نکند
+            const rangeBounds = (start, end) => {
+                if (typeof tehranDateRangeToISOBounds === 'function') return tehranDateRangeToISOBounds(start, end);
+                const startUTC = new Date(Date.parse(start + 'T00:00:00.000Z') - 3.5 * 60 * 60 * 1000).toISOString();
+                const endUTC = new Date(Date.parse(end + 'T00:00:00.000Z') - 3.5 * 60 * 60 * 1000 + 24 * 60 * 60 * 1000).toISOString();
+                return { startUTC, endUTC };
+            };
+            const curB = rangeBounds(curStart, curEnd);
+            const prevB = rangeBounds(prevStart, prevEnd);
+            const selCols = 'product_code, quantity, sell_price, created_at, seller_name, sale_type, shift_label';
 
-            const { data: sales, error } = await _supabase
-                .from('sales')
-                .select('product_code, quantity, sell_price, created_at, seller_name, sale_type, shift_label')
-                .gte('created_at', widestStartUTC).lt('created_at', widestEndUTC)
-                .order('created_at', { ascending: true })
-                .limit(10000);
+            async function fetchSalesRange(startUTC, endUTC) {
+                const pageSize = 1000;
+                let all = [], from = 0;
+                for (let guard = 0; guard < 40; guard++) {
+                    const { data, error } = await _supabase
+                        .from('sales')
+                        .select(selCols)
+                        .gte('created_at', startUTC).lt('created_at', endUTC)
+                        .order('created_at', { ascending: true })
+                        .range(from, from + pageSize - 1);
+                    if (error) throw error;
+                    if (!data || !data.length) break;
+                    all = all.concat(data);
+                    if (data.length < pageSize) break;
+                    from += pageSize;
+                }
+                return all;
+            }
 
-            if (error) {
-                resultBox.innerHTML = '❌ خطا در دریافت اطلاعات فروش: ' + error.message;
+            let curSalesRaw, prevSalesRaw;
+            try {
+                [curSalesRaw, prevSalesRaw] = await Promise.all([
+                    fetchSalesRange(curB.startUTC, curB.endUTC),
+                    fetchSalesRange(prevB.startUTC, prevB.endUTC)
+                ]);
+            } catch (error) {
+                resultBox.innerHTML = '❌ خطا در دریافت اطلاعات فروش: ' + (error.message || error);
                 return;
             }
 
@@ -16732,8 +16883,8 @@ function sbRenderAdminLists(cfg) {
                 return iso >= start && iso <= end;
             };
 
-            const curSales = (sales || []).filter(s => inRange(s, curStart, curEnd));
-            const prevSales = (sales || []).filter(s => inRange(s, prevStart, prevEnd));
+            const curSales = (curSalesRaw || []).filter(s => inRange(s, curStart, curEnd));
+            const prevSales = (prevSalesRaw || []).filter(s => inRange(s, prevStart, prevEnd));
 
             const sum = (list, field) => list.reduce((acc, s) => acc + (Number(s[field]) || 0), 0);
             const curRevenue = sum(curSales, 'sell_price');
