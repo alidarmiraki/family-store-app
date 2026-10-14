@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v152 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v153 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2827,7 +2827,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
                 <option value="gemini">Google Gemini مستقیم</option>
             </select>
             <label>API Key:</label>
-            <input type="password" id="geminiApiKeyInput" dir="ltr" placeholder="sk-or-v1-..." autocomplete="off">
+            <input type="password" id="geminiApiKeyInput" dir="ltr" placeholder="sk-or-v1-... یا sk- (DeepSeek)" autocomplete="off">
             <label style="display:flex; align-items:center; gap:6px;">
                 <input type="checkbox" id="geminiEnabled" style="width:auto;" checked> خواندن هوشمند عکس فعال باشد
             </label>
@@ -3322,7 +3322,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v152 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v153 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3506,7 +3506,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=152', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=153', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -9245,15 +9245,88 @@ function sbRenderAdminLists(cfg) {
                     if (s && s.apiKey) key = s.apiKey;
                 } catch (e) {}
             }
-            if (!key) throw new Error('کلید API تنظیم نشده. مدیر باید در تنظیمات AI یک‌بار ذخیره کند.');
+            if (!key) {
+                try {
+                    const inp = document.getElementById('geminiApiKeyInput');
+                    if (inp && inp.value) key = inp.value.trim();
+                } catch (e) {}
+            }
+            if (!key) throw new Error('کلید API تنظیم نشده. مدیر باید در تنظیمات AI ذخیره کند.');
 
+            const isOpenRouter = /^sk-or-/i.test(key);
+            const isDeepSeek = !isOpenRouter && /^sk-/i.test(key);
             let lastErr = '';
-            if (typeof qnOpenRouterRequest === 'function') {
-                for (let i = 0; i < AI_FREE_MODELS.length; i++) {
-                    const model = AI_FREE_MODELS[i];
+
+            async function tryDeepSeek() {
+                const endpoints = [];
+                try {
+                    const hosts = [];
+                    if (typeof TELEGRAM_PROXY_HOSTS !== 'undefined' && Array.isArray(TELEGRAM_PROXY_HOSTS)) {
+                        TELEGRAM_PROXY_HOSTS.forEach(function (h) { hosts.push(h); });
+                    }
+                    hosts.push('https://proxy.ali8001.ir');
+                    hosts.push('https://shop-proxy-fast.adarmiraki.workers.dev');
+                    hosts.push('https://shop-proxy-1.adarmiraki.workers.dev');
+                    hosts.forEach(function (h) {
+                        const b = String(h).replace(/\/+$/, '').replace(/\/telegram$/i, '');
+                        endpoints.push(b + '/deepseek/chat/completions');
+                        endpoints.push(b + '/api/deepseek/chat/completions');
+                    });
+                } catch (e) {}
+                endpoints.push('https://api.deepseek.com/chat/completions');
+                endpoints.push('https://api.deepseek.com/v1/chat/completions');
+
+                const models = ['deepseek-chat', 'deepseek-v4-flash', 'deepseek-reasoner'];
+                const bodyBase = { messages: messages, temperature: temperature, max_tokens: maxTokens };
+                for (let m = 0; m < models.length; m++) {
+                    const body = JSON.stringify(Object.assign({}, bodyBase, { model: models[m] }));
+                    for (let i = 0; i < endpoints.length; i++) {
+                        try {
+                            const res = await (typeof fetchWithTimeout === 'function'
+                                ? fetchWithTimeout(endpoints[i], {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': 'Bearer ' + key
+                                    },
+                                    body: body
+                                }, opts.timeout || 28000)
+                                : fetch(endpoints[i], {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': 'Bearer ' + key
+                                    },
+                                    body: body
+                                }));
+                            const json = await res.json().catch(function () { return null; });
+                            if (res.ok && json && json.choices && json.choices[0] && json.choices[0].message) {
+                                const txt = json.choices[0].message.content;
+                                if (txt) return { text: String(txt).trim(), model: models[m], provider: 'deepseek' };
+                            }
+                            lastErr = (json && (json.error && (json.error.message || JSON.stringify(json.error)))) || ('DeepSeek HTTP ' + res.status);
+                            // کلید اشتباه → قطع
+                            if (res.status === 401 || res.status === 403) {
+                                throw new Error('کلید DeepSeek نامعتبر است. از platform.deepseek.com کلید جدید بگیر.');
+                            }
+                        } catch (e) {
+                            if (/نامعتبر|invalid|401|403/i.test(String(e.message || e))) throw e;
+                            lastErr = e.message || String(e);
+                        }
+                    }
+                }
+                return null;
+            }
+
+            async function tryOpenRouter() {
+                if (typeof qnOpenRouterRequest !== 'function') return null;
+                const models = (typeof AI_FREE_MODELS !== 'undefined' && AI_FREE_MODELS.length)
+                    ? AI_FREE_MODELS
+                    : ['openrouter/free', 'deepseek/deepseek-chat'];
+                for (let i = 0; i < models.length; i++) {
                     try {
                         const result = await qnOpenRouterRequest(key, {
-                            model: model,
+                            model: models[i],
                             messages: messages,
                             temperature: temperature,
                             max_tokens: maxTokens
@@ -9261,50 +9334,45 @@ function sbRenderAdminLists(cfg) {
                         if (result && result.ok) {
                             const txt = result.json && result.json.choices && result.json.choices[0]
                                 && result.json.choices[0].message && result.json.choices[0].message.content;
-                            if (txt) return { text: String(txt).trim(), model: model, provider: 'openrouter' };
-                            lastErr = 'پاسخ خالی';
+                            if (txt) return { text: String(txt).trim(), model: models[i], provider: 'openrouter' };
+                            lastErr = 'پاسخ خالی از OpenRouter';
                         } else {
-                            lastErr = (result && result.error) || ('خطا ' + model);
+                            lastErr = (result && result.error) || ('OpenRouter ' + models[i]);
                             if (/No endpoints found|not found|invalid model/i.test(String(lastErr))) continue;
-                            if (result && result.auth) throw new Error(lastErr);
+                            // کلید OpenRouter نیست — بدون throw برو بعدی
+                            if (result && result.auth) {
+                                lastErr = 'این کلید برای OpenRouter نیست (اگر DeepSeek است مشکلی نیست)';
+                                break;
+                            }
                         }
                     } catch (e) {
                         lastErr = e.message || String(e);
-                        if (/unauthorized|api key|401|402|403/i.test(lastErr)) throw e;
                     }
                 }
+                return null;
             }
-            // DeepSeek مستقیم اگر کلید sk- غیر openrouter باشد
-            if (key.indexOf('sk-or-') !== 0 && key.indexOf('sk-') === 0) {
-                const endpoints = [
-                    'https://proxy.ali8001.ir/deepseek/chat/completions',
-                    'https://api.deepseek.com/chat/completions'
-                ];
-                const body = JSON.stringify({
-                    model: 'deepseek-chat',
-                    messages: messages,
-                    temperature: temperature,
-                    max_tokens: maxTokens
-                });
-                for (let i = 0; i < endpoints.length; i++) {
-                    try {
-                        const res = await fetch(endpoints[i], {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
-                            body: body
-                        });
-                        const json = await res.json().catch(function () { return null; });
-                        if (res.ok && json && json.choices && json.choices[0] && json.choices[0].message) {
-                            const txt = json.choices[0].message.content;
-                            if (txt) return { text: String(txt).trim(), model: 'deepseek-chat', provider: 'deepseek' };
-                        }
-                        lastErr = (json && json.error && json.error.message) || ('DeepSeek ' + res.status);
-                    } catch (e) { lastErr = e.message || String(e); }
-                }
+
+            // ترتیب: اگر DeepSeek → اول DeepSeek؛ اگر OpenRouter → اول OpenRouter؛ وگرنه هر دو
+            if (isDeepSeek) {
+                const r = await tryDeepSeek();
+                if (r) return r;
+                // بعضی کلیدها با OpenRouter هم کار می‌کنند
+                const r2 = await tryOpenRouter();
+                if (r2) return r2;
+            } else if (isOpenRouter) {
+                const r = await tryOpenRouter();
+                if (r) return r;
+            } else {
+                const r1 = await tryOpenRouter();
+                if (r1) return r1;
+                const r2 = await tryDeepSeek();
+                if (r2) return r2;
             }
-            throw new Error(lastErr || 'هیچ مدل رایگان AI در دسترس نبود.');
+
+            throw new Error(lastErr || 'اتصال به AI برقرار نشد. کلید DeepSeek (sk-...) یا OpenRouter (sk-or-...) را چک کن.');
         }
         window.aiTextChat = aiTextChat;
+
 
 
         const ASC_LS = 'appSharedConfig_v1';
