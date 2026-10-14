@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v148 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v150 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -248,6 +248,42 @@
         .sb-how { border-color: rgba(52,211,153,.3); }
 
         
+        
+        /* مربی فروش — روز کم‌فروش + پرسش‌های بین کار */
+        .sc-bar { margin: 8px 0; direction: rtl; text-align: right; }
+        .sc-bar:empty { display: none; }
+        .sc-card {
+            border-radius: 14px; padding: 12px 14px;
+            border: 1px solid rgba(251,191,36,.35);
+            background: linear-gradient(135deg, rgba(251,191,36,.14), rgba(239,68,68,.1));
+        }
+        .sc-card.sc-ok {
+            border-color: rgba(52,211,153,.35);
+            background: linear-gradient(135deg, rgba(16,185,129,.12), rgba(59,130,246,.1));
+        }
+        .sc-card h4 { margin: 0 0 6px; font-size: 13px; font-weight: 900; color: #fbbf24; }
+        .sc-card.sc-ok h4 { color: #34d399; }
+        .sc-card ul { margin: 6px 0 0; padding-right: 18px; font-size: 12px; line-height: 1.85; }
+        .sc-card li { margin-bottom: 4px; }
+        .sc-pop {
+            position: fixed; left: 12px; right: 12px; bottom: 70px; z-index: 10000;
+            background: linear-gradient(160deg, #1e1b4b, #0f172a);
+            border: 1px solid rgba(167,139,250,.45);
+            border-radius: 16px; padding: 14px 16px; direction: rtl; text-align: right;
+            box-shadow: 0 16px 48px rgba(0,0,0,.5);
+            animation: scIn .28s ease;
+        }
+        @keyframes scIn { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+        .sc-pop .sc-q { font-weight: 900; font-size: 14px; color: #c4b5fd; margin-bottom: 8px; }
+        .sc-pop .sc-a { font-size: 12px; line-height: 1.85; color: #e2e8f0; }
+        .sc-pop .sc-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+        .sc-pop button {
+            flex: 1; min-width: 100px; border: none; border-radius: 10px;
+            padding: 10px; font-weight: 800; cursor: pointer; font-size: 13px;
+        }
+        .sc-pop .sc-ok-btn { background: #10b981; color: #fff; }
+        .sc-pop .sc-later-btn { background: rgba(148,163,184,.25); color: #e2e8f0; }
+
         .pg-card {
             border: 1px solid rgba(148,163,184,.25); border-radius: 14px;
             padding: 12px; margin-bottom: 10px; background: rgba(15,23,42,.4);
@@ -1903,6 +1939,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
     <!-- تب خلاصه روز (داشبورد مدیر) -->
     <div id="dashboardTab" class="card">
         <h2>🏠 خلاصه امروز</h2>
+        <div id="sellerCoachBar" class="sc-bar"></div>
         <div id="rsDashPanel" class="rs-panel"></div>
         <div id="dashboardContent"><div class="skeleton-block skeleton-card"></div><div class="skeleton-block skeleton-card"></div></div>
     </div>
@@ -1911,6 +1948,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
     <div id="saleTab" class="card">
         <h2 id="saleFormTitle">🧀 ثبت فروش لبنیات روزانه</h2>
         <div id="sbBannerSale" class="sb-banner"></div>
+        <div id="sellerCoachBar_sbBannerSale" class="sc-bar"></div>
         <div id="sQuickPickBox" class="hint" style="margin-top:0;"></div>
         <input type="text" id="sCustomerName" dir="auto" list="recentCustomersDatalist" placeholder="🙋 نام مشتری (اختیاری، برای مشتری‌های ثابت)" style="margin-top:6px;">
         <label>انتخاب یا تایپ نام کالا:</label>
@@ -1989,6 +2027,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
     <div id="saleEkalaTab" class="card">
         <h2 id="saleEkalaFormTitle">🛒 ثبت فروش اکالا</h2>
         <div id="sbBannerEkala" class="sb-banner"></div>
+        <div id="sellerCoachBar_sbBannerEkala" class="sc-bar"></div>
         <div class="hint">وقتی سفارشی از طریق اکالا می‌آید و شما کالا را وزن و آماده تحویل به پیک/مشتری می‌کنید، همین‌جا ثبت کنید. این کاملاً از فروش حضوری جدا نگهداری می‌شود.</div>
         <div id="seQuickPickBox" class="hint" style="margin-top:0;"></div>
         <input type="text" id="seCustomerName" dir="auto" list="recentCustomersDatalist" placeholder="🙋 نام مشتری (اختیاری، برای مشتری‌های ثابت)" style="margin-top:6px;">
@@ -2061,6 +2100,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
     <div id="saleSausageTab" class="card">
         <h2 id="saleSausageFormTitle">🌭 ثبت فروش سوسیس و کالباس</h2>
         <div id="sbBannerSausage" class="sb-banner"></div>
+        <div id="sellerCoachBar_sbBannerSausage" class="sc-bar"></div>
         <div class="hint">این تب مخصوص فروش کالاهایی است که در «تعریف کالا» با نوع «سوسیس و کالباس» ثبت شده‌اند. لیست پیشنهادی این کادر فقط همین کالاها را نشان می‌دهد. این کاملاً از فروش حضوری و اکالای لبنیات/ترشیجات جدا نگهداری می‌شود.</div>
         <div id="ssQuickPickBox" class="hint" style="margin-top:0;"></div>
         <input type="text" id="ssCustomerName" dir="auto" list="recentCustomersDatalist" placeholder="🙋 نام مشتری (اختیاری، برای مشتری‌های ثابت)" style="margin-top:6px;">
@@ -3282,7 +3322,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v148 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v150 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3466,7 +3506,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=148', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=150', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -9411,6 +9451,275 @@ function sbRenderAdminLists(cfg) {
             if (btn) { btn.disabled = false; btn.textContent = '✨ تقویت همه با هوش مصنوعی'; }
             showToast('تمام شد: ' + ok + ' موفق' + (fail ? '، ' + fail + ' ناموفق' : ''));
         };
+
+
+
+        // ========== مربی فروش: روز کم‌فروش + پرسش بین کار (رایگان، بدون API) ==========
+        const SC_STATE_KEY = 'sellerCoachState_v1';
+        const SC_TIPS_LOW = [
+            'روی ترازو یک پیشنهاد ترکیبی بگو: «با خیارشور کامل می‌شه؟»',
+            '۳ کالای پرفروش را جلو بگذار و قیمت را درشت بنویس.',
+            'به مشتری‌های رهگذر بگو: «تازه‌برش می‌زنم، بگو چند گرم.»',
+            'نیم‌کیلو به بالا را کمی تشویق کن: «از این مقدار به‌صرفه‌تره.»',
+            'با غرفه بغلی هماهنگ شو: مشتری نان/نوشیدنی را سمت تو بفرستند.',
+            'از مشتری ثابت بپرس: «همون همیشگی یا امروز چیز جدید امتحان کنیم؟»',
+            'یک نمونه کوچک برای چشیدن (اگر مجاز است) فروش را بالا می‌برد.',
+            'ساعت خلوت را برای چیدن ویترین و تمیزکاری سریع استفاده کن؛ ظاهر مرتب مشتری می‌آورد.'
+        ];
+        const SC_QUESTIONS = [
+            {
+                q: 'از صبح تا الان چند نفر اومدن و بدون خرید رفتن؟',
+                a: 'اگر بیش از ۲–۳ نفر بودن، احتمالاً قیمت یا پیشنهاد اول ضعیف بوده. دفعه بعد همان اول یک ترکیب آماده بگو (مثلاً کالباس + خیارشور).'
+            },
+            {
+                q: 'آخرین مشتری فقط یک قلم خرید یا بیشتر؟',
+                a: 'اگر تک‌قلم بود، بعد از ثبت فروش بپرس: «چیز دیگه‌ای کنارش می‌خوای؟» — همین یک جمله میانگین فاکتور را بالا می‌برد.'
+            },
+            {
+                q: 'الان ویترین از چشم مشتری مرتب و پر به نظر می‌رسه؟',
+                a: 'قفسه‌ی خلوت یا نامرتب خرید را کم می‌کند. ۳۰ ثانیه چیدمان جلو، تفاوت دارد.'
+            },
+            {
+                q: 'امروز کدوم کالا هنوز فروش نرفته؟',
+                a: 'همان را با یک جمله خاص پیشنهاد بده: «این تازه‌ست / این برای مهمونی خوبه / این گوشتش بالاست.»'
+            },
+            {
+                q: 'به آخرین مشتری جمله آماده گفتی یا فقط وزن کردی؟',
+                a: 'فروشنده واقعی فقط وزن نمی‌کند؛ یک پیشنهاد کوتاه هم می‌دهد. از تب «معرفی محصولات» یک جمله بردار.'
+            },
+            {
+                q: 'ساعت شلوغی نزدیکه؟ آماده‌ای؟',
+                a: 'قبل از شلوغی، چاقو/ترازو/کیسه و کالاهای پرتکرار را آماده کن تا صف معطل نشود و فروش از دست نرود.'
+            },
+            {
+                q: 'میانگین فاکتور امروزت به هدفت نزدیکه؟',
+                a: 'اگر پایین است، روی «یک قلم بیشتر» تمرکز کن نه فقط تعداد مشتری. پیشنهاد مکمل مهم‌تر از عجله است.'
+            }
+        ];
+
+        function scToday() {
+            try { return getTehranISODate(); } catch (e) { return new Date().toISOString().slice(0, 10); }
+        }
+
+        function scLoadState() {
+            try {
+                const o = JSON.parse(localStorage.getItem(SC_STATE_KEY) || '{}');
+                if (!o || o.day !== scToday()) {
+                    return { day: scToday(), lastPopAt: 0, popCount: 0, dismissed: false, lowMode: false };
+                }
+                return o;
+            } catch (e) {
+                return { day: scToday(), lastPopAt: 0, popCount: 0, dismissed: false, lowMode: false };
+            }
+        }
+
+        function scSaveState(st) {
+            try { localStorage.setItem(SC_STATE_KEY, JSON.stringify(st)); } catch (e) {}
+        }
+
+        function scHourTehran() {
+            try {
+                const parts = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Tehran', hour: 'numeric', hour12: false }).formatToParts(new Date());
+                const h = parts.find(p => p.type === 'hour');
+                return h ? parseInt(h.value, 10) : new Date().getHours();
+            } catch (e) { return new Date().getHours(); }
+        }
+
+        /** تخمین: آیا امروز نسبت به معمول کم‌فروش است؟ */
+        function scIsLowSalesDay(dayStats) {
+            const hour = scHourTehran();
+            // قبل از ۱۰ صبح قضاوت نکن
+            if (hour < 10) return { low: false, reason: 'early' };
+            const count = (dayStats && dayStats.count) || 0;
+            const sum = (dayStats && dayStats.sum) || 0;
+            // آستانه‌های ساده بر اساس ساعت (قابل تنظیم با تجربه غرفه)
+            // تا ظهر: کمتر از ۳ فاکتور یا کمتر از ۲۰۰هزار → کم
+            // تا عصر: کمتر از ۸ فاکتور یا کمتر از ۶۰۰هزار
+            // بعد از ۱۸: کمتر از ۱۲ فاکتور یا کمتر از ۱ میلیون
+            let minCount = 3, minSum = 200000;
+            if (hour >= 14 && hour < 18) { minCount = 8; minSum = 600000; }
+            if (hour >= 18) { minCount = 12; minSum = 1000000; }
+            if (count < minCount || sum < minSum) {
+                return { low: true, count, sum, minCount, minSum, hour };
+            }
+            return { low: false, count, sum, hour };
+        }
+
+        function scPickTips(n) {
+            const pool = SC_TIPS_LOW.slice();
+            const out = [];
+            while (out.length < n && pool.length) {
+                const i = Math.floor(Math.random() * pool.length);
+                out.push(pool.splice(i, 1)[0]);
+            }
+            return out;
+        }
+
+        function scRenderLowCard(info) {
+            const tips = scPickTips(3);
+            const fa = (x) => { try { return Number(x).toLocaleString('fa-IR'); } catch (e) { return String(x); } };
+            let h = '<div class="sc-card">';
+            h += '<h4>📉 امروز فروش نسبت به معمول پایین‌تره</h4>';
+            h += '<div style="font-size:11px;opacity:.85;margin-bottom:4px;">تا این ساعت: ' + fa(info.count) + ' فاکتور · ' + fa(info.sum) + ' تومان</div>';
+            h += '<ul>';
+            tips.forEach(t => { h += '<li>' + t + '</li>'; });
+            h += '</ul></div>';
+            return h;
+        }
+
+        function scRenderOkCard(info) {
+            let h = '<div class="sc-card sc-ok">';
+            h += '<h4>✅ روند فروش امروز خوبه</h4>';
+            h += '<div style="font-size:12px;line-height:1.7;">همین‌طور ادامه بده: بعد از هر فروش یک پیشنهاد مکمل بگو تا میانگین فاکتور بالاتر برود.</div>';
+            h += '</div>';
+            return h;
+        }
+
+        function scFillBars(html) {
+            const ids = ['sellerCoachBar', 'sellerCoachBar_sbBannerSale', 'sellerCoachBar_sbBannerEkala', 'sellerCoachBar_sbBannerSausage'];
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = html || '';
+            });
+        }
+
+        window.scRefreshCoach = function () {
+            try {
+                if (typeof currentRole !== 'undefined' && currentRole === 'admin') {
+                    // مدیر هم می‌تواند وضعیت را ببیند
+                }
+                const day = (typeof rsLoadDay === 'function') ? rsLoadDay() : { count: 0, sum: 0 };
+                const info = scIsLowSalesDay(day);
+                const st = scLoadState();
+                st.lowMode = !!info.low;
+                scSaveState(st);
+                if (info.low) scFillBars(scRenderLowCard(info));
+                else if (info.reason === 'early') scFillBars('');
+                else scFillBars(scRenderOkCard(info));
+            } catch (e) { console.warn('scRefresh', e); }
+        };
+
+        function scShowPopup(item) {
+            try {
+                const old = document.querySelector('.sc-pop');
+                if (old) old.remove();
+            } catch (e) {}
+            const el = document.createElement('div');
+            el.className = 'sc-pop';
+            el.innerHTML =
+                '<div class="sc-q">💬 مربی فروش هوشمند</div>' +
+                '<div class="sc-a"><b>' + item.q + '</b><br><br>' + item.a + '</div>' +
+                '<div class="sc-actions">' +
+                '<button type="button" class="sc-ok-btn">انجام می‌دم</button>' +
+                '<button type="button" class="sc-later-btn">بعداً</button>' +
+                '</div>';
+            el.querySelector('.sc-ok-btn').onclick = () => {
+                el.remove();
+                try { showToast('عالی — همان را روی مشتری بعدی امتحان کن.'); } catch (e) {}
+            };
+            el.querySelector('.sc-later-btn').onclick = () => el.remove();
+            document.body.appendChild(el);
+            setTimeout(() => { try { el.remove(); } catch (e) {} }, 45000);
+        }
+
+        /** وسط کار، گاهی یک پرسش/نکته نشان بده (رایگان، بدون اینترنت) */
+        window.scMaybeAsk = async function (force) {
+            try {
+                const st = scLoadState();
+                const now = Date.now();
+                if (!force) {
+                    if (st.popCount >= 5) return;
+                    if (now - (st.lastPopAt || 0) < 40 * 60 * 1000) return;
+                    const h = scHourTehran();
+                    if (h < 9 || h > 22) return;
+                }
+                st.lastPopAt = now;
+                st.popCount = (st.popCount || 0) + 1;
+                scSaveState(st);
+
+                let item = null;
+                // هوش مصنوعی آنلاین (از طریق پروکسی — بدون فیلترشکن)
+                try {
+                    let key = '';
+                    try {
+                        const inp = document.getElementById('geminiApiKeyInput');
+                        if (inp && inp.value) key = inp.value.trim();
+                        if (!key) key = (localStorage.getItem('geminiApiKey') || localStorage.getItem('openrouterApiKey') || localStorage.getItem('qnApiKey') || '').trim();
+                    } catch (e) {}
+                    if (key && navigator.onLine && typeof qnOpenRouterRequest === 'function') {
+                        const day = (typeof rsLoadDay === 'function') ? rsLoadDay() : { count: 0, sum: 0 };
+                        const low = scIsLowSalesDay(day);
+                        const body = {
+                            model: 'google/gemini-2.0-flash-001',
+                            messages: [
+                                { role: 'system', content: 'تو مربی فروش یک غرفه سوسیس و کالباس و لبنیات در فروشگاه زنجیره‌ای ایران هستی. فقط فارسی، خیلی کوتاه و عملی بنویس.' },
+                                { role: 'user', content:
+                                    (low.low ? 'فروش امروز نسبت به معمول پایین است. ' : 'فروش امروز در حد معمول است. ') +
+                                    'ساعت حدود ' + scHourTehran() + ' است. امروز تا الان ' + (day.count || 0) +
+                                    ' فاکتور و حدود ' + Math.round((day.sum || 0) / 1000) +
+                                    ' هزار تومان فروش ثبت شده. یک سوال کوتاه مفید از فروشنده بپرس و دقیقاً زیر آن ۲ خط راهنمای عملی برای افزایش فروش بنویس. بدون مقدمه.' }
+                            ],
+                            temperature: 0.75,
+                            max_tokens: 220
+                        };
+                        const result = await qnOpenRouterRequest(key, body, 18000);
+                        if (result && result.ok) {
+                            const txt = result.json && result.json.choices && result.json.choices[0]
+                                && result.json.choices[0].message && result.json.choices[0].message.content;
+                            if (txt) {
+                                const lines = String(txt).trim().split('\n').map(l => l.trim()).filter(Boolean);
+                                item = {
+                                    q: lines[0].replace(/^[\d\.\-\*\s]+/, ''),
+                                    a: lines.slice(1).join(' ') || 'یک کالای مکمل به مشتری پیشنهاد بده.'
+                                };
+                            }
+                        }
+                    }
+                } catch (e) { console.warn('sc AI', e); }
+                if (!item) item = SC_QUESTIONS[Math.floor(Math.random() * SC_QUESTIONS.length)];
+                scShowPopup(item);
+            } catch (e) { console.warn('scMaybeAsk', e); }
+        };
+
+// بعد از هر فروش: رفرش وضعیت کم‌فروشی + گاهی پرسش
+        (function scHookSale() {
+            const prev = window.rsAfterSale;
+            window.rsAfterSale = function (payload) {
+                try { if (typeof prev === 'function') prev(payload); } catch (e) {}
+                try {
+                    scRefreshCoach();
+                    // هر ۳ فاکتور یک‌بار شانس پرسش
+                    const day = (typeof rsLoadDay === 'function') ? rsLoadDay() : { count: 0 };
+                    if (day.count > 0 && day.count % 3 === 0) scMaybeAsk(false);
+                } catch (e) {}
+            };
+        })();
+
+        // تایمر: هر ۲۵ دقیقه اگر فروشنده در سایت است بپرس
+        setInterval(() => {
+            try {
+                if (document.hidden) return;
+                if (typeof currentUserLabel === 'undefined' || !currentUserLabel) return;
+                scRefreshCoach();
+                scMaybeAsk(false);
+            } catch (e) {}
+        }, 25 * 60 * 1000);
+
+        // بار اول
+        setTimeout(() => { try { scRefreshCoach(); } catch (e) {} }, 2500);
+        // وقتی تب فروش باز می‌شود
+        const _scPrevSwitch = window.switchTab;
+        if (typeof _scPrevSwitch === 'function') {
+            window.switchTab = function (name) {
+                const r = _scPrevSwitch.apply(this, arguments);
+                try {
+                    if (name === 'sale' || name === 'ekala' || name === 'sausage' || name === 'dashboard' || name === 'salesBoost') {
+                        setTimeout(() => scRefreshCoach(), 300);
+                    }
+                } catch (e) {}
+                return r;
+            };
+        }
 
 
     async function loadSausagePriceCompare() {
@@ -20670,35 +20979,35 @@ notify pgrst, 'reload schema';`;
     }
 
     function qnOpenRouterEndpoints(path) {
-        // path مثل: /api/v1/chat/completions
+        // اول پروکسی (ایران بدون فیلترشکن)، بعد مستقیم
         const p = path.startsWith('/') ? path : ('/' + path);
         const list = [];
         const add = (u) => { if (u && list.indexOf(u) === -1) list.push(u); };
-        // مستقیم
-        add('https://openrouter.ai' + p);
-        // پروکسی‌های فروشگاه
         try {
             const hosts = [];
             if (typeof TELEGRAM_PROXY_HOSTS !== 'undefined' && Array.isArray(TELEGRAM_PROXY_HOSTS)) {
                 TELEGRAM_PROXY_HOSTS.forEach(h => hosts.push(h));
             }
-            // Worker تلگرام کاربر
-            hosts.push('https://telegram-proxy.adarmiraki.workers.dev');
             hosts.push('https://proxy.ali8001.ir');
+            hosts.push('https://shop-proxy-fast.adarmiraki.workers.dev');
             hosts.push('https://shop-proxy-1.adarmiraki.workers.dev');
+            hosts.push('https://telegram-proxy.adarmiraki.workers.dev');
             try {
                 JSON.parse(localStorage.getItem('extraProxies') || '[]').forEach(u => {
                     if (u && typeof u === 'string') hosts.push(u.replace(/\/+$/, ''));
                 });
             } catch (e) {}
             hosts.forEach(h => {
-                const base = String(h).replace(/\/+$/, '').replace(/\/telegram$/i, '');
+                const base = String(h).replace(/\/+$/, '')
+                    .replace(/\/telegram$/i, '')
+                    .replace(/\/supabase$/i, '')
+                    .replace(/\/openrouter$/i, '');
+                add(base + '/or' + p);
                 add(base + '/openrouter' + p);
                 add(base + '/api/openrouter' + p);
-                add(base + '/https://openrouter.ai' + p);
             });
         } catch (e) {}
-        list.sort((a, b) => (/openrouter\.ai/.test(a) ? 1 : 0) - (/openrouter\.ai/.test(b) ? 1 : 0));
+        add('https://openrouter.ai' + p);
         return list;
     }
 
