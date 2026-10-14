@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v154 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v156 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2822,7 +2822,8 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             <div class="hint" style="margin-top:0;">کلید را <b>مدیر یک‌بار ذخیره کند</b> تا روی همه گوشی‌ها کار کند. برای ایران <b>OpenRouter</b> + پروکسی. خواندن <b>لیبل</b> و <b>برگه دست‌نویس</b> (مدل بینایی رایگان دارد).</div>
             <div class="hint"><b>ساخت کلید OpenRouter:</b> با VPN برو <span dir="ltr">openrouter.ai/keys</span> → Create Key → کپی کن. بعد می‌توانی VPN را خاموش کنی؛ درخواست‌ها از داخل برنامه می‌روند.</div>
             <label>ارائه‌دهنده:</label>
-            <select id="aiVisionProvider" onchange="document.getElementById('geminiApiKeyInput').placeholder=(this.value==='deepseek'?'sk-... از platform.deepseek.com':(this.value==='openrouter'?'sk-or-v1-...':'AIza...'))">
+            <select id="aiVisionProvider" onchange="document.getElementById('geminiApiKeyInput').placeholder=(this.value==='groq'?'gsk_... از console.groq.com':(this.value==='deepseek'?'sk-... از platform.deepseek.com':(this.value==='openrouter'?'sk-or-v1-...':'AIza...')))">
+                <option value="groq">Groq Llama رایگان (کلید gsk_...)</option>
                 <option value="openrouter">OpenRouter (کلید sk-or-...)</option>
                 <option value="deepseek">DeepSeek (کلید sk-...)</option>
                 <option value="gemini">Google Gemini مستقیم</option>
@@ -2832,6 +2833,12 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             <label style="display:flex; align-items:center; gap:6px;">
                 <input type="checkbox" id="geminiEnabled" style="width:auto;" checked> خواندن هوشمند عکس فعال باشد
             </label>
+
+            <div class="hint" style="margin-top:8px;border:1px solid rgba(52,211,153,.35);border-radius:10px;padding:8px 10px;">
+                <b>کلید رایگان پیشنهادی:</b> Groq → <span dir="ltr">console.groq.com</span> (کلید با <b>gsk_</b>)<br>
+                مدل‌های واقعی چت: <span dir="ltr">llama-3.3-70b-versatile</span> و <span dir="ltr">llama-3.1-8b-instant</span><br>
+                ⚠️ مدل‌های <span dir="ltr">llama-prompt-guard</span> فقط برای تشخیص حمله هستند و برای متن فروش کار نمی‌کنند.
+            </div>
             <button class="submit-btn" type="button" onclick="saveGeminiSettings()">💾 ذخیره تنظیمات AI</button>
             <button class="range-toggle-btn" type="button" onclick="testGeminiKey()">🧪 تست اتصال AI</button>
             <div id="geminiStatus" class="hint" style="margin-top:8px;"></div>
@@ -3323,7 +3330,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v154 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v156 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3507,7 +3514,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=154', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=156', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -9255,8 +9262,66 @@ function sbRenderAdminLists(cfg) {
             if (!key) throw new Error('کلید API تنظیم نشده. مدیر باید در تنظیمات AI ذخیره کند.');
 
             const isOpenRouter = /^sk-or-/i.test(key);
-            const isDeepSeek = !isOpenRouter && /^sk-/i.test(key);
+            const isGroq = /^gsk_/i.test(key);
+            const isDeepSeek = !isOpenRouter && !isGroq && /^sk-/i.test(key);
             let lastErr = '';
+
+            async function tryGroq() {
+                const endpoints = [];
+                try {
+                    const hosts = ['https://proxy.ali8001.ir', 'https://shop-proxy-fast.adarmiraki.workers.dev', 'https://shop-proxy-1.adarmiraki.workers.dev'];
+                    hosts.forEach(function (h) {
+                        const b = String(h).replace(/\/+$/, '');
+                        endpoints.push(b + '/groq/openai/v1/chat/completions');
+                        endpoints.push(b + '/api/groq/openai/v1/chat/completions');
+                    });
+                } catch (e) {}
+                endpoints.push('https://api.groq.com/openai/v1/chat/completions');
+                const models = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'llama-3.2-3b-preview', 'gemma2-9b-it', 'mixtral-8x7b-32768'];
+                for (let m = 0; m < models.length; m++) {
+                    const body = JSON.stringify({
+                        model: models[m],
+                        messages: messages,
+                        temperature: temperature,
+                        max_tokens: maxTokens
+                    });
+                    for (let i = 0; i < endpoints.length; i++) {
+                        try {
+                            const res = await (typeof fetchWithTimeout === 'function'
+                                ? fetchWithTimeout(endpoints[i], {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': 'Bearer ' + key
+                                    },
+                                    body: body
+                                }, opts.timeout || 28000)
+                                : fetch(endpoints[i], {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': 'Bearer ' + key
+                                    },
+                                    body: body
+                                }));
+                            const json = await res.json().catch(function () { return null; });
+                            if (res.ok && json && json.choices && json.choices[0] && json.choices[0].message) {
+                                const txt = json.choices[0].message.content;
+                                if (txt) return { text: String(txt).trim(), model: models[m], provider: 'groq' };
+                            }
+                            lastErr = (json && json.error && (json.error.message || JSON.stringify(json.error))) || ('Groq HTTP ' + res.status);
+                            if (res.status === 401 || res.status === 403) {
+                                throw new Error('کلید Groq نامعتبر است. از console.groq.com کلید رایگان بگیر (با gsk_ شروع می‌شود).');
+                            }
+                        } catch (e) {
+                            if (/نامعتبر|invalid|401|403/i.test(String(e.message || e))) throw e;
+                            lastErr = e.message || String(e);
+                        }
+                    }
+                }
+                return null;
+            }
+
 
             async function tryDeepSeek() {
                 const endpoints = [];
@@ -9353,24 +9418,26 @@ function sbRenderAdminLists(cfg) {
                 return null;
             }
 
-            // ترتیب: اگر DeepSeek → اول DeepSeek؛ اگر OpenRouter → اول OpenRouter؛ وگرنه هر دو
-            if (isDeepSeek) {
+            // ترتیب بر اساس نوع کلید
+            if (isGroq) {
+                const r = await tryGroq();
+                if (r) return r;
+            } else if (isDeepSeek) {
                 const r = await tryDeepSeek();
                 if (r) return r;
-                // بعضی کلیدها با OpenRouter هم کار می‌کنند
-                const r2 = await tryOpenRouter();
-                if (r2) return r2;
             } else if (isOpenRouter) {
                 const r = await tryOpenRouter();
                 if (r) return r;
             } else {
-                const r1 = await tryOpenRouter();
-                if (r1) return r1;
-                const r2 = await tryDeepSeek();
-                if (r2) return r2;
+                let r = await tryGroq();
+                if (r) return r;
+                r = await tryOpenRouter();
+                if (r) return r;
+                r = await tryDeepSeek();
+                if (r) return r;
             }
 
-            throw new Error(lastErr || 'اتصال به AI برقرار نشد. کلید DeepSeek (sk-...) یا OpenRouter (sk-or-...) را چک کن.');
+            throw new Error(lastErr || 'اتصال برقرار نشد. کلید رایگان Groq (gsk_...) یا OpenRouter (sk-or-...) را بگذار.');
         }
         window.aiTextChat = aiTextChat;
 
@@ -10351,8 +10418,9 @@ function sbRenderAdminLists(cfg) {
             }
 
             const isOR = /^sk-or-/i.test(key);
-            const isDS = !isOR && /^sk-/i.test(key);
-            if (st) st.innerHTML = '⏳ در حال تست ' + (isDS ? 'DeepSeek' : (isOR ? 'OpenRouter' : 'AI')) + '...';
+            const isGroq = /^gsk_/i.test(key);
+            const isDS = !isOR && !isGroq && /^sk-/i.test(key);
+            if (st) st.innerHTML = '⏳ در حال تست ' + (isGroq ? 'Groq (Llama)' : (isDS ? 'DeepSeek' : (isOR ? 'OpenRouter' : 'AI'))) + '...';
 
             let ok = false, detail = '', lastErr = '';
 
@@ -10450,16 +10518,57 @@ function sbRenderAdminLists(cfg) {
                 return { ok: false };
             }
 
+            async function testGroq() {
+                const endpoints = [
+                    'https://proxy.ali8001.ir/groq/openai/v1/chat/completions',
+                    'https://shop-proxy-fast.adarmiraki.workers.dev/groq/openai/v1/chat/completions',
+                    'https://api.groq.com/openai/v1/chat/completions'
+                ];
+                const body = JSON.stringify({
+                    model: 'llama-3.3-70b-versatile',
+                    messages: [{ role: 'user', content: 'Reply with only: ok' }],
+                    max_tokens: 8
+                });
+                for (let i = 0; i < endpoints.length; i++) {
+                    try {
+                        const res = await (typeof fetchWithTimeout === 'function'
+                            ? fetchWithTimeout(endpoints[i], {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+                                body: body
+                            }, 25000)
+                            : fetch(endpoints[i], {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+                                body: body
+                            }));
+                        const json = await res.json().catch(function () { return null; });
+                        if (res.ok && json && json.choices && json.choices[0]) {
+                            return { ok: true, detail: 'Groq Llama · ' + endpoints[i].replace(/^https:\/\//, '').split('/')[0] };
+                        }
+                        lastErr = (json && json.error && (json.error.message || JSON.stringify(json.error))) || ('HTTP ' + res.status);
+                        if (res.status === 401 || res.status === 403) {
+                            lastErr = 'کلید Groq نامعتبر — از console.groq.com کلید رایگان بگیر';
+                            break;
+                        }
+                    } catch (e) { lastErr = e.message || String(e); }
+                }
+                return { ok: false };
+            }
+
             try {
-                if (isDS) {
+                if (isGroq) {
+                    const r = await testGroq();
+                    ok = r.ok; detail = r.detail || '';
+                } else if (isDS) {
                     const r = await testDS();
                     ok = r.ok; detail = r.detail || '';
                 } else if (isOR) {
                     const r = await testOR();
                     ok = r.ok; detail = r.detail || '';
                 } else {
-                    // کلید نامشخص — هر دو را امتحان کن
-                    let r = await testOR();
+                    let r = await testGroq();
+                    if (!r.ok) r = await testOR();
                     if (!r.ok) r = await testDS();
                     ok = r.ok; detail = r.detail || '';
                 }
@@ -10468,22 +10577,32 @@ function sbRenderAdminLists(cfg) {
             }
 
             if (ok) {
+                const provName = isGroq ? 'groq' : (isDS ? 'deepseek' : 'openrouter');
                 try {
                     localStorage.setItem('geminiApiKey', key);
                     localStorage.setItem('geminiEnabled', '1');
-                    localStorage.setItem('aiVisionProvider', isDS ? 'deepseek' : 'openrouter');
-                    if (typeof ascLoadLocal === 'function' && typeof ascPushRemote === 'function') {
-                        const cfg = ascLoadLocal();
-                        cfg.ai = { apiKey: key, enabled: true, provider: isDS ? 'deepseek' : 'openrouter' };
-                        ascPushRemote(cfg).catch(function () {});
+                    localStorage.setItem('aiVisionProvider', provName);
+                    localStorage.setItem('qnApiKey', key);
+                    if (keyEl) keyEl.value = key;
+                    if (provEl) {
+                        try { provEl.value = provName; } catch (e) {}
                     }
-                } catch (e) {}
-                if (provEl) {
-                    // اگر گزینه deepseek نیست، openrouter بماند
-                    try { provEl.value = isDS ? 'openrouter' : (isOR ? 'openrouter' : provEl.value); } catch (e) {}
-                }
+                    if (typeof ascLoadLocal === 'function') {
+                        const cfg = ascLoadLocal();
+                        cfg.ai = { apiKey: key, enabled: true, provider: provName };
+                        ascSaveLocal(cfg);
+                        if (typeof ascPushRemote === 'function') {
+                            const pushResult = await ascPushRemote(cfg);
+                            if (pushResult && pushResult.ok) {
+                                detail = (detail || 'OK') + ' · همگام سرور';
+                            } else if (pushResult && pushResult.error) {
+                                detail = (detail || 'OK') + ' · محلی (سرور: ' + pushResult.error + ')';
+                            }
+                        }
+                    }
+                } catch (e) { console.warn(e); }
                 if (st) st.innerHTML = '✅ اتصال برقرار · <span dir="ltr">' + (detail || 'OK') + '</span>';
-                showToast('✅ AI وصل شد');
+                showToast('✅ AI وصل و ذخیره شد — همه گوشی‌ها');
             } else {
                 const msg = lastErr || 'اتصال برقرار نشد';
                 if (st) st.innerHTML = '❌ ' + msg;
