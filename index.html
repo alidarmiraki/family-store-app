@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v153 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v154 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2822,8 +2822,9 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             <div class="hint" style="margin-top:0;">کلید را <b>مدیر یک‌بار ذخیره کند</b> تا روی همه گوشی‌ها کار کند. برای ایران <b>OpenRouter</b> + پروکسی. خواندن <b>لیبل</b> و <b>برگه دست‌نویس</b> (مدل بینایی رایگان دارد).</div>
             <div class="hint"><b>ساخت کلید OpenRouter:</b> با VPN برو <span dir="ltr">openrouter.ai/keys</span> → Create Key → کپی کن. بعد می‌توانی VPN را خاموش کنی؛ درخواست‌ها از داخل برنامه می‌روند.</div>
             <label>ارائه‌دهنده:</label>
-            <select id="aiVisionProvider" onchange="document.getElementById('geminiApiKeyInput').placeholder=(this.value==='openrouter'?'sk-or-v1-...':'AIza...')">
-                <option value="openrouter">OpenRouter (پیشنهادی برای ایران)</option>
+            <select id="aiVisionProvider" onchange="document.getElementById('geminiApiKeyInput').placeholder=(this.value==='deepseek'?'sk-... از platform.deepseek.com':(this.value==='openrouter'?'sk-or-v1-...':'AIza...'))">
+                <option value="openrouter">OpenRouter (کلید sk-or-...)</option>
+                <option value="deepseek">DeepSeek (کلید sk-...)</option>
                 <option value="gemini">Google Gemini مستقیم</option>
             </select>
             <label>API Key:</label>
@@ -3322,7 +3323,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v153 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v154 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3506,7 +3507,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=153', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=154', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -10340,106 +10341,156 @@ function sbRenderAdminLists(cfg) {
         async function testGeminiKey() {
             const keyEl = document.getElementById('geminiApiKeyInput');
             const provEl = document.getElementById('aiVisionProvider');
-            const s = getGeminiSettings();
-            const key = (keyEl && keyEl.value.trim()) || s.apiKey;
-            const provider = (provEl && provEl.value) || s.provider || 'openrouter';
+            const s = (typeof getGeminiSettings === 'function') ? getGeminiSettings() : {};
+            const key = ((keyEl && keyEl.value.trim()) || (s && s.apiKey) || '').trim();
             const st = document.getElementById('geminiStatus');
-            if (!key) { showToast('اول API Key را وارد کن'); return; }
-            if (st) st.innerHTML = '⏳ تست ' + (provider === 'openrouter' ? 'OpenRouter' : 'Gemini') + '...';
-
-            if (provider === 'openrouter') {
-                // اگر توابع دفترچه هنوز لود نشده‌اند، تست ساده مستقیم
-                const tryRequest = async (body) => {
-                    if (typeof qnOpenRouterRequest === 'function') return qnOpenRouterRequest(key, body, 30000);
-                    const res = await fetchWithTimeout('https://openrouter.ai/api/v1/chat/completions', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': 'Bearer ' + key,
-                            'HTTP-Referer': location.origin || 'https://localhost',
-                            'X-Title': 'Ghorfe Familly'
-                        },
-                        body: JSON.stringify(body)
-                    }, 30000);
-                    const json = await res.json().catch(() => null);
-                    if (res.ok && json) return { ok: true, json: json };
-                    return { ok: false, error: (json && json.error && json.error.message) || ('HTTP ' + res.status) };
-                };
-                const models = [
-                    'openrouter/free',
-                    'baidu/qianfan-ocr-fast:free',
-                    'qwen/qwen2.5-vl-7b-instruct:free',
-                    'qwen/qwen2.5-vl-3b-instruct:free',
-                    'meta-llama/llama-3.2-11b-vision-instruct:free',
-                    'moonshotai/kimi-vl-a3b-thinking:free'
-                ];
-                let lastErr = null, okModel = null;
-                for (let i = 0; i < models.length; i++) {
-                    const result = await tryRequest({
-                        model: models[i],
-                        messages: [{ role: 'user', content: 'Reply with only: ok' }],
-                        max_tokens: 8
-                    });
-                    if (result.ok && result.json && result.json.choices) { okModel = models[i]; break; }
-                    lastErr = result.error || 'خطا';
-                    if (result.auth) break;
-                }
-                if (okModel) {
-                    try {
-                        localStorage.setItem('geminiApiKey', key);
-                        localStorage.setItem('aiVisionProvider', 'openrouter');
-                        localStorage.setItem('openrouterModel', okModel);
-                        localStorage.setItem('geminiEnabled', '1');
-                        if (document.getElementById('geminiEnabled')) document.getElementById('geminiEnabled').checked = true;
-                        if (document.getElementById('aiVisionProvider')) document.getElementById('aiVisionProvider').value = 'openrouter';
-                    } catch (e) {}
-                    if (st) st.innerHTML = '✅ OpenRouter وصل شد<br>مدل: <b dir="ltr">' + okModel + '</b>';
-                    showToast('✅ OpenRouter وصل شد');
-                } else {
-                    const isFetch = /Failed to fetch|NetworkError|Load failed/i.test(String(lastErr || ''));
-                    if (st) st.innerHTML = '❌ ' + (lastErr || 'خطا') + (isFetch
-                        ? '<br><b>شبکه قطع است یا OpenRouter فیلتر است.</b><br>۱) Worker پروکسی OpenRouter را طبق راهنما بساز<br>۲) یا موقع تست VPN روشن کن'
-                        : '<br>کلید را در openrouter.ai/keys چک کن (اگر لو رفته، حذف و جدید بساز).');
-                    showToast('❌ تست OpenRouter ناموفق');
-                }
+            if (!key) {
+                showToast('اول API Key را وارد کن');
+                if (st) st.innerHTML = '❌ کلید خالی است';
                 return;
             }
 
-            // Gemini مستقیم
-            const models = ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-flash'];
-            let lastErr = null, okModel = null;
-            for (let i = 0; i < models.length; i++) {
-                try {
-                    const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + models[i] + ':generateContent?key=' + encodeURIComponent(key);
-                    const res = await fetchWithTimeout(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: [{ parts: [{ text: 'Reply with only: ok' }] }],
-                            generationConfig: { maxOutputTokens: 8, temperature: 0 }
-                        })
-                    }, 25000);
-                    const json = await res.json().catch(() => null);
-                    if (res.ok && json && json.candidates) { okModel = models[i]; break; }
-                    lastErr = (json && json.error && json.error.message) || ('HTTP ' + res.status);
-                } catch (e) {
-                    lastErr = e.message || String(e);
+            const isOR = /^sk-or-/i.test(key);
+            const isDS = !isOR && /^sk-/i.test(key);
+            if (st) st.innerHTML = '⏳ در حال تست ' + (isDS ? 'DeepSeek' : (isOR ? 'OpenRouter' : 'AI')) + '...';
+
+            let ok = false, detail = '', lastErr = '';
+
+            // --- DeepSeek ---
+            async function testDS() {
+                const endpoints = [
+                    'https://proxy.ali8001.ir/deepseek/chat/completions',
+                    'https://shop-proxy-fast.adarmiraki.workers.dev/deepseek/chat/completions',
+                    'https://api.deepseek.com/chat/completions',
+                    'https://api.deepseek.com/v1/chat/completions'
+                ];
+                const body = JSON.stringify({
+                    model: 'deepseek-chat',
+                    messages: [{ role: 'user', content: 'فقط بنویس: ok' }],
+                    max_tokens: 8
+                });
+                for (let i = 0; i < endpoints.length; i++) {
+                    try {
+                        const res = await (typeof fetchWithTimeout === 'function'
+                            ? fetchWithTimeout(endpoints[i], {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': 'Bearer ' + key
+                                },
+                                body: body
+                            }, 25000)
+                            : fetch(endpoints[i], {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': 'Bearer ' + key
+                                },
+                                body: body
+                            }));
+                        const json = await res.json().catch(function () { return null; });
+                        if (res.ok && json && json.choices && json.choices[0]) {
+                            return { ok: true, detail: 'DeepSeek · ' + endpoints[i].replace(/^https:\/\//, '').split('/')[0] };
+                        }
+                        lastErr = (json && json.error && (json.error.message || JSON.stringify(json.error))) || ('HTTP ' + res.status);
+                        if (res.status === 401 || res.status === 403) {
+                            lastErr = 'کلید DeepSeek نامعتبر — از platform.deepseek.com کلید جدید بگیر';
+                            break;
+                        }
+                    } catch (e) {
+                        lastErr = e.message || String(e);
+                    }
                 }
+                return { ok: false };
             }
-            if (okModel) {
+
+            // --- OpenRouter ---
+            async function testOR() {
+                if (!isOR && isDS) return { ok: false }; // کلید DeepSeek را به OpenRouter نفرست
+                const models = ['openrouter/free', 'google/gemma-4-31b-it:free', 'deepseek/deepseek-chat'];
+                for (let i = 0; i < models.length; i++) {
+                    try {
+                        let result;
+                        if (typeof qnOpenRouterRequest === 'function') {
+                            result = await qnOpenRouterRequest(key, {
+                                model: models[i],
+                                messages: [{ role: 'user', content: 'Reply with only: ok' }],
+                                max_tokens: 8
+                            }, 25000);
+                        } else {
+                            const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': 'Bearer ' + key,
+                                    'HTTP-Referer': location.origin || 'https://localhost',
+                                    'X-Title': 'Ghorfe Familly'
+                                },
+                                body: JSON.stringify({
+                                    model: models[i],
+                                    messages: [{ role: 'user', content: 'Reply with only: ok' }],
+                                    max_tokens: 8
+                                })
+                            });
+                            const json = await res.json().catch(function () { return null; });
+                            result = (res.ok && json) ? { ok: true, json: json } : { ok: false, error: (json && json.error && json.error.message) || ('HTTP ' + res.status) };
+                        }
+                        if (result && result.ok) {
+                            return { ok: true, detail: 'OpenRouter · ' + models[i] };
+                        }
+                        lastErr = (result && result.error) || lastErr;
+                        if (result && result.auth) {
+                            lastErr = 'کلید OpenRouter نامعتبر (باید با sk-or- شروع شود)';
+                            break;
+                        }
+                    } catch (e) {
+                        lastErr = e.message || String(e);
+                    }
+                }
+                return { ok: false };
+            }
+
+            try {
+                if (isDS) {
+                    const r = await testDS();
+                    ok = r.ok; detail = r.detail || '';
+                } else if (isOR) {
+                    const r = await testOR();
+                    ok = r.ok; detail = r.detail || '';
+                } else {
+                    // کلید نامشخص — هر دو را امتحان کن
+                    let r = await testOR();
+                    if (!r.ok) r = await testDS();
+                    ok = r.ok; detail = r.detail || '';
+                }
+            } catch (e) {
+                lastErr = e.message || String(e);
+            }
+
+            if (ok) {
                 try {
                     localStorage.setItem('geminiApiKey', key);
-                    localStorage.setItem('aiVisionProvider', 'gemini');
-                    localStorage.setItem('geminiModel', okModel);
                     localStorage.setItem('geminiEnabled', '1');
+                    localStorage.setItem('aiVisionProvider', isDS ? 'deepseek' : 'openrouter');
+                    if (typeof ascLoadLocal === 'function' && typeof ascPushRemote === 'function') {
+                        const cfg = ascLoadLocal();
+                        cfg.ai = { apiKey: key, enabled: true, provider: isDS ? 'deepseek' : 'openrouter' };
+                        ascPushRemote(cfg).catch(function () {});
+                    }
                 } catch (e) {}
-                if (st) st.innerHTML = '✅ Gemini وصل شد — <b dir="ltr">' + okModel + '</b>';
-                showToast('✅ Gemini وصل شد');
+                if (provEl) {
+                    // اگر گزینه deepseek نیست، openrouter بماند
+                    try { provEl.value = isDS ? 'openrouter' : (isOR ? 'openrouter' : provEl.value); } catch (e) {}
+                }
+                if (st) st.innerHTML = '✅ اتصال برقرار · <span dir="ltr">' + (detail || 'OK') + '</span>';
+                showToast('✅ AI وصل شد');
             } else {
-                if (st) st.innerHTML = '❌ Gemini از این منطقه در دسترس نیست. ارائه‌دهنده را روی OpenRouter بگذار.';
-                showToast('❌ Gemini در ایران معمولاً کار نمی‌کند — OpenRouter را امتحان کن');
+                const msg = lastErr || 'اتصال برقرار نشد';
+                if (st) st.innerHTML = '❌ ' + msg;
+                showToast('❌ ' + msg);
             }
         }
+
 
         async function loadTelegramSettings() {
             const s = await getTelegramSettings(true);
