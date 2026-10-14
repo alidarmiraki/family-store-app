@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v151 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v152 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -3322,7 +3322,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v151 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v152 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3506,7 +3506,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=151', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=152', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -9222,6 +9222,91 @@ function sbRenderAdminLists(cfg) {
 
 
         // ========== تنظیمات مشترک مدیر — همگام همه گوشی‌ها ==========
+        
+        // مدل‌های رایگان OpenRouter — gemini-2.0-flash-001 دیگر endpoint ندارد
+        const AI_FREE_MODELS = [
+            'openrouter/free',
+            'google/gemma-4-31b-it:free',
+            'google/gemma-4-26b-a4b-it:free',
+            'nvidia/nemotron-3.5-lightning:free',
+            'deepseek/deepseek-v4-flash:free',
+            'deepseek/deepseek-chat'
+        ];
+
+        async function aiTextChat(messages, opts) {
+            opts = opts || {};
+            const maxTokens = opts.max_tokens || 500;
+            const temperature = opts.temperature != null ? opts.temperature : 0.6;
+            let key = '';
+            try { if (typeof getSharedAiKey === 'function') key = await getSharedAiKey(); } catch (e) {}
+            if (!key) {
+                try {
+                    const s = typeof getGeminiSettings === 'function' ? getGeminiSettings() : null;
+                    if (s && s.apiKey) key = s.apiKey;
+                } catch (e) {}
+            }
+            if (!key) throw new Error('کلید API تنظیم نشده. مدیر باید در تنظیمات AI یک‌بار ذخیره کند.');
+
+            let lastErr = '';
+            if (typeof qnOpenRouterRequest === 'function') {
+                for (let i = 0; i < AI_FREE_MODELS.length; i++) {
+                    const model = AI_FREE_MODELS[i];
+                    try {
+                        const result = await qnOpenRouterRequest(key, {
+                            model: model,
+                            messages: messages,
+                            temperature: temperature,
+                            max_tokens: maxTokens
+                        }, opts.timeout || 25000);
+                        if (result && result.ok) {
+                            const txt = result.json && result.json.choices && result.json.choices[0]
+                                && result.json.choices[0].message && result.json.choices[0].message.content;
+                            if (txt) return { text: String(txt).trim(), model: model, provider: 'openrouter' };
+                            lastErr = 'پاسخ خالی';
+                        } else {
+                            lastErr = (result && result.error) || ('خطا ' + model);
+                            if (/No endpoints found|not found|invalid model/i.test(String(lastErr))) continue;
+                            if (result && result.auth) throw new Error(lastErr);
+                        }
+                    } catch (e) {
+                        lastErr = e.message || String(e);
+                        if (/unauthorized|api key|401|402|403/i.test(lastErr)) throw e;
+                    }
+                }
+            }
+            // DeepSeek مستقیم اگر کلید sk- غیر openrouter باشد
+            if (key.indexOf('sk-or-') !== 0 && key.indexOf('sk-') === 0) {
+                const endpoints = [
+                    'https://proxy.ali8001.ir/deepseek/chat/completions',
+                    'https://api.deepseek.com/chat/completions'
+                ];
+                const body = JSON.stringify({
+                    model: 'deepseek-chat',
+                    messages: messages,
+                    temperature: temperature,
+                    max_tokens: maxTokens
+                });
+                for (let i = 0; i < endpoints.length; i++) {
+                    try {
+                        const res = await fetch(endpoints[i], {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+                            body: body
+                        });
+                        const json = await res.json().catch(function () { return null; });
+                        if (res.ok && json && json.choices && json.choices[0] && json.choices[0].message) {
+                            const txt = json.choices[0].message.content;
+                            if (txt) return { text: String(txt).trim(), model: 'deepseek-chat', provider: 'deepseek' };
+                        }
+                        lastErr = (json && json.error && json.error.message) || ('DeepSeek ' + res.status);
+                    } catch (e) { lastErr = e.message || String(e); }
+                }
+            }
+            throw new Error(lastErr || 'هیچ مدل رایگان AI در دسترس نبود.');
+        }
+        window.aiTextChat = aiTextChat;
+
+
         const ASC_LS = 'appSharedConfig_v1';
         let __ascCache = null;
         let __ascPulling = null;
@@ -9488,38 +9573,12 @@ function sbRenderAdminLists(cfg) {
         }
 
         async function pgCallAI(prompt) {
-            const key = await pgGetAiKey();
-            if (!key) throw new Error('کلید API هوش مصنوعی تنظیم نشده. از تنظیمات دفترچه/Gemini وارد کن.');
-            const body = {
-                model: 'google/gemini-2.0-flash-001',
-                messages: [
-                    { role: 'system', content: 'تو مشاور فروش غرفه سوسیس و کالباس فله در ایران هستی. جواب را فارسی، کوتاه، کاربردی و محترمانه بنویس. بدون مقدمه اضافه.' },
-                    { role: 'user', content: prompt }
-                ],
-                temperature: 0.6,
-                max_tokens: 500
-            };
-            let result;
-            if (typeof qnOpenRouterRequest === 'function') {
-                result = await qnOpenRouterRequest(key, body, 45000);
-            } else {
-                const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + key,
-                        'HTTP-Referer': location.origin || 'https://localhost',
-                        'X-Title': 'Ghorfe Product Guide'
-                    },
-                    body: JSON.stringify(body)
-                });
-                const json = await res.json().catch(() => null);
-                result = { ok: res.ok, json };
-            }
-            if (!result || !result.ok) throw new Error((result && result.json && result.json.error && result.json.error.message) || 'خطای AI');
-            const txt = result.json && result.json.choices && result.json.choices[0] && result.json.choices[0].message && result.json.choices[0].message.content;
-            if (!txt) throw new Error('پاسخ خالی از AI');
-            return String(txt).trim();
+            const messages = [
+                { role: 'system', content: 'تو مشاور فروش غرفه سوسیس و کالباس فله در ایران هستی. جواب را فارسی، کوتاه، کاربردی و محترمانه بنویس. بدون مقدمه اضافه.' },
+                { role: 'user', content: prompt }
+            ];
+            const r = await aiTextChat(messages, { max_tokens: 500, temperature: 0.6, timeout: 45000 });
+            return r.text;
         }
 
         window.pgEnhanceOne = async function (key, idx, name, price) {
