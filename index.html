@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v156 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v157 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2836,8 +2836,8 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
 
             <div class="hint" style="margin-top:8px;border:1px solid rgba(52,211,153,.35);border-radius:10px;padding:8px 10px;">
                 <b>کلید رایگان پیشنهادی:</b> Groq → <span dir="ltr">console.groq.com</span> (کلید با <b>gsk_</b>)<br>
-                مدل‌های واقعی چت: <span dir="ltr">llama-3.3-70b-versatile</span> و <span dir="ltr">llama-3.1-8b-instant</span><br>
-                ⚠️ مدل‌های <span dir="ltr">llama-prompt-guard</span> فقط برای تشخیص حمله هستند و برای متن فروش کار نمی‌کنند.
+                مدل‌های فعال روی حساب تو: <span dir="ltr">openai/gpt-oss-120b</span> · <span dir="ltr">openai/gpt-oss-20b</span> · <span dir="ltr">qwen/qwen3.8-27b</span><br>
+                ⚠️ <span dir="ltr">prompt-guard</span> و <span dir="ltr">whisper</span> برای متن فروش نیستند.
             </div>
             <button class="submit-btn" type="button" onclick="saveGeminiSettings()">💾 ذخیره تنظیمات AI</button>
             <button class="range-toggle-btn" type="button" onclick="testGeminiKey()">🧪 تست اتصال AI</button>
@@ -3330,7 +3330,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v156 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v157 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3514,7 +3514,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=156', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=157', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -9277,7 +9277,7 @@ function sbRenderAdminLists(cfg) {
                     });
                 } catch (e) {}
                 endpoints.push('https://api.groq.com/openai/v1/chat/completions');
-                const models = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'llama-3.2-3b-preview', 'gemma2-9b-it', 'mixtral-8x7b-32768'];
+                const models = ['openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'qwen/qwen3.8-27b', 'qwen/qwen3-32b', 'llama-3.1-8b-instant', 'llama-3.3-70b-versatile'];
                 for (let m = 0; m < models.length; m++) {
                     const body = JSON.stringify({
                         model: models[m],
@@ -10524,34 +10524,39 @@ function sbRenderAdminLists(cfg) {
                     'https://shop-proxy-fast.adarmiraki.workers.dev/groq/openai/v1/chat/completions',
                     'https://api.groq.com/openai/v1/chat/completions'
                 ];
-                const body = JSON.stringify({
-                    model: 'llama-3.3-70b-versatile',
-                    messages: [{ role: 'user', content: 'Reply with only: ok' }],
-                    max_tokens: 8
-                });
-                for (let i = 0; i < endpoints.length; i++) {
-                    try {
-                        const res = await (typeof fetchWithTimeout === 'function'
-                            ? fetchWithTimeout(endpoints[i], {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
-                                body: body
-                            }, 25000)
-                            : fetch(endpoints[i], {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
-                                body: body
-                            }));
-                        const json = await res.json().catch(function () { return null; });
-                        if (res.ok && json && json.choices && json.choices[0]) {
-                            return { ok: true, detail: 'Groq Llama · ' + endpoints[i].replace(/^https:\/\//, '').split('/')[0] };
-                        }
-                        lastErr = (json && json.error && (json.error.message || JSON.stringify(json.error))) || ('HTTP ' + res.status);
-                        if (res.status === 401 || res.status === 403) {
-                            lastErr = 'کلید Groq نامعتبر — از console.groq.com کلید رایگان بگیر';
-                            break;
-                        }
-                    } catch (e) { lastErr = e.message || String(e); }
+                const models = ['openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'qwen/qwen3.8-27b', 'llama-3.1-8b-instant'];
+                for (let m = 0; m < models.length; m++) {
+                    const body = JSON.stringify({
+                        model: models[m],
+                        messages: [{ role: 'user', content: 'Reply with only: ok' }],
+                        max_tokens: 16
+                    });
+                    for (let i = 0; i < endpoints.length; i++) {
+                        try {
+                            const res = await (typeof fetchWithTimeout === 'function'
+                                ? fetchWithTimeout(endpoints[i], {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+                                    body: body
+                                }, 25000)
+                                : fetch(endpoints[i], {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+                                    body: body
+                                }));
+                            const json = await res.json().catch(function () { return null; });
+                            if (res.ok && json && json.choices && json.choices[0]) {
+                                return { ok: true, detail: 'Groq · ' + models[m] };
+                            }
+                            lastErr = (json && json.error && (json.error.message || JSON.stringify(json.error))) || ('HTTP ' + res.status);
+                            if (res.status === 401 || res.status === 403) {
+                                lastErr = 'کلید Groq نامعتبر — از console.groq.com کلید جدید بگیر';
+                                return { ok: false };
+                            }
+                            // مدل موجود نیست → مدل بعدی
+                            if (/does not exist|not have access|model/i.test(String(lastErr))) break;
+                        } catch (e) { lastErr = e.message || String(e); }
+                    }
                 }
                 return { ok: false };
             }
