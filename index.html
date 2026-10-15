@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v157 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v158 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -1905,6 +1905,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <button class="tab-btn" id="btnSaleSausage" onclick="switchTab('saleSausage'); loadProductDatalist(); loadRecentSales('sausage');"><span class="tab-ico">🌭</span><span class="tab-label">ثبت فروش سوسیس و کالباس</span></button>
         <button class="tab-btn" id="btnSausagePriceCompare" onclick="switchTab('sausagePriceCompare'); loadSausagePriceCompare();"><span class="tab-ico">🏷️</span><span class="tab-label">راهنمای لیبل سوسیس‌ها</span></button>
         <button class="tab-btn" id="btnProductGuide" onclick="switchTab('productGuide'); loadProductGuideTab();"><span class="tab-ico">🧠</span><span class="tab-label">معرفی محصولات</span></button>
+        <button class="tab-btn" id="btnAiChat" onclick="switchTab('aiChat'); loadAiChatTab();"><span class="tab-ico">💬</span><span class="tab-label">چت با AI</span></button>
         <button class="tab-btn" id="btnQuickNote" onclick="switchTab('quickNote');"><span class="tab-ico">📝</span><span class="tab-label">دفترچه فروش سریع</span><span class="qn-badge" id="qnTabBadge"></span></button>
         <button class="tab-btn" id="btnAttendance" onclick="switchTab('attendance'); loadFingerprintStatus();"><span class="tab-ico">⏰</span><span class="tab-label">حضور و غیاب</span></button>
         <button class="tab-btn" id="btnMessage" onclick="switchTab('message');"><span class="tab-ico">📩</span><span class="tab-label">ارسال پیام به مدیر</span></button>
@@ -2465,7 +2466,24 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="pgList"></div>
     </div>
 
-    <div id="sausagePriceCompareTab" class="card">
+    
+    <div id="aiChatTab" class="card" style="display:none;">
+        <h2>💬 گفتگو با دستیار فروش</h2>
+        <div class="hint">سوال بپرس: قیمت پیشنهادی، جمله فروش، ترکیب محصولات، پاسخ به مشتری و… — با همان کلید AI مدیر</div>
+        <div id="aiChatMessages" style="max-height:55vh;overflow-y:auto;direction:rtl;text-align:right;padding:8px 4px;margin:10px 0;border-radius:14px;background:rgba(15,23,42,.35);border:1px solid rgba(148,163,184,.2);"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <input id="aiChatInput" type="text" placeholder="سوالت را بنویس..." style="flex:1;min-width:180px;border-radius:12px;padding:12px;border:1px solid rgba(148,163,184,.3);background:var(--bg-input);color:var(--text-primary);" onkeydown="if(event.key==='Enter'){event.preventDefault();sendAiChat();}">
+            <button type="button" class="confirm-btn" onclick="sendAiChat()" style="min-width:100px;">ارسال</button>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
+            <button type="button" class="secondary-btn" style="font-size:11px;padding:6px 10px;" onclick="aiChatQuick('یک جمله کوتاه برای پیشنهاد کالباس به مشتری بنویس')">جمله فروش</button>
+            <button type="button" class="secondary-btn" style="font-size:11px;padding:6px 10px;" onclick="aiChatQuick('چطور میانگین فاکتور را بالا ببرم؟')">میانگین فاکتور</button>
+            <button type="button" class="secondary-btn" style="font-size:11px;padding:6px 10px;" onclick="aiChatQuick('سه ترکیب فروش سوسیس و لبنیات پیشنهاد بده')">ترکیب محصول</button>
+        </div>
+        <div id="aiChatStatus" class="hint" style="margin-top:8px;"></div>
+    </div>
+
+<div id="sausagePriceCompareTab" class="card">
         <h2>🏷️ راهنمای لیبل سوسیس‌ها</h2>
         <div class="spc-intro">
             <div class="spc-intro-title">چطور از این لیست استفاده کنی؟</div>
@@ -3330,7 +3348,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v157 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v158 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3514,7 +3532,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=157', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=158', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -3846,7 +3864,17 @@ function openProxyPanel() {
     const ov = document.createElement('div'); ov.id = 'proxyPanel';
     ov.style.cssText = 'position:fixed;inset:0;z-index:100002;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:12px;';
     const extras = () => { try { return JSON.parse(localStorage.getItem('extraProxies') || '[]'); } catch (e) { return []; } };
-    const saveExtras = a => { try { localStorage.setItem('extraProxies', JSON.stringify(a)); } catch (e) {} };
+    const saveExtras = a => {
+        try { localStorage.setItem('extraProxies', JSON.stringify(a)); } catch (e) {}
+        try {
+            if (typeof ascLoadLocal === 'function') {
+                const cfg = ascLoadLocal();
+                cfg.proxies = Array.isArray(a) ? a : [];
+                if (typeof ascSaveLocal === 'function') ascSaveLocal(cfg);
+                if (typeof ascPushRemote === 'function' && navigator.onLine) ascPushRemote(cfg).catch(function () {});
+            }
+        } catch (e) {}
+    };
     const host = u => u === SUPABASE_REAL_URL ? 'سرور اصلی (مستقیم)' : u.replace(/^https?:\/\//, '');
     const msTxt = u => EP_MS[u] > 0 ? EP_MS[u] + ' ms ✅' : EP_MS[u] === -1 ? '✖ پاسخ نداد' : '—';
     const pin = (u) => { try { localStorage.setItem('pinnedEp', u); localStorage.setItem('autoSwitch', '0'); } catch (e) {} activeBaseUrl = u; connectionStatus = (u === SUPABASE_REAL_URL) ? 'direct' : 'proxy'; delete EP_FAIL[u]; updateConnectionStatusIndicator(); };
@@ -5984,15 +6012,15 @@ notify pgrst, 'reload schema';`;
             } catch (e) {}
 
             if (currentRole === 'admin') {
-                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnSausagePriceCompare', 'btnProductGuide', 'btnQuickNote', 'btnInbox', 'btnStaffMessage', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnShiftSettings', 'btnTelegramSettings', 'btnDebtLedger', 'btnContractAdmin', 'btnGrowthReport', 'btnPurchaseInvoices', 'btnTakeoutAdmin', 'btnGoals', 'btnSalesBoost', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnDeletedSales', 'btnWeeklyReports', 'btnPersonnel', 'btnMyAccount'], 'dashboardTab');
+                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnSausagePriceCompare', 'btnProductGuide', 'btnAiChat', 'btnQuickNote', 'btnInbox', 'btnStaffMessage', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnShiftSettings', 'btnTelegramSettings', 'btnDebtLedger', 'btnContractAdmin', 'btnGrowthReport', 'btnPurchaseInvoices', 'btnTakeoutAdmin', 'btnGoals', 'btnSalesBoost', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnDeletedSales', 'btnWeeklyReports', 'btnPersonnel', 'btnMyAccount'], 'dashboardTab');
                 checkAndGenerateWeeklyReport();
                 document.getElementById('salaryAdminForm').style.display = 'block';
                 checkLowStockAlertNoWeight();
             } else if (currentRole === 'morning_seller') {
-                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnSausagePriceCompare', 'btnProductGuide', 'btnQuickNote', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnDebtLedger', 'btnPersonalTakeout', 'btnGoals', 'btnSalesBoost', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnMyAccount'], 'dashboardTab');
+                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnSausagePriceCompare', 'btnProductGuide', 'btnAiChat', 'btnQuickNote', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnDebtLedger', 'btnPersonalTakeout', 'btnGoals', 'btnSalesBoost', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnMyAccount'], 'dashboardTab');
                 document.getElementById('salaryAdminForm').style.display = 'none';
             } else {
-                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnSausagePriceCompare', 'btnProductGuide', 'btnQuickNote', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnReport', 'btnDebtLedger', 'btnPersonalTakeout', 'btnGoals', 'btnSalesBoost', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnMyAccount'], 'dashboardTab');
+                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnSausagePriceCompare', 'btnProductGuide', 'btnAiChat', 'btnQuickNote', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnReport', 'btnDebtLedger', 'btnPersonalTakeout', 'btnGoals', 'btnSalesBoost', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnMyAccount'], 'dashboardTab');
                 document.getElementById('salaryAdminForm').style.display = 'none';
             }
 
@@ -9437,17 +9465,120 @@ function sbRenderAdminLists(cfg) {
                 if (r) return r;
             }
 
-            throw new Error(lastErr || 'اتصال برقرار نشد. کلید رایگان Groq (gsk_...) یا OpenRouter (sk-or-...) را بگذار.');
+            throw new Error((typeof aiFriendlyError === 'function' ? aiFriendlyError(lastErr) : lastErr) || 'اتصال برقرار نشد. فیلترشکن را روشن کن یا پروکسی سایت را بزن.');
         }
         window.aiTextChat = aiTextChat;
 
+
+
+        
+        // ========== چت AI + خطای فیلترشکن + همگام پروکسی ==========
+        const AI_CHAT_SYS = 'تو دستیار فروش غرفه لبنیات و سوسیس‌وکالباس فله در بیرجند هستی. جواب فارسی، کوتاه، عملی و محترمانه. اگر از قیمت دقیق خبر نداری بگو تقریبی است.';
+
+        function aiFriendlyError(err) {
+            const m = String(err && err.message || err || '');
+            if (/Failed to fetch|NetworkError|timeout|abort|ERR_|offline|Load failed|network/i.test(m)) {
+                return 'اتصال به AI برقرار نشد. فیلترشکن گوشی را روشن کن و دوباره امتحان کن، یا از پروکسی‌های داخل سایت (وضعیت اتصال) استفاده کن.';
+            }
+            if (/401|403|نامعتبر|invalid|auth|API key|Authentication/i.test(m)) {
+                return 'کلید AI نامعتبر است. مدیر باید در تنظیمات، کلید را دوباره ذخیره کند.';
+            }
+            if (/does not exist|No endpoints|model/i.test(m)) {
+                return 'مدل AI در دسترس نیست. یک‌بار دیگر تست اتصال AI را بزن یا مدل دیگری در تنظیمات.';
+            }
+            if (/429|rate limit|quota/i.test(m)) {
+                return 'سقف رایگان AI پر شده. کمی بعد دوباره تلاش کن.';
+            }
+            return m || 'خطای ناشناخته AI';
+        }
+
+        function loadAiChatTab() {
+            const box = document.getElementById('aiChatMessages');
+            if (!box) return;
+            if (!box.dataset.ready) {
+                box.innerHTML = '<div style="opacity:.75;font-size:12px;padding:8px;">سلام 👋 از من بپرس: جمله فروش، ترکیب محصول، پاسخ به مشتری و…</div>';
+                box.dataset.ready = '1';
+            }
+            try { document.getElementById('aiChatInput') && document.getElementById('aiChatInput').focus(); } catch (e) {}
+        }
+
+        function aiChatAppend(role, text) {
+            const box = document.getElementById('aiChatMessages');
+            if (!box) return;
+            const div = document.createElement('div');
+            div.style.cssText = 'margin:8px 0;padding:10px 12px;border-radius:12px;font-size:13px;line-height:1.75;' +
+                (role === 'user'
+                    ? 'background:rgba(56,189,248,.15);border:1px solid rgba(56,189,248,.3);'
+                    : 'background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.28);');
+            div.innerHTML = '<b style="font-size:11px;opacity:.8;">' + (role === 'user' ? 'شما' : 'دستیار') + '</b><div style="margin-top:4px;white-space:pre-wrap;">' +
+                String(text).replace(/[&<>]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]; }) + '</div>';
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        window.aiChatQuick = function (q) {
+            const inp = document.getElementById('aiChatInput');
+            if (inp) inp.value = q;
+            sendAiChat();
+        };
+
+        window.sendAiChat = async function () {
+            const inp = document.getElementById('aiChatInput');
+            const st = document.getElementById('aiChatStatus');
+            const q = (inp && inp.value || '').trim();
+            if (!q) return;
+            if (inp) inp.value = '';
+            aiChatAppend('user', q);
+            if (st) st.textContent = '⏳ در حال فکر کردن...';
+            try {
+                if (typeof aiTextChat !== 'function') throw new Error('موتور AI لود نشده. صفحه را یک‌بار کامل ببند و باز کن.');
+                const r = await aiTextChat([
+                    { role: 'system', content: AI_CHAT_SYS },
+                    { role: 'user', content: q }
+                ], { max_tokens: 600, temperature: 0.7, timeout: 45000 });
+                aiChatAppend('assistant', r.text);
+                if (st) st.textContent = '✅ ' + (r.provider || '') + (r.model ? ' · ' + r.model : '');
+            } catch (e) {
+                const msg = aiFriendlyError(e);
+                aiChatAppend('assistant', '⚠️ ' + msg);
+                if (st) st.textContent = '❌ ' + msg;
+                try { showToast(msg); } catch (err) {}
+            }
+        };
+        window.loadAiChatTab = loadAiChatTab;
+
+        // همگام‌سازی پروکسی‌های مدیر برای همه گوشی‌ها
+        function ascGetProxiesFromLocal() {
+            try {
+                return JSON.parse(localStorage.getItem('extraProxies') || '[]').filter(function (u) {
+                    return typeof u === 'string' && /^https:\/\/\S+$/.test(u);
+                });
+            } catch (e) { return []; }
+        }
+        function ascApplyProxies(list) {
+            if (!Array.isArray(list)) return;
+            try {
+                localStorage.setItem('extraProxies', JSON.stringify(list));
+                if (typeof PROXY_ENDPOINTS !== 'undefined' && Array.isArray(PROXY_ENDPOINTS)) {
+                    list.forEach(function (u) {
+                        if (PROXY_ENDPOINTS.indexOf(u) === -1) PROXY_ENDPOINTS.push(u);
+                    });
+                }
+            } catch (e) {}
+        }
+        // هوک روی saveExtras اگر وجود دارد
+        (function hookProxySync() {
+            try {
+                const _save = window.saveExtras || null;
+            } catch (e) {}
+        })();
 
 
         const ASC_LS = 'appSharedConfig_v1';
         let __ascCache = null;
         let __ascPulling = null;
         function ascDefault() {
-            return { ai: { apiKey: '', enabled: true, provider: 'openrouter' }, productGuide: {}, updatedAt: null };
+            return { ai: { apiKey: '', enabled: true, provider: 'openrouter' }, productGuide: {}, proxies: [], updatedAt: null };
         }
         function ascLoadLocal() {
             try {
@@ -9477,6 +9608,16 @@ function sbRenderAdminLists(cfg) {
                     if (cfg.ai.provider) localStorage.setItem('aiVisionProvider', cfg.ai.provider);
                 }
                 if (cfg.productGuide) localStorage.setItem('productGuideTexts_v2', JSON.stringify(cfg.productGuide));
+                if (Array.isArray(cfg.proxies)) {
+                    localStorage.setItem('extraProxies', JSON.stringify(cfg.proxies));
+                    try {
+                        if (typeof PROXY_ENDPOINTS !== 'undefined' && Array.isArray(PROXY_ENDPOINTS)) {
+                            cfg.proxies.forEach(function (u) {
+                                if (u && PROXY_ENDPOINTS.indexOf(u) === -1) PROXY_ENDPOINTS.push(u);
+                            });
+                        }
+                    } catch (e) {}
+                }
             } catch (e) {}
             __ascCache = cfg;
         }
@@ -9496,6 +9637,8 @@ function sbRenderAdminLists(cfg) {
                     const remoteKey = (remote.ai && remote.ai.apiKey) || '';
                     if (remT >= locT || (!localKey && remoteKey)) {
                         remote.productGuide = Object.assign({}, local.productGuide || {}, remote.productGuide || {});
+                        const px = [].concat(local.proxies || [], remote.proxies || []);
+                        remote.proxies = px.filter(function (u, i) { return u && px.indexOf(u) === i; });
                         if (data.updated_at) remote.updatedAt = data.updated_at;
                         ascSaveLocal(remote);
                         local = remote;
