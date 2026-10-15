@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v158 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v159 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2467,7 +2467,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
     </div>
 
     
-    <div id="aiChatTab" class="card" style="display:none;">
+    <div id="aiChatTab" class="card">
         <h2>💬 گفتگو با دستیار فروش</h2>
         <div class="hint">سوال بپرس: قیمت پیشنهادی، جمله فروش، ترکیب محصولات، پاسخ به مشتری و… — با همان کلید AI مدیر</div>
         <div id="aiChatMessages" style="max-height:55vh;overflow-y:auto;direction:rtl;text-align:right;padding:8px 4px;margin:10px 0;border-radius:14px;background:rgba(15,23,42,.35);border:1px solid rgba(148,163,184,.2);"></div>
@@ -2479,6 +2479,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             <button type="button" class="secondary-btn" style="font-size:11px;padding:6px 10px;" onclick="aiChatQuick('یک جمله کوتاه برای پیشنهاد کالباس به مشتری بنویس')">جمله فروش</button>
             <button type="button" class="secondary-btn" style="font-size:11px;padding:6px 10px;" onclick="aiChatQuick('چطور میانگین فاکتور را بالا ببرم؟')">میانگین فاکتور</button>
             <button type="button" class="secondary-btn" style="font-size:11px;padding:6px 10px;" onclick="aiChatQuick('سه ترکیب فروش سوسیس و لبنیات پیشنهاد بده')">ترکیب محصول</button>
+            <button type="button" class="secondary-btn" style="font-size:11px;padding:6px 10px;opacity:.85;" onclick="aiChatClearHistory()">پاک کردن تاریخچه</button>
         </div>
         <div id="aiChatStatus" class="hint" style="margin-top:8px;"></div>
     </div>
@@ -3348,7 +3349,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v158 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v159 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3532,7 +3533,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=158', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=159', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -9472,8 +9473,10 @@ function sbRenderAdminLists(cfg) {
 
 
         
-        // ========== چت AI + خطای فیلترشکن + همگام پروکسی ==========
+        // ========== چت AI + خطای فیلترشکن + تاریخچه ==========
         const AI_CHAT_SYS = 'تو دستیار فروش غرفه لبنیات و سوسیس‌وکالباس فله در بیرجند هستی. جواب فارسی، کوتاه، عملی و محترمانه. اگر از قیمت دقیق خبر نداری بگو تقریبی است.';
+        const AI_CHAT_HIST_KEY = 'aiChatHistory_v1';
+        const AI_CHAT_MAX = 40;
 
         function aiFriendlyError(err) {
             const m = String(err && err.message || err || '');
@@ -9484,7 +9487,7 @@ function sbRenderAdminLists(cfg) {
                 return 'کلید AI نامعتبر است. مدیر باید در تنظیمات، کلید را دوباره ذخیره کند.';
             }
             if (/does not exist|No endpoints|model/i.test(m)) {
-                return 'مدل AI در دسترس نیست. یک‌بار دیگر تست اتصال AI را بزن یا مدل دیگری در تنظیمات.';
+                return 'مدل AI در دسترس نیست. یک‌بار دیگر تست اتصال AI را بزن.';
             }
             if (/429|rate limit|quota/i.test(m)) {
                 return 'سقف رایگان AI پر شده. کمی بعد دوباره تلاش کن.';
@@ -9492,28 +9495,63 @@ function sbRenderAdminLists(cfg) {
             return m || 'خطای ناشناخته AI';
         }
 
+        function aiChatLoadHistory() {
+            try {
+                const arr = JSON.parse(localStorage.getItem(AI_CHAT_HIST_KEY) || '[]');
+                return Array.isArray(arr) ? arr : [];
+            } catch (e) { return []; }
+        }
+        function aiChatSaveHistory(arr) {
+            try {
+                const trimmed = (arr || []).slice(-AI_CHAT_MAX);
+                localStorage.setItem(AI_CHAT_HIST_KEY, JSON.stringify(trimmed));
+            } catch (e) {}
+        }
+        function aiChatClearHistory() {
+            try { localStorage.removeItem(AI_CHAT_HIST_KEY); } catch (e) {}
+            const box = document.getElementById('aiChatMessages');
+            if (box) {
+                box.innerHTML = '<div style="opacity:.75;font-size:12px;padding:8px;">تاریخچه پاک شد. سوال جدید بپرس 👋</div>';
+                box.dataset.ready = '1';
+            }
+            try { showToast('تاریخچه چت پاک شد'); } catch (e) {}
+        }
+
         function loadAiChatTab() {
             const box = document.getElementById('aiChatMessages');
             if (!box) return;
-            if (!box.dataset.ready) {
+            const hist = aiChatLoadHistory();
+            box.innerHTML = '';
+            if (!hist.length) {
                 box.innerHTML = '<div style="opacity:.75;font-size:12px;padding:8px;">سلام 👋 از من بپرس: جمله فروش، ترکیب محصول، پاسخ به مشتری و…</div>';
-                box.dataset.ready = '1';
+            } else {
+                hist.forEach(function (item) {
+                    aiChatAppend(item.role || 'assistant', item.text || '', true);
+                });
             }
+            box.dataset.ready = '1';
             try { document.getElementById('aiChatInput') && document.getElementById('aiChatInput').focus(); } catch (e) {}
         }
 
-        function aiChatAppend(role, text) {
+        function aiChatAppend(role, text, skipSave) {
             const box = document.getElementById('aiChatMessages');
             if (!box) return;
+            // remove welcome if first real message
+            if (!skipSave && box.querySelector('[data-welcome]')) box.innerHTML = '';
             const div = document.createElement('div');
             div.style.cssText = 'margin:8px 0;padding:10px 12px;border-radius:12px;font-size:13px;line-height:1.75;' +
                 (role === 'user'
                     ? 'background:rgba(56,189,248,.15);border:1px solid rgba(56,189,248,.3);'
                     : 'background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.28);');
-            div.innerHTML = '<b style="font-size:11px;opacity:.8;">' + (role === 'user' ? 'شما' : 'دستیار') + '</b><div style="margin-top:4px;white-space:pre-wrap;">' +
-                String(text).replace(/[&<>]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]; }) + '</div>';
+            const esc = String(text).replace(/[&<>]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]; });
+            div.innerHTML = '<b style="font-size:11px;opacity:.8;">' + (role === 'user' ? 'شما' : 'دستیار') + '</b><div style="margin-top:4px;white-space:pre-wrap;">' + esc + '</div>';
             box.appendChild(div);
             box.scrollTop = box.scrollHeight;
+            if (!skipSave) {
+                const hist = aiChatLoadHistory();
+                hist.push({ role: role, text: String(text), at: Date.now() });
+                aiChatSaveHistory(hist);
+            }
         }
 
         window.aiChatQuick = function (q) {
@@ -9531,11 +9569,17 @@ function sbRenderAdminLists(cfg) {
             aiChatAppend('user', q);
             if (st) st.textContent = '⏳ در حال فکر کردن...';
             try {
-                if (typeof aiTextChat !== 'function') throw new Error('موتور AI لود نشده. صفحه را یک‌بار کامل ببند و باز کن.');
-                const r = await aiTextChat([
-                    { role: 'system', content: AI_CHAT_SYS },
-                    { role: 'user', content: q }
-                ], { max_tokens: 600, temperature: 0.7, timeout: 45000 });
+                if (typeof aiTextChat !== 'function') throw new Error('موتور AI لود نشده. صفحه را کامل ببند و باز کن.');
+                // آخرین چند پیام برای زمینه
+                const hist = aiChatLoadHistory().slice(-8);
+                const messages = [{ role: 'system', content: AI_CHAT_SYS }];
+                hist.forEach(function (h) {
+                    if (h.role === 'user' || h.role === 'assistant') {
+                        messages.push({ role: h.role === 'assistant' ? 'assistant' : 'user', content: h.text });
+                    }
+                });
+                // آخرین user ممکن است دوبار باشد — ok
+                const r = await aiTextChat(messages, { max_tokens: 600, temperature: 0.7, timeout: 45000 });
                 aiChatAppend('assistant', r.text);
                 if (st) st.textContent = '✅ ' + (r.provider || '') + (r.model ? ' · ' + r.model : '');
             } catch (e) {
@@ -9546,6 +9590,8 @@ function sbRenderAdminLists(cfg) {
             }
         };
         window.loadAiChatTab = loadAiChatTab;
+        window.aiChatClearHistory = aiChatClearHistory;
+
 
         // همگام‌سازی پروکسی‌های مدیر برای همه گوشی‌ها
         function ascGetProxiesFromLocal() {
