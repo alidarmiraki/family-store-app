@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v161 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v163 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -375,6 +375,31 @@
         .aic-status {
             margin-top: 8px; font-size: 11px; opacity: .8; text-align: center; min-height: 16px;
         }
+        .aic-shell {
+            border: 1px solid rgba(167,139,250,.3) !important;
+            background:
+                radial-gradient(900px 320px at 100% 0%, rgba(99,102,241,.16), transparent 55%),
+                radial-gradient(700px 280px at 0% 100%, rgba(16,185,129,.1), transparent 50%),
+                var(--bg-card) !important;
+        }
+        .aic-bot-face { display: inline-block; animation: aicBob 2.8s ease-in-out infinite; }
+        @keyframes aicBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+        .aic-title {
+            background: linear-gradient(90deg, #e9d5ff, #a5f3fc, #bbf7d0) !important;
+            -webkit-background-clip: text !important; background-clip: text !important;
+            color: transparent !important; font-weight: 900;
+        }
+        .aic-pill .aic-dot {
+            display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+            background: #34d399; box-shadow: 0 0 8px #34d399; margin-left: 4px; vertical-align: middle;
+            animation: aicBlink 1.6s ease-in-out infinite;
+        }
+        @keyframes aicBlink { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+        .aic-composer {
+            box-shadow: 0 8px 22px rgba(79,70,229,.12);
+            border-color: rgba(167,139,250,.35) !important;
+        }
+        .aic-send { box-shadow: 0 4px 14px rgba(16,185,129,.28); }
 
         .pg-card {
             border: 1px solid rgba(148,163,184,.25); border-radius: 14px;
@@ -2559,20 +2584,21 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
     </div>
 
     
-    <div id="aiChatTab" class="card">
+    <div id="aiChatTab" class="card aic-shell">
         <div class="aic-hero">
-            <div class="aic-hero-icon">🤖</div>
+            <div class="aic-hero-icon"><span class="aic-bot-face">🤖</span></div>
             <div class="aic-hero-text">
-                <h2 style="margin:0;font-size:17px;">دستیار فروش هوشمند</h2>
+                <h2 class="aic-title" style="margin:0;font-size:17px;">دستیار فروش هوشمند</h2>
                 <div class="aic-hero-sub">جمله فروش · ترکیب محصول · پاسخ مشتری · مشاوره لحظه‌ای</div>
             </div>
-            <div id="aicOnlinePill" class="aic-pill">آنلاین</div>
+            <div id="aicOnlinePill" class="aic-pill"><span class="aic-dot"></span> آنلاین</div>
         </div>
         <div id="aiChatMessages" class="aic-messages"></div>
         <div class="aic-quick">
             <button type="button" class="aic-chip" onclick="aiChatQuick('یک جمله کوتاه و جذاب برای پیشنهاد کالباس به مشتری بنویس')">✨ جمله فروش</button>
             <button type="button" class="aic-chip" onclick="aiChatQuick('چطور میانگین فاکتور امروز را بالا ببرم؟')">📈 میانگین فاکتور</button>
             <button type="button" class="aic-chip" onclick="aiChatQuick('سه ترکیب فروش سوسیس و لبنیات برای مشتری پیشنهاد بده')">🧀 ترکیب محصول</button>
+            <button type="button" class="aic-chip" onclick="aiChatQuick('اگر مشتری گفت گرونه چی جواب بدم؟')">💬 پاسخ مشتری</button>
             <button type="button" class="aic-chip aic-chip-muted" onclick="aiChatClearHistory()">🗑 پاک کردن</button>
         </div>
         <div class="aic-composer">
@@ -3448,7 +3474,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v161 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v163 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3632,7 +3658,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=161', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=163', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -9395,28 +9421,55 @@ function sbRenderAdminLists(cfg) {
             let lastErr = '';
 
             async function tryGroq() {
-                const endpoints = [];
+                // ساخت لیست پروکسی از تنظیمات سایت + پیش‌فرض‌ها
+                const hosts = [];
+                const addHost = function (h) {
+                    if (!h) return;
+                    const b = String(h).replace(/\/+$/, '').replace(/\/telegram$/i, '');
+                    if (/^https:\/\//i.test(b) && hosts.indexOf(b) === -1) hosts.push(b);
+                };
                 try {
-                    const hosts = ['https://proxy.ali8001.ir', 'https://shop-proxy-fast.adarmiraki.workers.dev', 'https://shop-proxy-1.adarmiraki.workers.dev'];
-                    hosts.forEach(function (h) {
-                        const b = String(h).replace(/\/+$/, '');
-                        endpoints.push(b + '/groq/openai/v1/chat/completions');
-                        endpoints.push(b + '/api/groq/openai/v1/chat/completions');
-                    });
+                    if (typeof TELEGRAM_PROXY_HOSTS !== 'undefined' && Array.isArray(TELEGRAM_PROXY_HOSTS)) {
+                        TELEGRAM_PROXY_HOSTS.forEach(addHost);
+                    }
                 } catch (e) {}
+                try {
+                    if (typeof PROXY_ENDPOINTS !== 'undefined' && Array.isArray(PROXY_ENDPOINTS)) {
+                        PROXY_ENDPOINTS.forEach(addHost);
+                    }
+                } catch (e) {}
+                try {
+                    const extras = JSON.parse(localStorage.getItem('extraProxies') || '[]');
+                    if (Array.isArray(extras)) extras.forEach(addHost);
+                } catch (e) {}
+                addHost('https://proxy.ali8001.ir');
+                addHost('https://shop-proxy-fast.adarmiraki.workers.dev');
+                addHost('https://shop-proxy-1.adarmiraki.workers.dev');
+
+                const endpoints = [];
+                hosts.forEach(function (b) {
+                    endpoints.push(b + '/groq/openai/v1/chat/completions');
+                    endpoints.push(b + '/api/groq/openai/v1/chat/completions');
+                });
+                // مستقیم (وقتی فیلترشکن گوشی روشن است)
                 endpoints.push('https://api.groq.com/openai/v1/chat/completions');
-                const models = ['openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'qwen/qwen3.8-27b', 'qwen/qwen3-32b', 'llama-3.1-8b-instant', 'llama-3.3-70b-versatile'];
-                for (let m = 0; m < models.length; m++) {
+
+                const models = ['openai/gpt-oss-20b', 'openai/gpt-oss-120b', 'qwen/qwen3.8-27b', 'llama-3.1-8b-instant'];
+                let sawNetwork = false;
+                let sawProxyBad = false;
+
+                for (let mi = 0; mi < models.length; mi++) {
                     const body = JSON.stringify({
-                        model: models[m],
+                        model: models[mi],
                         messages: messages,
                         temperature: temperature,
                         max_tokens: maxTokens
                     });
                     for (let i = 0; i < endpoints.length; i++) {
+                        const ep = endpoints[i];
                         try {
                             const res = await (typeof fetchWithTimeout === 'function'
-                                ? fetchWithTimeout(endpoints[i], {
+                                ? fetchWithTimeout(ep, {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
@@ -9424,7 +9477,7 @@ function sbRenderAdminLists(cfg) {
                                     },
                                     body: body
                                 }, opts.timeout || 28000)
-                                : fetch(endpoints[i], {
+                                : fetch(ep, {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
@@ -9435,82 +9488,54 @@ function sbRenderAdminLists(cfg) {
                             const json = await res.json().catch(function () { return null; });
                             if (res.ok && json && json.choices && json.choices[0] && json.choices[0].message) {
                                 const txt = json.choices[0].message.content;
-                                if (txt) return { text: String(txt).trim(), model: models[m], provider: 'groq' };
+                                if (txt) return { text: String(txt).trim(), model: models[mi], provider: 'groq' };
                             }
-                            lastErr = (json && json.error && (json.error.message || JSON.stringify(json.error))) || ('Groq HTTP ' + res.status);
+                            const errMsg = (json && (json.error && (json.error.message || json.message || JSON.stringify(json.error)))) || ('HTTP ' + res.status);
+                            lastErr = errMsg;
+                            // پروکسی قدیمی / مسیر اشتباه
+                            if (json && (json.error === 'host_not_allowed' || json.error === 'proxy_upstream_failed' || json.error === 'missing_authorization')) {
+                                sawProxyBad = true;
+                                lastErr = 'پروکسی AI درست تنظیم نشده. ورکر را به‌روز کن یا فیلترشکن گوشی را روشن کن.';
+                                continue;
+                            }
+                            if (/No API key|JWT|supabase/i.test(String(errMsg))) {
+                                sawProxyBad = true;
+                                lastErr = 'پروکسی به‌جای Groq به مسیر اشتباه رفته. ورکر جدید را Deploy کن.';
+                                continue;
+                            }
                             if (res.status === 401 || res.status === 403) {
-                                throw new Error('کلید Groq نامعتبر است. از console.groq.com کلید رایگان بگیر (با gsk_ شروع می‌شود).');
+                                // فقط اگر مستقیم به api.groq.com بوده، کلید واقعاً بد است
+                                if (/api\.groq\.com/i.test(ep)) {
+                                    throw new Error('کلید Groq نامعتبر است. از console.groq.com کلید جدید با gsk_ بگیر.');
+                                }
+                                // از پروکسی — احتمالاً هدر نرسیده یا ورکر قدیمی
+                                sawProxyBad = true;
+                                lastErr = 'پروکسی کلید را درست نفرستاد. فیلترشکن گوشی را روشن کن یا ورکر را به‌روز کن.';
+                                continue;
+                            }
+                            if (/does not exist|not have access/i.test(String(errMsg))) {
+                                break; // مدل بعدی
                             }
                         } catch (e) {
-                            if (/نامعتبر|invalid|401|403/i.test(String(e.message || e))) throw e;
-                            lastErr = e.message || String(e);
+                            const msg = e.message || String(e);
+                            if (/نامعتبر|invalid api key/i.test(msg) && /gsk_|Groq/i.test(msg)) throw e;
+                            if (/Failed to fetch|NetworkError|timeout|abort/i.test(msg)) {
+                                sawNetwork = true;
+                                lastErr = msg;
+                                continue;
+                            }
+                            lastErr = msg;
                         }
                     }
+                }
+                if (sawProxyBad && !sawNetwork) {
+                    lastErr = lastErr || 'پروکسی AI کار نمی‌کند. فیلترشکن گوشی را روشن کن یا ورکر Cloudflare را با نسخه جدید Deploy کن.';
+                } else if (sawNetwork) {
+                    lastErr = 'اتصال به AI برقرار نشد. فیلترشکن گوشی را روشن کن یا پروکسی سالم در وضعیت اتصال اضافه کن.';
                 }
                 return null;
             }
 
-
-            async function tryDeepSeek() {
-                const endpoints = [];
-                try {
-                    const hosts = [];
-                    if (typeof TELEGRAM_PROXY_HOSTS !== 'undefined' && Array.isArray(TELEGRAM_PROXY_HOSTS)) {
-                        TELEGRAM_PROXY_HOSTS.forEach(function (h) { hosts.push(h); });
-                    }
-                    hosts.push('https://proxy.ali8001.ir');
-                    hosts.push('https://shop-proxy-fast.adarmiraki.workers.dev');
-                    hosts.push('https://shop-proxy-1.adarmiraki.workers.dev');
-                    hosts.forEach(function (h) {
-                        const b = String(h).replace(/\/+$/, '').replace(/\/telegram$/i, '');
-                        endpoints.push(b + '/deepseek/chat/completions');
-                        endpoints.push(b + '/api/deepseek/chat/completions');
-                    });
-                } catch (e) {}
-                endpoints.push('https://api.deepseek.com/chat/completions');
-                endpoints.push('https://api.deepseek.com/v1/chat/completions');
-
-                const models = ['deepseek-chat', 'deepseek-v4-flash', 'deepseek-reasoner'];
-                const bodyBase = { messages: messages, temperature: temperature, max_tokens: maxTokens };
-                for (let m = 0; m < models.length; m++) {
-                    const body = JSON.stringify(Object.assign({}, bodyBase, { model: models[m] }));
-                    for (let i = 0; i < endpoints.length; i++) {
-                        try {
-                            const res = await (typeof fetchWithTimeout === 'function'
-                                ? fetchWithTimeout(endpoints[i], {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'Authorization': 'Bearer ' + key
-                                    },
-                                    body: body
-                                }, opts.timeout || 28000)
-                                : fetch(endpoints[i], {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'Authorization': 'Bearer ' + key
-                                    },
-                                    body: body
-                                }));
-                            const json = await res.json().catch(function () { return null; });
-                            if (res.ok && json && json.choices && json.choices[0] && json.choices[0].message) {
-                                const txt = json.choices[0].message.content;
-                                if (txt) return { text: String(txt).trim(), model: models[m], provider: 'deepseek' };
-                            }
-                            lastErr = (json && (json.error && (json.error.message || JSON.stringify(json.error)))) || ('DeepSeek HTTP ' + res.status);
-                            // کلید اشتباه → قطع
-                            if (res.status === 401 || res.status === 403) {
-                                throw new Error('کلید DeepSeek نامعتبر است. از platform.deepseek.com کلید جدید بگیر.');
-                            }
-                        } catch (e) {
-                            if (/نامعتبر|invalid|401|403/i.test(String(e.message || e))) throw e;
-                            lastErr = e.message || String(e);
-                        }
-                    }
-                }
-                return null;
-            }
 
             async function tryOpenRouter() {
                 if (typeof qnOpenRouterRequest !== 'function') return null;
@@ -10868,7 +10893,7 @@ function sbRenderAdminLists(cfg) {
                             }
                             lastErr = (json && json.error && (json.error.message || JSON.stringify(json.error))) || ('HTTP ' + res.status);
                             if (res.status === 401 || res.status === 403) {
-                                lastErr = 'کلید Groq نامعتبر — از console.groq.com کلید جدید بگیر';
+                                lastErr = (/api\.groq\.com/i.test(endpoints[i]) ? 'کلید Groq نامعتبر — از console.groq.com کلید جدید بگیر' : 'پروکسی کلید را نرساند — فیلترشکن گوشی یا ورکر جدید');
                                 return { ok: false };
                             }
                             // مدل موجود نیست → مدل بعدی
