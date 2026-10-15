@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v161 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v162 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -285,98 +285,217 @@
         .sc-pop .sc-later-btn { background: rgba(148,163,184,.25); color: #e2e8f0; }
 
         
-        /* چت AI — ظاهر حرفه‌ای */
+        
+        /* ========== چت AI — نسخه خفن ========== */
+        .aic-shell {
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(167, 139, 250, 0.28) !important;
+            background:
+                radial-gradient(1200px 400px at 100% -10%, rgba(99,102,241,.18), transparent 55%),
+                radial-gradient(900px 360px at -10% 110%, rgba(16,185,129,.12), transparent 50%),
+                var(--bg-card) !important;
+        }
+        .aic-glow {
+            pointer-events: none;
+            position: absolute; inset: -40% -20% auto auto;
+            width: 70%; height: 220px;
+            background: radial-gradient(circle, rgba(139,92,246,.25), transparent 70%);
+            filter: blur(20px);
+            animation: aicGlow 6s ease-in-out infinite alternate;
+        }
+        @keyframes aicGlow {
+            from { opacity: .45; transform: translate(0,0); }
+            to { opacity: .85; transform: translate(-12px, 10px); }
+        }
         .aic-hero {
+            position: relative; z-index: 1;
             display: flex; align-items: center; gap: 12px;
-            padding: 12px 14px; margin: -4px -4px 12px;
-            border-radius: 16px;
-            background: linear-gradient(135deg, rgba(99,102,241,.22), rgba(16,185,129,.14), rgba(56,189,248,.12));
-            border: 1px solid rgba(167,139,250,.28);
+            padding: 14px 14px; margin: 0 0 12px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, rgba(99,102,241,.28), rgba(16,185,129,.14) 45%, rgba(56,189,248,.14));
+            border: 1px solid rgba(196,181,253,.35);
+            box-shadow: 0 8px 28px rgba(79,70,229,.12), inset 0 1px 0 rgba(255,255,255,.06);
         }
         .aic-hero-icon {
-            width: 44px; height: 44px; border-radius: 14px;
+            position: relative;
+            width: 52px; height: 52px; border-radius: 16px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 22px;
-            background: rgba(15,23,42,.45);
-            box-shadow: 0 4px 14px rgba(0,0,0,.25);
+            font-size: 26px;
+            background: linear-gradient(145deg, rgba(15,23,42,.7), rgba(30,41,59,.55));
+            box-shadow: 0 6px 18px rgba(0,0,0,.35), 0 0 0 1px rgba(167,139,250,.25);
+            flex-shrink: 0;
+        }
+        .aic-bot-face { position: relative; z-index: 1; display: block; animation: aicBob 2.8s ease-in-out infinite; }
+        @keyframes aicBob {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+        .aic-pulse {
+            position: absolute; inset: -4px; border-radius: 18px;
+            border: 2px solid rgba(52,211,153,.45);
+            animation: aicPulse 2s ease-out infinite;
+        }
+        @keyframes aicPulse {
+            0% { transform: scale(.92); opacity: .7; }
+            100% { transform: scale(1.25); opacity: 0; }
         }
         .aic-hero-text { flex: 1; min-width: 0; text-align: right; }
-        .aic-hero-sub { font-size: 11px; opacity: .78; margin-top: 3px; line-height: 1.5; }
-        .aic-pill {
-            font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 999px;
-            background: rgba(16,185,129,.2); color: #34d399; border: 1px solid rgba(52,211,153,.35);
-            white-space: nowrap;
+        .aic-title {
+            margin: 0; font-size: 17px; font-weight: 900;
+            background: linear-gradient(90deg, #e9d5ff, #a5f3fc, #bbf7d0);
+            -webkit-background-clip: text; background-clip: text;
+            color: transparent;
+            letter-spacing: -.2px;
         }
-        .aic-pill.busy { background: rgba(251,191,36,.15); color: #fbbf24; border-color: rgba(251,191,36,.35); }
+        .aic-hero-sub { font-size: 11px; opacity: .8; margin-top: 4px; line-height: 1.55; }
+        .aic-pill {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 10px; font-weight: 800; padding: 6px 11px; border-radius: 999px;
+            background: rgba(16,185,129,.18); color: #6ee7b7;
+            border: 1px solid rgba(52,211,153,.4);
+            white-space: nowrap; flex-shrink: 0;
+        }
+        .aic-pill .aic-dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: #34d399; box-shadow: 0 0 8px #34d399;
+            animation: aicBlink 1.6s ease-in-out infinite;
+        }
+        @keyframes aicBlink {
+            0%,100% { opacity: 1; }
+            50% { opacity: .35; }
+        }
+        .aic-pill.busy {
+            background: rgba(251,191,36,.16); color: #fcd34d;
+            border-color: rgba(251,191,36,.4);
+        }
+        .aic-pill.busy .aic-dot {
+            background: #fbbf24; box-shadow: 0 0 8px #fbbf24;
+            animation: aicBlink .7s ease-in-out infinite;
+        }
         .aic-messages {
-            max-height: 48vh; min-height: 180px; overflow-y: auto;
+            position: relative; z-index: 1;
+            max-height: 46vh; min-height: 200px; overflow-y: auto;
             direction: rtl; text-align: right;
-            padding: 8px 6px; margin: 0 0 10px;
-            border-radius: 16px;
-            background: rgba(8,12,24,.45);
-            border: 1px solid rgba(148,163,184,.18);
+            padding: 12px 10px; margin: 0 0 12px;
+            border-radius: 18px;
+            background:
+                linear-gradient(180deg, rgba(8,12,24,.55), rgba(8,12,24,.35));
+            border: 1px solid rgba(148,163,184,.2);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
             scroll-behavior: smooth;
         }
-        .aic-bubble {
-            max-width: 92%; margin: 8px 0; padding: 10px 12px;
-            border-radius: 16px; font-size: 13px; line-height: 1.8;
-            animation: aicIn .22s ease;
+        .aic-messages::-webkit-scrollbar { width: 5px; }
+        .aic-messages::-webkit-scrollbar-thumb {
+            background: rgba(167,139,250,.45); border-radius: 99px;
         }
-        @keyframes aicIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        .aic-bubble {
+            max-width: 90%; margin: 10px 0; padding: 11px 13px;
+            border-radius: 18px; font-size: 13.5px; line-height: 1.85;
+            animation: aicIn .28s cubic-bezier(.22,1,.36,1);
+            backdrop-filter: blur(8px);
+        }
+        @keyframes aicIn {
+            from { opacity: 0; transform: translateY(12px) scale(.98); }
+            to { opacity: 1; transform: none; }
+        }
         .aic-bubble.user {
-            margin-right: auto; margin-left: 8px;
-            background: linear-gradient(135deg, rgba(14,165,233,.28), rgba(56,189,248,.16));
-            border: 1px solid rgba(56,189,248,.35);
+            margin-right: auto; margin-left: 10px;
+            background: linear-gradient(145deg, rgba(14,165,233,.34), rgba(56,189,248,.14));
+            border: 1px solid rgba(125,211,252,.4);
             border-bottom-left-radius: 6px;
+            box-shadow: 0 6px 16px rgba(14,165,233,.12);
         }
         .aic-bubble.bot {
-            margin-left: auto; margin-right: 8px;
-            background: linear-gradient(135deg, rgba(99,102,241,.22), rgba(167,139,250,.12));
-            border: 1px solid rgba(167,139,250,.32);
+            margin-left: auto; margin-right: 10px;
+            background: linear-gradient(145deg, rgba(99,102,241,.28), rgba(167,139,250,.12));
+            border: 1px solid rgba(196,181,253,.4);
             border-bottom-right-radius: 6px;
+            box-shadow: 0 6px 16px rgba(99,102,241,.12);
         }
-        .aic-bubble .aic-who { font-size: 10px; font-weight: 800; opacity: .7; margin-bottom: 3px; }
+        .aic-bubble .aic-who {
+            font-size: 10px; font-weight: 900; opacity: .72; margin-bottom: 4px;
+            letter-spacing: .3px;
+        }
         .aic-bubble .aic-body { white-space: pre-wrap; word-break: break-word; }
         .aic-typing {
-            display: inline-flex; gap: 4px; padding: 4px 0;
+            display: inline-flex; gap: 5px; padding: 6px 2px; align-items: center;
         }
         .aic-typing i {
-            width: 6px; height: 6px; border-radius: 50%; background: #a78bfa;
+            width: 7px; height: 7px; border-radius: 50%;
+            background: linear-gradient(135deg, #c4b5fd, #67e8f9);
             animation: aicDot 1s infinite ease-in-out;
         }
         .aic-typing i:nth-child(2) { animation-delay: .15s; }
         .aic-typing i:nth-child(3) { animation-delay: .3s; }
-        @keyframes aicDot { 0%,80%,100% { opacity: .3; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
-        .aic-quick { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
-        .aic-chip {
-            border: 1px solid rgba(148,163,184,.28); background: rgba(15,23,42,.4);
-            color: var(--text-primary); border-radius: 999px; padding: 7px 12px;
-            font-size: 11px; font-weight: 700; cursor: pointer;
+        @keyframes aicDot {
+            0%,80%,100% { opacity: .25; transform: translateY(0) scale(.9); }
+            40% { opacity: 1; transform: translateY(-4px) scale(1.1); }
         }
-        .aic-chip:active { transform: scale(.96); }
-        .aic-chip-muted { opacity: .75; }
+        .aic-quick {
+            position: relative; z-index: 1;
+            display: flex; flex-wrap: nowrap; gap: 8px;
+            margin-bottom: 12px; overflow-x: auto; padding-bottom: 4px;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .aic-quick::-webkit-scrollbar { display: none; }
+        .aic-chip {
+            flex: 0 0 auto;
+            border: 1px solid rgba(167,139,250,.3);
+            background: linear-gradient(180deg, rgba(30,41,59,.75), rgba(15,23,42,.55));
+            color: var(--text-primary);
+            border-radius: 999px; padding: 8px 13px;
+            font-size: 11.5px; font-weight: 800; cursor: pointer;
+            transition: transform .12s ease, box-shadow .12s ease, border-color .12s;
+            box-shadow: 0 4px 12px rgba(0,0,0,.15);
+        }
+        .aic-chip:hover, .aic-chip:focus {
+            border-color: rgba(125,211,252,.5);
+            box-shadow: 0 6px 16px rgba(56,189,248,.15);
+        }
+        .aic-chip:active { transform: scale(.95); }
+        .aic-chip-muted { opacity: .7; border-style: dashed; }
         .aic-composer {
+            position: relative; z-index: 1;
+            padding: 2px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, rgba(167,139,250,.55), rgba(52,211,153,.4), rgba(56,189,248,.45));
+            box-shadow: 0 10px 28px rgba(79,70,229,.18);
+        }
+        .aic-composer-inner {
             display: flex; gap: 8px; align-items: stretch;
-            background: rgba(15,23,42,.5); border: 1px solid rgba(148,163,184,.25);
+            background: rgba(8,12,24,.92);
             border-radius: 16px; padding: 6px;
         }
         .aic-composer input {
             flex: 1; border: none; outline: none; background: transparent;
-            color: var(--text-primary); padding: 10px 12px; font-size: 14px;
+            color: var(--text-primary); padding: 12px 14px; font-size: 14.5px;
             font-family: inherit; min-width: 0;
         }
+        .aic-composer input::placeholder { opacity: .45; }
         .aic-send {
-            border: none; border-radius: 12px; padding: 0 18px;
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: #fff; font-weight: 800; font-size: 13px; cursor: pointer;
-            white-space: nowrap; min-width: 72px;
+            display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+            border: none; border-radius: 13px; padding: 0 16px;
+            background: linear-gradient(135deg, #34d399, #10b981 40%, #059669);
+            color: #042f2e; font-weight: 900; font-size: 13px; cursor: pointer;
+            white-space: nowrap; min-width: 84px;
+            box-shadow: 0 6px 16px rgba(16,185,129,.35);
         }
-        .aic-send:disabled { opacity: .55; cursor: wait; }
+        .aic-send:active { transform: scale(.97); }
+        .aic-send:disabled {
+            opacity: .55; cursor: wait;
+            background: linear-gradient(135deg, #64748b, #475569);
+            color: #e2e8f0; box-shadow: none;
+        }
+        .aic-send-ico { font-size: 12px; transform: scaleX(-1); display: inline-block; }
         .aic-status {
-            margin-top: 8px; font-size: 11px; opacity: .8; text-align: center; min-height: 16px;
+            position: relative; z-index: 1;
+            margin-top: 10px; font-size: 11px; opacity: .82;
+            text-align: center; min-height: 16px;
         }
 
-        .pg-card {
+.pg-card {
             border: 1px solid rgba(148,163,184,.25); border-radius: 14px;
             padding: 12px; margin-bottom: 10px; background: rgba(15,23,42,.4);
             direction: rtl; text-align: right;
@@ -2559,26 +2678,33 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
     </div>
 
     
-    <div id="aiChatTab" class="card">
+    <div id="aiChatTab" class="card aic-shell">
+        <div class="aic-glow" aria-hidden="true"></div>
         <div class="aic-hero">
-            <div class="aic-hero-icon">🤖</div>
+            <div class="aic-hero-icon"><span class="aic-bot-face">🤖</span><span class="aic-pulse"></span></div>
             <div class="aic-hero-text">
-                <h2 style="margin:0;font-size:17px;">دستیار فروش هوشمند</h2>
-                <div class="aic-hero-sub">جمله فروش · ترکیب محصول · پاسخ مشتری · مشاوره لحظه‌ای</div>
+                <h2 class="aic-title">دستیار فروش هوشمند</h2>
+                <div class="aic-hero-sub">همراه غرفه · جمله فروش · ترکیب محصول · پاسخ مشتری</div>
             </div>
-            <div id="aicOnlinePill" class="aic-pill">آنلاین</div>
+            <div id="aicOnlinePill" class="aic-pill"><span class="aic-dot"></span> آنلاین</div>
         </div>
         <div id="aiChatMessages" class="aic-messages"></div>
-        <div class="aic-quick">
-            <button type="button" class="aic-chip" onclick="aiChatQuick('یک جمله کوتاه و جذاب برای پیشنهاد کالباس به مشتری بنویس')">✨ جمله فروش</button>
-            <button type="button" class="aic-chip" onclick="aiChatQuick('چطور میانگین فاکتور امروز را بالا ببرم؟')">📈 میانگین فاکتور</button>
+        <div class="aic-quick" id="aicQuickRow">
+            <button type="button" class="aic-chip" onclick="aiChatQuick('یک جمله کوتاه و جذاب برای پیشنهاد کالباس تازه به مشتری بنویس')">✨ جمله فروش</button>
+            <button type="button" class="aic-chip" onclick="aiChatQuick('چطور میانگین فاکتور امروز را بالا ببرم؟ سه نکته عملی بگو')">📈 میانگین فاکتور</button>
             <button type="button" class="aic-chip" onclick="aiChatQuick('سه ترکیب فروش سوسیس و لبنیات برای مشتری پیشنهاد بده')">🧀 ترکیب محصول</button>
+            <button type="button" class="aic-chip" onclick="aiChatQuick('اگر مشتری گفت گرونه چی جواب بدم؟')">💬 پاسخ مشتری</button>
             <button type="button" class="aic-chip aic-chip-muted" onclick="aiChatClearHistory()">🗑 پاک کردن</button>
         </div>
         <div class="aic-composer">
-            <input id="aiChatInput" type="text" placeholder="سوالت را بنویس…" autocomplete="off"
-                onkeydown="if(event.key==='Enter'){event.preventDefault();sendAiChat();}">
-            <button type="button" id="aiChatSendBtn" class="aic-send" onclick="sendAiChat()">ارسال</button>
+            <div class="aic-composer-inner">
+                <input id="aiChatInput" type="text" placeholder="هر چی می‌خوای از دستیار بپرس…" autocomplete="off"
+                    onkeydown="if(event.key==='Enter'){event.preventDefault();sendAiChat();}">
+                <button type="button" id="aiChatSendBtn" class="aic-send" onclick="sendAiChat()" title="ارسال">
+                    <span class="aic-send-label">ارسال</span>
+                    <span class="aic-send-ico">➤</span>
+                </button>
+            </div>
         </div>
         <div id="aiChatStatus" class="aic-status"></div>
     </div>
@@ -3448,7 +3574,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v161 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v162 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3632,7 +3758,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=161', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=162', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -9622,7 +9748,11 @@ function sbRenderAdminLists(cfg) {
             const hist = aiChatLoadHistory();
             box.innerHTML = '';
             if (!hist.length) {
-                box.innerHTML = '<div class="aic-bubble bot" data-welcome="1"><div class="aic-who">دستیار</div><div class="aic-body">سلام 👋 از من بپرس: جمله فروش، ترکیب محصول، پاسخ به مشتری…</div></div>';
+                box.innerHTML = '<div class="aic-bubble bot" data-welcome="1"><div class="aic-who">دستیار فروش</div><div class="aic-body">سلام رفیق 🔥 من اینجام برای:
+• جمله فروش خفن
+• ترکیب سوسیس + لبنیات
+• جواب به مشتری
+بزن بریم، چی می‌خوای؟</div></div>';
             } else {
                 hist.forEach(function (item) {
                     aiChatAppend(item.role || 'assistant', item.text || '', true);
