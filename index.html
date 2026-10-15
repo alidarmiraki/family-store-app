@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v161 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v162 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -375,6 +375,31 @@
         .aic-status {
             margin-top: 8px; font-size: 11px; opacity: .8; text-align: center; min-height: 16px;
         }
+        .aic-shell {
+            border: 1px solid rgba(167,139,250,.3) !important;
+            background:
+                radial-gradient(900px 320px at 100% 0%, rgba(99,102,241,.16), transparent 55%),
+                radial-gradient(700px 280px at 0% 100%, rgba(16,185,129,.1), transparent 50%),
+                var(--bg-card) !important;
+        }
+        .aic-bot-face { display: inline-block; animation: aicBob 2.8s ease-in-out infinite; }
+        @keyframes aicBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+        .aic-title {
+            background: linear-gradient(90deg, #e9d5ff, #a5f3fc, #bbf7d0) !important;
+            -webkit-background-clip: text !important; background-clip: text !important;
+            color: transparent !important; font-weight: 900;
+        }
+        .aic-pill .aic-dot {
+            display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+            background: #34d399; box-shadow: 0 0 8px #34d399; margin-left: 4px; vertical-align: middle;
+            animation: aicBlink 1.6s ease-in-out infinite;
+        }
+        @keyframes aicBlink { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+        .aic-composer {
+            box-shadow: 0 8px 22px rgba(79,70,229,.12);
+            border-color: rgba(167,139,250,.35) !important;
+        }
+        .aic-send { box-shadow: 0 4px 14px rgba(16,185,129,.28); }
 
         .pg-card {
             border: 1px solid rgba(148,163,184,.25); border-radius: 14px;
@@ -2559,20 +2584,21 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
     </div>
 
     
-    <div id="aiChatTab" class="card">
+    <div id="aiChatTab" class="card aic-shell">
         <div class="aic-hero">
-            <div class="aic-hero-icon">🤖</div>
+            <div class="aic-hero-icon"><span class="aic-bot-face">🤖</span></div>
             <div class="aic-hero-text">
-                <h2 style="margin:0;font-size:17px;">دستیار فروش هوشمند</h2>
+                <h2 class="aic-title" style="margin:0;font-size:17px;">دستیار فروش هوشمند</h2>
                 <div class="aic-hero-sub">جمله فروش · ترکیب محصول · پاسخ مشتری · مشاوره لحظه‌ای</div>
             </div>
-            <div id="aicOnlinePill" class="aic-pill">آنلاین</div>
+            <div id="aicOnlinePill" class="aic-pill"><span class="aic-dot"></span> آنلاین</div>
         </div>
         <div id="aiChatMessages" class="aic-messages"></div>
         <div class="aic-quick">
             <button type="button" class="aic-chip" onclick="aiChatQuick('یک جمله کوتاه و جذاب برای پیشنهاد کالباس به مشتری بنویس')">✨ جمله فروش</button>
             <button type="button" class="aic-chip" onclick="aiChatQuick('چطور میانگین فاکتور امروز را بالا ببرم؟')">📈 میانگین فاکتور</button>
             <button type="button" class="aic-chip" onclick="aiChatQuick('سه ترکیب فروش سوسیس و لبنیات برای مشتری پیشنهاد بده')">🧀 ترکیب محصول</button>
+            <button type="button" class="aic-chip" onclick="aiChatQuick('اگر مشتری گفت گرونه چی جواب بدم؟')">💬 پاسخ مشتری</button>
             <button type="button" class="aic-chip aic-chip-muted" onclick="aiChatClearHistory()">🗑 پاک کردن</button>
         </div>
         <div class="aic-composer">
@@ -3448,7 +3474,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v161 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v162 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3632,7 +3658,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=161', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=162', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
