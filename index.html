@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v160 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v161 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -3448,7 +3448,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v160 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v161 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3632,7 +3632,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=160', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=161', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -19209,26 +19209,88 @@ function sbRenderAdminLists(cfg) {
             const start = takeoutPage * TAKEOUT_PAGE_SIZE;
             const pageItems = cachedTakeoutList.slice(start, start + TAKEOUT_PAGE_SIZE);
 
-            const totalAmount = cachedTakeoutList.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+            const totalOpen = cachedTakeoutList.filter(t => !isTakeoutSettled(t)).reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+            const totalSettled = cachedTakeoutList.filter(t => isTakeoutSettled(t)).reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
 
-            box.innerHTML = `<p style="color:#fbbf24; font-weight:bold; margin-bottom:8px;">مجموع کل برداشت‌های شما (با ۱۰٪ تخفیف): ${totalAmount.toLocaleString('fa-IR')} تومان</p>` +
-                pageItems.map(t => `
-                    <div class="summary-mini" style="flex-direction:column; align-items:stretch; gap:8px;">
-                        <div style="display:flex; justify-content:space-between; gap:8px;">
-                            <span>🛒 <b>${t.item_name}</b>${t.weight ? ' (' + Number(t.weight).toLocaleString('fa-IR') + ' کیلو)' : ''}${t.note ? ' — ' + escapeHtmlForToast(t.note) : ''}<br><span style="font-size:10px; color:#94a3b8;">${getTehranFullDateTimeString(new Date(t.created_at))}</span>${t.photo_url ? ` — <a href="${t.photo_url}" target="_blank" style="color:#38bdf8;">👁️ عکس بارکد</a>` : ''}</span>
-                            <b style="color:#f87171; white-space:nowrap;">${Number(t.amount).toLocaleString('fa-IR')} تومان</b>
-                        </div>
-                        <div style="display:flex; gap:6px;">
+            box.innerHTML = `<p style="color:#fbbf24; font-weight:bold; margin-bottom:4px;">حساب‌نشده (هنوز از حقوق کم نشده): ${totalOpen.toLocaleString('fa-IR')} تومان</p>` +
+                (totalSettled > 0 ? `<p style="color:#34d399; font-weight:bold; margin-bottom:8px;">تسویه‌شده با حقوق (کم شده از حقوقتان): ${totalSettled.toLocaleString('fa-IR')} تومان</p>` : '') +
+                pageItems.map(t => {
+                    const done = isTakeoutSettled(t);
+                    const badge = done
+                        ? '<div style="margin-top:6px;padding:6px 8px;border-radius:10px;background:rgba(16,185,129,.15);border:1px solid rgba(52,211,153,.35);color:#34d399;font-size:11px;font-weight:700;">✅ مدیر حساب کرده — از حقوقتان کم شده و تسویه شده</div>'
+                        : '<div style="margin-top:6px;padding:6px 8px;border-radius:10px;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.3);color:#fbbf24;font-size:11px;font-weight:700;">⏳ هنوز حساب نشده — بعداً از حقوق کسر می‌شود</div>';
+                    const actions = done
+                        ? ''
+                        : `<div style="display:flex; gap:6px;">
                             <button class="row-btn edit-btn" style="flex:1; padding:5px 8px; font-size:11px;" onclick="editTakeout('${t.id}')">✏️ ویرایش</button>
                             <button class="row-btn delete-btn" style="flex:1; padding:5px 8px; font-size:11px;" onclick="deleteTakeout('${t.id}')">🗑️ حذف</button>
+                        </div>`;
+                    return `
+                    <div class="summary-mini" style="flex-direction:column; align-items:stretch; gap:6px; opacity:${done ? '0.92' : '1'};">
+                        <div style="display:flex; justify-content:space-between; gap:8px;">
+                            <span>🛒 <b>${t.item_name}</b>${t.weight ? ' (' + Number(t.weight).toLocaleString('fa-IR') + ' کیلو)' : ''}${t.note ? ' — ' + escapeHtmlForToast(t.note) : ''}<br><span style="font-size:10px; color:#94a3b8;">${getTehranFullDateTimeString(new Date(t.created_at))}</span>${t.photo_url ? ` — <a href="${t.photo_url}" target="_blank" style="color:#38bdf8;">👁️ عکس بارکد</a>` : ''}</span>
+                            <b style="color:${done ? '#34d399' : '#f87171'}; white-space:nowrap;">${Number(t.amount).toLocaleString('fa-IR')} تومان</b>
                         </div>
-                    </div>
-                `).join('');
+                        ${badge}
+                        ${actions}
+                    </div>`;
+                }).join('');
 
             if (indicator) {
                 indicator.innerText = `صفحه ${(takeoutPage + 1).toLocaleString('fa-IR')} از ${totalPages.toLocaleString('fa-IR')}`;
             }
         }
+
+        
+        function isTakeoutSettled(t) {
+            if (!t) return false;
+            return t.settled === true || t.settled === 'true' || t.settled === 1 || t.status === 'settled';
+        }
+
+        async function markTakeoutsSettled(ids, settled) {
+            if (!ids || !ids.length) return { ok: false, error: 'خالی' };
+            const payload = settled
+                ? { settled: true, settled_at: new Date().toISOString(), settled_by: (typeof currentUserLabel !== 'undefined' ? currentUserLabel : 'مدیر') }
+                : { settled: false, settled_at: null, settled_by: null };
+            try {
+                const { error } = await _supabase.from('personal_takeouts').update(payload).in('id', ids);
+                if (error) return { ok: false, error: error.message };
+                return { ok: true };
+            } catch (e) {
+                return { ok: false, error: String(e.message || e) };
+            }
+        }
+
+        window.adminSettleTakeout = async function (id) {
+            const sure = confirm('این برداشت با حقوق حساب شده و تسویه شود؟ دیگر در لیست حساب‌نشده مدیر نمی‌آید.');
+            if (!sure) return;
+            const r = await markTakeoutsSettled([id], true);
+            if (!r.ok) return showToast('❌ ' + (r.error || 'خطا'));
+            showToast('✅ تسویه شد — از حقوق کم شده لحاظ می‌شود');
+            try { loadTakeoutAdminSummary(); } catch (e) {}
+        };
+
+        window.adminSettleAllSellerTakeouts = async function (seller) {
+            const cache = window._adminTakeoutsCache || [];
+            const ids = cache.filter(t => t.seller_name === seller && !isTakeoutSettled(t)).map(t => t.id);
+            if (!ids.length) return showToast('مورد حساب‌نشده‌ای نیست');
+            const sure = confirm('همه برداشت‌های حساب‌نشده «' + seller + '» (' + ids.length + ' مورد) با حقوق تسویه شود؟');
+            if (!sure) return;
+            const r = await markTakeoutsSettled(ids, true);
+            if (!r.ok) return showToast('❌ ' + (r.error || 'خطا'));
+            showToast('✅ ' + ids.length + ' مورد برای ' + seller + ' تسویه شد');
+            try { loadTakeoutAdminSummary(); } catch (e) {}
+        };
+
+        window.adminUnsettleTakeout = async function (id) {
+            const sure = confirm('این مورد دوباره حساب‌نشده شود؟');
+            if (!sure) return;
+            const r = await markTakeoutsSettled([id], false);
+            if (!r.ok) return showToast('❌ ' + (r.error || 'خطا'));
+            showToast('برگشت به حساب‌نشده');
+            try { loadTakeoutAdminSummary(); } catch (e) {}
+        };
+
 
         async function loadTakeoutAdminSummary() {
             const startStr = document.getElementById('takeoutRangeStart').value;
@@ -19251,13 +19313,19 @@ function sbRenderAdminLists(cfg) {
                 });
             }
 
-            if (filtered.length === 0) {
-                box.innerHTML = '<p style="color:#94a3b8;">هیچ برداشتی در این بازه ثبت نشده است.</p>';
+            // فقط حساب‌نشده‌ها برای مدیر در لیست اصلی
+            const unsettled = filtered.filter(t => !isTakeoutSettled(t));
+            const settledCount = filtered.length - unsettled.length;
+
+            if (unsettled.length === 0) {
+                box.innerHTML = '<p style="color:#94a3b8;">برداشت حساب‌نشده‌ای در این بازه نیست.' +
+                    (settledCount ? ' (' + settledCount.toLocaleString('fa-IR') + ' مورد قبلاً با حقوق تسویه شده و مخفی است.)' : '') + '</p>';
+                window._adminTakeoutsCache = filtered;
                 return;
             }
 
             const perSeller = {};
-            filtered.forEach(t => {
+            unsettled.forEach(t => {
                 if (!perSeller[t.seller_name]) perSeller[t.seller_name] = { total: 0, items: [] };
                 perSeller[t.seller_name].total += Number(t.amount) || 0;
                 perSeller[t.seller_name].items.push(t);
@@ -19266,18 +19334,25 @@ function sbRenderAdminLists(cfg) {
             window._adminTakeoutsCache = filtered;
             cachedTakeoutList = data || [];
             let html = '';
+            if (settledCount > 0) {
+                html += '<p class="hint" style="margin-bottom:10px;">✅ ' + settledCount.toLocaleString('fa-IR') +
+                    ' مورد تسویه‌شده با حقوق از این لیست مخفی شده‌اند.</p>';
+            }
             Object.entries(perSeller).forEach(([seller, info]) => {
                 html += `<div class="report-card">
                     <h3>👤 ${seller}${firedTag(seller)}</h3>
-                    <p style="font-size:15px; color:#f87171; font-weight:bold;">مجموع قابل کسر از حقوق: ${info.total.toLocaleString('fa-IR')} تومان (${info.items.length} مورد)</p>
+                    <p style="font-size:15px; color:#f87171; font-weight:bold;">مجموع حساب‌نشده (قابل کسر): ${info.total.toLocaleString('fa-IR')} تومان (${info.items.length} مورد)</p>
+                    <button type="button" class="confirm-btn" style="width:100%;margin-bottom:10px;padding:8px;font-size:12px;"
+                        onclick="adminSettleAllSellerTakeouts('${String(seller).replace(/'/g, "\\'")}')">✅ همه این‌ها با حقوق حساب شد</button>
                     ${info.items.map(t => `
                         <div class="summary-mini">
                             <span>🛒 ${t.item_name}${t.weight ? ' (' + Number(t.weight).toLocaleString('fa-IR') + ' کیلو)' : ''}${t.note ? ' — ' + t.note : ''}<br><span style="font-size:10px; color:#94a3b8;">${getTehranFullDateTimeString(new Date(t.created_at))}</span>${t.photo_url ? ` — <a href="${t.photo_url}" target="_blank" style="color:#38bdf8;">👁️ عکس بارکد</a>` : ' — <span style="color:#ef4444;">بدون عکس</span>'}</span>
                             <b style="color:#f87171;">${Number(t.amount).toLocaleString('fa-IR')} تومان</b>
                         </div>
-                        <div style="display:flex; gap:6px; margin-bottom:6px;">
-                            <button class="row-btn edit-btn" style="flex:1; padding:5px 8px; font-size:11px;" onclick="adminEditTakeout('${t.id}')">✏️ ویرایش</button>
-                            <button class="row-btn delete-btn" style="flex:1; padding:5px 8px; font-size:11px;" onclick="deleteTakeout('${t.id}')">🗑️ حذف</button>
+                        <div style="display:flex; gap:6px; margin-bottom:6px; flex-wrap:wrap;">
+                            <button class="row-btn fill-btn" style="flex:1; min-width:90px; padding:5px 8px; font-size:11px;" onclick="adminSettleTakeout('${t.id}')">✅ حساب شد با حقوق</button>
+                            <button class="row-btn edit-btn" style="flex:1; min-width:70px; padding:5px 8px; font-size:11px;" onclick="adminEditTakeout('${t.id}')">✏️ ویرایش</button>
+                            <button class="row-btn delete-btn" style="flex:1; min-width:70px; padding:5px 8px; font-size:11px;" onclick="deleteTakeout('${t.id}')">🗑️ حذف</button>
                         </div>
                     `).join('')}
                 </div>`;
