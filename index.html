@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v159 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v160 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -283,6 +283,98 @@
         }
         .sc-pop .sc-ok-btn { background: #10b981; color: #fff; }
         .sc-pop .sc-later-btn { background: rgba(148,163,184,.25); color: #e2e8f0; }
+
+        
+        /* چت AI — ظاهر حرفه‌ای */
+        .aic-hero {
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px 14px; margin: -4px -4px 12px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(99,102,241,.22), rgba(16,185,129,.14), rgba(56,189,248,.12));
+            border: 1px solid rgba(167,139,250,.28);
+        }
+        .aic-hero-icon {
+            width: 44px; height: 44px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+            background: rgba(15,23,42,.45);
+            box-shadow: 0 4px 14px rgba(0,0,0,.25);
+        }
+        .aic-hero-text { flex: 1; min-width: 0; text-align: right; }
+        .aic-hero-sub { font-size: 11px; opacity: .78; margin-top: 3px; line-height: 1.5; }
+        .aic-pill {
+            font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 999px;
+            background: rgba(16,185,129,.2); color: #34d399; border: 1px solid rgba(52,211,153,.35);
+            white-space: nowrap;
+        }
+        .aic-pill.busy { background: rgba(251,191,36,.15); color: #fbbf24; border-color: rgba(251,191,36,.35); }
+        .aic-messages {
+            max-height: 48vh; min-height: 180px; overflow-y: auto;
+            direction: rtl; text-align: right;
+            padding: 8px 6px; margin: 0 0 10px;
+            border-radius: 16px;
+            background: rgba(8,12,24,.45);
+            border: 1px solid rgba(148,163,184,.18);
+            scroll-behavior: smooth;
+        }
+        .aic-bubble {
+            max-width: 92%; margin: 8px 0; padding: 10px 12px;
+            border-radius: 16px; font-size: 13px; line-height: 1.8;
+            animation: aicIn .22s ease;
+        }
+        @keyframes aicIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        .aic-bubble.user {
+            margin-right: auto; margin-left: 8px;
+            background: linear-gradient(135deg, rgba(14,165,233,.28), rgba(56,189,248,.16));
+            border: 1px solid rgba(56,189,248,.35);
+            border-bottom-left-radius: 6px;
+        }
+        .aic-bubble.bot {
+            margin-left: auto; margin-right: 8px;
+            background: linear-gradient(135deg, rgba(99,102,241,.22), rgba(167,139,250,.12));
+            border: 1px solid rgba(167,139,250,.32);
+            border-bottom-right-radius: 6px;
+        }
+        .aic-bubble .aic-who { font-size: 10px; font-weight: 800; opacity: .7; margin-bottom: 3px; }
+        .aic-bubble .aic-body { white-space: pre-wrap; word-break: break-word; }
+        .aic-typing {
+            display: inline-flex; gap: 4px; padding: 4px 0;
+        }
+        .aic-typing i {
+            width: 6px; height: 6px; border-radius: 50%; background: #a78bfa;
+            animation: aicDot 1s infinite ease-in-out;
+        }
+        .aic-typing i:nth-child(2) { animation-delay: .15s; }
+        .aic-typing i:nth-child(3) { animation-delay: .3s; }
+        @keyframes aicDot { 0%,80%,100% { opacity: .3; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
+        .aic-quick { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+        .aic-chip {
+            border: 1px solid rgba(148,163,184,.28); background: rgba(15,23,42,.4);
+            color: var(--text-primary); border-radius: 999px; padding: 7px 12px;
+            font-size: 11px; font-weight: 700; cursor: pointer;
+        }
+        .aic-chip:active { transform: scale(.96); }
+        .aic-chip-muted { opacity: .75; }
+        .aic-composer {
+            display: flex; gap: 8px; align-items: stretch;
+            background: rgba(15,23,42,.5); border: 1px solid rgba(148,163,184,.25);
+            border-radius: 16px; padding: 6px;
+        }
+        .aic-composer input {
+            flex: 1; border: none; outline: none; background: transparent;
+            color: var(--text-primary); padding: 10px 12px; font-size: 14px;
+            font-family: inherit; min-width: 0;
+        }
+        .aic-send {
+            border: none; border-radius: 12px; padding: 0 18px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: #fff; font-weight: 800; font-size: 13px; cursor: pointer;
+            white-space: nowrap; min-width: 72px;
+        }
+        .aic-send:disabled { opacity: .55; cursor: wait; }
+        .aic-status {
+            margin-top: 8px; font-size: 11px; opacity: .8; text-align: center; min-height: 16px;
+        }
 
         .pg-card {
             border: 1px solid rgba(148,163,184,.25); border-radius: 14px;
@@ -2468,20 +2560,27 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
 
     
     <div id="aiChatTab" class="card">
-        <h2>💬 گفتگو با دستیار فروش</h2>
-        <div class="hint">سوال بپرس: قیمت پیشنهادی، جمله فروش، ترکیب محصولات، پاسخ به مشتری و… — با همان کلید AI مدیر</div>
-        <div id="aiChatMessages" style="max-height:55vh;overflow-y:auto;direction:rtl;text-align:right;padding:8px 4px;margin:10px 0;border-radius:14px;background:rgba(15,23,42,.35);border:1px solid rgba(148,163,184,.2);"></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <input id="aiChatInput" type="text" placeholder="سوالت را بنویس..." style="flex:1;min-width:180px;border-radius:12px;padding:12px;border:1px solid rgba(148,163,184,.3);background:var(--bg-input);color:var(--text-primary);" onkeydown="if(event.key==='Enter'){event.preventDefault();sendAiChat();}">
-            <button type="button" class="confirm-btn" onclick="sendAiChat()" style="min-width:100px;">ارسال</button>
+        <div class="aic-hero">
+            <div class="aic-hero-icon">🤖</div>
+            <div class="aic-hero-text">
+                <h2 style="margin:0;font-size:17px;">دستیار فروش هوشمند</h2>
+                <div class="aic-hero-sub">جمله فروش · ترکیب محصول · پاسخ مشتری · مشاوره لحظه‌ای</div>
+            </div>
+            <div id="aicOnlinePill" class="aic-pill">آنلاین</div>
         </div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
-            <button type="button" class="secondary-btn" style="font-size:11px;padding:6px 10px;" onclick="aiChatQuick('یک جمله کوتاه برای پیشنهاد کالباس به مشتری بنویس')">جمله فروش</button>
-            <button type="button" class="secondary-btn" style="font-size:11px;padding:6px 10px;" onclick="aiChatQuick('چطور میانگین فاکتور را بالا ببرم؟')">میانگین فاکتور</button>
-            <button type="button" class="secondary-btn" style="font-size:11px;padding:6px 10px;" onclick="aiChatQuick('سه ترکیب فروش سوسیس و لبنیات پیشنهاد بده')">ترکیب محصول</button>
-            <button type="button" class="secondary-btn" style="font-size:11px;padding:6px 10px;opacity:.85;" onclick="aiChatClearHistory()">پاک کردن تاریخچه</button>
+        <div id="aiChatMessages" class="aic-messages"></div>
+        <div class="aic-quick">
+            <button type="button" class="aic-chip" onclick="aiChatQuick('یک جمله کوتاه و جذاب برای پیشنهاد کالباس به مشتری بنویس')">✨ جمله فروش</button>
+            <button type="button" class="aic-chip" onclick="aiChatQuick('چطور میانگین فاکتور امروز را بالا ببرم؟')">📈 میانگین فاکتور</button>
+            <button type="button" class="aic-chip" onclick="aiChatQuick('سه ترکیب فروش سوسیس و لبنیات برای مشتری پیشنهاد بده')">🧀 ترکیب محصول</button>
+            <button type="button" class="aic-chip aic-chip-muted" onclick="aiChatClearHistory()">🗑 پاک کردن</button>
         </div>
-        <div id="aiChatStatus" class="hint" style="margin-top:8px;"></div>
+        <div class="aic-composer">
+            <input id="aiChatInput" type="text" placeholder="سوالت را بنویس…" autocomplete="off"
+                onkeydown="if(event.key==='Enter'){event.preventDefault();sendAiChat();}">
+            <button type="button" id="aiChatSendBtn" class="aic-send" onclick="sendAiChat()">ارسال</button>
+        </div>
+        <div id="aiChatStatus" class="aic-status"></div>
     </div>
 
 <div id="sausagePriceCompareTab" class="card">
@@ -3349,7 +3448,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v159 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag">v160 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3533,7 +3632,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=159', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=160', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -9523,28 +9622,30 @@ function sbRenderAdminLists(cfg) {
             const hist = aiChatLoadHistory();
             box.innerHTML = '';
             if (!hist.length) {
-                box.innerHTML = '<div style="opacity:.75;font-size:12px;padding:8px;">سلام 👋 از من بپرس: جمله فروش، ترکیب محصول، پاسخ به مشتری و…</div>';
+                box.innerHTML = '<div class="aic-bubble bot" data-welcome="1"><div class="aic-who">دستیار</div><div class="aic-body">سلام 👋 از من بپرس: جمله فروش، ترکیب محصول، پاسخ به مشتری…</div></div>';
             } else {
                 hist.forEach(function (item) {
                     aiChatAppend(item.role || 'assistant', item.text || '', true);
                 });
             }
             box.dataset.ready = '1';
+            const pill = document.getElementById('aicOnlinePill');
+            if (pill) { pill.textContent = 'آنلاین'; pill.classList.remove('busy'); }
             try { document.getElementById('aiChatInput') && document.getElementById('aiChatInput').focus(); } catch (e) {}
         }
 
         function aiChatAppend(role, text, skipSave) {
             const box = document.getElementById('aiChatMessages');
             if (!box) return;
-            // remove welcome if first real message
-            if (!skipSave && box.querySelector('[data-welcome]')) box.innerHTML = '';
+            const welcome = box.querySelector('[data-welcome]');
+            if (!skipSave && welcome) welcome.remove();
+            const typing = box.querySelector('[data-typing]');
+            if (typing) typing.remove();
             const div = document.createElement('div');
-            div.style.cssText = 'margin:8px 0;padding:10px 12px;border-radius:12px;font-size:13px;line-height:1.75;' +
-                (role === 'user'
-                    ? 'background:rgba(56,189,248,.15);border:1px solid rgba(56,189,248,.3);'
-                    : 'background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.28);');
+            const isUser = role === 'user';
+            div.className = 'aic-bubble ' + (isUser ? 'user' : 'bot');
             const esc = String(text).replace(/[&<>]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]; });
-            div.innerHTML = '<b style="font-size:11px;opacity:.8;">' + (role === 'user' ? 'شما' : 'دستیار') + '</b><div style="margin-top:4px;white-space:pre-wrap;">' + esc + '</div>';
+            div.innerHTML = '<div class="aic-who">' + (isUser ? 'شما' : 'دستیار') + '</div><div class="aic-body">' + esc + '</div>';
             box.appendChild(div);
             box.scrollTop = box.scrollHeight;
             if (!skipSave) {
@@ -9552,6 +9653,19 @@ function sbRenderAdminLists(cfg) {
                 hist.push({ role: role, text: String(text), at: Date.now() });
                 aiChatSaveHistory(hist);
             }
+        }
+
+        function aiChatShowTyping() {
+            const box = document.getElementById('aiChatMessages');
+            if (!box) return;
+            const old = box.querySelector('[data-typing]');
+            if (old) old.remove();
+            const div = document.createElement('div');
+            div.className = 'aic-bubble bot';
+            div.setAttribute('data-typing', '1');
+            div.innerHTML = '<div class="aic-who">دستیار</div><div class="aic-typing"><i></i><i></i><i></i></div>';
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
         }
 
         window.aiChatQuick = function (q) {
@@ -9563,34 +9677,49 @@ function sbRenderAdminLists(cfg) {
         window.sendAiChat = async function () {
             const inp = document.getElementById('aiChatInput');
             const st = document.getElementById('aiChatStatus');
+            const btn = document.getElementById('aiChatSendBtn');
+            const pill = document.getElementById('aicOnlinePill');
             const q = (inp && inp.value || '').trim();
             if (!q) return;
             if (inp) inp.value = '';
+            if (btn) btn.disabled = true;
+            if (pill) { pill.textContent = 'در حال پاسخ…'; pill.classList.add('busy'); }
             aiChatAppend('user', q);
-            if (st) st.textContent = '⏳ در حال فکر کردن...';
+            aiChatShowTyping();
+            if (st) st.textContent = '';
             try {
                 if (typeof aiTextChat !== 'function') throw new Error('موتور AI لود نشده. صفحه را کامل ببند و باز کن.');
-                // آخرین چند پیام برای زمینه
-                const hist = aiChatLoadHistory().slice(-8);
-                const messages = [{ role: 'system', content: AI_CHAT_SYS }];
+                // فقط ۳ پیام آخر برای سرعت
+                const hist = aiChatLoadHistory().slice(-6);
+                const messages = [{ role: 'system', content: AI_CHAT_SYS + ' خیلی کوتاه جواب بده.' }];
                 hist.forEach(function (h) {
                     if (h.role === 'user' || h.role === 'assistant') {
                         messages.push({ role: h.role === 'assistant' ? 'assistant' : 'user', content: h.text });
                     }
                 });
-                // آخرین user ممکن است دوبار باشد — ok
-                const r = await aiTextChat(messages, { max_tokens: 600, temperature: 0.7, timeout: 45000 });
+                // مدل سریع‌تر برای چت
+                const r = await aiTextChat(messages, {
+                    max_tokens: 350,
+                    temperature: 0.65,
+                    timeout: 28000,
+                    preferFast: true
+                });
                 aiChatAppend('assistant', r.text);
-                if (st) st.textContent = '✅ ' + (r.provider || '') + (r.model ? ' · ' + r.model : '');
+                if (st) st.innerHTML = '✅ <span dir="ltr">' + (r.provider || '') + (r.model ? ' · ' + r.model : '') + '</span>';
             } catch (e) {
                 const msg = aiFriendlyError(e);
                 aiChatAppend('assistant', '⚠️ ' + msg);
                 if (st) st.textContent = '❌ ' + msg;
                 try { showToast(msg); } catch (err) {}
+            } finally {
+                if (btn) btn.disabled = false;
+                if (pill) { pill.textContent = 'آنلاین'; pill.classList.remove('busy'); }
+                try { inp && inp.focus(); } catch (e) {}
             }
         };
         window.loadAiChatTab = loadAiChatTab;
         window.aiChatClearHistory = aiChatClearHistory;
+
 
 
         // همگام‌سازی پروکسی‌های مدیر برای همه گوشی‌ها
@@ -10713,7 +10842,7 @@ function sbRenderAdminLists(cfg) {
                     'https://shop-proxy-fast.adarmiraki.workers.dev/groq/openai/v1/chat/completions',
                     'https://api.groq.com/openai/v1/chat/completions'
                 ];
-                const models = ['openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'qwen/qwen3.8-27b', 'llama-3.1-8b-instant'];
+                const models = ['openai/gpt-oss-20b', 'openai/gpt-oss-120b', 'qwen/qwen3.8-27b', 'llama-3.1-8b-instant'];
                 for (let m = 0; m < models.length; m++) {
                     const body = JSON.stringify({
                         model: models[m],
