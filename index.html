@@ -14,10 +14,24 @@
                 var saved = localStorage.getItem('boothThemeMode');
                 if (saved === 'light') document.documentElement.classList.add('light-theme');
             } catch (e) {}
+            // لینک پرداخت مشتری: از همان اول فقط صفحه پرداخت — بدون ورود/تب‌های سایت
+            try {
+                var q = location.search || '';
+                var h = location.hash || '';
+                if (/[?&]pay=/.test(q) || /#pay[/=]/.test(h)) {
+                    document.documentElement.classList.add('pay-guest-mode');
+                    document.documentElement.style.background = '#0b1220';
+                }
+            } catch (e2) {}
         })();
     </script>
+    <style id="payGuestCss">
+        html.pay-guest-mode body > *:not(#payPublicView) { display: none !important; }
+        html.pay-guest-mode #payPublicView { display: block !important; min-height: 100vh; padding: 12px 8px 40px; }
+        html.pay-guest-mode body { background: #0b1220 !important; margin: 0; }
+    </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v167 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v168 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -3309,8 +3323,9 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             <label>بابت (اختیاری):</label>
             <input type="text" id="payNewNote" dir="auto" placeholder="مثلاً فاکتور سوسیس امروز">
             <div id="paySellerMinsWrap">
-                <label>مهلت این لینک (دقیقه) — خالی = پیش‌فرض:</label>
-                <input type="number" id="payNewMins" min="10" max="2880" placeholder="مثلاً 120" style="direction:ltr;text-align:left;">
+                <label>مهلت این لینک (دقیقه) — خالی = پیش‌فرض تنظیمات:</label>
+                <input type="number" id="payNewMins" min="1" max="10080" placeholder="مثلاً 1 یا 60 یا 180" style="direction:ltr;text-align:left;">
+                <div class="hint" style="margin-top:4px;">می‌توانی حتی ۱ دقیقه بگذاری؛ دقیقاً همان مدت روی لینک مشتری اعمال می‌شود.</div>
             </div>
             <button type="button" class="submit-btn" style="background:linear-gradient(100deg,#0ea5e9,#6366f1);" onclick="createPayLink()">🔗 ساخت لینک پرداخت</button>
             <div id="payNewResult" style="margin-top:10px;"></div>
@@ -3751,7 +3766,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=167', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=168', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -22600,16 +22615,45 @@ notify pgrst, 'reload schema';`;
     }
     async function payListMine() {
         const local = payLocalAll();
-        if (typeof _supabase === 'undefined' || !_supabase || typeof currentUserLabel === 'undefined') return local;
-        try {
-            let q = _supabase.from('payment_links').select('*').order('created_at', { ascending: false }).limit(80);
-            if (typeof currentRole !== 'undefined' && currentRole !== 'admin') {
-                q = q.eq('created_by', currentUserLabel);
+        let remote = [];
+        if (typeof _supabase !== 'undefined' && _supabase) {
+            try {
+                let q = _supabase.from('payment_links').select('*').order('created_at', { ascending: false }).limit(80);
+                if (typeof currentRole !== 'undefined' && currentRole !== 'admin' && typeof currentUserLabel !== 'undefined') {
+                    q = q.eq('created_by', currentUserLabel);
+                }
+                const { data, error } = await q;
+                if (!error && data) remote = data;
+            } catch (e) {}
+        }
+        // ادغام: وضعیت و رسید محلی اولویت دارد (اگر جدول سرور نباشد یا آپدیت نرسیده باشد)
+        const map = {};
+        remote.forEach(function (r) { if (r && r.token) map[r.token] = Object.assign({}, r); });
+        local.forEach(function (r) {
+            if (!r || !r.token) return;
+            if (!map[r.token]) map[r.token] = Object.assign({}, r);
+            else {
+                const cur = map[r.token];
+                // اگر محلی رسید/تأیید جدیدتر دارد، همان را بگیر
+                if (r.receipt_url && !cur.receipt_url) cur.receipt_url = r.receipt_url;
+                if (r.status === 'receipt' || r.status === 'approved' || r.status === 'rejected') cur.status = r.status;
+                if (r.paid_at) cur.paid_at = r.paid_at;
+                if (r.approved_at) cur.approved_at = r.approved_at;
+                if (r.expires_at) cur.expires_at = r.expires_at;
+                Object.assign(cur, {
+                    customer_name: cur.customer_name || r.customer_name,
+                    amount: cur.amount || r.amount,
+                    note: cur.note || r.note,
+                    card: cur.card || r.card,
+                    holder: cur.holder || r.holder,
+                    phone: cur.phone || r.phone,
+                    created_by: cur.created_by || r.created_by
+                });
             }
-            const { data, error } = await q;
-            if (error) throw error;
-            return data && data.length ? data : local;
-        } catch (e) { return local; }
+        });
+        return Object.keys(map).map(function (k) { return map[k]; }).sort(function (a, b) {
+            return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+        });
     }
 
     function payIsAdmin() {
@@ -22726,7 +22770,9 @@ notify pgrst, 'reload schema';`;
         const amount = parseInt(payDigits(document.getElementById('payNewAmount').value), 10);
         const note = (document.getElementById('payNewNote').value || '').trim();
         let mins = parseInt(document.getElementById('payNewMins').value, 10);
-        if (!mins || mins < 10) mins = cfg.mins || 180;
+        // اگر خالی بود از پیش‌فرض؛ اگر عدد گذاشته (حتی ۱ دقیقه) همان را بگیر
+        if (!Number.isFinite(mins) || mins < 1) mins = parseInt(cfg.mins, 10) || 180;
+        if (mins > 10080) mins = 10080;
         if (!(amount > 0)) return showToast('❌ مبلغ معتبر وارد کن');
 
         const token = payToken();
@@ -22798,15 +22844,21 @@ notify pgrst, 'reload schema';`;
             const url = payLinkUrl(r.token);
             const isAdmin = payIsAdmin();
             const canApprove = isAdmin && st === 'receipt';
-            const byMe = !isAdmin ? (' · توسط: ' + payEsc(r.created_by || '')) : (r.created_by ? ' · سازنده: ' + payEsc(r.created_by) : '');
+            const byMe = r.created_by ? (' · سازنده: ' + payEsc(r.created_by)) : '';
+            const expLeft = Math.max(0, exp - now);
+            const expTxt = st === 'open'
+                ? (' · باقی‌مانده: ' + Math.floor(expLeft / 60000) + 'د ' + Math.floor((expLeft % 60000) / 1000) + 'ث')
+                : '';
             return '<div class="summary-mini" style="flex-direction:column;align-items:stretch;gap:6px;margin-bottom:10px;">' +
                 '<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;">' +
                 '<span><b>' + payEsc(r.customer_name) + '</b> — ' + Number(r.amount).toLocaleString('fa-IR') + ' تومان<br>' +
-                '<span style="font-size:11px;opacity:.8;">' + payEsc(stLabel) + byMe + (r.note ? ' · ' + payEsc(r.note) : '') + '</span></span>' +
+                '<span style="font-size:11px;opacity:.8;">' + payEsc(stLabel) + byMe + expTxt + (r.note ? ' · ' + payEsc(r.note) : '') + '</span></span>' +
                 '</div>' +
-                (r.receipt_url ? (isAdmin
-                    ? '<a href="' + payEsc(r.receipt_url) + '" target="_blank" style="color:#38bdf8;font-size:12px;">👁️ مشاهده رسید</a>'
-                    : '<span style="font-size:12px;color:#34d399;">📷 رسید ارسال شده — منتظر تأیید مدیر</span>') : '') +
+                (r.receipt_url ? (
+                    isAdmin
+                        ? '<div style="margin:4px 0;"><a href="' + payEsc(r.receipt_url) + '" target="_blank" rel="noopener"><img src="' + payEsc(r.receipt_url) + '" alt="رسید" style="max-width:100%;max-height:180px;border-radius:12px;border:1px solid rgba(148,163,184,.3);"></a><div style="font-size:11px;margin-top:4px;"><a href="' + payEsc(r.receipt_url) + '" target="_blank" style="color:#38bdf8;">👁️ مشاهده تمام‌صفحه</a></div></div>'
+                        : '<span style="font-size:12px;color:#34d399;">📷 رسید ارسال شده — منتظر تأیید مدیر</span>'
+                ) : '') +
                 '<div style="display:flex;gap:6px;flex-wrap:wrap;">' +
                 '<button type="button" class="row-btn fill-btn" style="flex:1;font-size:11px;" onclick="navigator.clipboard.writeText(' + JSON.stringify(url) + ').then(function(){showToast(\'📋 لینک کپی شد\')})">کپی لینک</button>' +
                 '<button type="button" class="row-btn edit-btn" style="flex:1;font-size:11px;" onclick="navigator.clipboard.writeText(' + JSON.stringify(payMsgTemplate(url, r.amount, r.customer_name, r.phone || payLoadCfg().phone)) + ').then(function(){showToast(\'📋 پیام کپی شد\')})">کپی پیام</button>' +
@@ -22894,7 +22946,7 @@ notify pgrst, 'reload schema';`;
             const local = payLocalAll();
             const i = local.findIndex(function (x) { return x.token === token; });
             if (i >= 0) { local[i].receipt_url = url; local[i].status = 'receipt'; payLocalSave(local); }
-            showToast('✅ رسید ارسال شد — منتظر تأیید مدیر بمانید');
+            showToast('✅ رسید ثبت شد — مدیر غرفه تأیید می‌کند و همین‌جا اطلاع داده می‌شود');
             openPayPublic(token);
         } catch (e) {
             showToast('❌ ' + (e.message || 'خطا در ارسال رسید'));
@@ -22920,9 +22972,16 @@ notify pgrst, 'reload schema';`;
         let row = null;
         const local = payLocalAll().find(function (x) { return x.token === token; });
         row = await payFetchRemote(token);
-        if (!row) row = local;
+        if (!row && local) row = Object.assign({}, local);
+        else if (row && local) {
+            // رسید/وضعیت محلی را از دست نده
+            if (local.receipt_url && !row.receipt_url) row.receipt_url = local.receipt_url;
+            if (local.status === 'receipt' || local.status === 'approved' || local.status === 'rejected') row.status = local.status;
+            if (local.paid_at) row.paid_at = local.paid_at;
+            if (local.expires_at) row.expires_at = local.expires_at;
+        }
         if (!row) {
-            inner.innerHTML = '<div class="report-card"><h3>لینک نامعتبر</h3><p class="hint">این لینک پیدا نشد یا حذف شده است.</p></div>';
+            inner.innerHTML = '<div class="report-card" style="text-align:center;padding:24px;"><h3>لینک نامعتبر یا منقضی</h3><p class="hint">این لینک پیدا نشد. از فروشنده لینک جدید بگیرید.</p></div>';
             return;
         }
 
@@ -22947,11 +23006,12 @@ notify pgrst, 'reload schema';`;
             return;
         }
         if (status === 'receipt') {
-            inner.innerHTML = '<div class="report-card" style="text-align:center;padding:20px;">' +
-                '<div style="font-size:40px;">📷</div>' +
-                '<h2>رسید دریافت شد</h2>' +
-                '<p class="hint">منتظر تأیید مدیر بمانید. بعد از تأیید، همین صفحه «موفقیت‌آمیز» نشان می‌دهد.</p>' +
-                '<button type="button" class="submit-btn" onclick="openPayPublic(\'' + payEsc(token) + '\')">بروزرسانی وضعیت</button>' +
+            inner.innerHTML = '<div class="report-card" style="text-align:center;padding:22px;border-color:rgba(56,189,248,.45);">' +
+                '<div style="font-size:44px;">📷</div>' +
+                '<h2 style="color:#38bdf8;">رسید شما ثبت شد</h2>' +
+                '<p style="line-height:1.9;font-size:13px;">رسید توسط <b>مدیر غرفه</b> بررسی و تأیید خواهد شد.<br>نتیجه همین‌جا اعلام می‌شود — لطفاً چند لحظه بعد همین صفحه را دوباره باز کنید.</p>' +
+                (row.phone ? '<p style="margin-top:10px;">📞 پشتیبانی: <b dir="ltr">' + payEsc(row.phone) + '</b></p>' : '') +
+                '<button type="button" class="submit-btn" style="margin-top:12px;" onclick="openPayPublic(\'' + payEsc(token) + '\')">بروزرسانی وضعیت</button>' +
                 '</div>';
             return;
         }
