@@ -31,7 +31,7 @@
         html.pay-guest-mode body { background: #0b1220 !important; margin: 0; }
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v168 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v169 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -3766,7 +3766,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=168', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=169', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -22863,7 +22863,9 @@ notify pgrst, 'reload schema';`;
                 '<button type="button" class="row-btn fill-btn" style="flex:1;font-size:11px;" onclick="navigator.clipboard.writeText(' + JSON.stringify(url) + ').then(function(){showToast(\'📋 لینک کپی شد\')})">کپی لینک</button>' +
                 '<button type="button" class="row-btn edit-btn" style="flex:1;font-size:11px;" onclick="navigator.clipboard.writeText(' + JSON.stringify(payMsgTemplate(url, r.amount, r.customer_name, r.phone || payLoadCfg().phone)) + ').then(function(){showToast(\'📋 پیام کپی شد\')})">کپی پیام</button>' +
                 (canApprove ? '<button type="button" class="row-btn confirm-btn" style="flex:1;font-size:11px;" onclick="approvePayLink(\'' + payEsc(r.token) + '\')">✅ تأیید پرداخت</button>' +
-                '<button type="button" class="row-btn delete-btn" style="flex:1;font-size:11px;" onclick="rejectPayLink(\'' + payEsc(r.token) + '\')">رد</button>' : '') +
+                '<button type="button" class="row-btn delete-btn" style="flex:1;font-size:11px;" onclick="rejectPayLink(\'' + payEsc(r.token) + '\')">رد رسید</button>' : '') +
+                ((st === 'open' || st === 'expired') ? '<button type="button" class="row-btn edit-btn" style="flex:1;font-size:11px;" onclick="editPayLink(\'' + payEsc(r.token) + '\')">✏️ ویرایش</button>' +
+                '<button type="button" class="row-btn delete-btn" style="flex:1;font-size:11px;" onclick="deletePayLink(\'' + payEsc(r.token) + '\')">🗑️ حذف</button>' : '') +
                 '</div></div>';
         }).join('');
     }
@@ -22893,9 +22895,77 @@ notify pgrst, 'reload schema';`;
     };
     window.rejectPayLink = async function (token) {
         if (!payIsAdmin()) return showToast('❌ فقط مدیر می‌تواند رد کند');
-        if (!confirm('رسید رد شود؟')) return;
-        await payUpdateStatus(token, 'rejected', {});
-        showToast('رد شد');
+        if (!confirm('رسید رد شود؟ مشتری می‌تواند دوباره عکس بفرستد اگر لینک هنوز باز باشد.')) return;
+        await payUpdateStatus(token, 'open', { receipt_url: null, paid_at: null });
+        showToast('رسید رد شد — لینک دوباره باز شد');
+        renderPayLinkList();
+    };
+
+    window.deletePayLink = async function (token) {
+        if (!payIsStaff()) return;
+        if (!confirm('این لینک حذف شود؟ دیگر کار نمی‌کند.')) return;
+        // محلی
+        const local = payLocalAll().filter(function (x) { return x.token !== token; });
+        payLocalSave(local);
+        // سرور
+        try {
+            if (typeof _supabase !== 'undefined' && _supabase) {
+                await _supabase.from('payment_links').delete().eq('token', token);
+            }
+        } catch (e) {}
+        showToast('🗑️ لینک حذف شد');
+        renderPayLinkList();
+        const box = document.getElementById('payNewResult');
+        if (box) box.innerHTML = '';
+    };
+
+    window.editPayLink = async function (token) {
+        if (!payIsStaff()) return;
+        const list = await payListMine();
+        const r = list.find(function (x) { return x.token === token; });
+        if (!r) return showToast('لینک پیدا نشد');
+        if ((r.status || 'open') === 'approved') return showToast('لینک تأییدشده قابل ویرایش نیست');
+
+        const newCustomer = prompt('نام مشتری:', r.customer_name || '');
+        if (newCustomer === null) return;
+        const newAmountStr = prompt('مبلغ (تومان):', String(r.amount || ''));
+        if (newAmountStr === null) return;
+        const newAmount = parseInt(payDigits(newAmountStr), 10);
+        if (!(newAmount > 0)) return showToast('❌ مبلغ نامعتبر');
+        const newNote = prompt('بابت (اختیاری):', r.note || '');
+        if (newNote === null) return;
+        const newMinsStr = prompt('مهلت از الان (دقیقه) — خالی = بدون تغییر مهلت:', '');
+        if (newMinsStr === null) return;
+
+        const extra = {
+            customer_name: (newCustomer || '').trim() || r.customer_name,
+            amount: newAmount,
+            note: (newNote || '').trim()
+        };
+        if (String(newMinsStr).trim() !== '') {
+            const mins = parseInt(newMinsStr, 10);
+            if (Number.isFinite(mins) && mins >= 1) {
+                extra.expires_at = new Date(Date.now() + mins * 60 * 1000).toISOString();
+            }
+        }
+        // اگر قبلاً رسید داشت و ویرایش شد، وضعیت را باز نگه دار مگر تأیید شده باشد
+        if ((r.status || '') === 'receipt') {
+            // مدیر/فروشنده عمداً ویرایش می‌کند؛ رسید قبلی می‌ماند مگر بخواهد
+        }
+
+        const local = payLocalAll();
+        const i = local.findIndex(function (x) { return x.token === token; });
+        if (i >= 0) Object.assign(local[i], extra);
+        else local.unshift(Object.assign({}, r, extra));
+        payLocalSave(local);
+
+        try {
+            if (typeof _supabase !== 'undefined' && _supabase) {
+                await _supabase.from('payment_links').update(extra).eq('token', token);
+            }
+        } catch (e) {}
+
+        showToast('✅ لینک ویرایش شد');
         renderPayLinkList();
     };
 
@@ -22934,25 +23004,76 @@ notify pgrst, 'reload schema';`;
         return dataUrl;
     }
 
+    window._payReceiptFile = null;
+    window.payOnReceiptPicked = function (token, input) {
+        try {
+            if (event) { event.preventDefault(); event.stopPropagation(); }
+        } catch (e) {}
+        const file = input && input.files && input.files[0];
+        if (!file) return;
+        window._payReceiptFile = file;
+        const prev = document.getElementById('payReceiptPreview');
+        const btn = document.getElementById('payReceiptBtn');
+        if (prev) {
+            const url = URL.createObjectURL(file);
+            prev.style.display = 'block';
+            prev.innerHTML = '<img src="' + url + '" alt="پیش‌نمایش رسید" style="max-width:100%;max-height:220px;border-radius:12px;border:1px solid rgba(148,163,184,.35);">' +
+                '<div style="font-size:12px;margin-top:6px;opacity:.85;">اگر درست است، «تأیید و ارسال» را بزن</div>';
+        }
+        if (btn) { btn.style.display = 'block'; btn.disabled = false; btn.textContent = '✅ تأیید و ارسال رسید'; }
+        showToast('📷 عکس انتخاب شد — برای ارسال دکمه تأیید را بزن');
+        return false;
+    };
+
     window.paySubmitReceipt = async function (token) {
-        const inp = document.getElementById('payReceiptFile');
-        if (!inp || !inp.files || !inp.files[0]) return showToast('❌ عکس رسید را انتخاب کن');
+        try {
+            if (event) { event.preventDefault(); event.stopPropagation(); }
+        } catch (e) {}
+        const file = window._payReceiptFile;
+        if (!file) return showToast('❌ اول از دوربین یا گالری عکس را انتخاب کن');
         const btn = document.getElementById('payReceiptBtn');
         if (btn) { btn.disabled = true; btn.textContent = '⏳ در حال ارسال...'; }
         try {
-            const url = await payUploadReceipt(token, inp.files[0]);
-            if (!url) throw new Error('آپلود ناموفق');
-            await payUpdateStatus(token, 'receipt', { receipt_url: url, paid_at: new Date().toISOString() });
+            // جلوگیری از هرگونه رفرش/ناوبری
+            try { history.replaceState(null, '', location.pathname + location.search + location.hash); } catch (e) {}
+            document.documentElement.classList.add('pay-guest-mode');
+
+            const url = await payUploadReceipt(token, file);
+            if (!url) throw new Error('آپلود ناموفق — دوباره امتحان کن');
+
+            // ذخیره محلی کامل (حتی اگر ردیف از قبل نبود)
             const local = payLocalAll();
-            const i = local.findIndex(function (x) { return x.token === token; });
-            if (i >= 0) { local[i].receipt_url = url; local[i].status = 'receipt'; payLocalSave(local); }
-            showToast('✅ رسید ثبت شد — مدیر غرفه تأیید می‌کند و همین‌جا اطلاع داده می‌شود');
-            openPayPublic(token);
+            let i = local.findIndex(function (x) { return x.token === token; });
+            const paidAt = new Date().toISOString();
+            if (i >= 0) {
+                local[i].receipt_url = url;
+                local[i].status = 'receipt';
+                local[i].paid_at = paidAt;
+            } else {
+                local.unshift({ token: token, status: 'receipt', receipt_url: url, paid_at: paidAt });
+            }
+            payLocalSave(local);
+
+            await payUpdateStatus(token, 'receipt', { receipt_url: url, paid_at: paidAt });
+            // اگر ردیف روی سرور نبود، upsert
+            try {
+                if (typeof _supabase !== 'undefined' && _supabase) {
+                    const remote = await payFetchRemote(token);
+                    if (!remote) {
+                        await payUpsertRemote(Object.assign({}, local[i >= 0 ? i : 0], { status: 'receipt', receipt_url: url, paid_at: paidAt }));
+                    }
+                }
+            } catch (e) {}
+
+            window._payReceiptFile = null;
+            showToast('✅ رسید ثبت شد — منتظر تأیید مدیر غرفه بمانید');
+            // بدون رفرش صفحه: فقط محتوای همین باکس را عوض کن
+            await openPayPublic(token);
         } catch (e) {
             showToast('❌ ' + (e.message || 'خطا در ارسال رسید'));
-        } finally {
-            if (btn) { btn.disabled = false; btn.textContent = 'ارسال رسید پرداخت'; }
+            if (btn) { btn.disabled = false; btn.textContent = '✅ تأیید و ارسال رسید'; }
         }
+        return false;
     };
 
     async function openPayPublic(token) {
@@ -23041,9 +23162,16 @@ notify pgrst, 'reload schema';`;
             '<div class="pay-timer" id="payTimerEl">مهلت پرداخت: <b>' + leftMin + ':' + String(leftSec).padStart(2, '0') + '</b></div>' +
             (row.phone ? '<p style="text-align:center;font-size:13px;margin:8px 0;">📞 پشتیبانی: <b dir="ltr">' + payEsc(row.phone) + '</b></p>' : '') +
             '<div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(148,163,184,.25);">' +
-            '<label>بعد از پرداخت، عکس رسید را ارسال کنید:</label>' +
-            '<input type="file" id="payReceiptFile" accept="image/*" capture="environment">' +
-            '<button type="button" class="submit-btn" id="payReceiptBtn" style="background:linear-gradient(100deg,#10b981,#059669);" onclick="paySubmitReceipt(\'' + payEsc(token) + '\')">ارسال رسید پرداخت</button>' +
+            '<label>بعد از پرداخت، عکس رسید را بفرستید:</label>' +
+            '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;">' +
+            '<button type="button" class="row-btn fill-btn" style="flex:1;" onclick="document.getElementById(\'payReceiptCam\').click()">📷 دوربین</button>' +
+            '<button type="button" class="row-btn edit-btn" style="flex:1;" onclick="document.getElementById(\'payReceiptGal\').click()">🖼️ گالری</button>' +
+            '</div>' +
+            '<input type="file" id="payReceiptCam" accept="image/*" capture="environment" style="display:none;" onchange="payOnReceiptPicked(\'' + payEsc(token) + '\', this)">' +
+            '<input type="file" id="payReceiptGal" accept="image/*" style="display:none;" onchange="payOnReceiptPicked(\'' + payEsc(token) + '\', this)">' +
+            '<div id="payReceiptPreview" style="display:none;margin:8px 0;text-align:center;"></div>' +
+            '<button type="button" class="submit-btn" id="payReceiptBtn" style="display:none;background:linear-gradient(100deg,#10b981,#059669);" onclick="paySubmitReceipt(\'' + payEsc(token) + '\')">✅ تأیید و ارسال رسید</button>' +
+            '<p class="hint" style="text-align:center;margin-top:6px;">عکس را انتخاب کن؛ بعد از تأیید، صفحه رفرش نمی‌شود و منتظر تأیید مدیر می‌مانی.</p>' +
             '</div></div>';
 
         if (payTimerIv) clearInterval(payTimerIv);
@@ -23067,12 +23195,26 @@ notify pgrst, 'reload schema';`;
             const u = new URL(location.href);
             const token = u.searchParams.get('pay') || (location.hash.match(/pay[/=]([\w-]+)/) || [])[1];
             if (token) {
-                setTimeout(function () { openPayPublic(token); }, 300);
+                document.documentElement.classList.add('pay-guest-mode');
+                // فوری، بدون تأخیر زیاد تا صفحه ورود دیده نشود
+                openPayPublic(token);
+                setTimeout(function () { openPayPublic(token); }, 200);
             }
         } catch (e) {}
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', payBoot);
     else payBoot();
+    // بعد از برگشت از دوربین (بعضی گوشی‌ها صفحه را بازیابی می‌کنند)
+    window.addEventListener('pageshow', function (ev) {
+        try {
+            const u = new URL(location.href);
+            const token = u.searchParams.get('pay') || (location.hash.match(/pay[/=]([\w-]+)/) || [])[1];
+            if (token) {
+                document.documentElement.classList.add('pay-guest-mode');
+                openPayPublic(token);
+            }
+        } catch (e) {}
+    });
 
     // فقط بعد از ورود — روی صفحه لاگین هرگز نشان نده
     function payEnsureTabVisible() {
