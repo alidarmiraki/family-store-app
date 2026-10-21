@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v166 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v167 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2069,7 +2069,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <button class="tab-btn" id="btnSausagePriceCompare" onclick="switchTab('sausagePriceCompare'); loadSausagePriceCompare();"><span class="tab-ico">🏷️</span><span class="tab-label">راهنمای لیبل سوسیس‌ها</span></button>
         <button class="tab-btn" id="btnProductGuide" onclick="switchTab('productGuide'); loadProductGuideTab();"><span class="tab-ico">🧠</span><span class="tab-label">معرفی محصولات</span></button>
         <button class="tab-btn" id="btnAiChat" onclick="switchTab('aiChat'); loadAiChatTab();"><span class="tab-ico">💬</span><span class="tab-label">چت با AI</span></button>
-        <button class="tab-btn" id="btnPayLink" onclick="switchTab('payLink'); loadPayLinkTab();" style="display:inline-flex;"><span class="tab-ico">💳</span><span class="tab-label">لینک پرداخت</span></button>
+        <button class="tab-btn" id="btnPayLink" onclick="switchTab('payLink'); loadPayLinkTab();" style="display:none;"><span class="tab-ico">💳</span><span class="tab-label">لینک پرداخت</span></button>
         <button class="tab-btn" id="btnQuickNote" onclick="switchTab('quickNote');"><span class="tab-ico">📝</span><span class="tab-label">دفترچه فروش سریع</span><span class="qn-badge" id="qnTabBadge"></span></button>
         <button class="tab-btn" id="btnAttendance" onclick="switchTab('attendance'); loadFingerprintStatus();"><span class="tab-ico">⏰</span><span class="tab-label">حضور و غیاب</span></button>
         <button class="tab-btn" id="btnMessage" onclick="switchTab('message');"><span class="tab-ico">📩</span><span class="tab-label">ارسال پیام به مدیر</span></button>
@@ -3304,7 +3304,8 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             <label>نام مشتری:</label>
             <input type="text" id="payNewCustomer" dir="auto" placeholder="نام مشتری">
             <label>مبلغ (تومان):</label>
-            <input type="text" id="payNewAmount" inputmode="numeric" placeholder="مثلاً 150000">
+            <input type="text" id="payNewAmount" inputmode="numeric" placeholder="مثلاً 150000" oninput="payAmountPreview()">
+            <div id="payAmountPreview" class="price-display" style="margin-top:6px;">مبلغ: ۰ تومان — برای مشتری: ۰ ریال</div>
             <label>بابت (اختیاری):</label>
             <input type="text" id="payNewNote" dir="auto" placeholder="مثلاً فاکتور سوسیس امروز">
             <div id="paySellerMinsWrap">
@@ -3750,7 +3751,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=166', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=167', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -22617,6 +22618,29 @@ notify pgrst, 'reload schema';`;
     function payIsStaff() {
         return (typeof currentRole !== 'undefined' && (currentRole === 'admin' || currentRole === 'morning_seller' || currentRole === 'evening_seller'));
     }
+    function payIsLoggedIn() {
+        try {
+            const login = document.getElementById('loginScreen');
+            if (login && login.style.display !== 'none' && login.offsetParent !== null) {
+                // اگر صفحه ورود دیده می‌شود، لاگین نیست
+                const badge = document.getElementById('userBadge');
+                if (!badge || !badge.innerHTML || badge.style.display === 'none') return false;
+            }
+            return !!(typeof currentRole !== 'undefined' && currentRole && typeof currentUserLabel !== 'undefined' && currentUserLabel);
+        } catch (e) { return false; }
+    }
+    window.payAmountPreview = function () {
+        const el = document.getElementById('payNewAmount');
+        const prev = document.getElementById('payAmountPreview');
+        if (!prev) return;
+        const n = parseInt(payDigits(el && el.value), 10) || 0;
+        if (!n) {
+            prev.textContent = 'مبلغ: ۰ تومان — برای مشتری: ۰ ریال';
+            return;
+        }
+        const rial = n * 10;
+        prev.innerHTML = 'مبلغ: <b style="color:#38bdf8;">' + n.toLocaleString('fa-IR') + ' تومان</b> — برای مشتری روی لینک: <b style="color:#fbbf24;">' + rial.toLocaleString('fa-IR') + ' ریال</b>';
+    };
 
     // همگام‌سازی تنظیمات کارت از shared_config برای همه گوشی‌ها
     async function payPullCfgFromCloud() {
@@ -22936,19 +22960,22 @@ notify pgrst, 'reload schema';`;
         const leftMin = Math.floor(leftMs / 60000);
         const leftSec = Math.floor((leftMs % 60000) / 1000);
         const cardHtml = payRenderCard(row.card, row.holder);
+        const toman = Number(row.amount) || 0;
+        const rial = toman * 10;
         inner.innerHTML =
             '<div class="report-card" style="padding:16px;">' +
             '<div style="text-align:center;font-weight:900;font-size:15px;margin-bottom:4px;">غرفه فامیلی</div>' +
             '<div class="hint" style="text-align:center;margin:0 0 12px;">پرداخت کارت‌به‌کارت</div>' +
             (row.customer_name ? '<p style="text-align:center;margin:0 0 8px;">مشتری: <b>' + payEsc(row.customer_name) + '</b></p>' : '') +
             (row.note ? '<p class="hint" style="text-align:center;">بابت: ' + payEsc(row.note) + '</p>' : '') +
-            '<div style="text-align:center;opacity:.8;font-size:12px;">مبلغ قابل پرداخت</div>' +
-            '<div class="pay-amt-big">' + Number(row.amount).toLocaleString('fa-IR') + ' <span style="font-size:16px;">تومان</span></div>' +
+            '<div style="text-align:center;opacity:.8;font-size:12px;">مبلغ قابل پرداخت (ریال)</div>' +
+            '<div class="pay-amt-big">' + rial.toLocaleString('fa-IR') + ' <span style="font-size:16px;">ریال</span></div>' +
+            '<div style="text-align:center;font-size:13px;opacity:.85;margin-bottom:8px;">معادل ' + toman.toLocaleString('fa-IR') + ' تومان</div>' +
             '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:12px;">' +
-            '<button type="button" class="row-btn fill-btn" onclick="payCopyAmount(' + Number(row.amount) + ')">کپی مبلغ (تومان)</button>' +
-            '<button type="button" class="row-btn fill-btn" onclick="payCopyAmount(' + (Number(row.amount) * 10) + ')">کپی مبلغ (ریال)</button>' +
+            '<button type="button" class="row-btn fill-btn" onclick="payCopyAmount(' + rial + ')">📋 کپی مبلغ (ریال)</button>' +
+            '<button type="button" class="row-btn edit-btn" onclick="payCopyAmount(' + toman + ')">کپی تومان</button>' +
             '</div>' +
-            '<div class="pay-warn">⚠️ مبلغ را <b>دقیقاً</b> به همین صورت بفرستید.</div>' +
+            '<div class="pay-warn">⚠️ مبلغ را <b>دقیقاً به ریال</b> بفرستید (حتی یک ریال کم/زیاد شناسایی سخت می‌شود).</div>' +
             cardHtml +
             '<button type="button" class="submit-btn" style="margin-top:12px;" onclick="payCopyCard(\'' + payEsc(row.card) + '\')">📋 کپی شماره کارت</button>' +
             '<div class="pay-timer" id="payTimerEl">مهلت پرداخت: <b>' + leftMin + ':' + String(leftSec).padStart(2, '0') + '</b></div>' +
@@ -22987,25 +23014,25 @@ notify pgrst, 'reload schema';`;
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', payBoot);
     else payBoot();
 
-    // نمایش دکمه تب برای مدیر + فروشنده‌ها (حتی اگر setupView مخفی کند)
+    // فقط بعد از ورود — روی صفحه لاگین هرگز نشان نده
     function payEnsureTabVisible() {
         const btn = document.getElementById('btnPayLink');
         if (!btn) return;
-        if (payIsStaff()) {
+        const logged = payIsLoggedIn() && payIsStaff();
+        if (logged) {
             btn.style.display = 'inline-flex';
             btn.style.visibility = 'visible';
             btn.hidden = false;
-            try {
-                const tabs = document.getElementById('tabContainer');
-                if (tabs && btn.parentElement !== tabs) tabs.appendChild(btn);
-            } catch (e) {}
-        } else if (typeof currentRole !== 'undefined' && currentRole) {
+        } else {
             btn.style.display = 'none';
+            btn.hidden = true;
         }
     }
-    setInterval(payEnsureTabVisible, 600);
+    setInterval(payEnsureTabVisible, 500);
     document.addEventListener('click', function () { setTimeout(payEnsureTabVisible, 80); }, true);
     window.addEventListener('focus', payEnsureTabVisible);
+    // اول مخفی
+    try { const b = document.getElementById('btnPayLink'); if (b) { b.style.display = 'none'; b.hidden = true; } } catch (e) {}
 })();
 
 /* v97 — نصب واقعی PWA (WebAPK) روی اندروید + عیب‌یابی دقیق اگر مرورگر فقط «میانبر» می‌سازد */
