@@ -17,7 +17,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v164 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v166 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2069,6 +2069,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <button class="tab-btn" id="btnSausagePriceCompare" onclick="switchTab('sausagePriceCompare'); loadSausagePriceCompare();"><span class="tab-ico">🏷️</span><span class="tab-label">راهنمای لیبل سوسیس‌ها</span></button>
         <button class="tab-btn" id="btnProductGuide" onclick="switchTab('productGuide'); loadProductGuideTab();"><span class="tab-ico">🧠</span><span class="tab-label">معرفی محصولات</span></button>
         <button class="tab-btn" id="btnAiChat" onclick="switchTab('aiChat'); loadAiChatTab();"><span class="tab-ico">💬</span><span class="tab-label">چت با AI</span></button>
+        <button class="tab-btn" id="btnPayLink" onclick="switchTab('payLink'); loadPayLinkTab();" style="display:inline-flex;"><span class="tab-ico">💳</span><span class="tab-label">لینک پرداخت</span></button>
         <button class="tab-btn" id="btnQuickNote" onclick="switchTab('quickNote');"><span class="tab-ico">📝</span><span class="tab-label">دفترچه فروش سریع</span><span class="qn-badge" id="qnTabBadge"></span></button>
         <button class="tab-btn" id="btnAttendance" onclick="switchTab('attendance'); loadFingerprintStatus();"><span class="tab-ico">⏰</span><span class="tab-label">حضور و غیاب</span></button>
         <button class="tab-btn" id="btnMessage" onclick="switchTab('message');"><span class="tab-ico">📩</span><span class="tab-label">ارسال پیام به مدیر</span></button>
@@ -2097,7 +2098,6 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <button class="tab-btn" id="btnWeeklyReports" onclick="switchTab('weeklyReports'); loadWeeklyReportsList();"><span class="tab-ico">📅</span><span class="tab-label">گزارش‌های هفتگی</span></button>
         <button class="tab-btn" id="btnPersonnel" onclick="switchTab('personnel'); loadPersonnelTab();"><span class="tab-ico">🪪</span><span class="tab-label">اطلاعات پرسنل</span></button>
         <button class="tab-btn" id="btnPersonalTakeout" onclick="switchTab('personalTakeout'); loadMyTakeouts();"><span class="tab-ico">🛒</span><span class="tab-label">برداشت شخصی</span></button>
-        <button class="tab-btn" id="btnPayLink" onclick="switchTab('payLink'); loadPayLinkTab();"><span class="tab-ico">💳</span><span class="tab-label">لینک پرداخت</span></button>
         <button class="tab-btn" id="btnMyAccount" onclick="switchTab('myAccount'); prefillMyAccountTab();"><span class="tab-ico">⚙️</span><span class="tab-label">حساب کاربری من</span></button>
     </div>
 
@@ -3279,19 +3279,24 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
     <!-- تب لینک پرداخت مشتری -->
     <div id="payLinkTab" class="card">
         <h2>💳 لینک پرداخت مشتری</h2>
-        <div class="hint">برای هر مشتری لینک اختصاصی بساز. مشتری مبلغ و کارت را می‌بیند، پرداخت می‌کند و عکس رسید می‌فرستد. بعد از تأیید تو، لینک منقضی می‌شود.</div>
+        <div class="hint" id="payLinkHint">برای هر مشتری لینک اختصاصی بساز. مشتری مبلغ و کارت را می‌بیند، پرداخت می‌کند و عکس رسید می‌فرستد.</div>
 
-        <div class="report-card" style="margin-top:10px;border-color:rgba(56,189,248,.35);">
-            <h3>⚙️ تنظیمات کارت و تماس</h3>
+        <div id="payAdminSettingsBox" class="report-card" style="margin-top:10px;border-color:rgba(56,189,248,.35);">
+            <h3>⚙️ تنظیمات کارت و تماس (فقط مدیر)</h3>
             <label>شماره کارت (۱۶ رقم):</label>
             <input type="text" id="payCfgCard" inputmode="numeric" maxlength="19" placeholder="6037-9975-...." dir="ltr" style="text-align:left;letter-spacing:1px;">
             <label>نام صاحب کارت:</label>
             <input type="text" id="payCfgHolder" dir="auto" placeholder="مثلاً تارا خالدیان">
-            <label>شماره تماس شما (برای پیام مشتری):</label>
+            <label>شماره تماس پشتیبانی:</label>
             <input type="text" id="payCfgPhone" dir="ltr" inputmode="tel" placeholder="09xxxxxxxxx" style="text-align:left;">
             <label>مهلت پیش‌فرض (دقیقه):</label>
             <input type="number" id="payCfgMins" min="15" max="1440" value="180" style="direction:ltr;text-align:left;">
             <button type="button" class="submit-btn" style="margin-top:8px;" onclick="savePayLinkSettings()">💾 ذخیره تنظیمات</button>
+        </div>
+
+        <div id="paySellerInfoBox" class="report-card" style="margin-top:10px;display:none;border-color:rgba(16,185,129,.35);">
+            <h3>💳 کارت فروشگاه</h3>
+            <div id="paySellerCardPreview" class="hint">کارت توسط مدیر تنظیم می‌شود.</div>
         </div>
 
         <div class="report-card" style="margin-top:12px;">
@@ -3302,14 +3307,16 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             <input type="text" id="payNewAmount" inputmode="numeric" placeholder="مثلاً 150000">
             <label>بابت (اختیاری):</label>
             <input type="text" id="payNewNote" dir="auto" placeholder="مثلاً فاکتور سوسیس امروز">
-            <label>مهلت این لینک (دقیقه) — خالی = پیش‌فرض:</label>
-            <input type="number" id="payNewMins" min="10" max="2880" placeholder="مثلاً 120" style="direction:ltr;text-align:left;">
+            <div id="paySellerMinsWrap">
+                <label>مهلت این لینک (دقیقه) — خالی = پیش‌فرض:</label>
+                <input type="number" id="payNewMins" min="10" max="2880" placeholder="مثلاً 120" style="direction:ltr;text-align:left;">
+            </div>
             <button type="button" class="submit-btn" style="background:linear-gradient(100deg,#0ea5e9,#6366f1);" onclick="createPayLink()">🔗 ساخت لینک پرداخت</button>
             <div id="payNewResult" style="margin-top:10px;"></div>
         </div>
 
         <div class="report-card" style="margin-top:12px;">
-            <h3>📋 لینک‌های من</h3>
+            <h3 id="payListTitle">📋 لینک‌ها</h3>
             <div id="payLinkList"><p class="hint">در حال بارگذاری...</p></div>
         </div>
     </div>
@@ -3743,7 +3750,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=164', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=166', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -22604,18 +22611,77 @@ notify pgrst, 'reload schema';`;
         } catch (e) { return local; }
     }
 
-    window.savePayLinkSettings = function () {
+    function payIsAdmin() {
+        return (typeof currentRole !== 'undefined' && currentRole === 'admin');
+    }
+    function payIsStaff() {
+        return (typeof currentRole !== 'undefined' && (currentRole === 'admin' || currentRole === 'morning_seller' || currentRole === 'evening_seller'));
+    }
+
+    // همگام‌سازی تنظیمات کارت از shared_config برای همه گوشی‌ها
+    async function payPullCfgFromCloud() {
+        try {
+            if (typeof _supabase === 'undefined' || !_supabase) return;
+            const { data } = await _supabase.from('shared_config').select('data').eq('id', 1).maybeSingle();
+            if (data && data.data && data.data.payLink) {
+                const c = data.data.payLink;
+                if (c.card) paySaveCfg(c);
+            }
+        } catch (e) {}
+    }
+    async function payPushCfgToCloud(cfg) {
+        try {
+            if (typeof _supabase === 'undefined' || !_supabase) return;
+            const { data } = await _supabase.from('shared_config').select('data').eq('id', 1).maybeSingle();
+            const base = (data && data.data) ? data.data : {};
+            base.payLink = cfg;
+            await _supabase.from('shared_config').upsert([{ id: 1, data: base, updated_at: new Date().toISOString() }], { onConflict: 'id' });
+        } catch (e) {}
+    }
+
+    window.savePayLinkSettings = async function () {
+        if (!payIsAdmin()) return showToast('❌ فقط مدیر می‌تواند تنظیمات کارت را تغییر دهد');
         const card = payDigits(document.getElementById('payCfgCard').value);
         const holder = (document.getElementById('payCfgHolder').value || '').trim();
         const phone = (document.getElementById('payCfgPhone').value || '').trim();
         const mins = parseInt(document.getElementById('payCfgMins').value, 10) || 180;
         if (card.length !== 16) return showToast('❌ شماره کارت باید ۱۶ رقم باشد');
-        paySaveCfg({ card: card, holder: holder, phone: phone, mins: mins });
-        showToast('✅ تنظیمات پرداخت ذخیره شد');
+        const cfg = { card: card, holder: holder, phone: phone, mins: mins };
+        paySaveCfg(cfg);
+        await payPushCfgToCloud(cfg);
+        showToast('✅ تنظیمات پرداخت ذخیره و برای همه همگام شد');
     };
 
     window.loadPayLinkTab = async function () {
+        await payPullCfgFromCloud();
         const cfg = payLoadCfg();
+        const isAdmin = payIsAdmin();
+
+        const adminBox = document.getElementById('payAdminSettingsBox');
+        const sellerBox = document.getElementById('paySellerInfoBox');
+        const sellerPrev = document.getElementById('paySellerCardPreview');
+        const hint = document.getElementById('payLinkHint');
+        const listTitle = document.getElementById('payListTitle');
+        const minsWrap = document.getElementById('paySellerMinsWrap');
+
+        if (adminBox) adminBox.style.display = isAdmin ? '' : 'none';
+        if (sellerBox) sellerBox.style.display = isAdmin ? 'none' : '';
+        if (minsWrap) minsWrap.style.display = isAdmin ? '' : 'none';
+        if (listTitle) listTitle.textContent = isAdmin ? '📋 همه لینک‌ها (تأیید رسید)' : '📋 لینک‌های ساخته‌شده توسط من';
+        if (hint) {
+            hint.textContent = isAdmin
+                ? 'مدیر: تنظیم کارت، ساخت لینک، دیدن همه رسیدها و تأیید/رد. بعد از تأیید، لینک منقضی می‌شود.'
+                : 'فروشنده: فقط ساخت لینک برای مشتری و کپی پیام. تأیید رسید فقط با مدیر است. کارت توسط مدیر تنظیم شده.';
+        }
+        if (sellerPrev) {
+            if (cfg.card) {
+                sellerPrev.innerHTML = payRenderCard(cfg.card, cfg.holder) +
+                    (cfg.phone ? '<p style="margin-top:8px;font-size:12px;">📞 ' + payEsc(cfg.phone) + '</p>' : '');
+            } else {
+                sellerPrev.innerHTML = '<p class="hint">هنوز مدیر کارت را تنظیم نکرده. از مدیر بخواه تنظیمات لینک پرداخت را پر کند.</p>';
+            }
+        }
+
         const c = document.getElementById('payCfgCard');
         const h = document.getElementById('payCfgHolder');
         const p = document.getElementById('payCfgPhone');
@@ -22706,13 +22772,17 @@ notify pgrst, 'reload schema';`;
                 expired: '⌛ منقضی'
             })[st] || st;
             const url = payLinkUrl(r.token);
-            const canApprove = st === 'receipt';
+            const isAdmin = payIsAdmin();
+            const canApprove = isAdmin && st === 'receipt';
+            const byMe = !isAdmin ? (' · توسط: ' + payEsc(r.created_by || '')) : (r.created_by ? ' · سازنده: ' + payEsc(r.created_by) : '');
             return '<div class="summary-mini" style="flex-direction:column;align-items:stretch;gap:6px;margin-bottom:10px;">' +
                 '<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;">' +
                 '<span><b>' + payEsc(r.customer_name) + '</b> — ' + Number(r.amount).toLocaleString('fa-IR') + ' تومان<br>' +
-                '<span style="font-size:11px;opacity:.8;">' + payEsc(stLabel) + (r.note ? ' · ' + payEsc(r.note) : '') + '</span></span>' +
+                '<span style="font-size:11px;opacity:.8;">' + payEsc(stLabel) + byMe + (r.note ? ' · ' + payEsc(r.note) : '') + '</span></span>' +
                 '</div>' +
-                (r.receipt_url ? '<a href="' + payEsc(r.receipt_url) + '" target="_blank" style="color:#38bdf8;font-size:12px;">👁️ مشاهده رسید</a>' : '') +
+                (r.receipt_url ? (isAdmin
+                    ? '<a href="' + payEsc(r.receipt_url) + '" target="_blank" style="color:#38bdf8;font-size:12px;">👁️ مشاهده رسید</a>'
+                    : '<span style="font-size:12px;color:#34d399;">📷 رسید ارسال شده — منتظر تأیید مدیر</span>') : '') +
                 '<div style="display:flex;gap:6px;flex-wrap:wrap;">' +
                 '<button type="button" class="row-btn fill-btn" style="flex:1;font-size:11px;" onclick="navigator.clipboard.writeText(' + JSON.stringify(url) + ').then(function(){showToast(\'📋 لینک کپی شد\')})">کپی لینک</button>' +
                 '<button type="button" class="row-btn edit-btn" style="flex:1;font-size:11px;" onclick="navigator.clipboard.writeText(' + JSON.stringify(payMsgTemplate(url, r.amount, r.customer_name, r.phone || payLoadCfg().phone)) + ').then(function(){showToast(\'📋 پیام کپی شد\')})">کپی پیام</button>' +
@@ -22739,12 +22809,14 @@ notify pgrst, 'reload schema';`;
     }
 
     window.approvePayLink = async function (token) {
+        if (!payIsAdmin()) return showToast('❌ فقط مدیر می‌تواند تأیید کند');
         if (!confirm('پرداخت را تأیید می‌کنی؟ لینک بعد از این منقضی می‌شود.')) return;
         await payUpdateStatus(token, 'approved', { approved_at: new Date().toISOString(), expires_at: new Date().toISOString() });
         showToast('✅ پرداخت تأیید شد — لینک منقضی شد');
         renderPayLinkList();
     };
     window.rejectPayLink = async function (token) {
+        if (!payIsAdmin()) return showToast('❌ فقط مدیر می‌تواند رد کند');
         if (!confirm('رسید رد شود؟')) return;
         await payUpdateStatus(token, 'rejected', {});
         showToast('رد شد');
@@ -22915,14 +22987,25 @@ notify pgrst, 'reload schema';`;
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', payBoot);
     else payBoot();
 
-    // نمایش دکمه تب برای همه نقش‌های لاگین‌شده
-    const _payObs = setInterval(function () {
+    // نمایش دکمه تب برای مدیر + فروشنده‌ها (حتی اگر setupView مخفی کند)
+    function payEnsureTabVisible() {
         const btn = document.getElementById('btnPayLink');
         if (!btn) return;
-        if (typeof currentRole !== 'undefined' && currentRole) {
-            btn.style.display = '';
+        if (payIsStaff()) {
+            btn.style.display = 'inline-flex';
+            btn.style.visibility = 'visible';
+            btn.hidden = false;
+            try {
+                const tabs = document.getElementById('tabContainer');
+                if (tabs && btn.parentElement !== tabs) tabs.appendChild(btn);
+            } catch (e) {}
+        } else if (typeof currentRole !== 'undefined' && currentRole) {
+            btn.style.display = 'none';
         }
-    }, 1500);
+    }
+    setInterval(payEnsureTabVisible, 600);
+    document.addEventListener('click', function () { setTimeout(payEnsureTabVisible, 80); }, true);
+    window.addEventListener('focus', payEnsureTabVisible);
 })();
 
 /* v97 — نصب واقعی PWA (WebAPK) روی اندروید + عیب‌یابی دقیق اگر مرورگر فقط «میانبر» می‌سازد */
