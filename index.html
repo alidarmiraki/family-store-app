@@ -31,7 +31,7 @@
         html.pay-guest-mode body { background: #0b1220 !important; margin: 0; }
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v169 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v170 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -3766,7 +3766,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=169', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=170', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -22979,17 +22979,62 @@ notify pgrst, 'reload schema';`;
     window.payCopyCard = function (n) { payCopy(payDigits(n), 'شماره کارت کپی شد'); };
     window.payCopyAmount = function (a) { payCopy(String(a), 'مبلغ کپی شد'); };
 
-    async function payUploadReceipt(token, file) {
-        if (!file) return null;
-        let dataUrl = null;
+    function payGuestMsg(text, ok) {
         try {
-            dataUrl = await new Promise(function (res, rej) {
+            let el = document.getElementById('payGuestMsg');
+            if (!el) {
+                el = document.createElement('div');
+                el.id = 'payGuestMsg';
+                el.style.cssText = 'position:fixed;left:12px;right:12px;bottom:18px;z-index:99999;padding:12px 14px;border-radius:14px;font-size:13px;line-height:1.7;text-align:center;direction:rtl;box-shadow:0 8px 28px rgba(0,0,0,.45);';
+                document.body.appendChild(el);
+            }
+            el.style.background = ok ? 'linear-gradient(135deg,#065f46,#0f766e)' : 'linear-gradient(135deg,#7f1d1d,#9a3412)';
+            el.style.color = '#fff';
+            el.textContent = text;
+            el.style.display = 'block';
+            clearTimeout(window._payGuestMsgT);
+            window._payGuestMsgT = setTimeout(function () { try { el.style.display = 'none'; } catch (e) {} }, 4500);
+        } catch (e) {}
+        try { if (typeof showToast === 'function') showToast(text); } catch (e2) {}
+    }
+
+    function payCompressImage(file, maxW, quality) {
+        maxW = maxW || 1000;
+        quality = quality || 0.72;
+        return new Promise(function (resolve) {
+            try {
                 const fr = new FileReader();
-                fr.onload = function () { res(fr.result); };
-                fr.onerror = rej;
+                fr.onerror = function () { resolve(null); };
+                fr.onload = function () {
+                    const img = new Image();
+                    img.onerror = function () { resolve(fr.result); };
+                    img.onload = function () {
+                        try {
+                            let w = img.width, h = img.height;
+                            if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+                            const c = document.createElement('canvas');
+                            c.width = w; c.height = h;
+                            c.getContext('2d').drawImage(img, 0, 0, w, h);
+                            resolve(c.toDataURL('image/jpeg', quality));
+                        } catch (e) { resolve(fr.result); }
+                    };
+                    img.src = fr.result;
+                };
                 fr.readAsDataURL(file);
-            });
-        } catch (e) { return null; }
+            } catch (e) { resolve(null); }
+        });
+    }
+
+    async function payUploadReceipt(token, fileOrDataUrl) {
+        let dataUrl = null;
+        if (typeof fileOrDataUrl === 'string' && fileOrDataUrl.indexOf('data:') === 0) {
+            dataUrl = fileOrDataUrl;
+        } else if (fileOrDataUrl) {
+            dataUrl = await payCompressImage(fileOrDataUrl, 1000, 0.7);
+        }
+        if (!dataUrl) return null;
+
+        // سعی آپلود به Supabase؛ اگر نشد همان dataUrl را نگه می‌داریم
         if (typeof _supabase !== 'undefined' && _supabase) {
             try {
                 const path = token + '_' + Date.now() + '.jpg';
@@ -23005,76 +23050,129 @@ notify pgrst, 'reload schema';`;
     }
 
     window._payReceiptFile = null;
+    window._payReceiptDataUrl = null;
+
     window.payOnReceiptPicked = function (token, input) {
-        try {
-            if (event) { event.preventDefault(); event.stopPropagation(); }
-        } catch (e) {}
+        try { if (typeof event !== 'undefined' && event) { event.preventDefault(); event.stopPropagation(); } } catch (e) {}
         const file = input && input.files && input.files[0];
-        if (!file) return;
+        if (!file) {
+            payGuestMsg('❌ فایل انتخاب نشد', false);
+            return false;
+        }
         window._payReceiptFile = file;
         const prev = document.getElementById('payReceiptPreview');
         const btn = document.getElementById('payReceiptBtn');
-        if (prev) {
-            const url = URL.createObjectURL(file);
-            prev.style.display = 'block';
-            prev.innerHTML = '<img src="' + url + '" alt="پیش‌نمایش رسید" style="max-width:100%;max-height:220px;border-radius:12px;border:1px solid rgba(148,163,184,.35);">' +
-                '<div style="font-size:12px;margin-top:6px;opacity:.85;">اگر درست است، «تأیید و ارسال» را بزن</div>';
-        }
-        if (btn) { btn.style.display = 'block'; btn.disabled = false; btn.textContent = '✅ تأیید و ارسال رسید'; }
-        showToast('📷 عکس انتخاب شد — برای ارسال دکمه تأیید را بزن');
+        const status = document.getElementById('payReceiptStatus');
+
+        // فشرده‌سازی فوری و ذخیره در session تا بعد از برگشت از دوربین از دست نرود
+        payCompressImage(file, 1000, 0.7).then(function (dataUrl) {
+            if (dataUrl) {
+                window._payReceiptDataUrl = dataUrl;
+                try { sessionStorage.setItem('payReceipt_' + token, dataUrl); } catch (e) {}
+            }
+            if (prev) {
+                prev.style.display = 'block';
+                prev.innerHTML = '<img src="' + (dataUrl || URL.createObjectURL(file)) + '" alt="پیش‌نمایش رسید" style="max-width:100%;max-height:220px;border-radius:12px;border:1px solid rgba(148,163,184,.35);">' +
+                    '<div style="font-size:12px;margin-top:6px;opacity:.85;">اگر درست است، دکمه سبز را بزن</div>';
+            }
+            if (btn) {
+                btn.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = '✅ تأیید و ارسال رسید';
+                btn.setAttribute('data-pay-token', token);
+            }
+            if (status) status.textContent = 'عکس آماده است — روی تأیید و ارسال بزن';
+            payGuestMsg('📷 عکس آماده است — تأیید و ارسال را بزن', true);
+        });
         return false;
     };
 
     window.paySubmitReceipt = async function (token) {
-        try {
-            if (event) { event.preventDefault(); event.stopPropagation(); }
-        } catch (e) {}
+        try { if (typeof event !== 'undefined' && event) { event.preventDefault(); event.stopPropagation(); } } catch (e) {}
+        if (!token) {
+            try { token = (document.getElementById('payReceiptBtn') || {}).getAttribute('data-pay-token'); } catch (e) {}
+        }
+        if (!token) {
+            payGuestMsg('❌ توکن پرداخت پیدا نشد — لینک را دوباره باز کن', false);
+            return false;
+        }
+
+        let dataUrl = window._payReceiptDataUrl;
+        try { if (!dataUrl) dataUrl = sessionStorage.getItem('payReceipt_' + token); } catch (e) {}
         const file = window._payReceiptFile;
-        if (!file) return showToast('❌ اول از دوربین یا گالری عکس را انتخاب کن');
+
+        if (!dataUrl && !file) {
+            payGuestMsg('❌ اول از دوربین یا گالری عکس را انتخاب کن', false);
+            return false;
+        }
+
         const btn = document.getElementById('payReceiptBtn');
+        const status = document.getElementById('payReceiptStatus');
         if (btn) { btn.disabled = true; btn.textContent = '⏳ در حال ارسال...'; }
+        if (status) status.textContent = 'در حال ارسال رسید...';
+
         try {
-            // جلوگیری از هرگونه رفرش/ناوبری
             try { history.replaceState(null, '', location.pathname + location.search + location.hash); } catch (e) {}
             document.documentElement.classList.add('pay-guest-mode');
 
-            const url = await payUploadReceipt(token, file);
-            if (!url) throw new Error('آپلود ناموفق — دوباره امتحان کن');
+            const url = await payUploadReceipt(token, dataUrl || file);
+            if (!url) throw new Error('آپلود ناموفق — اینترنت را چک کن و دوباره بزن');
 
-            // ذخیره محلی کامل (حتی اگر ردیف از قبل نبود)
+            const paidAt = new Date().toISOString();
             const local = payLocalAll();
             let i = local.findIndex(function (x) { return x.token === token; });
-            const paidAt = new Date().toISOString();
-            if (i >= 0) {
-                local[i].receipt_url = url;
-                local[i].status = 'receipt';
-                local[i].paid_at = paidAt;
-            } else {
-                local.unshift({ token: token, status: 'receipt', receipt_url: url, paid_at: paidAt });
+            // اگر ردیف محلی نبود، از سرور یا حداقل با token بساز
+            let base = i >= 0 ? local[i] : null;
+            if (!base) {
+                try { base = await payFetchRemote(token); } catch (e) {}
             }
-            payLocalSave(local);
+            if (!base) base = { token: token, amount: 0, customer_name: 'مشتری', status: 'open' };
+            base = Object.assign({}, base, { status: 'receipt', receipt_url: url, paid_at: paidAt });
 
-            await payUpdateStatus(token, 'receipt', { receipt_url: url, paid_at: paidAt });
-            // اگر ردیف روی سرور نبود، upsert
-            try {
-                if (typeof _supabase !== 'undefined' && _supabase) {
-                    const remote = await payFetchRemote(token);
-                    if (!remote) {
-                        await payUpsertRemote(Object.assign({}, local[i >= 0 ? i : 0], { status: 'receipt', receipt_url: url, paid_at: paidAt }));
-                    }
-                }
-            } catch (e) {}
+            if (i >= 0) local[i] = base;
+            else local.unshift(base);
+            try { payLocalSave(local); } catch (e) {
+                // اگر dataUrl خیلی بزرگ بود، بدون تصویر در لیست ذخیره کن
+                try {
+                    const slim = Object.assign({}, base, { receipt_url: (url.indexOf('data:') === 0 ? '(local)' : url) });
+                    if (i >= 0) local[i] = slim; else { local.length = 0; local.push(slim); }
+                    payLocalSave(local);
+                } catch (e2) {}
+            }
+
+            try { await payUpdateStatus(token, 'receipt', { receipt_url: url, paid_at: paidAt }); } catch (e) {}
+            try { await payUpsertRemote(base); } catch (e) {}
 
             window._payReceiptFile = null;
-            showToast('✅ رسید ثبت شد — منتظر تأیید مدیر غرفه بمانید');
-            // بدون رفرش صفحه: فقط محتوای همین باکس را عوض کن
+            window._payReceiptDataUrl = null;
+            try { sessionStorage.removeItem('payReceipt_' + token); } catch (e) {}
+
+            payGuestMsg('✅ رسید ثبت شد — منتظر تأیید مدیر بمانید', true);
+            if (status) status.textContent = 'رسید ثبت شد';
             await openPayPublic(token);
         } catch (e) {
-            showToast('❌ ' + (e.message || 'خطا در ارسال رسید'));
+            const msg = (e && e.message) ? e.message : 'خطا در ارسال رسید';
+            payGuestMsg('❌ ' + msg, false);
+            if (status) status.textContent = msg;
             if (btn) { btn.disabled = false; btn.textContent = '✅ تأیید و ارسال رسید'; }
         }
         return false;
     };
+
+    // کلیک مطمئن روی دکمه ارسال (حتی اگر onclick خراب شود)
+    document.addEventListener('click', function (ev) {
+        const t = ev.target && (ev.target.id === 'payReceiptBtn' ? ev.target : (ev.target.closest && ev.target.closest('#payReceiptBtn')));
+        if (!t) return;
+        ev.preventDefault();
+        ev.stopPropagation();
+        const token = t.getAttribute('data-pay-token') || (function () {
+            try {
+                const u = new URL(location.href);
+                return u.searchParams.get('pay') || ((location.hash.match(/pay[/=]([\w-]+)/) || [])[1]);
+            } catch (e) { return null; }
+        })();
+        if (token) window.paySubmitReceipt(token);
+    }, true);
 
     async function openPayPublic(token) {
         const view = document.getElementById('payPublicView');
@@ -23164,15 +23262,42 @@ notify pgrst, 'reload schema';`;
             '<div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(148,163,184,.25);">' +
             '<label>بعد از پرداخت، عکس رسید را بفرستید:</label>' +
             '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;">' +
-            '<button type="button" class="row-btn fill-btn" style="flex:1;" onclick="document.getElementById(\'payReceiptCam\').click()">📷 دوربین</button>' +
-            '<button type="button" class="row-btn edit-btn" style="flex:1;" onclick="document.getElementById(\'payReceiptGal\').click()">🖼️ گالری</button>' +
+            '<button type="button" class="row-btn fill-btn" style="flex:1;" id="payBtnCam">📷 دوربین</button>' +
+            '<button type="button" class="row-btn edit-btn" style="flex:1;" id="payBtnGal">🖼️ گالری</button>' +
             '</div>' +
-            '<input type="file" id="payReceiptCam" accept="image/*" capture="environment" style="display:none;" onchange="payOnReceiptPicked(\'' + payEsc(token) + '\', this)">' +
-            '<input type="file" id="payReceiptGal" accept="image/*" style="display:none;" onchange="payOnReceiptPicked(\'' + payEsc(token) + '\', this)">' +
+            '<input type="file" id="payReceiptCam" accept="image/*" capture="environment" style="position:fixed;left:-9999px;width:1px;height:1px;opacity:0;">' +
+            '<input type="file" id="payReceiptGal" accept="image/*" style="position:fixed;left:-9999px;width:1px;height:1px;opacity:0;">' +
             '<div id="payReceiptPreview" style="display:none;margin:8px 0;text-align:center;"></div>' +
-            '<button type="button" class="submit-btn" id="payReceiptBtn" style="display:none;background:linear-gradient(100deg,#10b981,#059669);" onclick="paySubmitReceipt(\'' + payEsc(token) + '\')">✅ تأیید و ارسال رسید</button>' +
+            '<div id="payReceiptStatus" style="text-align:center;font-size:12px;min-height:18px;margin:6px 0;color:#94a3b8;"></div>' +
+            '<button type="button" class="submit-btn" id="payReceiptBtn" data-pay-token="' + payEsc(token) + '" style="display:none;background:linear-gradient(100deg,#10b981,#059669);">✅ تأیید و ارسال رسید</button>' +
             '<p class="hint" style="text-align:center;margin-top:6px;">عکس را انتخاب کن؛ بعد از تأیید، صفحه رفرش نمی‌شود و منتظر تأیید مدیر می‌مانی.</p>' +
             '</div></div>';
+
+        // اتصال دکمه‌ها بدون اتکا به onclick رشته‌ای
+        setTimeout(function () {
+            const cam = document.getElementById('payReceiptCam');
+            const gal = document.getElementById('payReceiptGal');
+            const btnCam = document.getElementById('payBtnCam');
+            const btnGal = document.getElementById('payBtnGal');
+            if (btnCam && cam) btnCam.onclick = function (e) { e.preventDefault(); cam.click(); };
+            if (btnGal && gal) btnGal.onclick = function (e) { e.preventDefault(); gal.click(); };
+            if (cam) cam.onchange = function () { window.payOnReceiptPicked(token, cam); };
+            if (gal) gal.onchange = function () { window.payOnReceiptPicked(token, gal); };
+            // اگر از قبل عکسی در session بود (برگشت از دوربین)
+            try {
+                const saved = sessionStorage.getItem('payReceipt_' + token);
+                if (saved) {
+                    window._payReceiptDataUrl = saved;
+                    const prev = document.getElementById('payReceiptPreview');
+                    const btn = document.getElementById('payReceiptBtn');
+                    if (prev) {
+                        prev.style.display = 'block';
+                        prev.innerHTML = '<img src="' + saved + '" style="max-width:100%;max-height:220px;border-radius:12px;">';
+                    }
+                    if (btn) { btn.style.display = 'block'; btn.disabled = false; }
+                }
+            } catch (e) {}
+        }, 50);
 
         if (payTimerIv) clearInterval(payTimerIv);
         payTimerIv = setInterval(function () {
