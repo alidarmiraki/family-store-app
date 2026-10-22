@@ -31,7 +31,7 @@
         html.pay-guest-mode body { background: #0b1220 !important; margin: 0; }
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v170 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v171 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -3332,8 +3332,11 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         </div>
 
         <div class="report-card" style="margin-top:12px;">
-            <h3 id="payListTitle">📋 لینک‌ها</h3>
-            <div id="payLinkList"><p class="hint">در حال بارگذاری...</p></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+                <h3 id="payListTitle" style="margin:0;">📋 لینک‌ها</h3>
+                <button type="button" class="row-btn fill-btn" style="width:auto;padding:8px 14px;font-size:12px;" onclick="refreshPayLinkList()">🔄 بروزرسانی رسیدها</button>
+            </div>
+            <div id="payLinkList" style="margin-top:10px;"><p class="hint">در حال بارگذاری...</p></div>
         </div>
     </div>
 
@@ -3582,7 +3585,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag">v164 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v171 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3766,7 +3769,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=170', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=171', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -22589,11 +22592,13 @@ notify pgrst, 'reload schema';`;
     }
     function payRenderCard(card, holder) {
         const info = payBankInfo(card);
-        return '<div class="bank-card ' + payEsc(info.cls) + '">' +
+        const digits = payDigits(card);
+        return '<div class="bank-card ' + payEsc(info.cls) + '" role="button" onclick="payCopyCard(\'' + payEsc(digits) + '\')" style="cursor:pointer;" title="برای کپی شماره کارت ضربه بزنید">' +
             '<div class="bc-chip"></div>' +
             '<div class="bc-bank">' + payEsc(info.name) + '</div>' +
             '<div class="bc-num">' + payEsc(payFmtCard(card)) + '</div>' +
-            '<div class="bc-row"><div><div class="bc-label">CARD HOLDER</div><div class="bc-holder">' + payEsc(holder || '—') + '</div></div></div>' +
+            '<div class="bc-row"><div><div class="bc-label">CARD HOLDER</div><div class="bc-holder">' + payEsc(holder || '—') + '</div></div>' +
+            '<div style="font-size:10px;opacity:.75;margin-top:4px;">👆 ضربه = کپی شماره</div></div>' +
             '</div>';
     }
 
@@ -22820,6 +22825,14 @@ notify pgrst, 'reload schema';`;
         showToast('✅ لینک پرداخت آماده است');
     };
 
+    window.refreshPayLinkList = async function () {
+        const box = document.getElementById('payLinkList');
+        if (box) box.innerHTML = '<p class="hint">🔄 در حال بروزرسانی از سرور...</p>';
+        try { if (typeof showToast === 'function') showToast('🔄 بروزرسانی رسیدها...'); } catch (e) {}
+        await renderPayLinkList();
+        try { if (typeof showToast === 'function') showToast('✅ لیست رسیدها بروز شد'); } catch (e) {}
+    };
+
     async function renderPayLinkList() {
         const box = document.getElementById('payLinkList');
         if (!box) return;
@@ -22830,7 +22843,16 @@ notify pgrst, 'reload schema';`;
             return;
         }
         const now = Date.now();
-        box.innerHTML = list.map(function (r) {
+        // باز و رسید بالا؛ تأیید/منقضی فشرده پایین
+        const ranked = list.slice().sort(function (a, b) {
+            const rank = function (r) {
+                let st = r.status || 'open';
+                if (st === 'open' && new Date(r.expires_at).getTime() < now) st = 'expired';
+                return ({ receipt: 0, open: 1, rejected: 2, expired: 3, approved: 4 })[st] ?? 5;
+            };
+            return rank(a) - rank(b) || new Date(b.created_at || 0) - new Date(a.created_at || 0);
+        });
+        box.innerHTML = ranked.map(function (r) {
             const exp = new Date(r.expires_at).getTime();
             let st = r.status || 'open';
             if (st === 'open' && exp < now) st = 'expired';
@@ -22849,23 +22871,28 @@ notify pgrst, 'reload schema';`;
             const expTxt = st === 'open'
                 ? (' · باقی‌مانده: ' + Math.floor(expLeft / 60000) + 'د ' + Math.floor((expLeft % 60000) / 1000) + 'ث')
                 : '';
-            return '<div class="summary-mini" style="flex-direction:column;align-items:stretch;gap:6px;margin-bottom:10px;">' +
+            const compact = (st === 'approved' || st === 'expired' || st === 'rejected');
+            const receiptBlock = r.receipt_url ? (
+                isAdmin
+                    ? (compact
+                        ? '<div style="font-size:11px;margin:2px 0;"><a href="' + payEsc(r.receipt_url) + '" target="_blank" style="color:#38bdf8;">👁️ مشاهده رسید</a></div>'
+                        : '<div style="margin:4px 0;"><a href="' + payEsc(r.receipt_url) + '" target="_blank" rel="noopener"><img src="' + payEsc(r.receipt_url) + '" alt="رسید" style="max-width:100%;max-height:140px;border-radius:12px;border:1px solid rgba(148,163,184,.3);"></a><div style="font-size:11px;margin-top:4px;"><a href="' + payEsc(r.receipt_url) + '" target="_blank" style="color:#38bdf8;">👁️ مشاهده تمام‌صفحه</a></div></div>')
+                    : '<span style="font-size:12px;color:#34d399;">📷 رسید ارسال شده — منتظر تأیید مدیر</span>'
+            ) : '';
+            return '<div class="summary-mini" style="flex-direction:column;align-items:stretch;gap:' + (compact ? '4' : '6') + 'px;margin-bottom:' + (compact ? '6' : '10') + 'px;padding:' + (compact ? '8px 10px' : '') + ';opacity:' + (compact ? '.88' : '1') + ';">' +
                 '<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;">' +
-                '<span><b>' + payEsc(r.customer_name) + '</b> — ' + Number(r.amount).toLocaleString('fa-IR') + ' تومان<br>' +
-                '<span style="font-size:11px;opacity:.8;">' + payEsc(stLabel) + byMe + expTxt + (r.note ? ' · ' + payEsc(r.note) : '') + '</span></span>' +
+                '<span style="font-size:' + (compact ? '12' : '13') + 'px;"><b>' + payEsc(r.customer_name) + '</b> — ' + Number(r.amount).toLocaleString('fa-IR') + ' تومان' +
+                (compact ? '' : '<br>') +
+                '<span style="font-size:11px;opacity:.8;">' + (compact ? ' · ' : '') + payEsc(stLabel) + byMe + expTxt + (r.note ? ' · ' + payEsc(r.note) : '') + '</span></span>' +
                 '</div>' +
-                (r.receipt_url ? (
-                    isAdmin
-                        ? '<div style="margin:4px 0;"><a href="' + payEsc(r.receipt_url) + '" target="_blank" rel="noopener"><img src="' + payEsc(r.receipt_url) + '" alt="رسید" style="max-width:100%;max-height:180px;border-radius:12px;border:1px solid rgba(148,163,184,.3);"></a><div style="font-size:11px;margin-top:4px;"><a href="' + payEsc(r.receipt_url) + '" target="_blank" style="color:#38bdf8;">👁️ مشاهده تمام‌صفحه</a></div></div>'
-                        : '<span style="font-size:12px;color:#34d399;">📷 رسید ارسال شده — منتظر تأیید مدیر</span>'
-                ) : '') +
+                receiptBlock +
                 '<div style="display:flex;gap:6px;flex-wrap:wrap;">' +
-                '<button type="button" class="row-btn fill-btn" style="flex:1;font-size:11px;" onclick="navigator.clipboard.writeText(' + JSON.stringify(url) + ').then(function(){showToast(\'📋 لینک کپی شد\')})">کپی لینک</button>' +
-                '<button type="button" class="row-btn edit-btn" style="flex:1;font-size:11px;" onclick="navigator.clipboard.writeText(' + JSON.stringify(payMsgTemplate(url, r.amount, r.customer_name, r.phone || payLoadCfg().phone)) + ').then(function(){showToast(\'📋 پیام کپی شد\')})">کپی پیام</button>' +
+                (compact ? '' : '<button type="button" class="row-btn fill-btn" style="flex:1;font-size:11px;" onclick="navigator.clipboard.writeText(' + JSON.stringify(url) + ').then(function(){showToast(\'📋 لینک کپی شد\')})">کپی لینک</button>' +
+                '<button type="button" class="row-btn edit-btn" style="flex:1;font-size:11px;" onclick="navigator.clipboard.writeText(' + JSON.stringify(payMsgTemplate(url, r.amount, r.customer_name, r.phone || payLoadCfg().phone)) + ').then(function(){showToast(\'📋 پیام کپی شد\')})">کپی پیام</button>') +
                 (canApprove ? '<button type="button" class="row-btn confirm-btn" style="flex:1;font-size:11px;" onclick="approvePayLink(\'' + payEsc(r.token) + '\')">✅ تأیید پرداخت</button>' +
                 '<button type="button" class="row-btn delete-btn" style="flex:1;font-size:11px;" onclick="rejectPayLink(\'' + payEsc(r.token) + '\')">رد رسید</button>' : '') +
-                ((st === 'open' || st === 'expired') ? '<button type="button" class="row-btn edit-btn" style="flex:1;font-size:11px;" onclick="editPayLink(\'' + payEsc(r.token) + '\')">✏️ ویرایش</button>' +
-                '<button type="button" class="row-btn delete-btn" style="flex:1;font-size:11px;" onclick="deletePayLink(\'' + payEsc(r.token) + '\')">🗑️ حذف</button>' : '') +
+                ((st === 'open' || st === 'expired') ? '<button type="button" class="row-btn edit-btn" style="flex:1;font-size:11px;" onclick="editPayLink(\'' + payEsc(r.token) + '\')">✏️ ویرایش</button>' : '') +
+                '<button type="button" class="row-btn delete-btn" style="flex:1;font-size:11px;" onclick="deletePayLink(\'' + payEsc(r.token) + '\')">🗑️ حذف</button>' +
                 '</div></div>';
         }).join('');
     }
@@ -22970,14 +22997,58 @@ notify pgrst, 'reload schema';`;
     };
 
     function payCopy(text, label) {
-        navigator.clipboard.writeText(text).then(function () {
-            showToast('📋 ' + (label || 'کپی شد'));
-        }).catch(function () {
-            showToast('کپی نشد — دستی انتخاب کن');
-        });
+        const t = String(text == null ? '' : text);
+        function ok() {
+            try { if (typeof showToast === 'function') showToast('📋 ' + (label || 'کپی شد')); } catch (e) {}
+            try { payGuestMsg('📋 ' + (label || 'کپی شد'), true); } catch (e) {}
+        }
+        function fail() {
+            try {
+                const ta = document.createElement('textarea');
+                ta.value = t; ta.style.cssText = 'position:fixed;left:-9999px;top:0';
+                document.body.appendChild(ta); ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                ok();
+            } catch (e) {
+                try { if (typeof showToast === 'function') showToast('کپی نشد — دستی انتخاب کن'); } catch (e2) {}
+            }
+        }
+        try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(t).then(ok).catch(fail);
+            } else fail();
+        } catch (e) { fail(); }
     }
+    window.payCopy = payCopy;
     window.payCopyCard = function (n) { payCopy(payDigits(n), 'شماره کارت کپی شد'); };
     window.payCopyAmount = function (a) { payCopy(String(a), 'مبلغ کپی شد'); };
+
+    window.refreshPayPublicStatus = async function (token) {
+        const btn = document.getElementById('payRefreshStatusBtn');
+        const hint = document.getElementById('payRefreshHint');
+        if (btn) { btn.disabled = true; btn.textContent = '⏳ در حال بررسی...'; }
+        if (hint) hint.textContent = 'در حال دریافت آخرین وضعیت از سرور...';
+        try {
+            // اجباراً از سرور بخوان؛ کش محلی را با سرور ادغام کن
+            let remote = null;
+            try { remote = await payFetchRemote(token); } catch (e) {}
+            if (remote) {
+                const local = payLocalAll();
+                const i = local.findIndex(function (x) { return x.token === token; });
+                if (i >= 0) local[i] = Object.assign({}, local[i], remote);
+                else local.unshift(remote);
+                payLocalSave(local);
+            }
+            await openPayPublic(token);
+            if (hint) hint.textContent = 'بروز شد';
+            payGuestMsg('🔄 وضعیت بروز شد', true);
+        } catch (e) {
+            if (hint) hint.textContent = 'خطا در بروزرسانی — دوباره تلاش کن';
+            if (btn) { btn.disabled = false; btn.textContent = '🔄 بروزرسانی وضعیت'; }
+            payGuestMsg('❌ بروزرسانی ناموفق', false);
+        }
+    };
 
     function payGuestMsg(text, ok) {
         try {
@@ -23228,10 +23299,18 @@ notify pgrst, 'reload schema';`;
             inner.innerHTML = '<div class="report-card" style="text-align:center;padding:22px;border-color:rgba(56,189,248,.45);">' +
                 '<div style="font-size:44px;">📷</div>' +
                 '<h2 style="color:#38bdf8;">رسید شما ثبت شد</h2>' +
-                '<p style="line-height:1.9;font-size:13px;">رسید توسط <b>مدیر غرفه</b> بررسی و تأیید خواهد شد.<br>نتیجه همین‌جا اعلام می‌شود — لطفاً چند لحظه بعد همین صفحه را دوباره باز کنید.</p>' +
-                (row.phone ? '<p style="margin-top:10px;">📞 پشتیبانی: <b dir="ltr">' + payEsc(row.phone) + '</b></p>' : '') +
-                '<button type="button" class="submit-btn" style="margin-top:12px;" onclick="openPayPublic(\'' + payEsc(token) + '\')">بروزرسانی وضعیت</button>' +
+                '<p style="line-height:1.9;font-size:13px;">رسید توسط <b>مدیر غرفه</b> بررسی و تأیید خواهد شد.<br>نتیجه همین‌جا اعلام می‌شود.</p>' +
+                (row.phone ? '<p style="margin-top:10px;cursor:pointer;" onclick="payCopy(\'' + payEsc(row.phone) + '\',\'شماره پشتیبانی کپی شد\')">📞 پشتیبانی: <b dir="ltr">' + payEsc(row.phone) + '</b><br><span style="font-size:11px;opacity:.75;">👆 ضربه = کپی شماره</span></p>' : '') +
+                '<button type="button" class="submit-btn" id="payRefreshStatusBtn" data-pay-token="' + payEsc(token) + '" style="margin-top:12px;">🔄 بروزرسانی وضعیت</button>' +
+                '<p id="payRefreshHint" class="hint" style="margin-top:8px;"></p>' +
                 '</div>';
+            setTimeout(function () {
+                const b = document.getElementById('payRefreshStatusBtn');
+                if (b) b.onclick = function (e) {
+                    e.preventDefault();
+                    window.refreshPayPublicStatus(token);
+                };
+            }, 30);
             return;
         }
 
@@ -23247,9 +23326,9 @@ notify pgrst, 'reload schema';`;
             '<div class="hint" style="text-align:center;margin:0 0 12px;">پرداخت کارت‌به‌کارت</div>' +
             (row.customer_name ? '<p style="text-align:center;margin:0 0 8px;">مشتری: <b>' + payEsc(row.customer_name) + '</b></p>' : '') +
             (row.note ? '<p class="hint" style="text-align:center;">بابت: ' + payEsc(row.note) + '</p>' : '') +
-            '<div style="text-align:center;opacity:.8;font-size:12px;">مبلغ قابل پرداخت (ریال)</div>' +
-            '<div class="pay-amt-big">' + rial.toLocaleString('fa-IR') + ' <span style="font-size:16px;">ریال</span></div>' +
-            '<div style="text-align:center;font-size:13px;opacity:.85;margin-bottom:8px;">معادل ' + toman.toLocaleString('fa-IR') + ' تومان</div>' +
+            '<div style="text-align:center;opacity:.8;font-size:12px;">مبلغ قابل پرداخت (ریال) — ضربه بزنید تا کپی شود</div>' +
+            '<div class="pay-amt-big" role="button" style="cursor:pointer;" onclick="payCopyAmount(' + rial + ')">' + rial.toLocaleString('fa-IR') + ' <span style="font-size:16px;">ریال</span></div>' +
+            '<div style="text-align:center;font-size:13px;opacity:.85;margin-bottom:8px;cursor:pointer;" onclick="payCopyAmount(' + toman + ')">معادل ' + toman.toLocaleString('fa-IR') + ' تومان · 👆 کپی</div>' +
             '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:12px;">' +
             '<button type="button" class="row-btn fill-btn" onclick="payCopyAmount(' + rial + ')">📋 کپی مبلغ (ریال)</button>' +
             '<button type="button" class="row-btn edit-btn" onclick="payCopyAmount(' + toman + ')">کپی تومان</button>' +
@@ -23258,9 +23337,9 @@ notify pgrst, 'reload schema';`;
             cardHtml +
             '<button type="button" class="submit-btn" style="margin-top:12px;" onclick="payCopyCard(\'' + payEsc(row.card) + '\')">📋 کپی شماره کارت</button>' +
             '<div class="pay-timer" id="payTimerEl">مهلت پرداخت: <b>' + leftMin + ':' + String(leftSec).padStart(2, '0') + '</b></div>' +
-            (row.phone ? '<p style="text-align:center;font-size:13px;margin:8px 0;">📞 پشتیبانی: <b dir="ltr">' + payEsc(row.phone) + '</b></p>' : '') +
+            (row.phone ? '<p style="text-align:center;font-size:13px;margin:8px 0;cursor:pointer;" onclick="payCopy(\'' + payEsc(row.phone) + '\',\'شماره پشتیبانی کپی شد\')">📞 پشتیبانی: <b dir="ltr">' + payEsc(row.phone) + '</b><br><span style="font-size:11px;opacity:.75;">👆 ضربه = کپی شماره</span></p>' : '') +
             '<div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(148,163,184,.25);">' +
-            '<label>بعد از پرداخت، عکس رسید را بفرستید:</label>' +
+            '<label>بعد از واریز، عکس رسید بانکی را بفرستید تا پرداخت شما ثبت شود:</label>' +
             '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;">' +
             '<button type="button" class="row-btn fill-btn" style="flex:1;" id="payBtnCam">📷 دوربین</button>' +
             '<button type="button" class="row-btn edit-btn" style="flex:1;" id="payBtnGal">🖼️ گالری</button>' +
@@ -23270,7 +23349,7 @@ notify pgrst, 'reload schema';`;
             '<div id="payReceiptPreview" style="display:none;margin:8px 0;text-align:center;"></div>' +
             '<div id="payReceiptStatus" style="text-align:center;font-size:12px;min-height:18px;margin:6px 0;color:#94a3b8;"></div>' +
             '<button type="button" class="submit-btn" id="payReceiptBtn" data-pay-token="' + payEsc(token) + '" style="display:none;background:linear-gradient(100deg,#10b981,#059669);">✅ تأیید و ارسال رسید</button>' +
-            '<p class="hint" style="text-align:center;margin-top:6px;">عکس را انتخاب کن؛ بعد از تأیید، صفحه رفرش نمی‌شود و منتظر تأیید مدیر می‌مانی.</p>' +
+            '<p class="hint" style="text-align:center;margin-top:6px;">از اعتماد شما سپاسگزاریم 🙏 بعد از ارسال رسید، نتیجه تأیید همین‌جا نمایش داده می‌شود.</p>' +
             '</div></div>';
 
         // اتصال دکمه‌ها بدون اتکا به onclick رشته‌ای
