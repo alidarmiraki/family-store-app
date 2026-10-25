@@ -34,13 +34,16 @@
         html.pay-guest-mode body > *:not(#payPublicView) { display: none !important; }
         html.pay-guest-mode #payPublicView { display: block !important; min-height: 100vh; padding: 12px 8px 40px; }
         html.pay-guest-mode body { background: #0b1220 !important; margin: 0; }
-        html.catalog-guest-mode body > *:not(#catalogPublicView) { display: none !important; visibility: hidden !important; }
-        html.catalog-guest-mode #catalogPublicView { display: block !important; visibility: visible !important; min-height: 100vh; }
+        html.catalog-guest-mode body > *:not(#catalogPublicView):not(#payPublicView):not(#invoicePrintFrame):not(#payGuestMsg):not(#catToastEl) { display: none !important; visibility: hidden !important; }
+        html.catalog-guest-mode #catalogPublicView { display: block !important; visibility: visible !important; min-height: 100vh; position: relative; z-index: 20; pointer-events: auto !important; }
+        html.catalog-guest-mode #catalogPublicView * { pointer-events: auto !important; }
+        html.catalog-guest-mode #payPublicView { display: block !important; visibility: visible !important; position: relative; z-index: 20; pointer-events: auto !important; }
         html.catalog-guest-mode body { background: #0b1220 !important; margin: 0; }
         html.catalog-guest-mode #loginScreen,
         html.catalog-guest-mode .login-box,
         html.catalog-guest-mode .header-clock,
         html.catalog-guest-mode .build-tag { display: none !important; }
+        #invoicePrintFrame { position: fixed !important; right: 0 !important; bottom: 0 !important; width: 0 !important; height: 0 !important; border: 0 !important; opacity: 0 !important; }
         .cat-hero{text-align:center;padding:22px 14px 10px;background:linear-gradient(160deg,#0f172a 0%,#1e293b 50%,#0f766e 140%);border-radius:0 0 24px 24px;margin-bottom:12px}
         .cat-hero h1{margin:8px 0 4px;font-size:22px;font-weight:900;background:linear-gradient(90deg,#fbbf24,#34d399,#38bdf8);-webkit-background-clip:text;background-clip:text;color:transparent}
         .cat-badge{display:inline-block;background:linear-gradient(100deg,#f59e0b,#ef4444);color:#fff;font-size:11px;font-weight:800;padding:5px 12px;border-radius:999px;margin-top:6px;box-shadow:0 4px 14px rgba(245,158,11,.35)}
@@ -65,7 +68,7 @@
         .cat-qty button{width:28px;height:28px;border-radius:8px;border:1px solid rgba(148,163,184,.35);background:#1e293b;color:#fff;font-weight:800;cursor:pointer}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v182 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v183 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -3690,7 +3693,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v182 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v183 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3874,7 +3877,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=182', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=183', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -23712,11 +23715,10 @@ notify pgrst, 'reload schema';`;
         if (status === 'open' && exp < now) status = 'expired';
         // تأیید شده / در حال آماده‌سازی / آماده / ارسال / تحویل
         if (status === 'approved' || status === 'preparing' || status === 'ready' || status === 'shipped' || status === 'delivered') {
+            // پولینگ رسید را قطع کن تا صفحه و تایمر ریست نشود
+            try { clearInterval(window._payReceiptPollT); window._payReceiptPollT = null; } catch (e) {}
+
             const orderCode = row.order_code || '';
-            const trackHref = orderCode
-                ? (location.pathname + (location.pathname.indexOf('?') >= 0 ? '&' : '?') + 'track=' + encodeURIComponent(orderCode)).replace(/\?&/, '?')
-                : '';
-            // ساخت URL پیگیری تمیز
             let trackUrl = '';
             try {
                 const u = new URL(location.href);
@@ -23726,8 +23728,15 @@ notify pgrst, 'reload schema';`;
                     trackUrl = u.toString();
                 }
             } catch (e) {
-                trackUrl = trackHref;
+                trackUrl = orderCode ? ('?track=' + encodeURIComponent(orderCode)) : '';
             }
+
+            // اگر همین صفحه تأیید قبلاً ساخته شده، دوباره نساز (جلوگیری از ریست تایمر ۱۰ ثانیه)
+            if (window._payApprovedUIToken === token && document.getElementById('payApprovedDoneBox')) {
+                return;
+            }
+            window._payApprovedUIToken = token;
+
             const msgByStatus = {
                 approved: 'رسید شما تأیید شد و سفارش در حال آماده‌سازی است.',
                 preparing: 'رسید شما تأیید شد و سفارش در حال آماده‌سازی است.',
@@ -23735,38 +23744,56 @@ notify pgrst, 'reload schema';`;
                 shipped: 'سفارش شما ارسال شد.',
                 delivered: 'سفارش تحویل داده شد. نوش جان 🙏'
             };
-            inner.innerHTML = '<div class="report-card" style="border-color:rgba(16,185,129,.5);text-align:center;padding:24px;direction:rtl;">' +
+            inner.innerHTML = '<div id="payApprovedDoneBox" class="report-card" style="border-color:rgba(16,185,129,.5);text-align:center;padding:24px;direction:rtl;">' +
                 '<div style="font-size:48px;">✅</div>' +
                 '<h2 style="color:#34d399;">رسید شما تأیید شد</h2>' +
                 '<p style="line-height:1.9;font-size:14px;margin:10px 0;">' + (msgByStatus[status] || msgByStatus.approved) + '</p>' +
                 (orderCode
                     ? ('<div style="margin:14px 0;padding:14px;border-radius:14px;background:rgba(15,23,42,.9);border:1px solid rgba(251,191,36,.4);">' +
                         '<div style="font-size:12px;opacity:.85;">شماره پیگیری سفارش (قابل کپی)</div>' +
-                        '<div id="payApprovedOrderCode" style="font-size:24px;font-weight:900;color:#fbbf24;margin:8px 0;letter-spacing:1px;direction:ltr;cursor:pointer;" onclick="payCopy(\'' + payEsc(orderCode) + '\',\'شماره پیگیری کپی شد\')">' + payEsc(orderCode) + '</div>' +
-                        '<button type="button" class="row-btn fill-btn" style="width:100%;" onclick="payCopy(\'' + payEsc(orderCode) + '\',\'شماره پیگیری کپی شد\')">📋 کپی شماره پیگیری</button>' +
+                        '<div id="payApprovedOrderCode" style="font-size:24px;font-weight:900;color:#fbbf24;margin:8px 0;letter-spacing:1px;direction:ltr;cursor:pointer;" data-code="' + payEsc(orderCode) + '">' + payEsc(orderCode) + '</div>' +
+                        '<button type="button" class="row-btn fill-btn" style="width:100%;" id="payBtnCopyCode">📋 کپی شماره پیگیری</button>' +
                         '</div>')
                     : '') +
                 (row.customer_name ? '<p style="font-size:13px;">مشتری: <b>' + payEsc(row.customer_name) + '</b></p>' : '') +
                 '<p style="font-size:13px;">مبلغ: <b>' + Number(row.amount || 0).toLocaleString('fa-IR') + ' تومان</b></p>' +
                 (trackUrl
                     ? ('<p id="payRedirectHint" class="hint" style="margin-top:12px;">تا ۱۰ ثانیه دیگر به صفحه پیگیری سفارش منتقل می‌شوید...</p>' +
-                        '<a class="submit-btn" style="display:block;text-decoration:none;margin-top:10px;" href="' + payEsc(trackUrl) + '">📦 رفتن به پیگیری سفارش</a>' +
-                        '<button type="button" class="row-btn fill-btn" style="width:100%;margin-top:8px;" onclick="printOrderInvoice(' + JSON.stringify(orderCode) + ',\'customer\')">🖨️ چاپ فاکتور مشتری</button>')
+                        '<a class="submit-btn" id="payBtnGoTrack" style="display:block;text-decoration:none;margin-top:10px;" href="' + payEsc(trackUrl) + '">📦 رفتن به پیگیری سفارش</a>' +
+                        '<button type="button" class="row-btn fill-btn" style="width:100%;margin-top:8px;" id="payBtnPrintCustomer">🖨️ چاپ فاکتور مشتری</button>')
                     : '<p class="hint" style="margin-top:10px;">از اعتمادتان ممنونیم 🙏</p>') +
                 '</div>';
-            if (trackUrl && (status === 'approved' || status === 'preparing')) {
-                let left = 10;
+
+            // اتصال دکمه‌ها با listener (قابل اعتمادتر از inline در موبایل)
+            setTimeout(function () {
+                const copyBtn = document.getElementById('payBtnCopyCode');
+                const codeEl = document.getElementById('payApprovedOrderCode');
+                const printBtn = document.getElementById('payBtnPrintCustomer');
+                if (copyBtn && orderCode) copyBtn.onclick = function (e) { e.preventDefault(); e.stopPropagation(); window.payCopy(orderCode, 'شماره پیگیری کپی شد'); };
+                if (codeEl && orderCode) codeEl.onclick = function () { window.payCopy(orderCode, 'شماره پیگیری کپی شد'); };
+                if (printBtn && orderCode) {
+                    printBtn.onclick = function (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        // هنگام چاپ تایمر را متوقف نکن — فقط چاپ کن بدون رفرش صفحه
+                        window.printOrderInvoice(orderCode, 'customer');
+                    };
+                }
+            }, 20);
+
+            if (trackUrl && (status === 'approved' || status === 'preparing') && !window._payApproveRedirectT) {
+                window._payRedirectLeft = 10;
                 const hint = function () {
                     const el = document.getElementById('payRedirectHint');
-                    if (el) el.textContent = 'تا ' + left + ' ثانیه دیگر به صفحه پیگیری سفارش منتقل می‌شوید...';
+                    if (el) el.textContent = 'تا ' + window._payRedirectLeft + ' ثانیه دیگر به صفحه پیگیری سفارش منتقل می‌شوید...';
                 };
                 hint();
-                clearInterval(window._payApproveRedirectT);
                 window._payApproveRedirectT = setInterval(function () {
-                    left -= 1;
+                    window._payRedirectLeft = (window._payRedirectLeft || 10) - 1;
                     hint();
-                    if (left <= 0) {
+                    if (window._payRedirectLeft <= 0) {
                         clearInterval(window._payApproveRedirectT);
+                        window._payApproveRedirectT = null;
                         location.href = trackUrl;
                     }
                 }, 1000);
@@ -24813,6 +24840,7 @@ notify pgrst, 'reload schema';`;
 
     window.printOrderInvoice = async function (code, role) {
         // role: 'customer' | 'manager' | 'seller'
+        // چاپ با iframe — روی موبایل window.open معمولاً بلاک می‌شود
         role = role || (typeof payIsAdmin === 'function' && payIsAdmin() ? 'manager' : 'customer');
         let row = null;
         try {
@@ -24829,14 +24857,14 @@ notify pgrst, 'reload schema';`;
             try { row = payLocalAll().find(function (x) { return x.order_code === code || x.token === code; }); } catch (e) {}
         }
         if (!row) {
-            try { catToast('فاکتور پیدا نشد', false); } catch (e) { showToast('فاکتور پیدا نشد'); }
+            try { if (typeof catToast === 'function') catToast('فاکتور پیدا نشد', false); } catch (e) {}
+            try { if (typeof showToast === 'function') showToast('فاکتور پیدا نشد'); } catch (e) {}
+            try { if (typeof payGuestMsg === 'function') payGuestMsg('فاکتور پیدا نشد', false); } catch (e) {}
             return;
         }
-        const w = window.open('', '_blank');
-        if (!w) {
-            try { catToast('پنجره چاپ مسدود شد', false); } catch (e) { showToast('پنجره چاپ مسدود شد'); }
-            return;
-        }
+        const esc = (typeof catEsc === 'function') ? catEsc : (typeof payEsc === 'function' ? payEsc : function (s) {
+            return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        });
         const st = ({
             open: 'در انتظار پرداخت', paying: 'در حال پرداخت', receipt: 'رسید در انتظار تأیید',
             approved: 'تأیید شده', preparing: 'در حال آماده‌سازی', ready: 'آماده تحویل/ارسال',
@@ -24849,31 +24877,64 @@ notify pgrst, 'reload schema';`;
             ? 'این برگه را به بسته بچسبانید · غرفه فامیلی'
             : 'رسید خرید شما · غرفه فامیلی · تازه مارکت';
         let body =
-            '<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><title>' + catEsc(title) + ' ' + catEsc(row.order_code || code) + '</title>' +
-            '<style>body{font-family:Tahoma,Arial,sans-serif;padding:20px;color:#111;max-width:420px;margin:0 auto}h1{font-size:17px;margin:0 0 6px}.box{border:2px solid #222;border-radius:8px;padding:12px;margin:10px 0;line-height:1.9}.muted{color:#555;font-size:12px}.big{font-size:22px;font-weight:900;letter-spacing:1px;direction:ltr;text-align:center;margin:8px 0}@media print{button{display:none}}</style></head><body>' +
-            '<h1>' + catEsc(title) + '</h1>' +
-            '<div class="muted">' + catEsc(subtitle) + '</div>' +
-            '<div class="big">' + catEsc(row.order_code || code) + '</div>' +
+            '<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+            '<title>' + esc(title) + ' ' + esc(row.order_code || code) + '</title>' +
+            '<style>body{font-family:Tahoma,Arial,sans-serif;padding:20px;color:#111;max-width:420px;margin:0 auto;background:#fff}h1{font-size:17px;margin:0 0 6px}.box{border:2px solid #222;border-radius:8px;padding:12px;margin:10px 0;line-height:1.9}.muted{color:#555;font-size:12px}.big{font-size:22px;font-weight:900;letter-spacing:1px;direction:ltr;text-align:center;margin:8px 0}@media print{button{display:none!important}}</style></head><body>' +
+            '<h1>' + esc(title) + '</h1>' +
+            '<div class="muted">' + esc(subtitle) + '</div>' +
+            '<div class="big">' + esc(row.order_code || code) + '</div>' +
             '<div class="box">' +
-            '<div><b>مشتری:</b> ' + catEsc(row.customer_name || '—') + '</div>' +
-            '<div><b>تلفن:</b> <span dir="ltr">' + catEsc(row.phone || '—') + '</span></div>' +
-            '<div><b>وضعیت:</b> ' + catEsc(st) + '</div>' +
+            '<div><b>مشتری:</b> ' + esc(row.customer_name || '—') + '</div>' +
+            '<div><b>تلفن:</b> <span dir="ltr">' + esc(row.phone || '—') + '</span></div>' +
+            '<div><b>وضعیت:</b> ' + esc(st) + '</div>' +
             '<div><b>مبلغ قابل پرداخت:</b> ' + Number(row.amount || 0).toLocaleString('fa-IR') + ' تومان</div>' +
             (row.delivery_type === 'pickup' ? '<div><b>نوع تحویل:</b> حضوری از درب فروشگاه</div>' : '<div><b>نوع تحویل:</b> ارسال درب منزل</div>') +
-            (row.delivery_when ? '<div><b>زمان:</b> ' + catEsc(row.delivery_when) + '</div>' : '') +
-            (row.address ? '<div><b>آدرس:</b> ' + catEsc(row.address) + '</div>' : '') +
+            (row.delivery_when ? '<div><b>زمان:</b> ' + esc(row.delivery_when) + '</div>' : '') +
+            (row.address ? '<div><b>آدرس:</b> ' + esc(row.address) + '</div>' : '') +
             '</div>';
         if (isMgr) {
-            body += '<div class="box" style="border-style:dashed;"><b>جزئیات برای آماده‌سازی:</b><pre style="white-space:pre-wrap;font-family:Tahoma;font-size:12px;margin:8px 0 0;">' + catEsc(row.note || '') + '</pre></div>' +
-                '<div class="muted">تماس با مشتری: ' + catEsc(row.phone || '—') + ' · چاپ: ' + new Date().toLocaleString('fa-IR') + '</div>';
+            body += '<div class="box" style="border-style:dashed;"><b>جزئیات برای آماده‌سازی:</b><pre style="white-space:pre-wrap;font-family:Tahoma;font-size:12px;margin:8px 0 0;">' + esc(row.note || '') + '</pre></div>' +
+                '<div class="muted">تماس با مشتری: ' + esc(row.phone || '—') + ' · چاپ: ' + new Date().toLocaleString('fa-IR') + '</div>';
         } else {
-            body += '<div class="box"><b>اقلام سفارش:</b><pre style="white-space:pre-wrap;font-family:Tahoma;font-size:12px;margin:8px 0 0;">' + catEsc(row.note || '') + '</pre></div>' +
+            body += '<div class="box"><b>اقلام سفارش:</b><pre style="white-space:pre-wrap;font-family:Tahoma;font-size:12px;margin:8px 0 0;">' + esc(row.note || '') + '</pre></div>' +
                 '<p class="muted">از خرید شما سپاسگزاریم 🙏 · ' + new Date().toLocaleString('fa-IR') + '</p>';
         }
         body += '<button onclick="window.print()" style="margin-top:12px;padding:10px 16px;font-size:14px;">🖨️ چاپ</button></body></html>';
-        w.document.write(body);
-        w.document.close();
-        setTimeout(function () { try { w.print(); } catch (e) {} }, 400);
+
+        try {
+            let frame = document.getElementById('invoicePrintFrame');
+            if (!frame) {
+                frame = document.createElement('iframe');
+                frame.id = 'invoicePrintFrame';
+                frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0;pointer-events:none;';
+                document.body.appendChild(frame);
+            }
+            const doc = frame.contentWindow || frame.contentDocument;
+            const d = doc.document || doc;
+            d.open();
+            d.write(body);
+            d.close();
+            setTimeout(function () {
+                try {
+                    frame.contentWindow.focus();
+                    frame.contentWindow.print();
+                } catch (e) {
+                    // fallback: تب جدید
+                    const w = window.open('', '_blank');
+                    if (w) {
+                        w.document.write(body);
+                        w.document.close();
+                        setTimeout(function () { try { w.print(); } catch (e2) {} }, 300);
+                    } else {
+                        try { if (typeof payGuestMsg === 'function') payGuestMsg('چاپ مسدود شد — اجازه پاپ‌آپ را بدهید', false); } catch (e3) {}
+                    }
+                }
+            }, 350);
+            try { if (typeof catToast === 'function') catToast('در حال آماده‌سازی چاپ...', true); } catch (e) {}
+            try { if (typeof payGuestMsg === 'function') payGuestMsg('🖨️ پنجره چاپ باز شد', true); } catch (e) {}
+        } catch (e) {
+            try { if (typeof showToast === 'function') showToast('خطا در چاپ'); } catch (e2) {}
+        }
     };
 
     async function openCatalogPublic() {
@@ -24947,16 +25008,22 @@ notify pgrst, 'reload schema';`;
         if (code && code.trim()) location.href = '?track=' + encodeURIComponent(code.trim());
     };
 
-    async function openTrackPublic(code) {
+    async function openTrackPublic(code, opts) {
+        opts = opts || {};
+        const silent = !!opts.silent;
         document.documentElement.classList.add('catalog-guest-mode');
         document.title = 'پیگیری سفارش ' + code;
         const view = document.getElementById('catalogPublicView');
         const inner = document.getElementById('catalogPublicInner');
         if (!view || !inner) return;
         view.style.display = 'block';
+        view.style.pointerEvents = 'auto';
         const login = document.getElementById('loginScreen');
         if (login) login.style.display = 'none';
-        inner.innerHTML = '<div style="padding:40px;text-align:center;">⏳ در حال بررسی سفارش...</div>';
+        // فقط در بار اول لودینگ نشان بده
+        if (!silent || !document.getElementById('trackStatusText')) {
+            inner.innerHTML = '<div style="padding:40px;text-align:center;direction:rtl;">⏳ در حال بررسی سفارش...</div>';
+        }
         let row = null;
         try {
             if (typeof _supabase !== 'undefined' && _supabase) {
@@ -24975,7 +25042,9 @@ notify pgrst, 'reload schema';`;
             } catch (e) {}
         }
         if (!row) {
-            inner.innerHTML = '<div style="padding:28px;text-align:center;direction:rtl;"><h2>سفارش پیدا نشد</h2><p class="hint">شماره پیگیری را بررسی کنید.</p><button class="submit-btn" onclick="location.href=\'?catalog=1\'">🛒 کاتالوگ</button></div>';
+            inner.innerHTML = '<div style="padding:28px;text-align:center;direction:rtl;"><h2>سفارش پیدا نشد</h2><p class="hint">شماره پیگیری را بررسی کنید.</p><button type="button" class="submit-btn" id="trackBtnCatalog">🛒 کاتالوگ</button></div>';
+            const b = document.getElementById('trackBtnCatalog');
+            if (b) b.onclick = function () { location.href = '?catalog=1'; };
             return;
         }
         const stMap = {
@@ -24992,6 +25061,7 @@ notify pgrst, 'reload schema';`;
             rejected: '❌ رد شد',
             expired: '⌛ منقضی'
         };
+        const orderCode = row.order_code || code;
         const st = stMap[row.status] || row.status;
         const color = ({ approved: '#34d399', preparing: '#34d399', ready: '#38bdf8', shipped: '#38bdf8', delivered: '#34d399', problem: '#fbbf24', cancelled: '#f87171', rejected: '#f87171', receipt: '#38bdf8' })[row.status] || '#e2e8f0';
         const steps = ['open', 'paying', 'receipt', 'approved', 'preparing', 'ready', 'shipped', 'delivered'];
@@ -25000,36 +25070,84 @@ notify pgrst, 'reload schema';`;
             const on = cur >= i && cur >= 0;
             return '<span style="flex:1;height:6px;border-radius:99px;background:' + (on ? '#34d399' : 'rgba(148,163,184,.25)') + ';"></span>';
         }).join('');
-        const trackLink = (function () {
-            try { const u = new URL(location.href); u.search = 'track=' + encodeURIComponent(row.order_code || code); return u.toString(); } catch (e) { return '?track=' + code; }
-        })();
+        let trackLink = '';
+        try {
+            const u = new URL(location.href);
+            u.search = 'track=' + encodeURIComponent(orderCode);
+            trackLink = u.toString();
+        } catch (e) { trackLink = '?track=' + encodeURIComponent(orderCode); }
+
+        // اگر silent و فقط وضعیت عوض شده، متن وضعیت را بروز کن
+        if (silent && document.getElementById('trackStatusText') && window._trackLastStatus === row.status) {
+            return;
+        }
+        window._trackLastStatus = row.status;
+
         inner.innerHTML =
-            '<div style="padding:24px 14px;text-align:center;direction:rtl;">' +
+            '<div style="padding:24px 14px;text-align:center;direction:rtl;pointer-events:auto;">' +
             '<div style="font-size:36px;">📦</div>' +
             '<h2 style="color:#34d399;">پیگیری سفارش · تازه مارکت</h2>' +
-            '<div style="font-size:22px;font-weight:900;color:#fbbf24;margin:10px 0;" dir="ltr">' + catEsc(row.order_code || code) + '</div>' +
+            '<div style="font-size:22px;font-weight:900;color:#fbbf24;margin:10px 0;" dir="ltr">' + catEsc(orderCode) + '</div>' +
             '<div style="display:flex;gap:4px;margin:12px 0;">' + stepBar + '</div>' +
             '<div class="summary-mini" style="flex-direction:column;gap:8px;text-align:right;margin-top:12px;">' +
             '<div>مشتری: <b>' + catEsc(row.customer_name || '—') + '</b></div>' +
             '<div>مبلغ: <b>' + Number(row.amount || 0).toLocaleString('fa-IR') + ' تومان</b></div>' +
-            '<div>وضعیت: <b style="color:' + color + ';">' + catEsc(st) + '</b></div>' +
+            '<div>وضعیت: <b id="trackStatusText" style="color:' + color + ';">' + catEsc(st) + '</b></div>' +
             (row.manager_note ? '<div style="padding:8px;border-radius:10px;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.35);">پیام فروشگاه: ' + catEsc(row.manager_note) + '</div>' : '') +
             (row.delivery_when ? '<div>زمان تحویل: ' + catEsc(row.delivery_when) + '</div>' : '') +
             (row.address ? '<div>آدرس/تحویل: ' + catEsc(row.address) + '</div>' : '') +
             '</div>' +
             (row.status === 'open' || row.status === 'paying' ? '<a class="submit-btn" style="display:block;margin-top:14px;text-decoration:none;" href="' + catEsc(payLinkUrl(row.token)) + '">💳 ادامه / انجام پرداخت</a>' : '') +
-            (row.status === 'problem' ? '<button type="button" class="submit-btn" style="margin-top:12px;" onclick="location.href=\'?catalog=1\'">✏️ اصلاح و سفارش دوباره</button>' : '') +
-            '<button type="button" class="row-btn fill-btn" style="width:100%;margin-top:10px;" onclick="printOrderInvoice(' + JSON.stringify(row.order_code || code) + ',\'customer\')">🖨️ چاپ فاکتور مشتری</button>' +
-            '<button type="button" class="row-btn fill-btn" style="width:100%;margin-top:8px;" onclick="payCopy(' + JSON.stringify(row.order_code || code) + ',\'شماره پیگیری کپی شد\')">📋 کپی شماره پیگیری</button>' +
-            '<button type="button" class="row-btn fill-btn" style="width:100%;margin-top:8px;" onclick="navigator.clipboard&&navigator.clipboard.writeText(' + JSON.stringify(trackLink) + ').then(function(){catToast(\'لینک پیگیری کپی شد\',true)})">🔗 کپی لینک پیگیری</button>' +
-            '<button type="button" class="row-btn fill-btn" style="width:100%;margin-top:8px;" onclick="openTrackPublic(' + JSON.stringify(code) + ')">🔄 بروزرسانی وضعیت</button>' +
-            '<button type="button" class="row-btn edit-btn" style="width:100%;margin-top:8px;" onclick="location.href=\'?catalog=1\'">🛒 بازگشت به کاتالوگ</button>' +
+            (row.status === 'problem' ? '<button type="button" class="submit-btn" style="margin-top:12px;" id="trackBtnFix">✏️ اصلاح و سفارش دوباره</button>' : '') +
+            '<button type="button" class="row-btn fill-btn" style="width:100%;margin-top:10px;" id="trackBtnPrint">🖨️ چاپ فاکتور مشتری</button>' +
+            '<button type="button" class="row-btn fill-btn" style="width:100%;margin-top:8px;" id="trackBtnCopyCode">📋 کپی شماره پیگیری</button>' +
+            '<button type="button" class="row-btn fill-btn" style="width:100%;margin-top:8px;" id="trackBtnCopyLink">🔗 کپی لینک پیگیری</button>' +
+            '<button type="button" class="row-btn fill-btn" style="width:100%;margin-top:8px;" id="trackBtnRefresh">🔄 بروزرسانی وضعیت</button>' +
+            '<button type="button" class="row-btn edit-btn" style="width:100%;margin-top:8px;" id="trackBtnCatalog">🛒 بازگشت به کاتالوگ</button>' +
             '</div>';
+
+        // اتصال دکمه‌ها — listener مستقیم (موبایل‌فرندلی)
+        setTimeout(function () {
+            const bind = function (id, fn) {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.onclick = function (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        try { fn(); } catch (err) { console.error(err); }
+                    };
+                }
+            };
+            bind('trackBtnPrint', function () { window.printOrderInvoice(orderCode, 'customer'); });
+            bind('trackBtnCopyCode', function () {
+                if (typeof window.payCopy === 'function') window.payCopy(orderCode, 'شماره پیگیری کپی شد');
+                else if (navigator.clipboard) navigator.clipboard.writeText(orderCode);
+            });
+            bind('trackBtnCopyLink', function () {
+                if (typeof window.payCopy === 'function') window.payCopy(trackLink, 'لینک پیگیری کپی شد');
+                else if (navigator.clipboard) navigator.clipboard.writeText(trackLink).then(function () {
+                    if (typeof catToast === 'function') catToast('لینک پیگیری کپی شد', true);
+                });
+            });
+            bind('trackBtnRefresh', function () {
+                const b = document.getElementById('trackBtnRefresh');
+                if (b) b.textContent = '⏳ در حال بروزرسانی...';
+                openTrackPublic(code, { silent: false }).then(function () {
+                    if (typeof catToast === 'function') catToast('وضعیت بروز شد', true);
+                });
+            });
+            bind('trackBtnCatalog', function () { location.href = '?catalog=1'; });
+            bind('trackBtnFix', function () { location.href = '?catalog=1'; });
+        }, 30);
+
         try {
             clearInterval(window._catTrackT);
-            window._catTrackT = setInterval(function () { openTrackPublic(code); }, 45000);
+            window._catTrackT = setInterval(function () {
+                openTrackPublic(code, { silent: true });
+            }, 20000);
         } catch (e) {}
     }
+    window.openTrackPublic = openTrackPublic;
 
     window.loadCatalogOrdersAdmin = async function () {
         if (!payIsAdmin()) return;
