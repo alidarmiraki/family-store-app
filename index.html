@@ -25,6 +25,7 @@
                 if (/[?&]catalog=/.test(q) || /#catalog/.test(h)) {
                     document.documentElement.classList.add('catalog-guest-mode');
                     document.documentElement.style.background = '#0b1220';
+                    document.title = 'کاتالوگ تازه مارکت';
                 }
             } catch (e2) {}
         })();
@@ -33,9 +34,13 @@
         html.pay-guest-mode body > *:not(#payPublicView) { display: none !important; }
         html.pay-guest-mode #payPublicView { display: block !important; min-height: 100vh; padding: 12px 8px 40px; }
         html.pay-guest-mode body { background: #0b1220 !important; margin: 0; }
-        html.catalog-guest-mode body > *:not(#catalogPublicView) { display: none !important; }
-        html.catalog-guest-mode #catalogPublicView { display: block !important; min-height: 100vh; }
+        html.catalog-guest-mode body > *:not(#catalogPublicView) { display: none !important; visibility: hidden !important; }
+        html.catalog-guest-mode #catalogPublicView { display: block !important; visibility: visible !important; min-height: 100vh; }
         html.catalog-guest-mode body { background: #0b1220 !important; margin: 0; }
+        html.catalog-guest-mode #loginScreen,
+        html.catalog-guest-mode .login-box,
+        html.catalog-guest-mode .header-clock,
+        html.catalog-guest-mode .build-tag { display: none !important; }
         .cat-hero{text-align:center;padding:22px 14px 10px;background:linear-gradient(160deg,#0f172a 0%,#1e293b 50%,#0f766e 140%);border-radius:0 0 24px 24px;margin-bottom:12px}
         .cat-hero h1{margin:8px 0 4px;font-size:22px;font-weight:900;background:linear-gradient(90deg,#fbbf24,#34d399,#38bdf8);-webkit-background-clip:text;background-clip:text;color:transparent}
         .cat-badge{display:inline-block;background:linear-gradient(100deg,#f59e0b,#ef4444);color:#fff;font-size:11px;font-weight:800;padding:5px 12px;border-radius:999px;margin-top:6px;box-shadow:0 4px 14px rgba(245,158,11,.35)}
@@ -60,7 +65,7 @@
         .cat-qty button{width:28px;height:28px;border-radius:8px;border:1px solid rgba(148,163,184,.35);background:#1e293b;color:#fff;font-weight:800;cursor:pointer}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v173 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v174 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2006,8 +2011,16 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
 
     <!-- کاتالوگ عمومی اینستاگرام / سفارش آنلاین -->
     <div id="catalogPublicView" style="display:none;max-width:480px;margin:0 auto;direction:rtl;">
-        <div id="catalogPublicInner"></div>
+        <div id="catalogPublicInner">
+            <div style="min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;direction:rtl;">
+                <div style="font-size:48px;margin-bottom:12px;">🛒</div>
+                <div style="font-size:22px;font-weight:900;background:linear-gradient(90deg,#34d399,#38bdf8,#fbbf24);-webkit-background-clip:text;background-clip:text;color:transparent;">تازه مارکت</div>
+                <div style="margin-top:10px;font-size:14px;opacity:.9;line-height:1.8;">در حال ورود به کاتالوگ فروشگاه<br><b>تازه مارکت</b></div>
+                <div style="margin-top:18px;width:42px;height:42px;border:3px solid rgba(56,189,248,.25);border-top-color:#38bdf8;border-radius:50%;animation:catSpin 0.8s linear infinite;"></div>
+            </div>
+        </div>
     </div>
+    <style>@keyframes catSpin{to{transform:rotate(360deg)}}</style>
 
     <!-- صفحه ورود -->
     <div id="loginScreen" class="login-box login-fancy" style="max-width:380px; margin:40px auto 0; animation: cardFadeIn 0.4s ease;">
@@ -3638,7 +3651,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v173 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v174 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3822,7 +3835,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=173', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=174', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -23564,7 +23577,7 @@ notify pgrst, 'reload schema';`;
     /* ========== کاتالوگ اینستاگرام / سفارش آنلاین ========== */
     let catCart = {}; // id -> {id,name,price,qty,unit}
     let catProducts = [];
-    let catFilter = 'all';
+    let catFilter = 'dairy';
 
     function catEsc(s) {
         return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -23574,14 +23587,30 @@ notify pgrst, 'reload schema';`;
     function catPrice(p) {
         return Number(p.sell_price) || Number(p.unit_price) || Number(p.price) || 0;
     }
+    // تشخیص دقیق دسته برای کاتالوگ بر اساس نام + نوع کالا در انبار
     function catCat(p) {
         const c = String(p.category || '');
-        if (c === 'sausage' || c.indexOf('سوسیس') >= 0 || c.indexOf('کالباس') >= 0) return 'sausage';
-        if (c.indexOf('ترشی') >= 0) return 'pickle';
+        const n = String(p.name || '');
+        // سوسیس و کالباس
+        if (c === 'sausage' || /سوسیس|کالباس|هات\s*داگ|هاتداگ|همبرگر|ژامبون|مورتادلا/.test(n)) return 'sausage';
+        // ترشیجات و شور و زیتون
+        if (
+            c.indexOf('ترشی') >= 0 ||
+            /ترشی|خیارشور|خیار\s*شور|زیتون|بندری|لیته|هفت\s*بیجار|سیر\s*ترشی|کلم\s*شور|فلفل\s*شور|شور\s*مخلوط|مخلوط\s*شور|بادمجان\s*شکم|شکم\s*پر|سالاد\s*فصل|ترشیجات|آلبالو\s*ترشی|گوجه\s*سبز|غوره/.test(n)
+        ) return 'pickle';
+        // لبنیات
+        if (/پنیر|ماست|کشک|دوغ|کره|خامه|شیر|سرشیر|کفیر|سرلاکت|لور|کاله|آران/.test(n)) return 'dairy';
+        // اگر در انبار general است و نام لبنیاتی نیست، هنوز ممکن است متفرقه باشد
+        // متفرقه‌های غذایی غیرترشی/غیرلبنی (مثل بامیه، شیره، کرم کنجد) → سایر
+        if (/بامیه|شیره|عسل|کرم\s*کنجد|ارده|حلوا|مربّا|مربا|نبات|سس|رب/.test(n)) return 'other';
+        // پیش‌فرض کالاهای general بدون نشانه خاص = لبنیات (مثل قبل در سیستم انبار)
         return 'dairy';
     }
     function catLabel(k) {
-        return ({ all: 'همه', dairy: '🧀 لبنیات', pickle: '🥒 ترشیجات', sausage: '🌭 سوسیس‌وکالباس' })[k] || k;
+        return ({ dairy: '🧀 لبنیات', pickle: '🥒 ترشیجات', sausage: '🌭 سوسیس‌وکالباس', other: '🧺 سایر' })[k] || k;
+    }
+    function catEmoji(k) {
+        return ({ dairy: '🧀', pickle: '🥒', sausage: '🌭', other: '🧺' })[k] || '🛒';
     }
     function catCartCount() {
         return Object.keys(catCart).reduce(function (s, k) { return s + (catCart[k].qty || 0); }, 0);
@@ -23626,7 +23655,7 @@ notify pgrst, 'reload schema';`;
     }
     function catImgHtml(p) {
         const src = catImg(p);
-        const emoji = catCat(p) === 'sausage' ? '🌭' : (catCat(p) === 'pickle' ? '🥒' : '🧀');
+        const emoji = catEmoji(catCat(p));
         if (src) {
             return '<div class="cat-img-wrap"><img src="' + catEsc(src) + '" alt="' + catEsc(p.name) + '" loading="lazy" onerror="this.style.display=\'none\';this.parentNode.querySelector(\'.cat-emoji\').style.display=\'flex\'"><div class="cat-emoji" style="display:none">' + emoji + '</div></div>';
         }
@@ -23650,7 +23679,7 @@ notify pgrst, 'reload schema';`;
         catRender();
     };
     window.catFilterTo = function (f) {
-        catFilter = f || 'all';
+        catFilter = f || 'dairy';
         catRenderGrid();
         document.querySelectorAll('.cat-tab').forEach(function (el) {
             el.classList.toggle('on', el.getAttribute('data-f') === catFilter);
@@ -23821,31 +23850,47 @@ notify pgrst, 'reload schema';`;
 
     async function openCatalogPublic() {
         document.documentElement.classList.add('catalog-guest-mode');
+        document.title = 'کاتالوگ تازه مارکت';
         const view = document.getElementById('catalogPublicView');
         const inner = document.getElementById('catalogPublicInner');
         if (!view || !inner) return;
         view.style.display = 'block';
         const login = document.getElementById('loginScreen');
         const tabs = document.getElementById('tabContainer');
+        const clock = document.getElementById('liveClock');
         if (login) login.style.display = 'none';
         if (tabs) tabs.style.display = 'none';
+        if (clock) clock.style.display = 'none';
 
-        inner.innerHTML = '<div style="text-align:center;padding:40px;opacity:.8;">⏳ در حال بارگذاری کاتالوگ...</div>';
+        // اگر هنوز لود نشده، همان پیام تازه مارکت بماند
+        if (!inner.querySelector('.cat-hero')) {
+            inner.innerHTML =
+                '<div style="min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;">' +
+                '<div style="font-size:48px;margin-bottom:12px;">🛒</div>' +
+                '<div style="font-size:22px;font-weight:900;color:#34d399;">تازه مارکت</div>' +
+                '<div style="margin-top:10px;font-size:14px;opacity:.9;line-height:1.8;">در حال ورود به کاتالوگ فروشگاه<br><b>تازه مارکت</b></div></div>';
+        }
+
         await catLoadProducts();
         await payPullCfgFromCloud();
         const disc = catDiscPct();
         const cfg = payLoadCfg();
 
+        // تب‌ها: بدون «همه» — فقط سه دسته اصلی (+ سایر اگر کالا داشت)
+        const hasOther = catProducts.some(function (p) { return catCat(p) === 'other'; });
+        const tabsList = ['dairy', 'pickle', 'sausage'].concat(hasOther ? ['other'] : []);
+        if (tabsList.indexOf(catFilter) < 0) catFilter = 'dairy';
+
         inner.innerHTML =
             '<div class="cat-hero">' +
-            '<div style="font-size:40px;">🧀</div>' +
-            '<h1>غرفه فامیلی</h1>' +
-            '<div style="font-size:12px;opacity:.85;">لبنیات · ترشیجات · سوسیس و کالباس فله</div>' +
+            '<div style="font-size:36px;">🛒</div>' +
+            '<h1>تازه مارکت</h1>' +
+            '<div style="font-size:12px;opacity:.85;">کاتالوگ آنلاین · لبنیات · ترشیجات · سوسیس و کالباس فله</div>' +
             (disc > 0 ? '<div class="cat-badge">🎁 ' + disc + '٪ تخفیف ویژه سفارش از اینستاگرام</div>' : '') +
             (cfg.phone ? '<div style="margin-top:8px;font-size:12px;opacity:.8;">📞 ' + catEsc(cfg.phone) + '</div>' : '') +
             '</div>' +
             '<div class="cat-tabs">' +
-            ['all', 'dairy', 'pickle', 'sausage'].map(function (f) {
+            tabsList.map(function (f) {
                 return '<button type="button" class="cat-tab' + (catFilter === f ? ' on' : '') + '" data-f="' + f + '" onclick="catFilterTo(\'' + f + '\')">' + catLabel(f) + '</button>';
             }).join('') +
             '</div>' +
