@@ -65,7 +65,7 @@
         .cat-qty button{width:28px;height:28px;border-radius:8px;border:1px solid rgba(148,163,184,.35);background:#1e293b;color:#fff;font-weight:800;cursor:pointer}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v175 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v176 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -3659,7 +3659,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v175 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v176 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3843,7 +3843,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=175', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=176', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -23073,6 +23073,7 @@ notify pgrst, 'reload schema';`;
             return '<div class="summary-mini" style="flex-direction:column;align-items:stretch;gap:' + (compact ? '4' : '6') + 'px;margin-bottom:' + (compact ? '6' : '10') + 'px;padding:' + (compact ? '8px 10px' : '') + ';opacity:' + (compact ? '.88' : '1') + ';">' +
                 '<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;">' +
                 '<span style="font-size:' + (compact ? '12' : '13') + 'px;"><b>' + payEsc(r.customer_name) + '</b> — ' + Number(r.amount).toLocaleString('fa-IR') + ' تومان' +
+                (r.order_code ? ' <span style="font-size:10px;direction:ltr;opacity:.9;">#' + payEsc(r.order_code) + '</span>' : '') +
                 (isInsta ? ' <span style="font-size:10px;background:linear-gradient(100deg,#f59e0b,#ef4444);color:#fff;padding:2px 6px;border-radius:6px;">اینستا</span>' : '') +
                 (compact ? '' : '<br>') +
                 '<span style="font-size:11px;opacity:.8;">' + (compact ? ' · ' : '') + payEsc(stLabel) + byMe + expTxt + '</span></span>' +
@@ -23591,6 +23592,53 @@ notify pgrst, 'reload schema';`;
     let catCart = {}; // id -> {id,name,price,qty,unit}
     let catProducts = [];
     let catFilter = 'dairy';
+    let catFormDraft = { name: '', phone: '', address: '', note: '' };
+    let catBusy = false;
+    // سبد جدا برای هر بازدیدکننده (هر مرورگر/جلسه)
+    (function catInitSession() {
+        try {
+            let sid = sessionStorage.getItem('cat_session_id');
+            if (!sid) {
+                sid = 'cs_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+                sessionStorage.setItem('cat_session_id', sid);
+            }
+            const raw = sessionStorage.getItem('cat_cart_' + sid);
+            if (raw) catCart = JSON.parse(raw) || {};
+        } catch (e) { catCart = {}; }
+    })();
+    function catPersistCart() {
+        try {
+            const sid = sessionStorage.getItem('cat_session_id') || 'cs_default';
+            sessionStorage.setItem('cat_cart_' + sid, JSON.stringify(catCart));
+        } catch (e) {}
+    }
+    function catToast(text, ok) {
+        try {
+            let el = document.getElementById('catToast');
+            if (!el) {
+                el = document.createElement('div');
+                el.id = 'catToast';
+                el.style.cssText = 'position:fixed;left:12px;right:12px;bottom:90px;z-index:9999;padding:12px 14px;border-radius:14px;text-align:center;font-weight:800;font-size:13px;line-height:1.7;box-shadow:0 10px 30px rgba(0,0,0,.45);direction:rtl;';
+                (document.getElementById('catalogPublicView') || document.body).appendChild(el);
+            }
+            el.style.background = ok ? 'linear-gradient(100deg,#065f46,#047857)' : 'linear-gradient(100deg,#7f1d1d,#b91c1c)';
+            el.style.color = '#fff';
+            el.style.display = 'block';
+            el.textContent = text;
+            clearTimeout(window._catToastT);
+            window._catToastT = setTimeout(function () { try { el.style.display = 'none'; } catch (e) {} }, 5000);
+        } catch (e) {
+            try { alert(text); } catch (e2) {}
+        }
+    }
+    function catOrderCode() {
+        const d = new Date();
+        const y = String(d.getFullYear()).slice(-2);
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const rnd = Math.floor(1000 + Math.random() * 9000);
+        return 'TM' + y + m + day + '-' + rnd;
+    }
 
     function catEsc(s) {
         return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -23696,6 +23744,7 @@ notify pgrst, 'reload schema';`;
         const key = String(p.id);
         if (!catCart[key]) catCart[key] = { id: p.id, name: p.name, price: catPrice(p), qty: 0, unit: 'کیلو' };
         catCart[key].qty = Math.round((catCart[key].qty + 0.5) * 10) / 10;
+        catPersistCart();
         catRender();
     };
     window.catMinus = function (id) {
@@ -23704,10 +23753,12 @@ notify pgrst, 'reload schema';`;
         const q = Math.round((catCart[key].qty - 0.5) * 10) / 10;
         if (q <= 0) delete catCart[key];
         else catCart[key].qty = q;
+        catPersistCart();
         catRender();
     };
     window.catRemove = function (id) {
         delete catCart[String(id)];
+        catPersistCart();
         catRender();
     };
     window.catSetQty = function (id, qty) {
@@ -23716,8 +23767,27 @@ notify pgrst, 'reload schema';`;
         qty = Math.max(0, Math.round(Number(qty) * 10) / 10);
         if (qty <= 0) delete catCart[key];
         else catCart[key].qty = qty;
+        catPersistCart();
         catRender();
     };
+    function catSaveFormDraft() {
+        try {
+            catFormDraft = {
+                name: ((document.getElementById('catName') || {}).value || ''),
+                phone: ((document.getElementById('catPhone') || {}).value || ''),
+                address: ((document.getElementById('catAddress') || {}).value || ''),
+                note: ((document.getElementById('catNote') || {}).value || '')
+            };
+        } catch (e) {}
+    }
+    function catRestoreFormDraft() {
+        try {
+            const n = document.getElementById('catName'); if (n) n.value = catFormDraft.name || '';
+            const p = document.getElementById('catPhone'); if (p) p.value = catFormDraft.phone || '';
+            const a = document.getElementById('catAddress'); if (a) a.value = catFormDraft.address || '';
+            const t = document.getElementById('catNote'); if (t) t.value = catFormDraft.note || '';
+        } catch (e) {}
+    }
     window.catFilterTo = function (f) {
         catFilter = f || 'dairy';
         catRenderGrid();
@@ -23811,19 +23881,22 @@ notify pgrst, 'reload schema';`;
             '</div>' +
             '<div style="margin-top:14px;">' +
             '<label>نام و نام خانوادگی *</label>' +
-            '<input type="text" id="catName" dir="auto" placeholder="نام کامل">' +
+            '<input type="text" id="catName" dir="auto" placeholder="نام کامل" oninput="catSaveFormDraft()">' +
             '<label>شماره تماس *</label>' +
-            '<input type="tel" id="catPhone" dir="ltr" inputmode="tel" placeholder="09xxxxxxxxx" style="text-align:left;">' +
+            '<input type="tel" id="catPhone" dir="ltr" inputmode="tel" placeholder="09xxxxxxxxx" style="text-align:left;" oninput="catSaveFormDraft()">' +
             '<label>آدرس دقیق تحویل *</label>' +
-            '<textarea id="catAddress" rows="3" dir="auto" placeholder="شهر، محله، خیابان، پلاک، واحد"></textarea>' +
+            '<textarea id="catAddress" rows="3" dir="auto" placeholder="شهر، محله، خیابان، پلاک، واحد" oninput="catSaveFormDraft()"></textarea>' +
             '<label>توضیح سفارش (اختیاری)</label>' +
-            '<input type="text" id="catNote" dir="auto" placeholder="مثلاً عصر تحویل شود">' +
-            '<button type="button" class="submit-btn" style="margin-top:12px;background:linear-gradient(100deg,#f59e0b,#ef4444);" onclick="catCheckout()">💳 ثبت سفارش و رفتن به پرداخت</button>' +
+            '<input type="text" id="catNote" dir="auto" placeholder="مثلاً عصر تحویل شود" oninput="catSaveFormDraft()">' +
+            '<div id="catCheckoutStatus" class="hint" style="margin-top:8px;min-height:20px;"></div>' +
+            '<button type="button" id="catCheckoutBtn" class="submit-btn" style="margin-top:12px;background:linear-gradient(100deg,#f59e0b,#ef4444);" onclick="catCheckout()">💳 ثبت سفارش و رفتن به پرداخت</button>' +
             '<button type="button" class="row-btn edit-btn" style="width:100%;margin-top:8px;" onclick="catCloseCart()">بستن</button>' +
             '</div>';
+        catRestoreFormDraft();
     }
 
     function catRender() {
+        catSaveFormDraft();
         catRenderGrid();
         catRenderCartBar();
         if (document.getElementById('catSheet') && document.getElementById('catSheet').style.display === 'flex') {
@@ -23832,30 +23905,50 @@ notify pgrst, 'reload schema';`;
     }
 
     window.catCheckout = async function () {
-        const name = ((document.getElementById('catName') || {}).value || '').trim();
-        const phone = ((document.getElementById('catPhone') || {}).value || '').trim();
-        const address = ((document.getElementById('catAddress') || {}).value || '').trim();
-        const note = ((document.getElementById('catNote') || {}).value || '').trim();
-        if (!name) return payGuestMsg('❌ نام را وارد کنید', false);
-        if (!phone || phone.length < 10) return payGuestMsg('❌ شماره تماس معتبر وارد کنید', false);
-        if (!address || address.length < 8) return payGuestMsg('❌ آدرس دقیق تحویل را بنویسید', false);
-        const keys = Object.keys(catCart);
-        if (!keys.length) return payGuestMsg('❌ سبد خالی است', false);
-
-        const cfg = payLoadCfg();
-        if (!cfg.card || payDigits(cfg.card).length !== 16) {
-            return payGuestMsg('❌ فروشگاه هنوز کارت را تنظیم نکرده. لطفاً دایرکت پیام دهید.', false);
+        if (catBusy) return;
+        catSaveFormDraft();
+        const name = (catFormDraft.name || '').trim();
+        let phone = (catFormDraft.phone || '').trim().replace(/[۰-۹]/g, function (d) {
+            return '۰۱۲۳۴۵۶۷۸۹'.indexOf(d);
+        }).replace(/\D/g, '');
+        const address = (catFormDraft.address || '').trim();
+        const note = (catFormDraft.note || '').trim();
+        const statusEl = document.getElementById('catCheckoutStatus');
+        const btn = document.getElementById('catCheckoutBtn');
+        function setStatus(t, ok) {
+            if (statusEl) {
+                statusEl.style.color = ok ? '#34d399' : '#f87171';
+                statusEl.textContent = t;
+            }
+            catToast(t, !!ok);
         }
+        if (!name) return setStatus('❌ نام را وارد کنید', false);
+        if (!phone || phone.length < 10) return setStatus('❌ شماره تماس معتبر وارد کنید', false);
+        if (!address || address.length < 5) return setStatus('❌ آدرس دقیق تحویل را بنویسید', false);
+        const keys = Object.keys(catCart);
+        if (!keys.length) return setStatus('❌ سبد خالی است', false);
+
+        catBusy = true;
+        if (btn) { btn.disabled = true; btn.textContent = '⏳ در حال ثبت سفارش...'; }
+        setStatus('⏳ در حال ثبت سفارش اختصاصی شما...', true);
+
+        try {
+            await payPullCfgFromCloud();
+        } catch (e) {}
+        const cfg = payLoadCfg();
+        const hasCard = cfg.card && payDigits(cfg.card).length === 16;
 
         const disc = catDiscPct();
         const sub = catCartTotal();
         const amount = catFinalTotal();
+        const orderCode = catOrderCode();
         const itemsTxt = keys.map(function (k) {
             const it = catCart[k];
             return '• ' + it.name + ' — ' + it.qty + ' کیلو × ' + it.price.toLocaleString('fa-IR') + ' = ' + (it.qty * it.price).toLocaleString('fa-IR');
         }).join('\n');
         const orderNote =
             '[سفارش اینستاگرام]\n' +
+            '🔖 شماره پیگیری: ' + orderCode + '\n' +
             '📞 ' + phone + '\n' +
             '📍 ' + address + '\n' +
             (note ? ('📝 ' + note + '\n') : '') +
@@ -23867,10 +23960,11 @@ notify pgrst, 'reload schema';`;
         const now = Date.now();
         const row = {
             token: token,
+            order_code: orderCode,
             customer_name: name,
             amount: amount,
             note: orderNote,
-            card: payDigits(cfg.card),
+            card: hasCard ? payDigits(cfg.card) : '',
             holder: cfg.holder || '',
             phone: phone,
             status: 'open',
@@ -23881,21 +23975,71 @@ notify pgrst, 'reload schema';`;
             paid_at: null,
             approved_at: null,
             address: address,
-            source: 'instagram_catalog'
+            source: 'instagram_catalog',
+            session_id: (function () { try { return sessionStorage.getItem('cat_session_id') || ''; } catch (e) { return ''; } })()
         };
 
         const local = payLocalAll();
         local.unshift(row);
         payLocalSave(local);
-        await payUpsertRemote(row);
+        let remoteOk = false;
+        try { remoteOk = await payUpsertRemote(row); } catch (e) { remoteOk = false; }
 
-        payGuestMsg('✅ سفارش ثبت شد — در حال انتقال به پرداخت...', true);
-        // برو به صفحه پرداخت همین دامنه
-        const payUrl = payLinkUrl(token);
+        // ذخیره سفارش برای پیگیری مشتری
+        try {
+            const mine = JSON.parse(localStorage.getItem('cat_my_orders_v1') || '[]');
+            mine.unshift({ order_code: orderCode, token: token, amount: amount, created_at: row.created_at, status: 'open' });
+            localStorage.setItem('cat_my_orders_v1', JSON.stringify(mine.slice(0, 30)));
+            sessionStorage.setItem('cat_last_order', orderCode);
+        } catch (e) {}
+
+        // خالی کردن سبد این جلسه بعد از ثبت
+        catCart = {};
+        catPersistCart();
+
+        if (!hasCard) {
+            setStatus('✅ سفارش ' + orderCode + ' ثبت شد. برای پرداخت در دایرکت پیام دهید.', true);
+            catBusy = false;
+            if (btn) { btn.disabled = false; btn.textContent = '💳 ثبت سفارش و رفتن به پرداخت'; }
+            // نمایش صفحه پیگیری
+            catShowOrderDone(orderCode, amount, null);
+            return;
+        }
+
+        setStatus('✅ سفارش ' + orderCode + ' ثبت شد — رفتن به پرداخت...', true);
+        const payUrl = payLinkUrl(token) + '&order=' + encodeURIComponent(orderCode);
         setTimeout(function () {
             location.href = payUrl;
-        }, 400);
+        }, 600);
     };
+
+    function catShowOrderDone(orderCode, amount, payUrl) {
+        const inner = document.getElementById('catalogPublicInner');
+        if (!inner) return;
+        const trackUrl = (function () {
+            try {
+                const u = new URL(location.href);
+                u.search = 'track=' + encodeURIComponent(orderCode);
+                return u.toString();
+            } catch (e) { return '?track=' + orderCode; }
+        })();
+        inner.innerHTML =
+            '<div style="padding:28px 16px;text-align:center;direction:rtl;">' +
+            '<div style="font-size:48px;">✅</div>' +
+            '<h2 style="margin:10px 0;color:#34d399;">سفارش ثبت شد</h2>' +
+            '<div style="font-size:13px;opacity:.85;margin-bottom:12px;">تازه مارکت</div>' +
+            '<div style="background:rgba(15,23,42,.95);border:1px solid rgba(52,211,153,.35);border-radius:16px;padding:16px;margin:12px 0;">' +
+            '<div style="font-size:12px;opacity:.8;">شماره پیگیری اختصاصی شما</div>' +
+            '<div style="font-size:26px;font-weight:900;letter-spacing:1px;margin:8px 0;color:#fbbf24;" dir="ltr">' + catEsc(orderCode) + '</div>' +
+            '<div style="font-size:14px;">مبلغ: <b>' + Number(amount).toLocaleString('fa-IR') + ' تومان</b></div>' +
+            '</div>' +
+            '<p class="hint">این شماره را نگه دارید. با همین شماره وضعیت سفارش را پیگیری کنید.</p>' +
+            (payUrl ? '<a class="submit-btn" style="display:block;text-decoration:none;margin-top:12px;" href="' + catEsc(payUrl) + '">💳 رفتن به پرداخت</a>' : '') +
+            '<button type="button" class="row-btn fill-btn" style="width:100%;margin-top:10px;" onclick="location.href=\'?catalog=1\'">🛒 بازگشت به کاتالوگ</button>' +
+            '<button type="button" class="row-btn edit-btn" style="width:100%;margin-top:8px;" onclick="navigator.clipboard&&navigator.clipboard.writeText(\'' + catEsc(orderCode) + '\');catToast(\'شماره پیگیری کپی شد\',true)">📋 کپی شماره پیگیری</button>' +
+            '</div>';
+        try { window.history.replaceState({}, '', trackUrl); } catch (e) {}
+    }
 
     async function openCatalogPublic() {
         document.documentElement.classList.add('catalog-guest-mode');
@@ -23951,6 +24095,55 @@ notify pgrst, 'reload schema';`;
         catRender();
     }
 
+    async function openTrackPublic(code) {
+        document.documentElement.classList.add('catalog-guest-mode');
+        document.title = 'پیگیری سفارش ' + code;
+        const view = document.getElementById('catalogPublicView');
+        const inner = document.getElementById('catalogPublicInner');
+        if (!view || !inner) return;
+        view.style.display = 'block';
+        const login = document.getElementById('loginScreen');
+        if (login) login.style.display = 'none';
+        inner.innerHTML = '<div style="padding:40px;text-align:center;">⏳ در حال بررسی سفارش...</div>';
+        let row = null;
+        try {
+            if (typeof _supabase !== 'undefined' && _supabase) {
+                const { data } = await _supabase.from('payment_links').select('*').eq('order_code', code).maybeSingle();
+                row = data;
+                if (!row) {
+                    const r2 = await _supabase.from('payment_links').select('*').eq('token', code).maybeSingle();
+                    row = r2.data;
+                }
+            }
+        } catch (e) {}
+        if (!row) {
+            try {
+                const local = payLocalAll().find(function (x) { return x.order_code === code || x.token === code; });
+                row = local || null;
+            } catch (e) {}
+        }
+        if (!row) {
+            inner.innerHTML = '<div style="padding:28px;text-align:center;direction:rtl;"><h2>سفارش پیدا نشد</h2><p class="hint">شماره پیگیری را بررسی کنید.</p><button class="submit-btn" onclick="location.href=\'?catalog=1\'">🛒 کاتالوگ</button></div>';
+            return;
+        }
+        const stMap = { open: 'در انتظار پرداخت', waiting: 'رسید ارسال شده — بررسی مدیر', approved: 'تأیید و آماده‌سازی', rejected: 'رد شده', expired: 'منقضی' };
+        const st = stMap[row.status] || row.status;
+        inner.innerHTML =
+            '<div style="padding:24px 14px;text-align:center;direction:rtl;">' +
+            '<div style="font-size:36px;">📦</div>' +
+            '<h2 style="color:#34d399;">پیگیری سفارش</h2>' +
+            '<div style="font-size:22px;font-weight:900;color:#fbbf24;margin:10px 0;" dir="ltr">' + catEsc(row.order_code || code) + '</div>' +
+            '<div class="summary-mini" style="flex-direction:column;gap:6px;text-align:right;margin-top:12px;">' +
+            '<div>مشتری: <b>' + catEsc(row.customer_name || '—') + '</b></div>' +
+            '<div>مبلغ: <b>' + Number(row.amount || 0).toLocaleString('fa-IR') + ' تومان</b></div>' +
+            '<div>وضعیت: <b style="color:#38bdf8;">' + catEsc(st) + '</b></div>' +
+            (row.address ? '<div>آدرس: ' + catEsc(row.address) + '</div>' : '') +
+            '</div>' +
+            (row.status === 'open' ? '<a class="submit-btn" style="display:block;margin-top:14px;text-decoration:none;" href="' + catEsc(payLinkUrl(row.token)) + '">💳 ادامه پرداخت</a>' : '') +
+            '<button type="button" class="row-btn fill-btn" style="width:100%;margin-top:10px;" onclick="location.href=\'?catalog=1\'">🛒 بازگشت به کاتالوگ</button>' +
+            '</div>';
+    }
+
     function payBoot() {
         try {
             const u = new URL(location.href);
@@ -23959,6 +24152,12 @@ notify pgrst, 'reload schema';`;
                 document.documentElement.classList.add('pay-guest-mode');
                 openPayPublic(token);
                 setTimeout(function () { openPayPublic(token); }, 200);
+                return;
+            }
+            const track = u.searchParams.get('track') || u.searchParams.get('order');
+            if (track && !u.searchParams.get('catalog')) {
+                document.documentElement.classList.add('catalog-guest-mode');
+                openTrackPublic(track);
                 return;
             }
             if (u.searchParams.get('catalog') === '1' || /catalog/i.test(u.hash || '')) {
