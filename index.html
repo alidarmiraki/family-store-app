@@ -65,7 +65,7 @@
         .cat-qty button{width:28px;height:28px;border-radius:8px;border:1px solid rgba(148,163,184,.35);background:#1e293b;color:#fff;font-weight:800;cursor:pointer}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v174 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v175 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2756,6 +2756,14 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <img id="pImagePreview" class="photo-preview" style="display:none;max-height:160px;border-radius:12px;margin-top:6px;">
         <div class="hint">عکس واضح از خود محصول بگذار تا در کاتالوگ آنلاین همان عکس نشان داده شود.</div>
 
+        <div class="report-card" style="margin:10px 0;padding:10px;border-color:rgba(245,158,11,.35);">
+            <label style="display:flex;align-items:center;gap:8px;margin-top:0;cursor:pointer;">
+                <input type="checkbox" id="pCatalogShow" style="width:auto;" checked>
+                📱 نمایش این کالا در کاتالوگ اینستاگرام (تازه مارکت)
+            </label>
+            <div class="hint" style="margin-top:4px;">فقط کالاهایی که این گزینه برایشان روشن باشد در لینک کاتالوگ مشتری دیده می‌شوند.</div>
+        </div>
+
         <label>نوع کالا:</label>
         <select id="pCategory" onchange="updatePricingAdvisor()">
             <option value="general">🧀 لبنیات و ترشیجات (عادی)</option>
@@ -3651,7 +3659,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v174 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v175 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3835,7 +3843,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=174', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=175', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -14143,8 +14151,10 @@ function sbRenderAdminLists(cfg) {
                 }
             } catch (e) {}
 
+            const catalog_show = !!(document.getElementById('pCatalogShow') && document.getElementById('pCatalogShow').checked);
+
             if (editingProductId) {
-                const updateData = { code, name, category, container_capacity: capacity, stock, booth_stock: boothStock, min_stock, booth_min_stock, sell_price, stock_confirmed_empty: false, booth_only };
+                const updateData = { code, name, category, container_capacity: capacity, stock, booth_stock: boothStock, min_stock, booth_min_stock, sell_price, stock_confirmed_empty: false, booth_only, catalog_show };
                 if (currentRole === 'admin') {
                     updateData.buy_price = buy_price;
                 }
@@ -14168,7 +14178,7 @@ function sbRenderAdminLists(cfg) {
                 }
             } else {
                 const insertRow = {
-                    code, name, category, container_capacity: capacity, stock, booth_stock: boothStock, min_stock, booth_min_stock, sell_price, buy_price, booth_only
+                    code, name, category, container_capacity: capacity, stock, booth_stock: boothStock, min_stock, booth_min_stock, sell_price, buy_price, booth_only, catalog_show
                 };
                 if (image_url) insertRow.image_url = image_url;
                 const { error } = await _supabase.from('products').insert([insertRow]);
@@ -14222,6 +14232,7 @@ function sbRenderAdminLists(cfg) {
                 const iu = document.getElementById('pImageUrl'); if (iu) iu.value = '';
                 const ifile = document.getElementById('pImageFile'); if (ifile) ifile.value = '';
                 const ip = document.getElementById('pImagePreview'); if (ip) { ip.src = ''; ip.style.display = 'none'; }
+                const cs = document.getElementById('pCatalogShow'); if (cs) cs.checked = true;
             } catch (e) {}
         }
 
@@ -14266,6 +14277,8 @@ function sbRenderAdminLists(cfg) {
                     else { ip.src = ''; ip.style.display = 'none'; }
                 }
                 const ifile = document.getElementById('pImageFile'); if (ifile) ifile.value = '';
+                const cs = document.getElementById('pCatalogShow');
+                if (cs) cs.checked = !(product.catalog_show === false || product.catalog_show === 0 || product.catalog_show === 'false');
             } catch (e) {}
             document.getElementById('pCapacity').value = product.container_capacity || 7.0;
             document.querySelector('input[name="pEntryMode"][value="direct"]').checked = true;
@@ -23587,23 +23600,34 @@ notify pgrst, 'reload schema';`;
     function catPrice(p) {
         return Number(p.sell_price) || Number(p.unit_price) || Number(p.price) || 0;
     }
+    function catNorm(s) {
+        return String(s || '')
+            .replace(/ي/g, 'ی')
+            .replace(/ك/g, 'ک')
+            .replace(/‌/g, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
     // تشخیص دقیق دسته برای کاتالوگ بر اساس نام + نوع کالا در انبار
     function catCat(p) {
-        const c = String(p.category || '');
-        const n = String(p.name || '');
-        // سوسیس و کالباس
+        const c = catNorm(p.category || '');
+        const n = catNorm(p.name || '');
+        // سوسیس و کالباس — اول
         if (c === 'sausage' || /سوسیس|کالباس|هات\s*داگ|هاتداگ|همبرگر|ژامبون|مورتادلا/.test(n)) return 'sausage';
-        // ترشیجات و شور و زیتون
+        // ترشیجات / شور / خیارشور / زیتون — قبل از لبنیات تا اشتباه نرود
         if (
             c.indexOf('ترشی') >= 0 ||
-            /ترشی|خیارشور|خیار\s*شور|زیتون|بندری|لیته|هفت\s*بیجار|سیر\s*ترشی|کلم\s*شور|فلفل\s*شور|شور\s*مخلوط|مخلوط\s*شور|بادمجان\s*شکم|شکم\s*پر|سالاد\s*فصل|ترشیجات|آلبالو\s*ترشی|گوجه\s*سبز|غوره/.test(n)
-        ) return 'pickle';
+            /ترشی|خیار\s*شور|خیارشور|شور|زیتون|بندری|لیته|هفت\s*بیجار|سیر|کلم|فلفل|مخلوط|بادمجان|شکم\s*پر|سالاد|آلبالو|گوجه\s*سبز|غوره|هویج|کرفس|خیار|زیتونون|نول/.test(n)
+        ) {
+            // اگر فقط «شیر» یا لبنیات خالص بود، ترشی نگیر
+            if (/^(ماست|پنیر|کشک|دوغ|کره|خامه)$/.test(n)) return 'dairy';
+            return 'pickle';
+        }
         // لبنیات
-        if (/پنیر|ماست|کشک|دوغ|کره|خامه|شیر|سرشیر|کفیر|سرلاکت|لور|کاله|آران/.test(n)) return 'dairy';
-        // اگر در انبار general است و نام لبنیاتی نیست، هنوز ممکن است متفرقه باشد
-        // متفرقه‌های غذایی غیرترشی/غیرلبنی (مثل بامیه، شیره، کرم کنجد) → سایر
-        if (/بامیه|شیره|عسل|کرم\s*کنجد|ارده|حلوا|مربّا|مربا|نبات|سس|رب/.test(n)) return 'other';
-        // پیش‌فرض کالاهای general بدون نشانه خاص = لبنیات (مثل قبل در سیستم انبار)
+        if (/پنیر|ماست|کشک|دوغ|کره|خامه|شیر|سرشیر|کفیر|لور|کاله|آران|سرلاکت/.test(n)) return 'dairy';
+        // سایر (شیرینی و متفرقه)
+        if (/بامیه|شیره|عسل|کرم\s*کنجد|ارده|حلوا|مربا|مربّا|نبات|سس|رب|نوتلا|شکلات/.test(n)) return 'other';
+        // پیش‌فرض: لبنیات
         return 'dairy';
     }
     function catLabel(k) {
@@ -23635,7 +23659,7 @@ notify pgrst, 'reload schema';`;
         let list = [];
         try {
             if (typeof _supabase !== 'undefined' && _supabase) {
-                const { data, error } = await _supabase.from('products').select('id,name,code,category,sell_price,unit_price,price,stock,booth_stock,image_url,photo_url').order('name');
+                const { data, error } = await _supabase.from('products').select('id,name,code,category,sell_price,unit_price,price,stock,booth_stock,image_url,photo_url,catalog_show').order('name');
                 if (!error && data) list = data;
             }
         } catch (e) {}
@@ -23645,8 +23669,12 @@ notify pgrst, 'reload schema';`;
                 if (raw) list = JSON.parse(raw) || [];
             } catch (e) {}
         }
+        // فقط کالاهایی که مدیر برای کاتالوگ اینستا فعال کرده (catalog_show !== false)
+        // اگر ستون خالی/null باشد = نمایش داده می‌شود تا مدیر بعداً خاموش کند
         catProducts = (list || []).filter(function (p) {
-            return p && p.name && catPrice(p) > 0;
+            if (!p || !p.name || !(catPrice(p) > 0)) return false;
+            if (p.catalog_show === false || p.catalog_show === 0 || p.catalog_show === 'false') return false;
+            return true;
         });
         return catProducts;
     }
@@ -23668,6 +23696,18 @@ notify pgrst, 'reload schema';`;
         const key = String(p.id);
         if (!catCart[key]) catCart[key] = { id: p.id, name: p.name, price: catPrice(p), qty: 0, unit: 'کیلو' };
         catCart[key].qty = Math.round((catCart[key].qty + 0.5) * 10) / 10;
+        catRender();
+    };
+    window.catMinus = function (id) {
+        const key = String(id);
+        if (!catCart[key]) return;
+        const q = Math.round((catCart[key].qty - 0.5) * 10) / 10;
+        if (q <= 0) delete catCart[key];
+        else catCart[key].qty = q;
+        catRender();
+    };
+    window.catRemove = function (id) {
+        delete catCart[String(id)];
         catRender();
     };
     window.catSetQty = function (id, qty) {
@@ -23706,15 +23746,23 @@ notify pgrst, 'reload schema';`;
         }
         grid.innerHTML = list.map(function (p) {
             const price = catPrice(p);
-            const inCart = catCart[String(p.id)];
+            const id = String(p.id);
+            const inCart = catCart[id];
+            const qtyBtns = inCart
+                ? ('<div class="cat-qty" style="justify-content:space-between;width:100%;margin-top:4px;">' +
+                    '<button type="button" onclick="catMinus(\'' + catEsc(id) + '\')" style="flex:1;">−</button>' +
+                    '<span style="min-width:48px;text-align:center;font-weight:800;font-size:13px;">' + inCart.qty + ' کیلو</span>' +
+                    '<button type="button" onclick="catAdd(\'' + catEsc(id) + '\')" style="flex:1;">+</button>' +
+                    '</div>' +
+                    '<button type="button" onclick="catRemove(\'' + catEsc(id) + '\')" style="margin-top:6px;background:linear-gradient(100deg,#ef4444,#b91c1c);">🗑️ حذف از سبد</button>')
+                : ('<button type="button" onclick="catAdd(\'' + catEsc(id) + '\')">➕ افزودن</button>');
             return '<div class="cat-card">' +
                 catImgHtml(p) +
                 '<div class="cn">' + catEsc(p.name) + '</div>' +
                 '<div class="cp">' + price.toLocaleString('fa-IR') + ' <span style="font-size:11px;">تومان</span></div>' +
                 '<div class="cu">قیمت هر کیلو · ' + catLabel(catCat(p)) + '</div>' +
-                '<button type="button" onclick="catAdd(\'' + catEsc(String(p.id)) + '\')">' +
-                (inCart ? ('در سبد: ' + inCart.qty + ' کیلو · +') : '➕ افزودن') +
-                '</button></div>';
+                qtyBtns +
+                '</div>';
         }).join('');
     }
 
@@ -23750,9 +23798,10 @@ notify pgrst, 'reload schema';`;
                 return '<div class="cat-line"><div style="flex:1;"><b>' + catEsc(it.name) + '</b><br><span style="font-size:11px;opacity:.8;">' +
                     it.price.toLocaleString('fa-IR') + ' تومان / کیلو</span></div>' +
                     '<div class="cat-qty">' +
-                    '<button type="button" onclick="catSetQty(\'' + catEsc(k) + '\',' + (it.qty - 0.5) + ')">−</button>' +
+                    '<button type="button" onclick="catMinus(\'' + catEsc(k) + '\')">−</button>' +
                     '<span style="min-width:36px;text-align:center;font-weight:800;">' + it.qty + '</span>' +
-                    '<button type="button" onclick="catSetQty(\'' + catEsc(k) + '\',' + (it.qty + 0.5) + ')">+</button>' +
+                    '<button type="button" onclick="catAdd(\'' + catEsc(k) + '\')">+</button>' +
+                    '<button type="button" onclick="catRemove(\'' + catEsc(k) + '\')" title="حذف" style="border-color:rgba(239,68,68,.5);color:#fca5a5;">🗑️</button>' +
                     '</div></div>';
             }).join('') +
             '<div style="margin-top:12px;padding:10px;border-radius:12px;background:rgba(15,23,42,.9);border:1px solid rgba(148,163,184,.2);">' +
