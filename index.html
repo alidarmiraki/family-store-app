@@ -14,12 +14,16 @@
                 var saved = localStorage.getItem('boothThemeMode');
                 if (saved === 'light') document.documentElement.classList.add('light-theme');
             } catch (e) {}
-            // لینک پرداخت مشتری: از همان اول فقط صفحه پرداخت — بدون ورود/تب‌های سایت
+            // لینک پرداخت / کاتالوگ: از همان اول فقط همان صفحه — بدون ورود/تب‌های سایت
             try {
                 var q = location.search || '';
                 var h = location.hash || '';
                 if (/[?&]pay=/.test(q) || /#pay[/=]/.test(h)) {
                     document.documentElement.classList.add('pay-guest-mode');
+                    document.documentElement.style.background = '#0b1220';
+                }
+                if (/[?&]catalog=/.test(q) || /#catalog/.test(h)) {
+                    document.documentElement.classList.add('catalog-guest-mode');
                     document.documentElement.style.background = '#0b1220';
                 }
             } catch (e2) {}
@@ -29,9 +33,34 @@
         html.pay-guest-mode body > *:not(#payPublicView) { display: none !important; }
         html.pay-guest-mode #payPublicView { display: block !important; min-height: 100vh; padding: 12px 8px 40px; }
         html.pay-guest-mode body { background: #0b1220 !important; margin: 0; }
+        html.catalog-guest-mode body > *:not(#catalogPublicView) { display: none !important; }
+        html.catalog-guest-mode #catalogPublicView { display: block !important; min-height: 100vh; }
+        html.catalog-guest-mode body { background: #0b1220 !important; margin: 0; }
+        .cat-hero{text-align:center;padding:22px 14px 10px;background:linear-gradient(160deg,#0f172a 0%,#1e293b 50%,#0f766e 140%);border-radius:0 0 24px 24px;margin-bottom:12px}
+        .cat-hero h1{margin:8px 0 4px;font-size:22px;font-weight:900;background:linear-gradient(90deg,#fbbf24,#34d399,#38bdf8);-webkit-background-clip:text;background-clip:text;color:transparent}
+        .cat-badge{display:inline-block;background:linear-gradient(100deg,#f59e0b,#ef4444);color:#fff;font-size:11px;font-weight:800;padding:5px 12px;border-radius:999px;margin-top:6px;box-shadow:0 4px 14px rgba(245,158,11,.35)}
+        .cat-tabs{display:flex;gap:6px;overflow-x:auto;padding:0 10px 8px;-webkit-overflow-scrolling:touch}
+        .cat-tab{flex:0 0 auto;border:1px solid rgba(148,163,184,.3);background:rgba(15,23,42,.8);color:#e2e8f0;border-radius:999px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer}
+        .cat-tab.on{background:linear-gradient(100deg,#0ea5e9,#6366f1);border-color:transparent;color:#fff}
+        .cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:8px 10px 100px}
+        .cat-card{background:rgba(15,23,42,.92);border:1px solid rgba(148,163,184,.22);border-radius:16px;padding:10px;display:flex;flex-direction:column;gap:6px;overflow:hidden}
+        .cat-img-wrap{width:100%;aspect-ratio:1/1;border-radius:12px;overflow:hidden;background:linear-gradient(145deg,#1e293b,#0f172a);position:relative}
+        .cat-img-wrap img{width:100%;height:100%;object-fit:cover;display:block}
+        .cat-emoji{position:absolute;inset:0;align-items:center;justify-content:center;font-size:42px;background:linear-gradient(145deg,rgba(30,41,59,.9),rgba(15,23,42,.95))}
+        .cat-card .cn{font-weight:800;font-size:13px;line-height:1.5;min-height:2.6em}
+        .cat-card .cp{color:#fbbf24;font-weight:900;font-size:14px}
+        .cat-card .cu{font-size:10px;opacity:.7}
+        .cat-card button{border:0;border-radius:12px;padding:9px;font:inherit;font-weight:800;cursor:pointer;background:linear-gradient(100deg,#10b981,#059669);color:#fff}
+        .cat-cartbar{position:fixed;left:10px;right:10px;bottom:12px;z-index:50;background:linear-gradient(100deg,#0f172a,#1e293b);border:1px solid rgba(56,189,248,.4);border-radius:18px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 12px 40px rgba(0,0,0,.5)}
+        .cat-cartbar button{border:0;border-radius:12px;padding:10px 16px;font:inherit;font-weight:800;background:linear-gradient(100deg,#f59e0b,#ef4444);color:#fff;cursor:pointer}
+        .cat-sheet{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.65);display:flex;align-items:flex-end;justify-content:center}
+        .cat-sheet-in{width:min(100%,480px);max-height:92vh;overflow:auto;background:#0f172a;border-radius:20px 20px 0 0;padding:16px;border:1px solid rgba(148,163,184,.25);direction:rtl}
+        .cat-line{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(148,163,184,.15);font-size:13px}
+        .cat-qty{display:flex;align-items:center;gap:6px}
+        .cat-qty button{width:28px;height:28px;border-radius:8px;border:1px solid rgba(148,163,184,.35);background:#1e293b;color:#fff;font-weight:800;cursor:pointer}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v171 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v173 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -1975,6 +2004,11 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="payPublicInner"></div>
     </div>
 
+    <!-- کاتالوگ عمومی اینستاگرام / سفارش آنلاین -->
+    <div id="catalogPublicView" style="display:none;max-width:480px;margin:0 auto;direction:rtl;">
+        <div id="catalogPublicInner"></div>
+    </div>
+
     <!-- صفحه ورود -->
     <div id="loginScreen" class="login-box login-fancy" style="max-width:380px; margin:40px auto 0; animation: cardFadeIn 0.4s ease;">
         <div class="lg-aurora"><i></i><i></i><i></i></div>
@@ -2703,6 +2737,12 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <label>نام محصول:</label>
         <input type="text" id="pName" dir="auto" placeholder="مثلاً پنیر محلی">
 
+        <label>📷 عکس محصول (برای کاتالوگ اینستا):</label>
+        <input type="file" id="pImageFile" accept="image/*" onchange="previewProductImage(event)">
+        <input type="hidden" id="pImageUrl" value="">
+        <img id="pImagePreview" class="photo-preview" style="display:none;max-height:160px;border-radius:12px;margin-top:6px;">
+        <div class="hint">عکس واضح از خود محصول بگذار تا در کاتالوگ آنلاین همان عکس نشان داده شود.</div>
+
         <label>نوع کالا:</label>
         <select id="pCategory" onchange="updatePricingAdvisor()">
             <option value="general">🧀 لبنیات و ترشیجات (عادی)</option>
@@ -3305,7 +3345,20 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             <input type="text" id="payCfgPhone" dir="ltr" inputmode="tel" placeholder="09xxxxxxxxx" style="text-align:left;">
             <label>مهلت پیش‌فرض (دقیقه):</label>
             <input type="number" id="payCfgMins" min="15" max="1440" value="180" style="direction:ltr;text-align:left;">
+            <label>تخفیف ویژه اینستاگرام (درصد):</label>
+            <input type="number" id="payCfgInstaDisc" min="0" max="50" value="0" style="direction:ltr;text-align:left;" placeholder="مثلاً 5">
+            <label>آدرس عمومی سایت / دامنه اختصاصی (برای لینک کاتالوگ و پرداخت):</label>
+            <input type="url" id="payCfgCatalogBase" dir="ltr" placeholder="https://example.com" style="text-align:left;direction:ltr;">
+            <div class="hint">اگر دامنه خودت را به سایت وصل کرده‌ای، اینجا بنویس تا لینک دایرکت دیگر github.io نباشد. خالی = همان آدرسی که الان با آن وارد شده‌ای.</div>
             <button type="button" class="submit-btn" style="margin-top:8px;" onclick="savePayLinkSettings()">💾 ذخیره تنظیمات</button>
+        </div>
+
+        <div id="payCatalogShareBox" class="report-card" style="margin-top:12px;border-color:rgba(245,158,11,.4);">
+            <h3>📱 کاتالوگ اینستاگرام</h3>
+            <div class="hint">این لینک را در دایرکت برای مشتری بفرست. برای عکس‌دار شدن کاتالوگ، در «تعریف کالا» برای هر محصول عکس آپلود کن.</div>
+            <div id="payCatalogLinkBox" class="hint" style="direction:ltr;text-align:left;word-break:break-all;margin:8px 0;"></div>
+            <button type="button" class="row-btn fill-btn" style="width:100%;" onclick="copyCatalogLink()">📋 کپی لینک کاتالوگ</button>
+            <button type="button" class="submit-btn" style="margin-top:8px;background:linear-gradient(100deg,#f59e0b,#ef4444);" onclick="copyCatalogDmMessage()">📋 کپی پیام آماده برای دایرکت</button>
         </div>
 
         <div id="paySellerInfoBox" class="report-card" style="margin-top:10px;display:none;border-color:rgba(16,185,129,.35);">
@@ -3585,7 +3638,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v171 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v173 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3769,7 +3822,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=171', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=173', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -14060,11 +14113,29 @@ function sbRenderAdminLists(cfg) {
                 if (!sure2) return;
             }
 
+            // آپلود عکس محصول (برای کاتالوگ)
+            let image_url = (document.getElementById('pImageUrl') && document.getElementById('pImageUrl').value) || '';
+            try {
+                const fileInput = document.getElementById('pImageFile');
+                if (fileInput && fileInput.files && fileInput.files[0] && _supabase) {
+                    showToast('⏳ در حال آپلود عکس محصول...');
+                    const file = fileInput.files[0];
+                    const path = 'products/' + (code || Date.now()) + '_' + Date.now() + '.jpg';
+                    const buf = await file.arrayBuffer();
+                    const up = await _supabase.storage.from('product-images').upload(path, buf, { contentType: file.type || 'image/jpeg', upsert: true });
+                    if (!up.error) {
+                        const { data: pub } = _supabase.storage.from('product-images').getPublicUrl(path);
+                        if (pub && pub.publicUrl) image_url = pub.publicUrl;
+                    }
+                }
+            } catch (e) {}
+
             if (editingProductId) {
                 const updateData = { code, name, category, container_capacity: capacity, stock, booth_stock: boothStock, min_stock, booth_min_stock, sell_price, stock_confirmed_empty: false, booth_only };
                 if (currentRole === 'admin') {
                     updateData.buy_price = buy_price;
                 }
+                if (image_url) updateData.image_url = image_url;
                 const { error } = await _supabase.from('products').update(updateData).eq('id', editingProductId);
 
                 if (error) {
@@ -14072,7 +14143,7 @@ function sbRenderAdminLists(cfg) {
                 } else {
                     showToast('✅ کالا با موفقیت به‌روزرسانی شد');
                     logInventoryChange(name, 'ویرایش کالا', `موجودی انبار: ${stock} کیلوگرم | موجودی غرفه: ${boothStock} کیلوگرم`);
-                    try { if (cachedInventoryFull) { const ix = cachedInventoryFull.findIndex(x => String(x.id) === String(editingProductId)); if (ix >= 0) { cachedInventoryFull[ix] = Object.assign({}, cachedInventoryFull[ix], { name, code, sell_price, buy_price, category }); } } refreshPriceChangeBanner(); } catch (e) {}
+                    try { if (cachedInventoryFull) { const ix = cachedInventoryFull.findIndex(x => String(x.id) === String(editingProductId)); if (ix >= 0) { cachedInventoryFull[ix] = Object.assign({}, cachedInventoryFull[ix], { name, code, sell_price, buy_price, category, image_url: image_url || cachedInventoryFull[ix].image_url }); } } refreshPriceChangeBanner(); } catch (e) {}
                     // cancelEdit خودش restoreInventoryView را صدا می‌زند اگر invReturnState باشد
                     const hadReturn = !!invReturnState;
                     cancelEdit();
@@ -14083,9 +14154,11 @@ function sbRenderAdminLists(cfg) {
                     loadProductDatalist();
                 }
             } else {
-                const { error } = await _supabase.from('products').insert([{
+                const insertRow = {
                     code, name, category, container_capacity: capacity, stock, booth_stock: boothStock, min_stock, booth_min_stock, sell_price, buy_price, booth_only
-                }]);
+                };
+                if (image_url) insertRow.image_url = image_url;
+                const { error } = await _supabase.from('products').insert([insertRow]);
 
                 if (error) {
                     showToast(buildProductSaveErrorMessage(error, code));
@@ -14132,7 +14205,23 @@ function sbRenderAdminLists(cfg) {
             document.getElementById('pSellPriceFormatted').innerText = '';
             document.getElementById('pBuyPrice').value = '';
             document.getElementById('pBuyPriceFormatted').innerText = '';
+            try {
+                const iu = document.getElementById('pImageUrl'); if (iu) iu.value = '';
+                const ifile = document.getElementById('pImageFile'); if (ifile) ifile.value = '';
+                const ip = document.getElementById('pImagePreview'); if (ip) { ip.src = ''; ip.style.display = 'none'; }
+            } catch (e) {}
         }
+
+        window.previewProductImage = function (ev) {
+            try {
+                const file = ev && ev.target && ev.target.files && ev.target.files[0];
+                const ip = document.getElementById('pImagePreview');
+                if (!file || !ip) return;
+                const url = URL.createObjectURL(file);
+                ip.src = url;
+                ip.style.display = 'block';
+            } catch (e) {}
+        };
 
         function editProductById(pId) {
             const product = cachedProductsList.find(item => String(item.id) === String(pId));
@@ -14155,6 +14244,16 @@ function sbRenderAdminLists(cfg) {
             document.getElementById('pCode').value = product.code || '';
             document.getElementById('pName').value = product.name || '';
             document.getElementById('pCategory').value = product.category || 'general';
+            try {
+                const imgUrl = product.image_url || product.photo_url || '';
+                const iu = document.getElementById('pImageUrl'); if (iu) iu.value = imgUrl;
+                const ip = document.getElementById('pImagePreview');
+                if (ip) {
+                    if (imgUrl) { ip.src = imgUrl; ip.style.display = 'block'; }
+                    else { ip.src = ''; ip.style.display = 'none'; }
+                }
+                const ifile = document.getElementById('pImageFile'); if (ifile) ifile.value = '';
+            } catch (e) {}
             document.getElementById('pCapacity').value = product.container_capacity || 7.0;
             document.querySelector('input[name="pEntryMode"][value="direct"]').checked = true;
             document.getElementById('pGrossStock').value = '';
@@ -22571,6 +22670,14 @@ notify pgrst, 'reload schema';`;
         return location.origin + location.pathname.replace(/\/$/, '') + (location.pathname.endsWith('.html') ? '' : (location.pathname.endsWith('/') ? '' : '/'));
     }
     function payLinkUrl(token) {
+        try {
+            const cfg = payLoadCfg();
+            let base = (cfg.catalogBase || '').replace(/\/$/, '');
+            if (base) {
+                if (!/^https?:\/\//i.test(base)) base = 'https://' + base;
+                return base + (base.indexOf('?') >= 0 ? '&' : '?') + 'pay=' + encodeURIComponent(token);
+            }
+        } catch (e) {}
         const u = new URL(location.href);
         u.search = '';
         u.hash = '';
@@ -22718,11 +22825,18 @@ notify pgrst, 'reload schema';`;
         const holder = (document.getElementById('payCfgHolder').value || '').trim();
         const phone = (document.getElementById('payCfgPhone').value || '').trim();
         const mins = parseInt(document.getElementById('payCfgMins').value, 10) || 180;
+        const instaDisc = Math.max(0, Math.min(50, parseInt(document.getElementById('payCfgInstaDisc').value, 10) || 0));
+        let catalogBase = (document.getElementById('payCfgCatalogBase').value || '').trim();
+        if (catalogBase) {
+            catalogBase = catalogBase.replace(/\/$/, '');
+            if (!/^https?:\/\//i.test(catalogBase)) catalogBase = 'https://' + catalogBase;
+        }
         if (card.length !== 16) return showToast('❌ شماره کارت باید ۱۶ رقم باشد');
-        const cfg = { card: card, holder: holder, phone: phone, mins: mins };
+        const cfg = { card: card, holder: holder, phone: phone, mins: mins, instaDisc: instaDisc, catalogBase: catalogBase };
         paySaveCfg(cfg);
         await payPushCfgToCloud(cfg);
         showToast('✅ تنظیمات پرداخت ذخیره و برای همه همگام شد');
+        try { window.renderCatalogShareBox && window.renderCatalogShareBox(); } catch (e) {}
     };
 
     window.loadPayLinkTab = async function () {
@@ -22759,11 +22873,58 @@ notify pgrst, 'reload schema';`;
         const h = document.getElementById('payCfgHolder');
         const p = document.getElementById('payCfgPhone');
         const m = document.getElementById('payCfgMins');
+        const d = document.getElementById('payCfgInstaDisc');
+        const b = document.getElementById('payCfgCatalogBase');
         if (c) c.value = cfg.card ? payFmtCard(cfg.card) : '';
         if (h) h.value = cfg.holder || '';
         if (p) p.value = cfg.phone || '';
         if (m) m.value = cfg.mins || 180;
+        if (d) d.value = cfg.instaDisc || 0;
+        if (b) b.value = cfg.catalogBase || '';
+        try { window.renderCatalogShareBox && window.renderCatalogShareBox(); } catch (e) {}
         await renderPayLinkList();
+    };
+
+    window.catalogPublicUrl = function () {
+        try {
+            const cfg = payLoadCfg();
+            let base = (cfg.catalogBase || '').replace(/\/$/, '');
+            if (base) {
+                if (!/^https?:\/\//i.test(base)) base = 'https://' + base;
+                return base + (base.indexOf('?') >= 0 ? '&' : '?') + 'catalog=1';
+            }
+            const u = new URL(location.href);
+            u.search = '';
+            u.hash = '';
+            let path = u.origin + u.pathname;
+            if (!/\.html?$/i.test(path) && !path.endsWith('/')) path += '/';
+            return path + (path.indexOf('?') >= 0 ? '&' : '?') + 'catalog=1';
+        } catch (e) {
+            return location.origin + location.pathname + '?catalog=1';
+        }
+    };
+    window.renderCatalogShareBox = function () {
+        const box = document.getElementById('payCatalogLinkBox');
+        if (box) box.textContent = window.catalogPublicUrl();
+    };
+    window.copyCatalogLink = function () {
+        const url = window.catalogPublicUrl();
+        payCopy(url, 'لینک کاتالوگ کپی شد');
+    };
+    window.copyCatalogDmMessage = function () {
+        const cfg = payLoadCfg();
+        const disc = cfg.instaDisc || 0;
+        const url = window.catalogPublicUrl();
+        const msg =
+            'سلام 👋\n' +
+            'به غرفه فامیلی خوش آمدید 🧀🥒🌭\n\n' +
+            '📦 کاتالوگ محصولات و سفارش آنلاین:\n' +
+            url + '\n\n' +
+            (disc > 0 ? ('🎁 با سفارش از این لینک، ' + disc + '٪ تخفیف ویژه اینستاگرام دارید!\n\n') : '') +
+            'محصولات را انتخاب کنید، آدرس تحویل را بنویسید و آنلاین پرداخت کنید.\n' +
+            'بعد از تأیید پرداخت، سفارشتان آماده‌ی ارسال می‌شود 🙏' +
+            (cfg.phone ? ('\n📞 پشتیبانی: ' + cfg.phone) : '');
+        payCopy(msg, 'پیام دایرکت کپی شد');
     };
 
     window.createPayLink = async function () {
@@ -22872,6 +23033,7 @@ notify pgrst, 'reload schema';`;
                 ? (' · باقی‌مانده: ' + Math.floor(expLeft / 60000) + 'د ' + Math.floor((expLeft % 60000) / 1000) + 'ث')
                 : '';
             const compact = (st === 'approved' || st === 'expired' || st === 'rejected');
+            const isInsta = (r.note && String(r.note).indexOf('[سفارش اینستاگرام]') >= 0) || r.source === 'instagram_catalog';
             const receiptBlock = r.receipt_url ? (
                 isAdmin
                     ? (compact
@@ -22879,12 +23041,17 @@ notify pgrst, 'reload schema';`;
                         : '<div style="margin:4px 0;"><a href="' + payEsc(r.receipt_url) + '" target="_blank" rel="noopener"><img src="' + payEsc(r.receipt_url) + '" alt="رسید" style="max-width:100%;max-height:140px;border-radius:12px;border:1px solid rgba(148,163,184,.3);"></a><div style="font-size:11px;margin-top:4px;"><a href="' + payEsc(r.receipt_url) + '" target="_blank" style="color:#38bdf8;">👁️ مشاهده تمام‌صفحه</a></div></div>')
                     : '<span style="font-size:12px;color:#34d399;">📷 رسید ارسال شده — منتظر تأیید مدیر</span>'
             ) : '';
+            const orderBlock = (!compact && r.note && isInsta)
+                ? '<div style="font-size:11px;line-height:1.7;margin:4px 0;padding:8px;border-radius:10px;background:rgba(15,23,42,.6);white-space:pre-wrap;border:1px solid rgba(245,158,11,.25);">' + payEsc(r.note) + '</div>'
+                : '';
             return '<div class="summary-mini" style="flex-direction:column;align-items:stretch;gap:' + (compact ? '4' : '6') + 'px;margin-bottom:' + (compact ? '6' : '10') + 'px;padding:' + (compact ? '8px 10px' : '') + ';opacity:' + (compact ? '.88' : '1') + ';">' +
                 '<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;">' +
                 '<span style="font-size:' + (compact ? '12' : '13') + 'px;"><b>' + payEsc(r.customer_name) + '</b> — ' + Number(r.amount).toLocaleString('fa-IR') + ' تومان' +
+                (isInsta ? ' <span style="font-size:10px;background:linear-gradient(100deg,#f59e0b,#ef4444);color:#fff;padding:2px 6px;border-radius:6px;">اینستا</span>' : '') +
                 (compact ? '' : '<br>') +
-                '<span style="font-size:11px;opacity:.8;">' + (compact ? ' · ' : '') + payEsc(stLabel) + byMe + expTxt + (r.note ? ' · ' + payEsc(r.note) : '') + '</span></span>' +
+                '<span style="font-size:11px;opacity:.8;">' + (compact ? ' · ' : '') + payEsc(stLabel) + byMe + expTxt + '</span></span>' +
                 '</div>' +
+                orderBlock +
                 receiptBlock +
                 '<div style="display:flex;gap:6px;flex-wrap:wrap;">' +
                 (compact ? '' : '<button type="button" class="row-btn fill-btn" style="flex:1;font-size:11px;" onclick="navigator.clipboard.writeText(' + JSON.stringify(url) + ').then(function(){showToast(\'📋 لینک کپی شد\')})">کپی لینک</button>' +
@@ -23394,15 +23561,316 @@ notify pgrst, 'reload schema';`;
         }, 1000);
     }
 
+    /* ========== کاتالوگ اینستاگرام / سفارش آنلاین ========== */
+    let catCart = {}; // id -> {id,name,price,qty,unit}
+    let catProducts = [];
+    let catFilter = 'all';
+
+    function catEsc(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+            return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+        });
+    }
+    function catPrice(p) {
+        return Number(p.sell_price) || Number(p.unit_price) || Number(p.price) || 0;
+    }
+    function catCat(p) {
+        const c = String(p.category || '');
+        if (c === 'sausage' || c.indexOf('سوسیس') >= 0 || c.indexOf('کالباس') >= 0) return 'sausage';
+        if (c.indexOf('ترشی') >= 0) return 'pickle';
+        return 'dairy';
+    }
+    function catLabel(k) {
+        return ({ all: 'همه', dairy: '🧀 لبنیات', pickle: '🥒 ترشیجات', sausage: '🌭 سوسیس‌وکالباس' })[k] || k;
+    }
+    function catCartCount() {
+        return Object.keys(catCart).reduce(function (s, k) { return s + (catCart[k].qty || 0); }, 0);
+    }
+    function catCartTotal() {
+        return Object.keys(catCart).reduce(function (s, k) {
+            const it = catCart[k];
+            return s + (it.price * it.qty);
+        }, 0);
+    }
+    function catDiscPct() {
+        const cfg = payLoadCfg();
+        return Math.max(0, Math.min(50, Number(cfg.instaDisc) || 0));
+    }
+    function catFinalTotal() {
+        const t = catCartTotal();
+        const d = catDiscPct();
+        return Math.max(0, Math.round(t * (1 - d / 100)));
+    }
+
+    async function catLoadProducts() {
+        let list = [];
+        try {
+            if (typeof _supabase !== 'undefined' && _supabase) {
+                const { data, error } = await _supabase.from('products').select('id,name,code,category,sell_price,unit_price,price,stock,booth_stock,image_url,photo_url').order('name');
+                if (!error && data) list = data;
+            }
+        } catch (e) {}
+        if (!list.length) {
+            try {
+                const raw = localStorage.getItem('offline_products_v1');
+                if (raw) list = JSON.parse(raw) || [];
+            } catch (e) {}
+        }
+        catProducts = (list || []).filter(function (p) {
+            return p && p.name && catPrice(p) > 0;
+        });
+        return catProducts;
+    }
+    function catImg(p) {
+        return p.image_url || p.photo_url || '';
+    }
+    function catImgHtml(p) {
+        const src = catImg(p);
+        const emoji = catCat(p) === 'sausage' ? '🌭' : (catCat(p) === 'pickle' ? '🥒' : '🧀');
+        if (src) {
+            return '<div class="cat-img-wrap"><img src="' + catEsc(src) + '" alt="' + catEsc(p.name) + '" loading="lazy" onerror="this.style.display=\'none\';this.parentNode.querySelector(\'.cat-emoji\').style.display=\'flex\'"><div class="cat-emoji" style="display:none">' + emoji + '</div></div>';
+        }
+        return '<div class="cat-img-wrap"><div class="cat-emoji" style="display:flex">' + emoji + '</div></div>';
+    }
+
+    window.catAdd = function (id) {
+        const p = catProducts.find(function (x) { return String(x.id) === String(id); });
+        if (!p) return;
+        const key = String(p.id);
+        if (!catCart[key]) catCart[key] = { id: p.id, name: p.name, price: catPrice(p), qty: 0, unit: 'کیلو' };
+        catCart[key].qty = Math.round((catCart[key].qty + 0.5) * 10) / 10;
+        catRender();
+    };
+    window.catSetQty = function (id, qty) {
+        const key = String(id);
+        if (!catCart[key]) return;
+        qty = Math.max(0, Math.round(Number(qty) * 10) / 10);
+        if (qty <= 0) delete catCart[key];
+        else catCart[key].qty = qty;
+        catRender();
+    };
+    window.catFilterTo = function (f) {
+        catFilter = f || 'all';
+        catRenderGrid();
+        document.querySelectorAll('.cat-tab').forEach(function (el) {
+            el.classList.toggle('on', el.getAttribute('data-f') === catFilter);
+        });
+    };
+    window.catOpenCart = function () {
+        const sheet = document.getElementById('catSheet');
+        if (sheet) sheet.style.display = 'flex';
+        catRenderCartSheet();
+    };
+    window.catCloseCart = function () {
+        const sheet = document.getElementById('catSheet');
+        if (sheet) sheet.style.display = 'none';
+    };
+
+    function catRenderGrid() {
+        const grid = document.getElementById('catGrid');
+        if (!grid) return;
+        let list = catProducts;
+        if (catFilter !== 'all') list = list.filter(function (p) { return catCat(p) === catFilter; });
+        if (!list.length) {
+            grid.innerHTML = '<p class="hint" style="grid-column:1/-1;text-align:center;padding:30px;">فعلاً محصولی برای نمایش نیست.</p>';
+            return;
+        }
+        grid.innerHTML = list.map(function (p) {
+            const price = catPrice(p);
+            const inCart = catCart[String(p.id)];
+            return '<div class="cat-card">' +
+                catImgHtml(p) +
+                '<div class="cn">' + catEsc(p.name) + '</div>' +
+                '<div class="cp">' + price.toLocaleString('fa-IR') + ' <span style="font-size:11px;">تومان</span></div>' +
+                '<div class="cu">قیمت هر کیلو · ' + catLabel(catCat(p)) + '</div>' +
+                '<button type="button" onclick="catAdd(\'' + catEsc(String(p.id)) + '\')">' +
+                (inCart ? ('در سبد: ' + inCart.qty + ' کیلو · +') : '➕ افزودن') +
+                '</button></div>';
+        }).join('');
+    }
+
+    function catRenderCartBar() {
+        const bar = document.getElementById('catCartBar');
+        if (!bar) return;
+        const n = catCartCount();
+        const total = catFinalTotal();
+        const disc = catDiscPct();
+        if (n <= 0) { bar.style.display = 'none'; return; }
+        bar.style.display = 'flex';
+        bar.innerHTML =
+            '<div><b>' + n.toLocaleString('fa-IR') + '</b> قلم<br><span style="color:#fbbf24;font-weight:800;">' +
+            total.toLocaleString('fa-IR') + ' تومان</span>' +
+            (disc > 0 ? '<br><span style="font-size:10px;opacity:.8;">با ' + disc + '٪ تخفیف اینستا</span>' : '') +
+            '</div><button type="button" onclick="catOpenCart()">سبد و ثبت سفارش</button>';
+    }
+
+    function catRenderCartSheet() {
+        const body = document.getElementById('catSheetBody');
+        if (!body) return;
+        const keys = Object.keys(catCart);
+        if (!keys.length) {
+            body.innerHTML = '<p class="hint">سبد خالی است.</p>';
+            return;
+        }
+        const disc = catDiscPct();
+        const sub = catCartTotal();
+        const fin = catFinalTotal();
+        body.innerHTML =
+            keys.map(function (k) {
+                const it = catCart[k];
+                return '<div class="cat-line"><div style="flex:1;"><b>' + catEsc(it.name) + '</b><br><span style="font-size:11px;opacity:.8;">' +
+                    it.price.toLocaleString('fa-IR') + ' تومان / کیلو</span></div>' +
+                    '<div class="cat-qty">' +
+                    '<button type="button" onclick="catSetQty(\'' + catEsc(k) + '\',' + (it.qty - 0.5) + ')">−</button>' +
+                    '<span style="min-width:36px;text-align:center;font-weight:800;">' + it.qty + '</span>' +
+                    '<button type="button" onclick="catSetQty(\'' + catEsc(k) + '\',' + (it.qty + 0.5) + ')">+</button>' +
+                    '</div></div>';
+            }).join('') +
+            '<div style="margin-top:12px;padding:10px;border-radius:12px;background:rgba(15,23,42,.9);border:1px solid rgba(148,163,184,.2);">' +
+            '<div style="display:flex;justify-content:space-between;"><span>جمع</span><b>' + sub.toLocaleString('fa-IR') + ' تومان</b></div>' +
+            (disc > 0 ? '<div style="display:flex;justify-content:space-between;color:#34d399;"><span>تخفیف اینستا ' + disc + '٪</span><b>−' + (sub - fin).toLocaleString('fa-IR') + '</b></div>' : '') +
+            '<div style="display:flex;justify-content:space-between;margin-top:6px;font-size:15px;"><span>قابل پرداخت</span><b style="color:#fbbf24;">' + fin.toLocaleString('fa-IR') + ' تومان</b></div>' +
+            '</div>' +
+            '<div style="margin-top:14px;">' +
+            '<label>نام و نام خانوادگی *</label>' +
+            '<input type="text" id="catName" dir="auto" placeholder="نام کامل">' +
+            '<label>شماره تماس *</label>' +
+            '<input type="tel" id="catPhone" dir="ltr" inputmode="tel" placeholder="09xxxxxxxxx" style="text-align:left;">' +
+            '<label>آدرس دقیق تحویل *</label>' +
+            '<textarea id="catAddress" rows="3" dir="auto" placeholder="شهر، محله، خیابان، پلاک، واحد"></textarea>' +
+            '<label>توضیح سفارش (اختیاری)</label>' +
+            '<input type="text" id="catNote" dir="auto" placeholder="مثلاً عصر تحویل شود">' +
+            '<button type="button" class="submit-btn" style="margin-top:12px;background:linear-gradient(100deg,#f59e0b,#ef4444);" onclick="catCheckout()">💳 ثبت سفارش و رفتن به پرداخت</button>' +
+            '<button type="button" class="row-btn edit-btn" style="width:100%;margin-top:8px;" onclick="catCloseCart()">بستن</button>' +
+            '</div>';
+    }
+
+    function catRender() {
+        catRenderGrid();
+        catRenderCartBar();
+        if (document.getElementById('catSheet') && document.getElementById('catSheet').style.display === 'flex') {
+            catRenderCartSheet();
+        }
+    }
+
+    window.catCheckout = async function () {
+        const name = ((document.getElementById('catName') || {}).value || '').trim();
+        const phone = ((document.getElementById('catPhone') || {}).value || '').trim();
+        const address = ((document.getElementById('catAddress') || {}).value || '').trim();
+        const note = ((document.getElementById('catNote') || {}).value || '').trim();
+        if (!name) return payGuestMsg('❌ نام را وارد کنید', false);
+        if (!phone || phone.length < 10) return payGuestMsg('❌ شماره تماس معتبر وارد کنید', false);
+        if (!address || address.length < 8) return payGuestMsg('❌ آدرس دقیق تحویل را بنویسید', false);
+        const keys = Object.keys(catCart);
+        if (!keys.length) return payGuestMsg('❌ سبد خالی است', false);
+
+        const cfg = payLoadCfg();
+        if (!cfg.card || payDigits(cfg.card).length !== 16) {
+            return payGuestMsg('❌ فروشگاه هنوز کارت را تنظیم نکرده. لطفاً دایرکت پیام دهید.', false);
+        }
+
+        const disc = catDiscPct();
+        const sub = catCartTotal();
+        const amount = catFinalTotal();
+        const itemsTxt = keys.map(function (k) {
+            const it = catCart[k];
+            return '• ' + it.name + ' — ' + it.qty + ' کیلو × ' + it.price.toLocaleString('fa-IR') + ' = ' + (it.qty * it.price).toLocaleString('fa-IR');
+        }).join('\n');
+        const orderNote =
+            '[سفارش اینستاگرام]\n' +
+            '📞 ' + phone + '\n' +
+            '📍 ' + address + '\n' +
+            (note ? ('📝 ' + note + '\n') : '') +
+            (disc > 0 ? ('🎁 تخفیف ' + disc + '٪ (از ' + sub.toLocaleString('fa-IR') + ')\n') : '') +
+            '———\n' + itemsTxt;
+
+        const token = payToken();
+        const mins = cfg.mins || 180;
+        const now = Date.now();
+        const row = {
+            token: token,
+            customer_name: name,
+            amount: amount,
+            note: orderNote,
+            card: payDigits(cfg.card),
+            holder: cfg.holder || '',
+            phone: phone,
+            status: 'open',
+            created_by: 'کاتالوگ اینستا',
+            created_at: new Date(now).toISOString(),
+            expires_at: new Date(now + mins * 60 * 1000).toISOString(),
+            receipt_url: null,
+            paid_at: null,
+            approved_at: null,
+            address: address,
+            source: 'instagram_catalog'
+        };
+
+        const local = payLocalAll();
+        local.unshift(row);
+        payLocalSave(local);
+        await payUpsertRemote(row);
+
+        payGuestMsg('✅ سفارش ثبت شد — در حال انتقال به پرداخت...', true);
+        // برو به صفحه پرداخت همین دامنه
+        const payUrl = payLinkUrl(token);
+        setTimeout(function () {
+            location.href = payUrl;
+        }, 400);
+    };
+
+    async function openCatalogPublic() {
+        document.documentElement.classList.add('catalog-guest-mode');
+        const view = document.getElementById('catalogPublicView');
+        const inner = document.getElementById('catalogPublicInner');
+        if (!view || !inner) return;
+        view.style.display = 'block';
+        const login = document.getElementById('loginScreen');
+        const tabs = document.getElementById('tabContainer');
+        if (login) login.style.display = 'none';
+        if (tabs) tabs.style.display = 'none';
+
+        inner.innerHTML = '<div style="text-align:center;padding:40px;opacity:.8;">⏳ در حال بارگذاری کاتالوگ...</div>';
+        await catLoadProducts();
+        await payPullCfgFromCloud();
+        const disc = catDiscPct();
+        const cfg = payLoadCfg();
+
+        inner.innerHTML =
+            '<div class="cat-hero">' +
+            '<div style="font-size:40px;">🧀</div>' +
+            '<h1>غرفه فامیلی</h1>' +
+            '<div style="font-size:12px;opacity:.85;">لبنیات · ترشیجات · سوسیس و کالباس فله</div>' +
+            (disc > 0 ? '<div class="cat-badge">🎁 ' + disc + '٪ تخفیف ویژه سفارش از اینستاگرام</div>' : '') +
+            (cfg.phone ? '<div style="margin-top:8px;font-size:12px;opacity:.8;">📞 ' + catEsc(cfg.phone) + '</div>' : '') +
+            '</div>' +
+            '<div class="cat-tabs">' +
+            ['all', 'dairy', 'pickle', 'sausage'].map(function (f) {
+                return '<button type="button" class="cat-tab' + (catFilter === f ? ' on' : '') + '" data-f="' + f + '" onclick="catFilterTo(\'' + f + '\')">' + catLabel(f) + '</button>';
+            }).join('') +
+            '</div>' +
+            '<div class="cat-grid" id="catGrid"></div>' +
+            '<div class="cat-cartbar" id="catCartBar" style="display:none;"></div>' +
+            '<div class="cat-sheet" id="catSheet" style="display:none;" onclick="if(event.target===this)catCloseCart()">' +
+            '<div class="cat-sheet-in" id="catSheetBody"></div></div>';
+
+        catRender();
+    }
+
     function payBoot() {
         try {
             const u = new URL(location.href);
             const token = u.searchParams.get('pay') || (location.hash.match(/pay[/=]([\w-]+)/) || [])[1];
             if (token) {
                 document.documentElement.classList.add('pay-guest-mode');
-                // فوری، بدون تأخیر زیاد تا صفحه ورود دیده نشود
                 openPayPublic(token);
                 setTimeout(function () { openPayPublic(token); }, 200);
+                return;
+            }
+            if (u.searchParams.get('catalog') === '1' || /catalog/i.test(u.hash || '')) {
+                document.documentElement.classList.add('catalog-guest-mode');
+                openCatalogPublic();
+                setTimeout(openCatalogPublic, 200);
             }
         } catch (e) {}
     }
@@ -23416,6 +23884,9 @@ notify pgrst, 'reload schema';`;
             if (token) {
                 document.documentElement.classList.add('pay-guest-mode');
                 openPayPublic(token);
+            } else if (u.searchParams.get('catalog') === '1') {
+                document.documentElement.classList.add('catalog-guest-mode');
+                openCatalogPublic();
             }
         } catch (e) {}
     });
