@@ -65,7 +65,7 @@
         .cat-qty button{width:28px;height:28px;border-radius:8px;border:1px solid rgba(148,163,184,.35);background:#1e293b;color:#fff;font-weight:800;cursor:pointer}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v178 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v179 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -3690,7 +3690,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v178 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v179 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3874,7 +3874,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=178', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=179', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -23833,15 +23833,13 @@ notify pgrst, 'reload schema';`;
     };
     function catSaveFormDraft() {
         try {
-            const recvEl = document.querySelector('input[name="catRecv"]:checked');
-            catFormDraft = {
-                name: ((document.getElementById('catName') || {}).value || ''),
-                phone: ((document.getElementById('catPhone') || {}).value || ''),
-                address: ((document.getElementById('catAddress') || {}).value || ''),
-                note: ((document.getElementById('catNote') || {}).value || ''),
-                when: ((document.getElementById('catWhen') || {}).value || catFormDraft.when || ''),
-                recv: (recvEl && recvEl.value) || catFormDraft.recv || 'delivery'
-            };
+            catFormDraft.name = ((document.getElementById('catName') || {}).value || catFormDraft.name || '');
+            catFormDraft.phone = ((document.getElementById('catPhone') || {}).value || catFormDraft.phone || '');
+            const a = document.getElementById('catAddress');
+            if (a) catFormDraft.address = a.value || '';
+            catFormDraft.note = ((document.getElementById('catNote') || {}).value || catFormDraft.note || '');
+            if (!catFormDraft.recv) catFormDraft.recv = 'delivery';
+            catFormDraft.when = catBuildWhenText();
         } catch (e) {}
     }
     function catRestoreFormDraft() {
@@ -23850,7 +23848,6 @@ notify pgrst, 'reload schema';`;
             const p = document.getElementById('catPhone'); if (p) p.value = catFormDraft.phone || '';
             const a = document.getElementById('catAddress'); if (a) a.value = catFormDraft.address || '';
             const t = document.getElementById('catNote'); if (t) t.value = catFormDraft.note || '';
-            const w = document.getElementById('catWhen'); if (w && catFormDraft.when) w.value = catFormDraft.when;
         } catch (e) {}
     }
     function catShipCost(recv) {
@@ -24006,27 +24003,7 @@ notify pgrst, 'reload schema';`;
             '<input type="text" id="catName" dir="auto" placeholder="نام کامل" oninput="catSaveFormDraft()">' +
             '<label>شماره تماس *</label>' +
             '<input type="tel" id="catPhone" dir="ltr" inputmode="tel" placeholder="09xxxxxxxxx" style="text-align:left;" oninput="catSaveFormDraft()">' +
-            '<label>نحوه دریافت *</label>' +
-            '<div class="unit-toggle" style="margin-bottom:8px;">' +
-            '<label><input type="radio" name="catRecv" value="delivery" ' + ((catFormDraft.recv || 'delivery') === 'delivery' ? 'checked' : '') + ' onchange="catFormDraft.recv=\'delivery\';catSaveFormDraft();catRenderCartSheet();"> 🚚 ارسال به آدرس</label>' +
-            '<label><input type="radio" name="catRecv" value="pickup" ' + (catFormDraft.recv === 'pickup' ? 'checked' : '') + ' onchange="catFormDraft.recv=\'pickup\';catSaveFormDraft();catRenderCartSheet();"> 🏪 حضوری از غرفه</label>' +
-            '</div>' +
-            '<label id="catAddrLabel">' + ((catFormDraft.recv || 'delivery') === 'pickup' ? 'توضیح مراجعه حضوری' : 'آدرس دقیق تحویل *') + '</label>' +
-            '<textarea id="catAddress" rows="2" dir="auto" placeholder="' + ((catFormDraft.recv || 'delivery') === 'pickup' ? 'مثلاً خودم می‌آیم' : 'شهر، محله، خیابان، پلاک') + '" oninput="catSaveFormDraft()"></textarea>' +
-            '<label>زمان تحویل / مراجعه *</label>' +
-            '<input type="datetime-local" id="catWhen" style="direction:ltr;text-align:left;" onchange="catSaveFormDraft()">' +
-            '<div class="hint" style="margin-top:4px;">روز و ساعتی که می‌خواهید کالا به‌دستتان برسد یا حضوری بیایید.</div>' +
-            (function () {
-                const cfg = payLoadCfg();
-                const ship = Number(cfg.shipCost) || 0;
-                const note = cfg.shipNote || (ship <= 0 ? 'ارسال رایگان' : '');
-                if ((catFormDraft.recv || 'delivery') === 'delivery') {
-                    return '<div style="margin:8px 0;padding:8px;border-radius:10px;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);font-size:12px;">🚚 ' +
-                        (ship <= 0 ? ('<b>ارسال رایگان</b> ' + catEsc(note)) : ('هزینه ارسال: <b>' + ship.toLocaleString('fa-IR') + ' تومان</b> — ' + catEsc(note))) +
-                        '</div>';
-                }
-                return '<div style="margin:8px 0;padding:8px;border-radius:10px;background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.3);font-size:12px;">🏪 تحویل حضوری از غرفه — بدون هزینه ارسال</div>';
-            })() +
+            catBuildRecvSection() +
             '<label>توضیح سفارش (اختیاری)</label>' +
             '<input type="text" id="catNote" dir="auto" placeholder="توضیح اضافه" oninput="catSaveFormDraft()">' +
             '<div id="catCheckoutStatus" class="hint" style="margin-top:8px;min-height:20px;"></div>' +
@@ -24034,11 +24011,146 @@ notify pgrst, 'reload schema';`;
             '<button type="button" class="row-btn edit-btn" style="width:100%;margin-top:8px;" onclick="catCloseCart()">بستن</button>' +
             '</div>';
         catRestoreFormDraft();
-        try {
-            const w = document.getElementById('catWhen');
-            if (w && catFormDraft.when) w.value = catFormDraft.when;
-        } catch (e) {}
     }
+
+    function catDayOptions() {
+        const names = ['امروز', 'فردا', 'پس‌فردا'];
+        const out = [];
+        for (let i = 0; i < 3; i++) {
+            const d = new Date();
+            d.setDate(d.getDate() + i);
+            const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+            const fa = d.toLocaleDateString('fa-IR', { weekday: 'short', month: 'numeric', day: 'numeric' });
+            out.push({ key: key, label: names[i], sub: fa, offset: i });
+        }
+        return out;
+    }
+    function catHourSlots(dayKey) {
+        const slots = [];
+        const now = new Date();
+        const todayKey = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+        const curH = now.getHours();
+        // ساعات کاری پیش‌فرض ۹ تا ۲۱ (هر یک ساعت)
+        for (let h = 9; h <= 21; h++) {
+            if (dayKey === todayKey && h <= curH) continue; // ساعت گذشته امروز نه
+            const label = String(h).padStart(2, '0') + ':00 – ' + String(h + 1).padStart(2, '0') + ':00';
+            slots.push({ key: String(h), label: label });
+        }
+        return slots;
+    }
+    function catBuildRecvSection() {
+        const cfg = payLoadCfg();
+        const recv = catFormDraft.recv || 'delivery';
+        const ship = Number(cfg.shipCost) || 0;
+        const note = cfg.shipNote || (ship <= 0 ? 'ارسال رایگان' : '');
+        const shopAddr = cfg.shopAddr || 'هایپر فامیلی · میدان قدس · بیرجند';
+        const days = catDayOptions();
+        if (!catFormDraft.day) catFormDraft.day = days[0].key;
+        const hours = catHourSlots(catFormDraft.day);
+        if (!catFormDraft.hour && hours.length) catFormDraft.hour = hours[0].key;
+        // اگر ساعت انتخابی دیگر در لیست نیست
+        if (catFormDraft.hour && !hours.some(function (h) { return h.key === catFormDraft.hour; })) {
+            catFormDraft.hour = hours.length ? hours[0].key : '';
+        }
+
+        const card = function (val, icon, title, desc, on) {
+            return '<button type="button" onclick="catSetRecv(\'' + val + '\')" style="flex:1;min-width:140px;text-align:right;padding:12px;border-radius:14px;border:2px solid ' +
+                (on ? 'rgba(56,189,248,.7)' : 'rgba(148,163,184,.25)') + ';background:' +
+                (on ? 'rgba(56,189,248,.15)' : 'rgba(15,23,42,.8)') + ';color:#e2e8f0;cursor:pointer;font:inherit;">' +
+                '<div style="font-size:22px;">' + icon + '</div>' +
+                '<div style="font-weight:800;font-size:13px;margin-top:4px;">' + title + '</div>' +
+                '<div style="font-size:11px;opacity:.75;margin-top:2px;line-height:1.5;">' + desc + '</div>' +
+                '</button>';
+        };
+
+        let html = '<label style="margin-top:12px;">چطور می‌خواهید تحویل بگیرید؟ *</label>' +
+            '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px;">' +
+            card('delivery', '🚚', 'تحویل درب منزل', ship <= 0 ? (note || 'ارسال رایگان') : ('هزینه ارسال ' + ship.toLocaleString('fa-IR') + ' ت'), recv === 'delivery') +
+            card('pickup', '🏪', 'حضوری از درب فروشگاه', 'بدون هزینه ارسال · مراجعه به غرفه', recv === 'pickup') +
+            '</div>';
+
+        if (recv === 'delivery') {
+            html += '<label>آدرس دقیق تحویل *</label>' +
+                '<textarea id="catAddress" rows="3" dir="auto" placeholder="شهر، محله، خیابان، پلاک، واحد، توضیحات پلاک" oninput="catSaveFormDraft()"></textarea>' +
+                '<div style="margin:8px 0;padding:10px;border-radius:12px;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);font-size:12px;">🚚 ' +
+                (ship <= 0 ? ('<b>ارسال رایگان</b> — ' + catEsc(note)) : ('هزینه ارسال: <b>' + ship.toLocaleString('fa-IR') + ' تومان</b> — ' + catEsc(note))) +
+                '</div>';
+        } else {
+            html += '<label>آدرس فروشگاه</label>' +
+                '<div role="button" onclick="catCopyShopAddr()" style="padding:12px;border-radius:12px;background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.35);cursor:pointer;margin-bottom:8px;">' +
+                '<div style="font-weight:800;font-size:13px;">📍 ' + catEsc(shopAddr) + '</div>' +
+                '<div style="font-size:11px;opacity:.8;margin-top:4px;">برای کپی آدرس ضربه بزنید · هنگام مراجعه به غرفه تازه مارکت بیایید</div>' +
+                '</div>' +
+                (cfg.shopHours ? '<div class="hint">🕐 ساعات کاری: ' + catEsc(cfg.shopHours) + '</div>' : '');
+        }
+
+        html += '<label style="margin-top:10px;">روز تحویل *</label>' +
+            '<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 10px;">' +
+            days.map(function (d) {
+                const on = catFormDraft.day === d.key;
+                return '<button type="button" onclick="catSetDay(\'' + d.key + '\')" style="flex:1;min-width:90px;padding:10px 8px;border-radius:12px;border:2px solid ' +
+                    (on ? 'rgba(251,191,36,.7)' : 'rgba(148,163,184,.25)') + ';background:' +
+                    (on ? 'rgba(251,191,36,.15)' : 'rgba(15,23,42,.8)') + ';color:#e2e8f0;cursor:pointer;font:inherit;">' +
+                    '<div style="font-weight:800;font-size:13px;">' + d.label + '</div>' +
+                    '<div style="font-size:10px;opacity:.75;">' + d.sub + '</div></button>';
+            }).join('') +
+            '</div>';
+
+        html += '<label>ساعت تحویل *</label>';
+        if (!hours.length) {
+            html += '<div class="hint" style="color:#f87171;">برای امروز ساعت خالی نمانده — فردا یا پس‌فردا را انتخاب کنید.</div>';
+        } else {
+            html += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;">' +
+                hours.map(function (h) {
+                    const on = String(catFormDraft.hour) === String(h.key);
+                    return '<button type="button" onclick="catSetHour(\'' + h.key + '\')" style="padding:8px 10px;border-radius:10px;border:1px solid ' +
+                        (on ? 'rgba(56,189,248,.8)' : 'rgba(148,163,184,.3)') + ';background:' +
+                        (on ? 'linear-gradient(100deg,#0ea5e9,#6366f1)' : 'rgba(15,23,42,.85)') +
+                        ';color:#fff;font-size:12px;font-weight:700;cursor:pointer;font:inherit;">' + h.label + '</button>';
+                }).join('') +
+                '</div>';
+        }
+        // when string for order
+        catFormDraft.when = catBuildWhenText();
+        return html;
+    }
+    function catBuildWhenText() {
+        const days = catDayOptions();
+        const day = days.find(function (d) { return d.key === catFormDraft.day; }) || days[0];
+        const h = parseInt(catFormDraft.hour, 10);
+        if (!day || isNaN(h)) return '';
+        return day.label + ' (' + day.sub + ') ساعت ' + String(h).padStart(2, '0') + ':00 تا ' + String(h + 1).padStart(2, '0') + ':00';
+    }
+    window.catSetRecv = function (v) {
+        catFormDraft.recv = v;
+        if (v === 'pickup') catFormDraft.address = '';
+        catSaveFormDraft();
+        catRenderCartSheet();
+        try { catRenderCartBar(); } catch (e) {}
+    };
+    window.catSetDay = function (k) {
+        catFormDraft.day = k;
+        catFormDraft.when = catBuildWhenText();
+        catRenderCartSheet();
+    };
+    window.catSetHour = function (k) {
+        catFormDraft.hour = k;
+        catFormDraft.when = catBuildWhenText();
+        catSaveFormDraft();
+        // فقط هایلایت ساعت را عوض کن بدون رندر کامل فرم (برای سرعت) — رندر کامل ساده‌تر است
+        catRenderCartSheet();
+    };
+    window.catCopyShopAddr = function () {
+        const cfg = payLoadCfg();
+        const addr = cfg.shopAddr || 'هایپر فامیلی · میدان قدس · بیرجند';
+        try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(addr).then(function () { catToast('📍 آدرس فروشگاه کپی شد', true); });
+            } else {
+                catToast(addr, true);
+            }
+        } catch (e) { catToast(addr, true); }
+    };
 
     function catRender() {
         catSaveFormDraft();
@@ -24068,8 +24180,12 @@ notify pgrst, 'reload schema';`;
         }
         if (!name) return setStatus('❌ نام را وارد کنید', false);
         if (!phone || phone.length < 10) return setStatus('❌ شماره تماس معتبر وارد کنید', false);
-        if (recv === 'delivery' && address.length < 5) return setStatus('❌ آدرس دقیق تحویل را بنویسید', false);
-        if (!when) return setStatus('❌ زمان تحویل / مراجعه را انتخاب کنید', false);
+        if (recv === 'delivery' && address.length < 5) return setStatus('❌ آدرس دقیق تحویل درب منزل را بنویسید', false);
+        if (!catFormDraft.day || !catFormDraft.hour) return setStatus('❌ روز و ساعت تحویل را انتخاب کنید', false);
+        if (!when) {
+            catFormDraft.when = catBuildWhenText();
+            if (!catFormDraft.when) return setStatus('❌ روز و ساعت تحویل را انتخاب کنید', false);
+        }
         const keys = Object.keys(catCart);
         if (!keys.length) return setStatus('❌ سبد خالی است', false);
         try { await payPullCfgFromCloud(); } catch (e) {}
