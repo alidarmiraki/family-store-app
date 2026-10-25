@@ -65,7 +65,7 @@
         .cat-qty button{width:28px;height:28px;border-radius:8px;border:1px solid rgba(148,163,184,.35);background:#1e293b;color:#fff;font-weight:800;cursor:pointer}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v181 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v182 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -3690,7 +3690,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v181 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v182 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3874,7 +3874,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=181', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=182', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -23898,9 +23898,97 @@ notify pgrst, 'reload schema';`;
     let catProducts = [];
     let catFilter = 'dairy';
     let catSearchQ = '';
-    let catFormDraft = { name: '', phone: '', address: '', note: '' };
+    let catFormDraft = {
+        name: '', phone: '', address: '', note: '', recv: 'delivery',
+        city: 'بیرجند', neighborhood: '', street: '', plaque: '', unit: '', addrExtra: '',
+        addrId: '', day: '', hour: '', when: ''
+    };
     let catBusy = false;
+    let catCustomerProfile = { name: '', phone: '', addresses: [] }; // addresses: [{id,label,city,neighborhood,street,plaque,unit,extra,full}]
     window._catOrdFilter = 'all';
+    const CAT_PROFILE_KEY = 'cat_customer_profile_v1';
+    function catLoadProfile() {
+        try {
+            const raw = localStorage.getItem(CAT_PROFILE_KEY);
+            if (raw) {
+                const p = JSON.parse(raw);
+                if (p && typeof p === 'object') {
+                    catCustomerProfile = {
+                        name: p.name || '',
+                        phone: p.phone || '',
+                        addresses: Array.isArray(p.addresses) ? p.addresses : []
+                    };
+                }
+            }
+        } catch (e) {}
+        // پر کردن پیش‌نویس از پروفایل ذخیره‌شده
+        if (!catFormDraft.name && catCustomerProfile.name) catFormDraft.name = catCustomerProfile.name;
+        if (!catFormDraft.phone && catCustomerProfile.phone) catFormDraft.phone = catCustomerProfile.phone;
+        if (catCustomerProfile.addresses && catCustomerProfile.addresses.length) {
+            const a = catCustomerProfile.addresses.find(function (x) { return x.id === catFormDraft.addrId; }) || catCustomerProfile.addresses[0];
+            if (a) catApplyAddress(a, false);
+        }
+    }
+    function catSaveProfile() {
+        try {
+            localStorage.setItem(CAT_PROFILE_KEY, JSON.stringify(catCustomerProfile));
+        } catch (e) {}
+    }
+    function catApplyAddress(a, saveDraft) {
+        if (!a) return;
+        catFormDraft.addrId = a.id || '';
+        catFormDraft.city = a.city || 'بیرجند';
+        catFormDraft.neighborhood = a.neighborhood || '';
+        catFormDraft.street = a.street || '';
+        catFormDraft.plaque = a.plaque || '';
+        catFormDraft.unit = a.unit || '';
+        catFormDraft.addrExtra = a.extra || '';
+        catFormDraft.address = a.full || catComposeAddress();
+        if (saveDraft !== false) catSaveFormDraft();
+    }
+    function catComposeAddress() {
+        const parts = [];
+        if (catFormDraft.city) parts.push(catFormDraft.city);
+        if (catFormDraft.neighborhood) parts.push('محله ' + catFormDraft.neighborhood);
+        if (catFormDraft.street) parts.push('خیابان ' + catFormDraft.street);
+        if (catFormDraft.plaque) parts.push('پلاک ' + catFormDraft.plaque);
+        if (catFormDraft.unit) parts.push('واحد ' + catFormDraft.unit);
+        if (catFormDraft.addrExtra) parts.push(catFormDraft.addrExtra);
+        return parts.join('، ');
+    }
+    function catPersistCustomerFromDraft() {
+        catSaveFormDraft();
+        const name = (catFormDraft.name || '').trim();
+        const phone = (catFormDraft.phone || '').trim();
+        if (name) catCustomerProfile.name = name;
+        if (phone) catCustomerProfile.phone = phone;
+        if ((catFormDraft.recv || 'delivery') === 'delivery') {
+            const full = catComposeAddress();
+            if (full.length >= 5) {
+                const id = catFormDraft.addrId || ('a_' + Date.now().toString(36));
+                const entry = {
+                    id: id,
+                    label: (catFormDraft.neighborhood || catFormDraft.street || 'آدرس') + (catFormDraft.plaque ? ' پلاک ' + catFormDraft.plaque : ''),
+                    city: catFormDraft.city || 'بیرجند',
+                    neighborhood: catFormDraft.neighborhood || '',
+                    street: catFormDraft.street || '',
+                    plaque: catFormDraft.plaque || '',
+                    unit: catFormDraft.unit || '',
+                    extra: catFormDraft.addrExtra || '',
+                    full: full
+                };
+                catFormDraft.addrId = id;
+                catFormDraft.address = full;
+                const list = catCustomerProfile.addresses || [];
+                const ix = list.findIndex(function (x) { return x.id === id; });
+                if (ix >= 0) list[ix] = entry;
+                else list.unshift(entry);
+                catCustomerProfile.addresses = list.slice(0, 8);
+            }
+        }
+        catSaveProfile();
+    }
+    catLoadProfile();
     // سبد جدا برای هر بازدیدکننده (هر مرورگر/جلسه)
     (function catInitSession() {
         try {
@@ -24079,23 +24167,54 @@ notify pgrst, 'reload schema';`;
     };
     function catSaveFormDraft() {
         try {
-            catFormDraft.name = ((document.getElementById('catName') || {}).value || catFormDraft.name || '');
-            catFormDraft.phone = ((document.getElementById('catPhone') || {}).value || catFormDraft.phone || '');
-            const a = document.getElementById('catAddress');
-            if (a) catFormDraft.address = a.value || '';
-            catFormDraft.note = ((document.getElementById('catNote') || {}).value || catFormDraft.note || '');
+            const n = document.getElementById('catName');
+            const p = document.getElementById('catPhone');
+            const t = document.getElementById('catNote');
+            if (n) catFormDraft.name = n.value || '';
+            if (p) catFormDraft.phone = p.value || '';
+            if (t) catFormDraft.note = t.value || '';
+            const city = document.getElementById('catCity');
+            const neigh = document.getElementById('catNeighborhood');
+            const street = document.getElementById('catStreet');
+            const plaque = document.getElementById('catPlaque');
+            const unit = document.getElementById('catUnit');
+            const extra = document.getElementById('catAddrExtra');
+            if (city) catFormDraft.city = city.value || '';
+            if (neigh) catFormDraft.neighborhood = neigh.value || '';
+            if (street) catFormDraft.street = street.value || '';
+            if (plaque) catFormDraft.plaque = plaque.value || '';
+            if (unit) catFormDraft.unit = unit.value || '';
+            if (extra) catFormDraft.addrExtra = extra.value || '';
+            if ((catFormDraft.recv || 'delivery') === 'delivery') {
+                catFormDraft.address = catComposeAddress();
+            }
             if (!catFormDraft.recv) catFormDraft.recv = 'delivery';
             catFormDraft.when = catBuildWhenText();
+            // ذخیره موقت در session تا با رفرش جزئی نپرد
+            try { sessionStorage.setItem('cat_form_draft_v1', JSON.stringify(catFormDraft)); } catch (e) {}
         } catch (e) {}
     }
     function catRestoreFormDraft() {
         try {
             const n = document.getElementById('catName'); if (n) n.value = catFormDraft.name || '';
             const p = document.getElementById('catPhone'); if (p) p.value = catFormDraft.phone || '';
-            const a = document.getElementById('catAddress'); if (a) a.value = catFormDraft.address || '';
             const t = document.getElementById('catNote'); if (t) t.value = catFormDraft.note || '';
+            const city = document.getElementById('catCity'); if (city) city.value = catFormDraft.city || 'بیرجند';
+            const neigh = document.getElementById('catNeighborhood'); if (neigh) neigh.value = catFormDraft.neighborhood || '';
+            const street = document.getElementById('catStreet'); if (street) street.value = catFormDraft.street || '';
+            const plaque = document.getElementById('catPlaque'); if (plaque) plaque.value = catFormDraft.plaque || '';
+            const unit = document.getElementById('catUnit'); if (unit) unit.value = catFormDraft.unit || '';
+            const extra = document.getElementById('catAddrExtra'); if (extra) extra.value = catFormDraft.addrExtra || '';
         } catch (e) {}
     }
+    // بازیابی پیش‌نویس جلسه
+    try {
+        const d = sessionStorage.getItem('cat_form_draft_v1');
+        if (d) {
+            const o = JSON.parse(d);
+            if (o && typeof o === 'object') catFormDraft = Object.assign({}, catFormDraft, o);
+        }
+    } catch (e) {}
     function catShipCost(recv) {
         const cfg = payLoadCfg();
         if (recv === 'pickup') return 0;
@@ -24316,8 +24435,38 @@ notify pgrst, 'reload schema';`;
             '</div>';
 
         if (recv === 'delivery') {
-            html += '<label>آدرس دقیق تحویل *</label>' +
-                '<textarea id="catAddress" rows="3" dir="auto" placeholder="شهر، محله، خیابان، پلاک، واحد، توضیحات پلاک" oninput="catSaveFormDraft()"></textarea>' +
+            const addrs = (catCustomerProfile.addresses || []);
+            html += '<label>آدرس تحویل *</label>';
+            if (addrs.length) {
+                html += '<div style="display:flex;flex-direction:column;gap:6px;margin:6px 0 10px;">' +
+                    addrs.map(function (a) {
+                        const on = catFormDraft.addrId === a.id;
+                        return '<button type="button" onclick="catPickSavedAddr(\'' + catEsc(a.id) + '\')" style="text-align:right;padding:10px 12px;border-radius:12px;border:2px solid ' +
+                            (on ? 'rgba(56,189,248,.7)' : 'rgba(148,163,184,.25)') + ';background:' +
+                            (on ? 'rgba(56,189,248,.12)' : 'rgba(15,23,42,.8)') + ';color:#e2e8f0;cursor:pointer;font:inherit;">' +
+                            '<div style="font-weight:800;font-size:13px;">📍 ' + catEsc(a.label || 'آدرس') + (on ? ' ✓' : '') + '</div>' +
+                            '<div style="font-size:11px;opacity:.8;margin-top:2px;line-height:1.5;">' + catEsc(a.full || '') + '</div></button>';
+                    }).join('') +
+                    '</div>';
+            }
+            html += '<div id="catAddrFields" style="padding:10px;border-radius:12px;background:rgba(15,23,42,.85);border:1px solid rgba(148,163,184,.25);margin-bottom:8px;">' +
+                '<div style="font-size:12px;font-weight:800;margin-bottom:8px;opacity:.9;">جزئیات آدرس</div>' +
+                '<label style="font-size:11px;">شهر *</label>' +
+                '<input type="text" id="catCity" dir="auto" placeholder="مثلاً بیرجند" value="' + catEsc(catFormDraft.city || 'بیرجند') + '" oninput="catSaveFormDraft()">' +
+                '<label style="font-size:11px;">محله / منطقه *</label>' +
+                '<input type="text" id="catNeighborhood" dir="auto" placeholder="نام محله" value="' + catEsc(catFormDraft.neighborhood || '') + '" oninput="catSaveFormDraft()">' +
+                '<label style="font-size:11px;">خیابان / کوچه *</label>' +
+                '<input type="text" id="catStreet" dir="auto" placeholder="خیابان و کوچه" value="' + catEsc(catFormDraft.street || '') + '" oninput="catSaveFormDraft()">' +
+                '<div style="display:flex;gap:8px;">' +
+                '<div style="flex:1;"><label style="font-size:11px;">پلاک *</label>' +
+                '<input type="text" id="catPlaque" dir="auto" placeholder="پلاک" value="' + catEsc(catFormDraft.plaque || '') + '" oninput="catSaveFormDraft()"></div>' +
+                '<div style="flex:1;"><label style="font-size:11px;">واحد</label>' +
+                '<input type="text" id="catUnit" dir="auto" placeholder="اختیاری" value="' + catEsc(catFormDraft.unit || '') + '" oninput="catSaveFormDraft()"></div>' +
+                '</div>' +
+                '<label style="font-size:11px;">توضیح بیشتر (در، زنگ، پلاک اضافه)</label>' +
+                '<input type="text" id="catAddrExtra" dir="auto" placeholder="مثلاً زنگ دوم / کنار نانوایی" value="' + catEsc(catFormDraft.addrExtra || '') + '" oninput="catSaveFormDraft()">' +
+                '</div>' +
+                '<button type="button" class="row-btn fill-btn" style="width:100%;margin-bottom:8px;font-size:12px;" onclick="catAddNewAddress()">➕ افزودن / ذخیره این آدرس</button>' +
                 '<div style="margin:8px 0;padding:10px;border-radius:12px;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);font-size:12px;">🚚 ' +
                 (ship <= 0 ? ('<b>ارسال رایگان</b> — ' + catEsc(note)) : ('هزینه ارسال: <b>' + ship.toLocaleString('fa-IR') + ' تومان</b> — ' + catEsc(note))) +
                 '</div>';
@@ -24368,23 +24517,59 @@ notify pgrst, 'reload schema';`;
         return day.label + ' (' + day.sub + ') ساعت ' + String(h).padStart(2, '0') + ':00 تا ' + String(h + 1).padStart(2, '0') + ':00';
     }
     window.catSetRecv = function (v) {
+        catSaveFormDraft(); // اول مقادیر فعلی را نگه دار
         catFormDraft.recv = v;
-        if (v === 'pickup') catFormDraft.address = '';
-        catSaveFormDraft();
+        catFormDraft.when = catBuildWhenText();
         catRenderCartSheet();
         try { catRenderCartBar(); } catch (e) {}
     };
     window.catSetDay = function (k) {
+        catSaveFormDraft(); // جلوگیری از پاک شدن نام/تلفن/آدرس
         catFormDraft.day = k;
+        // ساعت را با روز جدید تطبیق بده
+        const hours = catHourSlots(k);
+        if (!hours.some(function (h) { return String(h.key) === String(catFormDraft.hour); })) {
+            catFormDraft.hour = hours.length ? hours[0].key : '';
+        }
         catFormDraft.when = catBuildWhenText();
+        try { sessionStorage.setItem('cat_form_draft_v1', JSON.stringify(catFormDraft)); } catch (e) {}
         catRenderCartSheet();
     };
     window.catSetHour = function (k) {
+        catSaveFormDraft();
         catFormDraft.hour = k;
         catFormDraft.when = catBuildWhenText();
-        catSaveFormDraft();
-        // فقط هایلایت ساعت را عوض کن بدون رندر کامل فرم (برای سرعت) — رندر کامل ساده‌تر است
+        try { sessionStorage.setItem('cat_form_draft_v1', JSON.stringify(catFormDraft)); } catch (e) {}
         catRenderCartSheet();
+    };
+    window.catPickSavedAddr = function (id) {
+        catSaveFormDraft();
+        const a = (catCustomerProfile.addresses || []).find(function (x) { return x.id === id; });
+        if (a) catApplyAddress(a, true);
+        catRenderCartSheet();
+    };
+    window.catAddNewAddress = function () {
+        catSaveFormDraft();
+        // اگر فیلدها پر است ذخیره کن؛ وگرنه فرم را برای آدرس جدید خالی کن
+        const full = catComposeAddress();
+        if (catFormDraft.neighborhood && catFormDraft.street && catFormDraft.plaque) {
+            catPersistCustomerFromDraft();
+            catToast('📍 آدرس ذخیره شد — دفعه بعد خودکار می‌آید', true);
+            catRenderCartSheet();
+            return;
+        }
+        // شروع آدرس جدید
+        catFormDraft.addrId = '';
+        catFormDraft.neighborhood = '';
+        catFormDraft.street = '';
+        catFormDraft.plaque = '';
+        catFormDraft.unit = '';
+        catFormDraft.addrExtra = '';
+        catFormDraft.address = '';
+        if (!catFormDraft.city) catFormDraft.city = 'بیرجند';
+        try { sessionStorage.setItem('cat_form_draft_v1', JSON.stringify(catFormDraft)); } catch (e) {}
+        catRenderCartSheet();
+        catToast('آدرس جدید را کامل کنید', true);
     };
     window.catCopyShopAddr = function () {
         const cfg = payLoadCfg();
@@ -24426,8 +24611,17 @@ notify pgrst, 'reload schema';`;
         }
         if (!name) return setStatus('❌ نام را وارد کنید', false);
         if (!phone || phone.length < 10) return setStatus('❌ شماره تماس معتبر وارد کنید', false);
-        if (recv === 'delivery' && address.length < 5) return setStatus('❌ آدرس دقیق تحویل درب منزل را بنویسید', false);
+        if (recv === 'delivery') {
+            if (!(catFormDraft.city || '').trim()) return setStatus('❌ شهر را بنویسید', false);
+            if (!(catFormDraft.neighborhood || '').trim()) return setStatus('❌ محله / منطقه را بنویسید', false);
+            if (!(catFormDraft.street || '').trim()) return setStatus('❌ خیابان / کوچه را بنویسید', false);
+            if (!(catFormDraft.plaque || '').trim()) return setStatus('❌ پلاک را بنویسید', false);
+            catFormDraft.address = catComposeAddress();
+            if ((catFormDraft.address || '').length < 5) return setStatus('❌ آدرس دقیق تحویل را کامل کنید', false);
+        }
         if (!catFormDraft.day || !catFormDraft.hour) return setStatus('❌ روز و ساعت تحویل را انتخاب کنید', false);
+        // ذخیره برای دفعات بعد روی همین گوشی
+        try { catPersistCustomerFromDraft(); } catch (e) {}
         if (!when) {
             catFormDraft.when = catBuildWhenText();
             if (!catFormDraft.when) return setStatus('❌ روز و ساعت تحویل را انتخاب کنید', false);
@@ -24501,6 +24695,7 @@ notify pgrst, 'reload schema';`;
         if (!keys.length) { catBusy = false; return catToast('سبد خالی است', false); }
 
         catToast('⏳ در حال ثبت سفارش...', true);
+        try { catPersistCustomerFromDraft(); } catch (e) {}
         try { await payPullCfgFromCloud(); } catch (e) {}
         const cfg = payLoadCfg();
         const hasCard = cfg.card && payDigits(cfg.card).length === 16;
@@ -24510,6 +24705,7 @@ notify pgrst, 'reload schema';`;
         const discAmt = Math.round(sub * disc / 100);
         const amount = Math.max(0, sub - discAmt + ship);
         const orderCode = catOrderCode();
+        const fullAddr = (recv === 'delivery') ? (catComposeAddress() || address) : address;
         const itemsTxt = keys.map(function (k) {
             const it = catCart[k];
             return '• ' + it.name + ' — ' + it.qty + ' کیلو × ' + it.price.toLocaleString('fa-IR') + ' = ' + (it.qty * it.price).toLocaleString('fa-IR');
@@ -24518,7 +24714,7 @@ notify pgrst, 'reload schema';`;
             '[سفارش اینستاگرام]\n' +
             '🔖 شماره پیگیری: ' + orderCode + '\n' +
             '📞 ' + phone + '\n' +
-            (recv === 'pickup' ? '🏪 تحویل حضوری\n' : ('📍 ارسال: ' + address + '\n')) +
+            (recv === 'pickup' ? '🏪 تحویل حضوری\n' : ('📍 ارسال: ' + fullAddr + '\n')) +
             '⏰ زمان: ' + when + '\n' +
             (note ? ('📝 ' + note + '\n') : '') +
             (disc > 0 ? ('🎁 تخفیف ' + disc + '٪: −' + discAmt.toLocaleString('fa-IR') + '\n') : '') +
@@ -24544,7 +24740,7 @@ notify pgrst, 'reload schema';`;
             receipt_url: null,
             paid_at: null,
             approved_at: null,
-            address: address,
+            address: fullAddr || address,
             delivery_type: recv,
             delivery_when: when,
             ship_cost: ship,
