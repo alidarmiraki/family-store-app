@@ -65,7 +65,7 @@
         .cat-qty button{width:28px;height:28px;border-radius:8px;border:1px solid rgba(148,163,184,.35);background:#1e293b;color:#fff;font-weight:800;cursor:pointer}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v179 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v181 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -3690,7 +3690,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v179 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v181 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3874,7 +3874,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=179', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=181', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -22855,25 +22855,150 @@ notify pgrst, 'reload schema';`;
         prev.innerHTML = 'مبلغ: <b style="color:#38bdf8;">' + n.toLocaleString('fa-IR') + ' تومان</b> — برای مشتری روی لینک: <b style="color:#fbbf24;">' + rial.toLocaleString('fa-IR') + ' ریال</b>';
     };
 
-    // همگام‌سازی تنظیمات کارت از shared_config برای همه گوشی‌ها
+    // همگام‌سازی تنظیمات کارت/فروشگاه برای همه گوشی‌ها و صفحه کاتالوگ
+    // مسیر اصلی: app_shared_config (همان جدول موفق بقیه تنظیمات سایت)
+    // مسیر پشتیبان: shared_config و جدول pay_link_settings
     async function payPullCfgFromCloud() {
         try {
-            if (typeof _supabase === 'undefined' || !_supabase) return;
-            const { data } = await _supabase.from('shared_config').select('data').eq('id', 1).maybeSingle();
-            if (data && data.data && data.data.payLink) {
-                const c = data.data.payLink;
-                if (c.card) paySaveCfg(c);
+            if (typeof _supabase === 'undefined' || !_supabase) return false;
+            let c = null;
+
+            // 1) app_shared_config.config.payLink
+            try {
+                const { data, error } = await _supabase.from('app_shared_config').select('config, updated_at').eq('id', 1).maybeSingle();
+                if (!error && data && data.config) {
+                    const cfg = typeof data.config === 'string' ? JSON.parse(data.config) : data.config;
+                    if (cfg && cfg.payLink && typeof cfg.payLink === 'object') c = cfg.payLink;
+                }
+            } catch (e) {}
+
+            // 2) shared_config.data.payLink
+            if (!c || !c.card) {
+                try {
+                    const { data } = await _supabase.from('shared_config').select('data').eq('id', 1).maybeSingle();
+                    if (data && data.data && data.data.payLink) c = Object.assign({}, c || {}, data.data.payLink);
+                } catch (e) {}
             }
-        } catch (e) {}
+
+            // 3) جدول اختصاصی
+            if (!c || !c.card) {
+                try {
+                    const { data } = await _supabase.from('pay_link_settings').select('*').eq('id', 1).maybeSingle();
+                    if (data) {
+                        c = Object.assign({}, c || {}, {
+                            card: data.card || (c && c.card),
+                            holder: data.holder || (c && c.holder),
+                            phone: data.phone || (c && c.phone),
+                            mins: data.mins || (c && c.mins),
+                            instaDisc: data.insta_disc != null ? data.insta_disc : (c && c.instaDisc),
+                            instoreDisc: data.instore_disc != null ? data.instore_disc : (c && c.instoreDisc),
+                            shipCost: data.ship_cost != null ? data.ship_cost : (c && c.shipCost),
+                            shipNote: data.ship_note || (c && c.shipNote),
+                            minOrder: data.min_order != null ? data.min_order : (c && c.minOrder),
+                            shopAddr: data.shop_addr || (c && c.shopAddr),
+                            shopHours: data.shop_hours || (c && c.shopHours),
+                            supportLink: data.support_link || (c && c.supportLink),
+                            catalogBase: data.catalog_base || (c && c.catalogBase)
+                        });
+                    }
+                } catch (e) {}
+            }
+
+            if (c && typeof c === 'object') {
+                // همیشه کامل ذخیره کن (حتی اگر فقط آدرس/تلفن باشد)
+                const prev = payLoadCfg();
+                paySaveCfg(Object.assign({}, prev, c, { syncedAt: new Date().toISOString() }));
+                return true;
+            }
+            return false;
+        } catch (e) {
+            return false;
+        }
     }
     async function payPushCfgToCloud(cfg) {
+        const results = { ok: false, paths: [] };
         try {
-            if (typeof _supabase === 'undefined' || !_supabase) return;
-            const { data } = await _supabase.from('shared_config').select('data').eq('id', 1).maybeSingle();
-            const base = (data && data.data) ? data.data : {};
-            base.payLink = cfg;
-            await _supabase.from('shared_config').upsert([{ id: 1, data: base, updated_at: new Date().toISOString() }], { onConflict: 'id' });
-        } catch (e) {}
+            if (typeof _supabase === 'undefined' || !_supabase) return results;
+
+            // 1) app_shared_config — مسیر اصلی همگام‌سازی سایت
+            try {
+                let base = {};
+                try {
+                    if (typeof window.ascLoadLocal === 'function') base = window.ascLoadLocal() || {};
+                } catch (e) {}
+                try {
+                    const { data } = await _supabase.from('app_shared_config').select('config').eq('id', 1).maybeSingle();
+                    if (data && data.config) {
+                        const remote = typeof data.config === 'string' ? JSON.parse(data.config) : data.config;
+                        if (remote && typeof remote === 'object') base = Object.assign({}, base, remote);
+                    }
+                } catch (e) {}
+                base.payLink = cfg;
+                base.updatedAt = new Date().toISOString();
+                const { error } = await _supabase.from('app_shared_config').upsert({
+                    id: 1,
+                    config: base,
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'id' });
+                if (!error) {
+                    results.ok = true;
+                    results.paths.push('app_shared_config');
+                    try {
+                        if (typeof window.ascSaveLocal === 'function') window.ascSaveLocal(base);
+                    } catch (e) {}
+                } else {
+                    results.paths.push('app_shared_config:' + (error.message || 'err'));
+                }
+            } catch (e) {
+                results.paths.push('app_shared_config:ex');
+            }
+
+            // 2) shared_config پشتیبان
+            try {
+                const { data } = await _supabase.from('shared_config').select('data').eq('id', 1).maybeSingle();
+                const base = (data && data.data) ? data.data : {};
+                base.payLink = cfg;
+                const { error } = await _supabase.from('shared_config').upsert([{
+                    id: 1,
+                    data: base,
+                    updated_at: new Date().toISOString()
+                }], { onConflict: 'id' });
+                if (!error) {
+                    results.ok = true;
+                    results.paths.push('shared_config');
+                }
+            } catch (e) {}
+
+            // 3) جدول تخت اختصاصی (خواندن آسان برای مهمان کاتالوگ)
+            try {
+                const row = {
+                    id: 1,
+                    card: cfg.card || '',
+                    holder: cfg.holder || '',
+                    phone: cfg.phone || '',
+                    mins: cfg.mins || 180,
+                    insta_disc: cfg.instaDisc || 0,
+                    instore_disc: cfg.instoreDisc || 0,
+                    ship_cost: cfg.shipCost || 0,
+                    ship_note: cfg.shipNote || '',
+                    min_order: cfg.minOrder || 0,
+                    shop_addr: cfg.shopAddr || '',
+                    shop_hours: cfg.shopHours || '',
+                    support_link: cfg.supportLink || '',
+                    catalog_base: cfg.catalogBase || '',
+                    updated_at: new Date().toISOString()
+                };
+                const { error } = await _supabase.from('pay_link_settings').upsert([row], { onConflict: 'id' });
+                if (!error) {
+                    results.ok = true;
+                    results.paths.push('pay_link_settings');
+                }
+            } catch (e) {}
+
+            return results;
+        } catch (e) {
+            return results;
+        }
     }
 
     window.savePayLinkSettings = async function () {
@@ -22901,11 +23026,17 @@ notify pgrst, 'reload schema';`;
             instaDisc: instaDisc, instoreDisc: instoreDisc,
             shipCost: shipCost, shipNote: shipNote || (shipCost <= 0 ? 'ارسال رایگان' : ''),
             minOrder: minOrder, shopAddr: shopAddr, shopHours: shopHours, supportLink: supportLink,
-            catalogBase: catalogBase
+            catalogBase: catalogBase,
+            updatedAt: new Date().toISOString()
         };
         paySaveCfg(cfg);
-        await payPushCfgToCloud(cfg);
-        showToast('✅ تنظیمات پرداخت ذخیره و برای همه همگام شد');
+        showToast('⏳ در حال همگام‌سازی برای همه گوشی‌ها...');
+        const res = await payPushCfgToCloud(cfg);
+        if (res && res.ok) {
+            showToast('✅ تنظیمات برای همه دستگاه‌ها ذخیره شد');
+        } else {
+            showToast('⚠️ روی این گوشی ذخیره شد ولی همگام‌سازی سرور کامل نشد. اتصال را چک کنید و دوباره ذخیره بزنید.');
+        }
         try { window.renderCatalogShareBox && window.renderCatalogShareBox(); } catch (e) {}
     };
 
@@ -23168,10 +23299,39 @@ notify pgrst, 'reload schema';`;
 
     window.approvePayLink = async function (token) {
         if (!payIsAdmin()) return showToast('❌ فقط مدیر می‌تواند تأیید کند');
-        if (!confirm('پرداخت را تأیید می‌کنی؟ لینک بعد از این منقضی می‌شود.')) return;
-        await payUpdateStatus(token, 'approved', { approved_at: new Date().toISOString(), expires_at: new Date().toISOString() });
-        showToast('✅ پرداخت تأیید شد — لینک منقضی شد');
+        if (!confirm('رسید را تأیید می‌کنی؟ سفارش وارد مرحله آماده‌سازی می‌شود و به مشتری اطلاع داده می‌شود.')) return;
+        // برای سفارش کاتالوگ: approved + بعداً preparing در پنل مدیر؛ برای لینک ساده: approved
+        let row = null;
+        try { row = await payFetchRemote(token); } catch (e) {}
+        if (!row) {
+            try { row = payLocalAll().find(function (x) { return x.token === token; }); } catch (e) {}
+        }
+        const isCatalog = row && (row.source === 'instagram_catalog' || (row.note && String(row.note).indexOf('[سفارش اینستاگرام]') >= 0));
+        const nextStatus = isCatalog ? 'preparing' : 'approved';
+        await payUpdateStatus(token, nextStatus, {
+            approved_at: new Date().toISOString(),
+            // لینک پرداخت بسته شود ولی سفارش با order_code قابل پیگیری بماند
+            expires_at: new Date().toISOString()
+        });
+        // محلی هم آپدیت
+        try {
+            const local = payLocalAll().map(function (r) {
+                if (r.token === token) {
+                    return Object.assign({}, r, {
+                        status: nextStatus,
+                        approved_at: new Date().toISOString(),
+                        expires_at: new Date().toISOString()
+                    });
+                }
+                return r;
+            });
+            payLocalSave(local);
+        } catch (e) {}
+        showToast(isCatalog
+            ? ('✅ رسید تأیید شد — سفارش ' + (row.order_code || '') + ' در حال آماده‌سازی')
+            : '✅ پرداخت تأیید شد');
         renderPayLinkList();
+        try { if (typeof loadCatalogOrdersAdmin === 'function') loadCatalogOrdersAdmin(); } catch (e) {}
     };
     window.rejectPayLink = async function (token) {
         if (!payIsAdmin()) return showToast('❌ فقط مدیر می‌تواند رد کند');
@@ -23277,29 +23437,40 @@ notify pgrst, 'reload schema';`;
     window.payCopyCard = function (n) { payCopy(payDigits(n), 'شماره کارت کپی شد'); };
     window.payCopyAmount = function (a) { payCopy(String(a), 'مبلغ کپی شد'); };
 
-    window.refreshPayPublicStatus = async function (token) {
+    window.refreshPayPublicStatus = async function (token, silent) {
         const btn = document.getElementById('payRefreshStatusBtn');
         const hint = document.getElementById('payRefreshHint');
-        if (btn) { btn.disabled = true; btn.textContent = '⏳ در حال بررسی...'; }
-        if (hint) hint.textContent = 'در حال دریافت آخرین وضعیت از سرور...';
+        if (!silent) {
+            if (btn) { btn.disabled = true; btn.textContent = '⏳ در حال بررسی...'; }
+            if (hint) hint.textContent = 'در حال دریافت آخرین وضعیت از سرور...';
+        }
         try {
-            // اجباراً از سرور بخوان؛ کش محلی را با سرور ادغام کن
             let remote = null;
             try { remote = await payFetchRemote(token); } catch (e) {}
             if (remote) {
                 const local = payLocalAll();
                 const i = local.findIndex(function (x) { return x.token === token; });
-                if (i >= 0) local[i] = Object.assign({}, local[i], remote);
+                // سرور منبع اصلی وضعیت بعد از ثبت رسید است
+                if (i >= 0) local[i] = Object.assign({}, local[i], remote, {
+                    status: remote.status || local[i].status,
+                    order_code: remote.order_code || local[i].order_code,
+                    customer_name: remote.customer_name || local[i].customer_name,
+                    phone: remote.phone || local[i].phone
+                });
                 else local.unshift(remote);
                 payLocalSave(local);
             }
             await openPayPublic(token);
-            if (hint) hint.textContent = 'بروز شد';
-            payGuestMsg('🔄 وضعیت بروز شد', true);
+            if (!silent) {
+                if (hint) hint.textContent = 'بروز شد — ' + new Date().toLocaleTimeString('fa-IR');
+                payGuestMsg('🔄 وضعیت بروز شد', true);
+            }
         } catch (e) {
-            if (hint) hint.textContent = 'خطا در بروزرسانی — دوباره تلاش کن';
-            if (btn) { btn.disabled = false; btn.textContent = '🔄 بروزرسانی وضعیت'; }
-            payGuestMsg('❌ بروزرسانی ناموفق', false);
+            if (!silent) {
+                if (hint) hint.textContent = 'خطا در بروزرسانی — دوباره تلاش کن';
+                if (btn) { btn.disabled = false; btn.textContent = '🔄 بروزرسانی وضعیت'; }
+                payGuestMsg('❌ بروزرسانی ناموفق', false);
+            }
         }
     };
 
@@ -23517,11 +23688,18 @@ notify pgrst, 'reload schema';`;
         row = await payFetchRemote(token);
         if (!row && local) row = Object.assign({}, local);
         else if (row && local) {
-            // رسید/وضعیت محلی را از دست نده
+            // رسید محلی را حفظ کن اگر سرور هنوز ندارد
             if (local.receipt_url && !row.receipt_url) row.receipt_url = local.receipt_url;
-            if (local.status === 'receipt' || local.status === 'approved' || local.status === 'rejected') row.status = local.status;
-            if (local.paid_at) row.paid_at = local.paid_at;
-            if (local.expires_at) row.expires_at = local.expires_at;
+            if (local.paid_at && !row.paid_at) row.paid_at = local.paid_at;
+            // وضعیت پیشرفته‌تر سرور اولویت دارد (تأیید/آماده‌سازی نباید با receipt محلی بازنویسی شود)
+            const rank = function (s) {
+                return ({ open: 1, paying: 2, receipt: 3, approved: 4, preparing: 5, ready: 6, shipped: 7, delivered: 8, problem: 3, rejected: 0, expired: 0, cancelled: 0 })[s || 'open'] || 0;
+            };
+            if (rank(local.status) > rank(row.status)) row.status = local.status;
+            if (local.order_code && !row.order_code) row.order_code = local.order_code;
+            if (local.customer_name && !row.customer_name) row.customer_name = local.customer_name;
+            if (local.phone && !row.phone) row.phone = local.phone;
+            if (local.address && !row.address) row.address = local.address;
         }
         if (!row) {
             inner.innerHTML = '<div class="report-card" style="text-align:center;padding:24px;"><h3>لینک نامعتبر یا منقضی</h3><p class="hint">این لینک پیدا نشد. از فروشنده لینک جدید بگیرید.</p></div>';
@@ -23532,12 +23710,67 @@ notify pgrst, 'reload schema';`;
         const exp = new Date(row.expires_at).getTime();
         let status = row.status || 'open';
         if (status === 'open' && exp < now) status = 'expired';
-        if (status === 'approved') {
-            inner.innerHTML = '<div class="report-card" style="border-color:rgba(16,185,129,.5);text-align:center;padding:24px;">' +
+        // تأیید شده / در حال آماده‌سازی / آماده / ارسال / تحویل
+        if (status === 'approved' || status === 'preparing' || status === 'ready' || status === 'shipped' || status === 'delivered') {
+            const orderCode = row.order_code || '';
+            const trackHref = orderCode
+                ? (location.pathname + (location.pathname.indexOf('?') >= 0 ? '&' : '?') + 'track=' + encodeURIComponent(orderCode)).replace(/\?&/, '?')
+                : '';
+            // ساخت URL پیگیری تمیز
+            let trackUrl = '';
+            try {
+                const u = new URL(location.href);
+                if (orderCode) {
+                    u.search = 'track=' + encodeURIComponent(orderCode);
+                    u.hash = '';
+                    trackUrl = u.toString();
+                }
+            } catch (e) {
+                trackUrl = trackHref;
+            }
+            const msgByStatus = {
+                approved: 'رسید شما تأیید شد و سفارش در حال آماده‌سازی است.',
+                preparing: 'رسید شما تأیید شد و سفارش در حال آماده‌سازی است.',
+                ready: 'سفارش شما آماده است.',
+                shipped: 'سفارش شما ارسال شد.',
+                delivered: 'سفارش تحویل داده شد. نوش جان 🙏'
+            };
+            inner.innerHTML = '<div class="report-card" style="border-color:rgba(16,185,129,.5);text-align:center;padding:24px;direction:rtl;">' +
                 '<div style="font-size:48px;">✅</div>' +
-                '<h2 style="color:#34d399;">تراکنش موفقیت‌آمیز بود</h2>' +
-                '<p class="hint">پرداخت شما تأیید شد. از اعتمادتان ممنونیم 🙏</p>' +
-                '<p style="opacity:.7;font-size:12px;">این لینک دیگر فعال نیست.</p></div>';
+                '<h2 style="color:#34d399;">رسید شما تأیید شد</h2>' +
+                '<p style="line-height:1.9;font-size:14px;margin:10px 0;">' + (msgByStatus[status] || msgByStatus.approved) + '</p>' +
+                (orderCode
+                    ? ('<div style="margin:14px 0;padding:14px;border-radius:14px;background:rgba(15,23,42,.9);border:1px solid rgba(251,191,36,.4);">' +
+                        '<div style="font-size:12px;opacity:.85;">شماره پیگیری سفارش (قابل کپی)</div>' +
+                        '<div id="payApprovedOrderCode" style="font-size:24px;font-weight:900;color:#fbbf24;margin:8px 0;letter-spacing:1px;direction:ltr;cursor:pointer;" onclick="payCopy(\'' + payEsc(orderCode) + '\',\'شماره پیگیری کپی شد\')">' + payEsc(orderCode) + '</div>' +
+                        '<button type="button" class="row-btn fill-btn" style="width:100%;" onclick="payCopy(\'' + payEsc(orderCode) + '\',\'شماره پیگیری کپی شد\')">📋 کپی شماره پیگیری</button>' +
+                        '</div>')
+                    : '') +
+                (row.customer_name ? '<p style="font-size:13px;">مشتری: <b>' + payEsc(row.customer_name) + '</b></p>' : '') +
+                '<p style="font-size:13px;">مبلغ: <b>' + Number(row.amount || 0).toLocaleString('fa-IR') + ' تومان</b></p>' +
+                (trackUrl
+                    ? ('<p id="payRedirectHint" class="hint" style="margin-top:12px;">تا ۱۰ ثانیه دیگر به صفحه پیگیری سفارش منتقل می‌شوید...</p>' +
+                        '<a class="submit-btn" style="display:block;text-decoration:none;margin-top:10px;" href="' + payEsc(trackUrl) + '">📦 رفتن به پیگیری سفارش</a>' +
+                        '<button type="button" class="row-btn fill-btn" style="width:100%;margin-top:8px;" onclick="printOrderInvoice(' + JSON.stringify(orderCode) + ',\'customer\')">🖨️ چاپ فاکتور مشتری</button>')
+                    : '<p class="hint" style="margin-top:10px;">از اعتمادتان ممنونیم 🙏</p>') +
+                '</div>';
+            if (trackUrl && (status === 'approved' || status === 'preparing')) {
+                let left = 10;
+                const hint = function () {
+                    const el = document.getElementById('payRedirectHint');
+                    if (el) el.textContent = 'تا ' + left + ' ثانیه دیگر به صفحه پیگیری سفارش منتقل می‌شوید...';
+                };
+                hint();
+                clearInterval(window._payApproveRedirectT);
+                window._payApproveRedirectT = setInterval(function () {
+                    left -= 1;
+                    hint();
+                    if (left <= 0) {
+                        clearInterval(window._payApproveRedirectT);
+                        location.href = trackUrl;
+                    }
+                }, 1000);
+            }
             return;
         }
         if (status === 'expired' || status === 'rejected') {
@@ -23545,25 +23778,38 @@ notify pgrst, 'reload schema';`;
                 '<h2>⌛ لینک منقضی شده</h2>' +
                 '<p class="hint">مهلت پرداخت تمام شده یا لینک بسته شده. با فروشنده تماس بگیرید.</p>' +
                 (row.phone ? '<p>📞 ' + payEsc(row.phone) + '</p>' : '') +
+                (row.order_code ? '<p>پیگیری: <b dir="ltr">' + payEsc(row.order_code) + '</b></p>' : '') +
                 '</div>';
             return;
         }
         if (status === 'receipt') {
-            inner.innerHTML = '<div class="report-card" style="text-align:center;padding:22px;border-color:rgba(56,189,248,.45);">' +
+            inner.innerHTML = '<div class="report-card" style="text-align:center;padding:22px;border-color:rgba(56,189,248,.45);direction:rtl;">' +
                 '<div style="font-size:44px;">📷</div>' +
                 '<h2 style="color:#38bdf8;">رسید شما ثبت شد</h2>' +
-                '<p style="line-height:1.9;font-size:13px;">رسید توسط <b>مدیر غرفه</b> بررسی و تأیید خواهد شد.<br>نتیجه همین‌جا اعلام می‌شود.</p>' +
-                (row.phone ? '<p style="margin-top:10px;cursor:pointer;" onclick="payCopy(\'' + payEsc(row.phone) + '\',\'شماره پشتیبانی کپی شد\')">📞 پشتیبانی: <b dir="ltr">' + payEsc(row.phone) + '</b><br><span style="font-size:11px;opacity:.75;">👆 ضربه = کپی شماره</span></p>' : '') +
+                '<p style="line-height:1.9;font-size:13px;">رسید توسط <b>مدیر غرفه</b> بررسی می‌شود.<br>به محض تأیید، همین صفحه پیام می‌دهد و به پیگیری سفارش می‌روید.</p>' +
+                (row.order_code
+                    ? ('<div style="margin:12px 0;padding:12px;border-radius:12px;background:rgba(15,23,42,.85);border:1px solid rgba(251,191,36,.35);">' +
+                        '<div style="font-size:11px;opacity:.8;">شماره پیگیری (از الان نگه دارید)</div>' +
+                        '<div style="font-size:20px;font-weight:900;color:#fbbf24;margin:6px 0;direction:ltr;cursor:pointer;" onclick="payCopy(\'' + payEsc(row.order_code) + '\',\'شماره پیگیری کپی شد\')">' + payEsc(row.order_code) + '</div>' +
+                        '<button type="button" class="row-btn fill-btn" style="width:100%;font-size:12px;" onclick="payCopy(\'' + payEsc(row.order_code) + '\',\'شماره پیگیری کپی شد\')">📋 کپی شماره پیگیری</button></div>')
+                    : '') +
+                (row.customer_name ? '<p style="font-size:12px;">به نام: <b>' + payEsc(row.customer_name) + '</b></p>' : '') +
                 '<button type="button" class="submit-btn" id="payRefreshStatusBtn" data-pay-token="' + payEsc(token) + '" style="margin-top:12px;">🔄 بروزرسانی وضعیت</button>' +
-                '<p id="payRefreshHint" class="hint" style="margin-top:8px;"></p>' +
+                '<p id="payRefreshHint" class="hint" style="margin-top:8px;">وضعیت هر چند ثانیه خودکار چک می‌شود...</p>' +
                 '</div>';
             setTimeout(function () {
                 const b = document.getElementById('payRefreshStatusBtn');
                 if (b) b.onclick = function (e) {
                     e.preventDefault();
+                    e.stopPropagation();
                     window.refreshPayPublicStatus(token);
                 };
             }, 30);
+            // پولینگ خودکار تا تأیید مدیر
+            clearInterval(window._payReceiptPollT);
+            window._payReceiptPollT = setInterval(function () {
+                window.refreshPayPublicStatus(token, true);
+            }, 5000);
             return;
         }
 
@@ -24369,38 +24615,67 @@ notify pgrst, 'reload schema';`;
         try { window.history.replaceState({}, '', trackUrl); } catch (e) {}
     }
 
-    window.printOrderInvoice = async function (code) {
+    window.printOrderInvoice = async function (code, role) {
+        // role: 'customer' | 'manager' | 'seller'
+        role = role || (typeof payIsAdmin === 'function' && payIsAdmin() ? 'manager' : 'customer');
         let row = null;
         try {
             if (typeof _supabase !== 'undefined' && _supabase) {
                 const { data } = await _supabase.from('payment_links').select('*').eq('order_code', code).maybeSingle();
                 row = data;
+                if (!row) {
+                    const r2 = await _supabase.from('payment_links').select('*').eq('token', code).maybeSingle();
+                    row = r2.data;
+                }
             }
         } catch (e) {}
         if (!row) {
             try { row = payLocalAll().find(function (x) { return x.order_code === code || x.token === code; }); } catch (e) {}
         }
-        if (!row) return catToast('فاکتور پیدا نشد', false);
+        if (!row) {
+            try { catToast('فاکتور پیدا نشد', false); } catch (e) { showToast('فاکتور پیدا نشد'); }
+            return;
+        }
         const w = window.open('', '_blank');
-        if (!w) return catToast('پنجره چاپ مسدود شد', false);
-        const st = ({ open: 'در انتظار پرداخت', paying: 'در حال پرداخت', receipt: 'رسید در انتظار تأیید', approved: 'تأیید شده', problem: 'نیاز به اصلاح', cancelled: 'لغو شده', rejected: 'رد شده', expired: 'منقضی' })[row.status] || row.status;
-        w.document.write('<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><title>فاکتور ' + catEsc(code) + '</title>' +
-            '<style>body{font-family:Tahoma,Arial,sans-serif;padding:24px;color:#111}h1{font-size:18px;margin:0 0 8px}.box{border:2px solid #222;border-radius:8px;padding:14px;margin:12px 0}table{width:100%;border-collapse:collapse;margin-top:10px}td,th{border:1px solid #999;padding:8px;font-size:13px;text-align:right}.muted{color:#555;font-size:12px}@media print{button{display:none}}</style></head><body>' +
-            '<h1>فاکتور سفارش — تازه مارکت</h1>' +
-            '<div class="muted">غرفه فامیلی · لبنیات، ترشیجات، سوسیس و کالباس فله</div>' +
+        if (!w) {
+            try { catToast('پنجره چاپ مسدود شد', false); } catch (e) { showToast('پنجره چاپ مسدود شد'); }
+            return;
+        }
+        const st = ({
+            open: 'در انتظار پرداخت', paying: 'در حال پرداخت', receipt: 'رسید در انتظار تأیید',
+            approved: 'تأیید شده', preparing: 'در حال آماده‌سازی', ready: 'آماده تحویل/ارسال',
+            shipped: 'ارسال شد', delivered: 'تحویل شد',
+            problem: 'نیاز به اصلاح', cancelled: 'لغو شده', rejected: 'رد شده', expired: 'منقضی'
+        })[row.status] || row.status;
+        const isMgr = role === 'manager' || role === 'seller';
+        const title = isMgr ? 'برگه آماده‌سازی / ارسال سفارش' : 'فاکتور مشتری — تازه مارکت';
+        const subtitle = isMgr
+            ? 'این برگه را به بسته بچسبانید · غرفه فامیلی'
+            : 'رسید خرید شما · غرفه فامیلی · تازه مارکت';
+        let body =
+            '<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><title>' + catEsc(title) + ' ' + catEsc(row.order_code || code) + '</title>' +
+            '<style>body{font-family:Tahoma,Arial,sans-serif;padding:20px;color:#111;max-width:420px;margin:0 auto}h1{font-size:17px;margin:0 0 6px}.box{border:2px solid #222;border-radius:8px;padding:12px;margin:10px 0;line-height:1.9}.muted{color:#555;font-size:12px}.big{font-size:22px;font-weight:900;letter-spacing:1px;direction:ltr;text-align:center;margin:8px 0}@media print{button{display:none}}</style></head><body>' +
+            '<h1>' + catEsc(title) + '</h1>' +
+            '<div class="muted">' + catEsc(subtitle) + '</div>' +
+            '<div class="big">' + catEsc(row.order_code || code) + '</div>' +
             '<div class="box">' +
-            '<div><b>شماره پیگیری:</b> <span dir="ltr">' + catEsc(row.order_code || code) + '</span></div>' +
-            '<div><b>مشتری:</b> ' + catEsc(row.customer_name || '') + '</div>' +
-            '<div><b>تلفن:</b> ' + catEsc(row.phone || '') + '</div>' +
+            '<div><b>مشتری:</b> ' + catEsc(row.customer_name || '—') + '</div>' +
+            '<div><b>تلفن:</b> <span dir="ltr">' + catEsc(row.phone || '—') + '</span></div>' +
             '<div><b>وضعیت:</b> ' + catEsc(st) + '</div>' +
-            '<div><b>مبلغ:</b> ' + Number(row.amount || 0).toLocaleString('fa-IR') + ' تومان</div>' +
-            (row.delivery_when ? '<div><b>زمان تحویل:</b> ' + catEsc(row.delivery_when) + '</div>' : '') +
-            (row.address ? '<div><b>آدرس/تحویل:</b> ' + catEsc(row.address) + '</div>' : '') +
-            '</div>' +
-            '<pre style="white-space:pre-wrap;font-family:Tahoma;font-size:12px;line-height:1.8;border:1px solid #ccc;padding:12px;border-radius:8px;">' + catEsc(row.note || '') + '</pre>' +
-            '<p class="muted">تاریخ چاپ: ' + new Date().toLocaleString('fa-IR') + '</p>' +
-            '<button onclick="window.print()">🖨️ چاپ</button>' +
-            '</body></html>');
+            '<div><b>مبلغ قابل پرداخت:</b> ' + Number(row.amount || 0).toLocaleString('fa-IR') + ' تومان</div>' +
+            (row.delivery_type === 'pickup' ? '<div><b>نوع تحویل:</b> حضوری از درب فروشگاه</div>' : '<div><b>نوع تحویل:</b> ارسال درب منزل</div>') +
+            (row.delivery_when ? '<div><b>زمان:</b> ' + catEsc(row.delivery_when) + '</div>' : '') +
+            (row.address ? '<div><b>آدرس:</b> ' + catEsc(row.address) + '</div>' : '') +
+            '</div>';
+        if (isMgr) {
+            body += '<div class="box" style="border-style:dashed;"><b>جزئیات برای آماده‌سازی:</b><pre style="white-space:pre-wrap;font-family:Tahoma;font-size:12px;margin:8px 0 0;">' + catEsc(row.note || '') + '</pre></div>' +
+                '<div class="muted">تماس با مشتری: ' + catEsc(row.phone || '—') + ' · چاپ: ' + new Date().toLocaleString('fa-IR') + '</div>';
+        } else {
+            body += '<div class="box"><b>اقلام سفارش:</b><pre style="white-space:pre-wrap;font-family:Tahoma;font-size:12px;margin:8px 0 0;">' + catEsc(row.note || '') + '</pre></div>' +
+                '<p class="muted">از خرید شما سپاسگزاریم 🙏 · ' + new Date().toLocaleString('fa-IR') + '</p>';
+        }
+        body += '<button onclick="window.print()" style="margin-top:12px;padding:10px 16px;font-size:14px;">🖨️ چاپ</button></body></html>';
+        w.document.write(body);
         w.document.close();
         setTimeout(function () { try { w.print(); } catch (e) {} }, 400);
     };
@@ -24548,7 +24823,8 @@ notify pgrst, 'reload schema';`;
             '</div>' +
             (row.status === 'open' || row.status === 'paying' ? '<a class="submit-btn" style="display:block;margin-top:14px;text-decoration:none;" href="' + catEsc(payLinkUrl(row.token)) + '">💳 ادامه / انجام پرداخت</a>' : '') +
             (row.status === 'problem' ? '<button type="button" class="submit-btn" style="margin-top:12px;" onclick="location.href=\'?catalog=1\'">✏️ اصلاح و سفارش دوباره</button>' : '') +
-            '<button type="button" class="row-btn fill-btn" style="width:100%;margin-top:10px;" onclick="printOrderInvoice(' + JSON.stringify(row.order_code || code) + ')">🖨️ چاپ فاکتور رسمی</button>' +
+            '<button type="button" class="row-btn fill-btn" style="width:100%;margin-top:10px;" onclick="printOrderInvoice(' + JSON.stringify(row.order_code || code) + ',\'customer\')">🖨️ چاپ فاکتور مشتری</button>' +
+            '<button type="button" class="row-btn fill-btn" style="width:100%;margin-top:8px;" onclick="payCopy(' + JSON.stringify(row.order_code || code) + ',\'شماره پیگیری کپی شد\')">📋 کپی شماره پیگیری</button>' +
             '<button type="button" class="row-btn fill-btn" style="width:100%;margin-top:8px;" onclick="navigator.clipboard&&navigator.clipboard.writeText(' + JSON.stringify(trackLink) + ').then(function(){catToast(\'لینک پیگیری کپی شد\',true)})">🔗 کپی لینک پیگیری</button>' +
             '<button type="button" class="row-btn fill-btn" style="width:100%;margin-top:8px;" onclick="openTrackPublic(' + JSON.stringify(code) + ')">🔄 بروزرسانی وضعیت</button>' +
             '<button type="button" class="row-btn edit-btn" style="width:100%;margin-top:8px;" onclick="location.href=\'?catalog=1\'">🛒 بازگشت به کاتالوگ</button>' +
@@ -24645,7 +24921,7 @@ notify pgrst, 'reload schema';`;
                 (st === 'shipped' ? '<button type="button" class="row-btn fill-btn" style="flex:1;font-size:11px;" onclick="catMgrSetStatus(\'' + payEsc(r.token) + '\',\'delivered\')">🏁 تحویل شد</button>' : '') +
                 '<button type="button" class="row-btn edit-btn" style="flex:1;font-size:11px;" onclick="catMgrProblem(\'' + payEsc(r.token) + '\')">⚠️ مشکل</button>' +
                 '<button type="button" class="row-btn edit-btn" style="flex:1;font-size:11px;color:#fca5a5;" onclick="catMgrSetStatus(\'' + payEsc(r.token) + '\',\'cancelled\')">❌ لغو</button>' +
-                '<button type="button" class="row-btn fill-btn" style="flex:1;font-size:11px;" onclick="printOrderInvoice(' + JSON.stringify(r.order_code || r.token) + ')">🖨️ فاکتور</button>' +
+                '<button type="button" class="row-btn fill-btn" style="flex:1;font-size:11px;" onclick="printOrderInvoice(' + JSON.stringify(r.order_code || r.token) + ',\'manager\')">🖨️ برگه آماده‌سازی</button>' +
                 '</div></div>';
         }).join('');
         try {
