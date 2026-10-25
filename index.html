@@ -68,7 +68,7 @@
         .cat-qty button{width:28px;height:28px;border-radius:8px;border:1px solid rgba(148,163,184,.35);background:#1e293b;color:#fff;font-weight:800;cursor:pointer}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v184 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v185 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -3693,7 +3693,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v184 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v185 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3877,7 +3877,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=184', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=185', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -24555,7 +24555,10 @@ notify pgrst, 'reload schema';`;
             '<div style="font-size:11px;opacity:.75;">در فروشگاه · تخفیف ' + cashDisc + '٪</div></button>' +
             '</div>';
         if (payMethod === 'cash') {
-            html += '<div style="margin:6px 0 10px;padding:10px;border-radius:12px;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.35);font-size:12px;line-height:1.7;">💵 بعد از ثبت سفارش، صفحه پرداخت باز نمی‌شود. وقتی آماده شد در زمان مشخص‌شده برای تحویل و پرداخت حضوری تشریف بیاورید.</div>';
+            const cashHint = (catFormDraft.recv || 'delivery') === 'delivery'
+                ? '💵 بعد از ثبت، صفحه پرداخت باز نمی‌شود. پیک هنگام تحویل درب منزل مبلغ را دریافت می‌کند.'
+                : '💵 بعد از ثبت، صفحه پرداخت باز نمی‌شود. هنگام مراجعه به فروشگاه در زمان مشخص‌شده پرداخت و تحویل می‌گیرید.';
+            html += '<div style="margin:6px 0 10px;padding:10px;border-radius:12px;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.35);font-size:12px;line-height:1.7;">' + cashHint + '</div>';
         }
         return html;
     }
@@ -24677,8 +24680,9 @@ notify pgrst, 'reload schema';`;
             if ((catFormDraft.address || '').length < 5) return setStatus('❌ آدرس دقیق تحویل را کامل کنید', false);
         }
         if (!catFormDraft.day || !catFormDraft.hour) return setStatus('❌ روز و ساعت تحویل را انتخاب کنید', false);
-        // ذخیره برای دفعات بعد روی همین گوشی
+        // ذخیره برای دفعات بعد + همگام ابری
         try { catPersistCustomerFromDraft(); } catch (e) {}
+        try { catPushCustomerCloud(); } catch (e) {}
         if (!when) {
             catFormDraft.when = catBuildWhenText();
             if (!catFormDraft.when) return setStatus('❌ روز و ساعت تحویل را انتخاب کنید', false);
@@ -24715,8 +24719,12 @@ notify pgrst, 'reload schema';`;
         }).join('');
         const sheet = document.getElementById('catSheetBody');
         if (!sheet) return;
-        const payLabel = payMethod === 'cash' ? '💵 پرداخت حضوری در فروشگاه' : '💳 پرداخت آنلاین';
-        const btnLabel = payMethod === 'cash' ? '✅ ثبت سفارش (پرداخت هنگام تحویل)' : '💳 مطمئنم — ثبت و پرداخت آنلاین';
+        const payLabel = payMethod === 'cash'
+            ? ((recv === 'delivery') ? '💵 پرداخت حضوری درب منزل (هنگام تحویل)' : '💵 پرداخت حضوری در فروشگاه')
+            : '💳 پرداخت آنلاین';
+        const btnLabel = payMethod === 'cash'
+            ? ((recv === 'delivery') ? '✅ ثبت سفارش (پرداخت درب منزل)' : '✅ ثبت سفارش (پرداخت در فروشگاه)')
+            : '💳 مطمئنم — ثبت و پرداخت آنلاین';
         sheet.innerHTML =
             '<div style="direction:rtl;">' +
             '<h3 style="margin:0 0 8px;">✅ تأیید نهایی سفارش</h3>' +
@@ -24757,6 +24765,7 @@ notify pgrst, 'reload schema';`;
 
         catToast('⏳ در حال ثبت سفارش...', true);
         try { catPersistCustomerFromDraft(); } catch (e) {}
+        try { await catPushCustomerCloud(); } catch (e) {}
         try { await payPullCfgFromCloud(); } catch (e) {}
         const cfg = payLoadCfg();
         const hasCard = cfg.card && payDigits(cfg.card).length === 16;
@@ -24777,8 +24786,10 @@ notify pgrst, 'reload schema';`;
             '[سفارش اینستاگرام]\n' +
             '🔖 شماره پیگیری: ' + orderCode + '\n' +
             '📞 ' + phone + '\n' +
-            (isCash ? '💵 پرداخت: حضوری در فروشگاه\n' : '💳 پرداخت: آنلاین / کارت‌به‌کارت\n') +
-            (recv === 'pickup' ? '🏪 تحویل حضوری\n' : ('📍 ارسال: ' + fullAddr + '\n')) +
+            (isCash
+                ? (recv === 'delivery' ? '💵 پرداخت: حضوری درب منزل (هنگام تحویل)\n' : '💵 پرداخت: حضوری در فروشگاه (هنگام مراجعه)\n')
+                : '💳 پرداخت: آنلاین / کارت‌به‌کارت\n') +
+            (recv === 'pickup' ? '🏪 تحویل حضوری از فروشگاه\n' : ('📍 ارسال درب منزل: ' + fullAddr + '\n')) +
             '⏰ زمان: ' + when + '\n' +
             (note ? ('📝 ' + note + '\n') : '') +
             (disc > 0 ? ('🎁 تخفیف ' + disc + '٪: −' + discAmt.toLocaleString('fa-IR') + '\n') : '') +
@@ -24815,7 +24826,9 @@ notify pgrst, 'reload schema';`;
             discount_amt: discAmt,
             subtotal: sub,
             source: 'instagram_catalog',
-            manager_note: isCash ? 'پرداخت حضوری — هنگام تحویل دریافت شود' : '',
+            manager_note: isCash
+                ? (recv === 'delivery' ? 'پرداخت حضوری — مبلغ هنگام تحویل درب منزل دریافت شود' : 'پرداخت حضوری — مبلغ هنگام مراجعه به فروشگاه دریافت شود')
+                : '',
             session_id: (function () { try { return sessionStorage.getItem('cat_session_id') || ''; } catch (e) { return ''; } })()
         };
 
@@ -25107,22 +25120,81 @@ notify pgrst, 'reload schema';`;
             else catToast('شماره پیگیری را وارد کنید', false);
         };
     }
+    async function catPushCustomerCloud() {
+        try {
+            if (typeof _supabase === 'undefined' || !_supabase) return false;
+            const phone = String(catCustomerProfile.phone || '').replace(/\D/g, '');
+            if (!phone || phone.length < 10) return false;
+            const row = {
+                phone: phone,
+                name: catCustomerProfile.name || '',
+                addresses: catCustomerProfile.addresses || [],
+                updated_at: new Date().toISOString()
+            };
+            const { error } = await _supabase.from('catalog_customers').upsert([row], { onConflict: 'phone' });
+            return !error;
+        } catch (e) { return false; }
+    }
+    async function catPullCustomerCloud() {
+        try {
+            if (typeof _supabase === 'undefined' || !_supabase) return;
+            const phone = String(catCustomerProfile.phone || catFormDraft.phone || '').replace(/\D/g, '');
+            if (!phone || phone.length < 10) return;
+            const { data } = await _supabase.from('catalog_customers').select('*').eq('phone', phone).maybeSingle();
+            if (data) {
+                if (data.name) catCustomerProfile.name = data.name;
+                if (Array.isArray(data.addresses) && data.addresses.length) catCustomerProfile.addresses = data.addresses;
+                catCustomerProfile.phone = phone;
+                catSaveProfile();
+                if (!catFormDraft.name) catFormDraft.name = catCustomerProfile.name;
+                if (!catFormDraft.phone) catFormDraft.phone = phone;
+            }
+        } catch (e) {}
+    }
     function catRenderAccountPage() {
         const box = document.getElementById('catPageAccount');
         if (!box) return;
         catLoadProfile();
+        try { catPullCustomerCloud().then(function () {
+            // اگر بعد از pull عوض شد، دوباره رندر نکن مگر خالی بوده
+        }); } catch (e) {}
         const p = catCustomerProfile;
         box.innerHTML = '<h2 style="margin:0 0 12px;color:#34d399;">👤 حساب من</h2>' +
-            '<div class="summary-mini" style="flex-direction:column;gap:8px;text-align:right;">' +
-            '<div>نام: <b>' + catEsc(p.name || '—') + '</b></div>' +
-            '<div>تلفن: <b dir="ltr">' + catEsc(p.phone || '—') + '</b></div>' +
-            '<div>تعداد آدرس ذخیره‌شده: <b>' + (p.addresses || []).length + '</b></div>' +
-            '</div>' +
-            '<p class="hint" style="margin-top:10px;">اطلاعات شما روی همین گوشی ذخیره می‌شود تا دفعه بعد دوباره وارد نکنید.</p>' +
-            '<button type="button" class="row-btn edit-btn" style="width:100%;margin-top:10px;" id="catClearProfileBtn">🗑️ پاک کردن اطلاعات ذخیره‌شده</button>';
+            '<label>نام و نام خانوادگی</label>' +
+            '<input type="text" id="accEditName" dir="auto" value="' + catEsc(p.name || '') + '" placeholder="نام کامل">' +
+            '<label>شماره تماس</label>' +
+            '<input type="tel" id="accEditPhone" dir="ltr" inputmode="tel" value="' + catEsc(p.phone || '') + '" placeholder="09xxxxxxxxx" style="text-align:left;">' +
+            '<div class="hint" style="margin:8px 0;">آدرس‌های ذخیره‌شده: <b>' + (p.addresses || []).length + '</b></div>' +
+            ((p.addresses || []).map(function (a, i) {
+                return '<div class="summary-mini" style="flex-direction:column;gap:4px;margin-bottom:8px;font-size:12px;">' +
+                    '<b>📍 ' + catEsc(a.label || ('آدرس ' + (i + 1))) + '</b>' +
+                    '<span>' + catEsc(a.full || '') + '</span></div>';
+            }).join('') || '<p class="hint">هنوز آدرسی ذخیره نشده — با اولین سفارش ارسال ذخیره می‌شود.</p>') +
+            '<button type="button" class="submit-btn" style="margin-top:10px;" id="accSaveBtn">💾 ذخیره و همگام‌سازی</button>' +
+            '<p class="hint" style="margin-top:8px;">با ذخیره، اطلاعات برای سفارش‌های بعدی و فروشگاه همگام می‌شود.</p>' +
+            '<div style="margin-top:12px;padding:10px;border-radius:12px;background:rgba(15,23,42,.8);font-size:12px;">اینستاگرام تازه مارکت: <b dir="ltr">@taze.market.ali</b></div>' +
+            '<button type="button" class="row-btn edit-btn" style="width:100%;margin-top:10px;" id="catClearProfileBtn">🗑️ پاک کردن اطلاعات این گوشی</button>';
+        const save = document.getElementById('accSaveBtn');
+        if (save) save.onclick = async function () {
+            const name = ((document.getElementById('accEditName') || {}).value || '').trim();
+            let phone = ((document.getElementById('accEditPhone') || {}).value || '').trim().replace(/[۰-۹]/g, function (d) {
+                return '۰۱۲۳۴۵۶۷۸۹'.indexOf(d);
+            }).replace(/\D/g, '');
+            if (!name) return catToast('نام را وارد کنید', false);
+            if (!phone || phone.length < 10) return catToast('شماره معتبر وارد کنید', false);
+            catCustomerProfile.name = name;
+            catCustomerProfile.phone = phone;
+            catFormDraft.name = name;
+            catFormDraft.phone = phone;
+            catSaveProfile();
+            save.textContent = '⏳ در حال ذخیره...';
+            const ok = await catPushCustomerCloud();
+            save.textContent = '💾 ذخیره و همگام‌سازی';
+            catToast(ok ? '✅ ذخیره و همگام شد' : '⚠️ روی گوشی ذخیره شد — همگام‌سازی سرور کامل نشد', !!ok);
+        };
         const b = document.getElementById('catClearProfileBtn');
         if (b) b.onclick = function () {
-            if (!confirm('اطلاعات ذخیره‌شده پاک شود؟')) return;
+            if (!confirm('اطلاعات این گوشی پاک شود؟')) return;
             catCustomerProfile = { name: '', phone: '', addresses: [] };
             catSaveProfile();
             catFormDraft.name = ''; catFormDraft.phone = '';
@@ -25224,7 +25296,16 @@ notify pgrst, 'reload schema';`;
             (row.delivery_when ? '<div>زمان تحویل: ' + catEsc(row.delivery_when) + '</div>' : '') +
             (row.address ? '<div>آدرس/تحویل: ' + catEsc(row.address) + '</div>' : '') +
             '</div>' +
-            (row.pay_method === 'cash' ? '<div style="margin-top:8px;padding:8px;border-radius:10px;background:rgba(251,191,36,.12);font-size:12px;">💵 پرداخت حضوری — هنگام تحویل در فروشگاه</div>' : '') +
+            (row.pay_method === 'cash'
+                ? ('<div style="margin-top:8px;padding:8px;border-radius:10px;background:rgba(251,191,36,.12);font-size:12px;">💵 ' +
+                    (row.delivery_type === 'delivery' || (row.note && String(row.note).indexOf('درب منزل') >= 0)
+                        ? 'پرداخت حضوری — مبلغ هنگام تحویل درب منزل دریافت می‌شود'
+                        : 'پرداخت حضوری — مبلغ هنگام مراجعه به فروشگاه دریافت می‌شود') +
+                    '</div>')
+                : '') +
+            (row.status === 'cancelled' && row.manager_note
+                ? ('<div style="margin-top:8px;padding:10px;border-radius:12px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.35);font-size:12px;line-height:1.8;">❌ سفارش لغو شد<br>' + catEsc(row.manager_note) + '<br><span style="opacity:.9;">از همراهی‌تان سپاسگزاریم 🙏 · اینستاگرام: <b dir="ltr">@taze.market.ali</b></span></div>')
+                : '') +
             (row.status === 'open' || row.status === 'paying' ? '<a class="submit-btn" style="display:block;margin-top:14px;text-decoration:none;" href="' + catEsc(payLinkUrl(row.token)) + '">💳 ادامه / انجام پرداخت</a>' : '') +
             (row.status === 'problem' ? '<button type="button" class="submit-btn" style="margin-top:12px;" id="trackBtnFix">✏️ اصلاح و سفارش دوباره</button>' : '') +
             (row.status === 'delivered' ? '<div style="margin:12px 0;padding:12px;border-radius:12px;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.4);font-size:13px;">🏁 سفارشتان تحویل شد. تا چند ثانیه به کاتالوگ برمی‌گردید...</div>' : '') +
@@ -25409,8 +25490,10 @@ notify pgrst, 'reload schema';`;
                 '<div><b>' + payEsc(r.customer_name) + '</b> · ' + Number(r.amount || 0).toLocaleString('fa-IR') + ' ت' +
                 (r.order_code ? ' <span dir="ltr">#' + payEsc(r.order_code) + '</span>' : '') +
                 '<br><span style="font-size:11px;opacity:.85;">' + (stMap[st] || st) +
-                (r.pay_method === 'cash' ? ' · 💵 حضوری' : ' · 💳 آنلاین') +
-                (r.delivery_type === 'pickup' ? ' · 🏪 تحویل حضوری' : ' · 🚚 ارسال') +
+                (r.pay_method === 'cash'
+                    ? (r.delivery_type === 'pickup' ? ' · 💵 پرداخت در فروشگاه' : ' · 💵 پرداخت درب منزل')
+                    : ' · 💳 آنلاین') +
+                (r.delivery_type === 'pickup' ? ' · 🏪 تحویل حضوری' : ' · 🚚 ارسال درب منزل') +
                 (r.delivery_when ? ' · ⏰ ' + payEsc(r.delivery_when) : '') + '</span></div>' +
                 (r.phone ? '<div style="font-size:12px;"><a href="tel:' + payEsc(r.phone) + '" style="color:#38bdf8;">📞 ' + payEsc(r.phone) + '</a></div>' : '') +
                 (r.note ? '<div style="font-size:11px;white-space:pre-wrap;opacity:.9;">' + payEsc(String(r.note).slice(0, 400)) + '</div>' : '') +
@@ -25475,14 +25558,20 @@ notify pgrst, 'reload schema';`;
         if (!payIsAdmin()) return;
         const extra = { status: status };
         if (status === 'approved') extra.approved_at = new Date().toISOString();
-        // لغو = حذف نرم از لیست (status cancelled)
+        if (status === 'cancelled') {
+            const reason = prompt('علت لغو سفارش را برای مشتری بنویسید (الزامی):', 'متأسفانه امکان آماده‌سازی این سفارش وجود نداشت');
+            if (reason == null) return;
+            if (!String(reason).trim()) return showToast('❌ علت لغو را بنویسید');
+            extra.manager_note =
+                'متأسفانه سفارش شما لغو شد.\n' +
+                'علت: ' + String(reason).trim() + '\n' +
+                'در صورت تمایل دوباره از کاتالوگ سفارش ثبت کنید.\n' +
+                'از همراهی‌تان سپاسگزاریم 🙏\n' +
+                'اینستاگرام: @taze.market.ali';
+        }
         try {
             if (typeof _supabase !== 'undefined' && _supabase) {
-                if (status === 'cancelled') {
-                    await _supabase.from('payment_links').update(extra).eq('token', token);
-                } else {
-                    await _supabase.from('payment_links').update(extra).eq('token', token);
-                }
+                await _supabase.from('payment_links').update(extra).eq('token', token);
             }
         } catch (e) {}
         const local = payLocalAll().map(function (r) {
@@ -25490,7 +25579,7 @@ notify pgrst, 'reload schema';`;
             return r;
         });
         payLocalSave(local);
-        const labels = { approved: '✅ تأیید شد', preparing: '👨‍🍳 آماده‌سازی', ready: '📦 آماده', shipped: '🚚 ارسال شد', delivered: '🏁 تحویل شد', cancelled: '❌ لغو شد و از لیست فعال برداشته شد' };
+        const labels = { approved: '✅ تأیید شد', preparing: '👨‍🍳 آماده‌سازی', ready: '📦 آماده', shipped: '🚚 ارسال شد', delivered: '🏁 تحویل شد', cancelled: '❌ لغو شد — پیام برای مشتری ثبت شد' };
         showToast(labels[status] || 'ثبت شد');
         loadCatalogOrdersAdmin();
     };
