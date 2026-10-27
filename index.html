@@ -68,7 +68,7 @@
         .cat-qty button{width:28px;height:28px;border-radius:8px;border:1px solid rgba(148,163,184,.35);background:#1e293b;color:#fff;font-weight:800;cursor:pointer}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v185 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v187 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2136,6 +2136,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <button class="tab-btn" id="btnPayLink" onclick="switchTab('payLink'); loadPayLinkTab();" style="display:none;"><span class="tab-ico">💳</span><span class="tab-label">لینک پرداخت</span></button>
         <button class="tab-btn" id="btnQuickNote" onclick="switchTab('quickNote');"><span class="tab-ico">📝</span><span class="tab-label">دفترچه فروش سریع</span><span class="qn-badge" id="qnTabBadge"></span></button>
         <button class="tab-btn" id="btnAttendance" onclick="switchTab('attendance'); loadFingerprintStatus();"><span class="tab-ico">⏰</span><span class="tab-label">حضور و غیاب</span></button>
+        <button class="tab-btn" id="btnDailyChecklist" onclick="switchTab('dailyChecklist'); loadDailyChecklistTab();"><span class="tab-ico">✅</span><span class="tab-label">چک‌لیست روزانه</span></button>
         <button class="tab-btn" id="btnMessage" onclick="switchTab('message');"><span class="tab-ico">📩</span><span class="tab-label">ارسال پیام به مدیر</span></button>
         <button class="tab-btn" id="btnStaffMessage" onclick="switchTab('staffMessage'); loadStaffMessageTargets(); loadSentMessageReadStatus();"><span class="tab-ico">📤</span><span class="tab-label">پیام به پرسنل</span></button>
         <button class="tab-btn" id="btnInbox" onclick="switchTab('inbox'); loadInbox();"><span class="tab-ico">📥</span><span class="tab-label">صندوقچه پیام‌ها</span></button>
@@ -2163,6 +2164,25 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <button class="tab-btn" id="btnPersonnel" onclick="switchTab('personnel'); loadPersonnelTab();"><span class="tab-ico">🪪</span><span class="tab-label">اطلاعات پرسنل</span></button>
         <button class="tab-btn" id="btnPersonalTakeout" onclick="switchTab('personalTakeout'); loadMyTakeouts();"><span class="tab-ico">🛒</span><span class="tab-label">برداشت شخصی</span></button>
         <button class="tab-btn" id="btnMyAccount" onclick="switchTab('myAccount'); prefillMyAccountTab();"><span class="tab-ico">⚙️</span><span class="tab-label">حساب کاربری من</span></button>
+    </div>
+
+    <!-- تب چک‌لیست کارهای روزانه -->
+    <div id="dailyChecklistTab" class="card">
+        <h2>✅ چک‌لیست کارهای روزانه</h2>
+        <div class="hint" id="dclHint">کارهایی که باید هر شیفت انجام شود. ورود: یادآوری · خروج: تیک بزنید.</div>
+        <div id="dclContent"><p class="hint">در حال بارگذاری...</p></div>
+    </div>
+
+    <!-- اورلی یادآوری / تیک چک‌لیست در ورود و خروج -->
+    <div id="dclOverlay" style="position:fixed;inset:0;z-index:10070;display:none;align-items:center;justify-content:center;background:rgba(5,8,15,.96);padding:16px;">
+        <div class="scanner-box" style="max-width:420px;width:100%;text-align:right;direction:rtl;max-height:90vh;overflow:auto;">
+            <div style="font-size:36px;text-align:center;">✅</div>
+            <h3 id="dclOverlayTitle" style="color:#34d399;margin:8px 0;text-align:center;">چک‌لیست امروز</h3>
+            <div class="hint" id="dclOverlaySub" style="text-align:center;margin-top:0;"></div>
+            <div id="dclOverlayList" style="margin:12px 0;"></div>
+            <button type="button" class="submit-btn" id="dclOverlayOkBtn">متوجه شدم ✓</button>
+            <button type="button" class="cancel-edit-btn" style="display:block;margin-top:8px;" id="dclOverlayCloseBtn">بستن</button>
+        </div>
     </div>
 
     <!-- تب خلاصه روز (داشبورد مدیر) -->
@@ -3693,7 +3713,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v185 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v187 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3877,7 +3897,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=185', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=187', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -6357,17 +6377,18 @@ notify pgrst, 'reload schema';`;
             } catch (e) {}
 
             if (currentRole === 'admin') {
-                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnSausagePriceCompare', 'btnProductGuide', 'btnAiChat', 'btnQuickNote', 'btnInbox', 'btnStaffMessage', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnShiftSettings', 'btnTelegramSettings', 'btnDebtLedger', 'btnContractAdmin', 'btnGrowthReport', 'btnPurchaseInvoices', 'btnTakeoutAdmin', 'btnGoals', 'btnSalesBoost', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnDeletedSales', 'btnWeeklyReports', 'btnPersonnel', 'btnMyAccount'], 'dashboardTab');
+                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnSausagePriceCompare', 'btnProductGuide', 'btnAiChat', 'btnQuickNote', 'btnDailyChecklist', 'btnInbox', 'btnStaffMessage', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnShiftSettings', 'btnTelegramSettings', 'btnDebtLedger', 'btnContractAdmin', 'btnGrowthReport', 'btnPurchaseInvoices', 'btnTakeoutAdmin', 'btnGoals', 'btnSalesBoost', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnDeletedSales', 'btnWeeklyReports', 'btnPersonnel', 'btnMyAccount'], 'dashboardTab');
                 checkAndGenerateWeeklyReport();
                 document.getElementById('salaryAdminForm').style.display = 'block';
                 checkLowStockAlertNoWeight();
             } else if (currentRole === 'morning_seller') {
-                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnSausagePriceCompare', 'btnProductGuide', 'btnAiChat', 'btnQuickNote', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnDebtLedger', 'btnPersonalTakeout', 'btnGoals', 'btnSalesBoost', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnMyAccount'], 'dashboardTab');
+                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnSausagePriceCompare', 'btnProductGuide', 'btnAiChat', 'btnQuickNote', 'btnAttendance', 'btnDailyChecklist', 'btnMessage', 'btnInbox', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnDebtLedger', 'btnPersonalTakeout', 'btnGoals', 'btnSalesBoost', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnMyAccount'], 'dashboardTab');
                 document.getElementById('salaryAdminForm').style.display = 'none';
             } else {
-                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnSausagePriceCompare', 'btnProductGuide', 'btnAiChat', 'btnQuickNote', 'btnAttendance', 'btnMessage', 'btnInbox', 'btnReport', 'btnDebtLedger', 'btnPersonalTakeout', 'btnGoals', 'btnSalesBoost', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnMyAccount'], 'dashboardTab');
+                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnSausagePriceCompare', 'btnProductGuide', 'btnAiChat', 'btnQuickNote', 'btnAttendance', 'btnDailyChecklist', 'btnMessage', 'btnInbox', 'btnReport', 'btnDebtLedger', 'btnPersonalTakeout', 'btnGoals', 'btnSalesBoost', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnMyAccount'], 'dashboardTab');
                 document.getElementById('salaryAdminForm').style.display = 'none';
             }
+            try { setTimeout(function () { dclMaybeRemindOnLogin(); }, 1800); } catch (e) {}
 
             renderBottomNav();
 
@@ -6789,6 +6810,7 @@ notify pgrst, 'reload schema';`;
             if (tab === 'dashboard') { loadAdminDashboard(); }
             if (tab === 'goals') { sstInit(); }
             if (tab === 'quickNote') { try { qnOpen(); } catch (e) { console.warn(e); } }
+            if (tab === 'dailyChecklist') { try { loadDailyChecklistTab(); } catch (e) {} }
 
             updateTrialGuideBanner(tab);
             syncBottomNavActiveState(tab);
@@ -6802,6 +6824,7 @@ notify pgrst, 'reload schema';`;
             saleSausage: '📴 فروش سوسیس روی صف می‌ماند تا آنلاین شوی.',
             quickNote: '📴 یادداشت‌ها روی گوشی می‌مانند. هوش مصنوعی نیاز به اینترنت دارد.',
             attendance: '📴 ورود/خروج الان ثبت می‌شود و بعد از آنلاین شدن برای مدیر می‌رود.',
+            dailyChecklist: '📴 تیک‌ها روی گوشی ذخیره می‌شوند و بعد از آنلاین شدن برای مدیر می‌روند.',
             goals: '📴 هدف‌ها از آخرین ذخیره دیده می‌شوند؛ تغییر نیاز به اینترنت دارد.',
             inventory: '📴 موجودی از آخرین لیست روی گوشی است.',
             booth: '📴 یخچال از آخرین داده روی گوشی است.',
@@ -11300,19 +11323,353 @@ function sbRenderAdminLists(cfg) {
             if (_exitChecklistResolver) { _exitChecklistResolver(choice); _exitChecklistResolver = null; }
         }
         function askExitChecklist() {
-            const isMorning = currentRole === 'morning_seller';
-            let text = isMorning
-                ? 'شیشه‌ها، دستگاه برش، زمین، داخل یخچال و ظرف‌ها رو پر و تمیز کردی؟'
-                : 'دستگاه برش، روی یخچال، روی زمین، زیر ترازو و زیر دستگاه وکیوم رو تمیز کردی؟';
-            let hadHurryLastTime = false;
-            try { hadHurryLastTime = localStorage.getItem('exitChecklistHurryFlag_' + currentUserLabel) === '1'; } catch (e) {}
-            if (hadHurryLastTime) {
-                text = '⚠️ دفعه قبل عجله داشتی و این کار رو نکرده بودی — امروز حتماً انجامش بده!\n\n' + text;
-            }
-            document.getElementById('exitChecklistText').innerText = text;
-            document.getElementById('exitChecklistOverlay').style.display = 'flex';
-            return new Promise((resolve) => { _exitChecklistResolver = resolve; });
+            // نسخه جدید: چک‌لیست آیتم‌دار روزانه
+            return dclAskOnExit();
         }
+
+        // ========== چک‌لیست کارهای روزانه ==========
+        const DCL_DEFAULTS = [
+            { id: 'm1', title: 'شارژ قفسه و یخچال غرفه', target: 'morning_seller', order: 1 },
+            { id: 'm2', title: 'تمیزی شیشه، دستگاه برش و سطح کار', target: 'morning_seller', order: 2 },
+            { id: 'm3', title: 'چک موجودی کالاهای کم و ثبت کمبود', target: 'morning_seller', order: 3 },
+            { id: 'm4', title: 'روشن‌کردن دستگاه‌ها و آماده‌سازی شروع شیفت', target: 'morning_seller', order: 4 },
+            { id: 'e1', title: 'تمیزی دستگاه برش، ترازو و زیر دستگاه وکیوم', target: 'evening_seller', order: 1 },
+            { id: 'e2', title: 'تمیزی روی یخچال، زمین و زیر ترازو', target: 'evening_seller', order: 2 },
+            { id: 'e3', title: 'جمع‌آوری زباله و مرتب‌سازی غرفه', target: 'evening_seller', order: 3 },
+            { id: 'e4', title: 'تحویل وضعیت به شیفت بعد / بستن فروشگاه', target: 'evening_seller', order: 4 },
+            { id: 'a1', title: 'ثبت ورود در سیستم حضور و غیاب', target: 'all', order: 0 },
+            { id: 'a2', title: 'پاسخ به پیام‌های مدیر در صندوقچه', target: 'all', order: 5 }
+        ];
+        let dclTasksCache = null;
+        let dclMarksCache = {}; // { taskId: true/false }
+
+        function dclToday() {
+            try { return getTehranISODate(new Date()); } catch (e) {
+                return new Date().toISOString().slice(0, 10);
+            }
+        }
+        function dclMarksKey(date, username) {
+            return 'dcl_marks_' + (date || dclToday()) + '_' + (username || (currentSessionUser && currentSessionUser.username) || 'x');
+        }
+        async function dclLoadTasks() {
+            if (dclTasksCache && dclTasksCache.length) return dclTasksCache;
+            let tasks = null;
+            try {
+                if (typeof _supabase !== 'undefined' && _supabase) {
+                    const { data } = await _supabase.from('app_shared_config').select('config').eq('id', 1).maybeSingle();
+                    if (data && data.config && Array.isArray(data.config.dailyChecklistTasks) && data.config.dailyChecklistTasks.length) {
+                        tasks = data.config.dailyChecklistTasks;
+                    }
+                }
+            } catch (e) {}
+            if (!tasks) {
+                try {
+                    const raw = localStorage.getItem('dcl_tasks_v1');
+                    if (raw) tasks = JSON.parse(raw);
+                } catch (e) {}
+            }
+            if (!tasks || !tasks.length) tasks = DCL_DEFAULTS.map(function (t) { return Object.assign({}, t, { active: true }); });
+            dclTasksCache = tasks.filter(function (t) { return t.active !== false; });
+            return dclTasksCache;
+        }
+        async function dclSaveTasks(tasks) {
+            dclTasksCache = tasks;
+            try { localStorage.setItem('dcl_tasks_v1', JSON.stringify(tasks)); } catch (e) {}
+            try {
+                if (typeof _supabase !== 'undefined' && _supabase) {
+                    const { data } = await _supabase.from('app_shared_config').select('config').eq('id', 1).maybeSingle();
+                    const cfg = (data && data.config) ? Object.assign({}, data.config) : {};
+                    cfg.dailyChecklistTasks = tasks;
+                    await _supabase.from('app_shared_config').upsert({ id: 1, config: cfg, updated_at: new Date().toISOString() }, { onConflict: 'id' });
+                }
+            } catch (e) {}
+        }
+        function dclLoadMarksLocal(date, username) {
+            try {
+                const raw = localStorage.getItem(dclMarksKey(date, username));
+                return raw ? JSON.parse(raw) : {};
+            } catch (e) { return {}; }
+        }
+        function dclSaveMarksLocal(date, username, marks) {
+            try { localStorage.setItem(dclMarksKey(date, username), JSON.stringify(marks || {})); } catch (e) {}
+        }
+        async function dclLoadMarks(date, username) {
+            date = date || dclToday();
+            username = username || (currentSessionUser && currentSessionUser.username) || '';
+            let marks = dclLoadMarksLocal(date, username);
+            try {
+                if (typeof _supabase !== 'undefined' && _supabase && username) {
+                    const { data } = await _supabase.from('daily_checklist_marks')
+                        .select('task_id, done')
+                        .eq('work_date', date)
+                        .eq('username', username);
+                    if (data && data.length) {
+                        data.forEach(function (r) { marks[r.task_id] = !!r.done; });
+                        dclSaveMarksLocal(date, username, marks);
+                    }
+                }
+            } catch (e) {}
+            dclMarksCache = marks;
+            return marks;
+        }
+        async function dclSetMark(taskId, done, date, username) {
+            date = date || dclToday();
+            username = username || (currentSessionUser && currentSessionUser.username) || '';
+            const marks = dclLoadMarksLocal(date, username);
+            marks[taskId] = !!done;
+            dclSaveMarksLocal(date, username, marks);
+            dclMarksCache = marks;
+            try {
+                if (typeof _supabase !== 'undefined' && _supabase && username) {
+                    const id = date + '_' + username + '_' + taskId;
+                    await _supabase.from('daily_checklist_marks').upsert([{
+                        id: id,
+                        work_date: date,
+                        username: username,
+                        seller_label: currentUserLabel || username,
+                        task_id: taskId,
+                        done: !!done,
+                        marked_at: new Date().toISOString()
+                    }], { onConflict: 'id' });
+                }
+            } catch (e) {}
+        }
+        function dclTasksForUser(tasks, role, username) {
+            return (tasks || []).filter(function (t) {
+                if (t.active === false) return false;
+                const tg = t.target || 'all';
+                if (tg === 'all') return true;
+                if (tg === role) return true;
+                if (tg === 'user:' + username) return true;
+                if (username && tg === username) return true;
+                return false;
+            }).sort(function (a, b) { return (a.order || 0) - (b.order || 0); });
+        }
+        function dclEsc(s) {
+            return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        window.loadDailyChecklistTab = async function () {
+            const box = document.getElementById('dclContent');
+            const hint = document.getElementById('dclHint');
+            if (!box) return;
+            box.innerHTML = '<p class="hint">در حال بارگذاری...</p>';
+            const isAdmin = currentRole === 'admin';
+            const today = dclToday();
+            const tasks = await dclLoadTasks();
+            if (isAdmin) {
+                if (hint) hint.textContent = 'برای هر فروشنده کار تعریف کنید و وضعیت امروز همه را اینجا ببینید.';
+                // لیست فروشنده‌ها
+                let staff = [];
+                try {
+                    if (typeof _supabase !== 'undefined' && _supabase) {
+                        const { data } = await _supabase.from('users').select('username,full_name,role').in('role', ['morning_seller', 'evening_seller']);
+                        staff = data || [];
+                    }
+                } catch (e) {}
+                // marks همه
+                let allMarks = {};
+                try {
+                    if (typeof _supabase !== 'undefined' && _supabase) {
+                        const { data } = await _supabase.from('daily_checklist_marks').select('*').eq('work_date', today);
+                        (data || []).forEach(function (r) {
+                            if (!allMarks[r.username]) allMarks[r.username] = {};
+                            allMarks[r.username][r.task_id] = !!r.done;
+                        });
+                    }
+                } catch (e) {}
+                // اگر سرور خالی بود از local هم ببین
+                staff.forEach(function (u) {
+                    if (!allMarks[u.username]) allMarks[u.username] = dclLoadMarksLocal(today, u.username);
+                });
+
+                let html = '<div style="margin-bottom:14px;padding:12px;border-radius:14px;background:rgba(15,23,42,.85);border:1px solid rgba(52,211,153,.25);">';
+                html += '<div style="font-weight:800;margin-bottom:8px;color:#34d399;">📝 تعریف کار جدید</div>';
+                html += '<input type="text" id="dclNewTitle" dir="auto" placeholder="مثال: تمیزی داخل یخچال" style="width:100%;margin-bottom:8px;">';
+                html += '<select id="dclNewTarget" style="width:100%;margin-bottom:8px;">';
+                html += '<option value="all">همه فروشنده‌ها</option>';
+                html += '<option value="morning_seller">فقط فروشنده صبح</option>';
+                html += '<option value="evening_seller">فقط فروشنده شب</option>';
+                staff.forEach(function (u) {
+                    const lab = (u.full_name || u.username) + (u.role === 'morning_seller' ? ' (صبح)' : ' (شب)');
+                    html += '<option value="user:' + dclEsc(u.username) + '">فقط: ' + dclEsc(lab) + '</option>';
+                });
+                html += '</select>';
+                html += '<button type="button" class="submit-btn" onclick="dclAdminAddTask()">➕ افزودن به چک‌لیست</button>';
+                html += '</div>';
+
+                // مدیریت لیست کارها
+                html += '<div style="margin-bottom:16px;"><div style="font-weight:800;margin-bottom:8px;">کارهای تعریف‌شده</div>';
+                if (!tasks.length) html += '<p class="hint">هنوز کاری تعریف نشده.</p>';
+                tasks.forEach(function (t) {
+                    let who = 'همه';
+                    if (t.target === 'morning_seller') who = 'فروشنده صبح';
+                    else if (t.target === 'evening_seller') who = 'فروشنده شب';
+                    else if (String(t.target || '').indexOf('user:') === 0) {
+                        const un = String(t.target).slice(5);
+                        const u = staff.find(function (x) { return x.username === un; });
+                        who = u ? (u.full_name || u.username) : un;
+                    }
+                    html += '<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;margin-bottom:6px;border-radius:12px;background:rgba(15,23,42,.7);border:1px solid rgba(148,163,184,.2);">';
+                    html += '<div style="flex:1;text-align:right;"><b style="font-size:13px;">' + dclEsc(t.title) + '</b><div style="font-size:11px;opacity:.7;">🎯 ' + dclEsc(who) + '</div></div>';
+                    html += '<button type="button" class="row-btn edit-btn" style="width:auto;padding:6px 10px;font-size:11px;color:#fca5a5;" onclick="dclAdminRemoveTask(\'' + dclEsc(t.id) + '\')">حذف</button>';
+                    html += '</div>';
+                });
+                html += '</div>';
+
+                // وضعیت امروز
+                html += '<div style="font-weight:800;margin-bottom:8px;color:#38bdf8;">📊 وضعیت امروز · ' + dclEsc(today) + '</div>';
+                if (!staff.length) {
+                    html += '<p class="hint">فروشنده‌ای یافت نشد.</p>';
+                } else {
+                    staff.forEach(function (u) {
+                        const role = u.role || '';
+                        const mine = dclTasksForUser(tasks, role, u.username);
+                        const marks = allMarks[u.username] || {};
+                        const doneN = mine.filter(function (t) { return marks[t.id]; }).length;
+                        const total = mine.length;
+                        const pct = total ? Math.round(doneN / total * 100) : 0;
+                        const barColor = pct >= 80 ? '#34d399' : (pct >= 40 ? '#fbbf24' : '#f87171');
+                        const lab = (u.full_name || u.username) + (role === 'morning_seller' ? ' · صبح' : ' · شب');
+                        html += '<div style="margin-bottom:10px;padding:12px;border-radius:14px;background:rgba(15,23,42,.85);border:1px solid rgba(148,163,184,.2);">';
+                        html += '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;">';
+                        html += '<b style="font-size:13px;">' + dclEsc(lab) + '</b>';
+                        html += '<span style="font-size:12px;font-weight:800;color:' + barColor + ';">' + doneN + ' / ' + total + '</span></div>';
+                        html += '<div style="height:8px;border-radius:99px;background:rgba(148,163,184,.2);overflow:hidden;margin-bottom:8px;"><div style="height:100%;width:' + pct + '%;background:' + barColor + ';border-radius:99px;"></div></div>';
+                        mine.forEach(function (t) {
+                            const ok = !!marks[t.id];
+                            html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(148,163,184,.1);font-size:12px;">';
+                            html += '<span style="font-size:16px;">' + (ok ? '✅' : '⬜') + '</span>';
+                            html += '<span style="flex:1;text-align:right;' + (ok ? 'opacity:.85;' : 'color:#fca5a5;') + '">' + dclEsc(t.title) + '</span>';
+                            html += '<span style="font-size:10px;opacity:.7;">' + (ok ? 'انجام شد' : 'انجام نشد') + '</span>';
+                            html += '</div>';
+                        });
+                        html += '</div>';
+                    });
+                }
+                box.innerHTML = html;
+            } else {
+                // فروشنده
+                if (hint) hint.textContent = 'کارهای امروز شما. در خروج حتماً تیک بزنید.';
+                const marks = await dclLoadMarks(today);
+                const mine = dclTasksForUser(tasks, currentRole, currentSessionUser && currentSessionUser.username);
+                const doneN = mine.filter(function (t) { return marks[t.id]; }).length;
+                let html = '<div style="padding:12px;border-radius:14px;background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(56,189,248,.08));border:1px solid rgba(52,211,153,.3);margin-bottom:12px;text-align:center;">';
+                html += '<div style="font-size:13px;opacity:.85;">پیشرفت امروز</div>';
+                html += '<div style="font-size:22px;font-weight:900;color:#34d399;margin-top:4px;">' + doneN + ' از ' + mine.length + '</div></div>';
+                if (!mine.length) {
+                    html += '<p class="hint">مدیر هنوز کاری برای شما تعریف نکرده.</p>';
+                } else {
+                    mine.forEach(function (t) {
+                        const ok = !!marks[t.id];
+                        html += '<label style="display:flex;align-items:center;gap:10px;padding:12px;margin-bottom:8px;border-radius:14px;background:rgba(15,23,42,.8);border:1px solid ' + (ok ? 'rgba(52,211,153,.45)' : 'rgba(148,163,184,.25)') + ';cursor:pointer;">';
+                        html += '<input type="checkbox" ' + (ok ? 'checked' : '') + ' onchange="dclToggleTask(\'' + dclEsc(t.id) + '\', this.checked)" style="width:20px;height:20px;accent-color:#10b981;">';
+                        html += '<span style="flex:1;text-align:right;font-size:13px;font-weight:600;' + (ok ? 'text-decoration:line-through;opacity:.7;' : '') + '">' + dclEsc(t.title) + '</span>';
+                        html += '</label>';
+                    });
+                }
+                html += '<p class="hint" style="margin-top:10px;">با زدن تیک، برای مدیر هم ثبت می‌شود که انجام داده‌اید.</p>';
+                box.innerHTML = html;
+            }
+        };
+
+        window.dclToggleTask = async function (taskId, done) {
+            await dclSetMark(taskId, done);
+            try { showToast(done ? '✅ انجام شد' : '⬜ برداشته شد'); } catch (e) {}
+            // اگر در تب هستیم رفرش نکن تا UX نرم بماند — فقط progress در overlay مهم است
+        };
+
+        window.dclAdminAddTask = async function () {
+            const title = ((document.getElementById('dclNewTitle') || {}).value || '').trim();
+            const target = ((document.getElementById('dclNewTarget') || {}).value || 'all');
+            if (!title) return showToast('❌ عنوان کار را بنویسید');
+            const tasks = await dclLoadTasks();
+            const id = 't' + Date.now().toString(36);
+            tasks.push({ id: id, title: title, target: target, order: tasks.length + 1, active: true });
+            await dclSaveTasks(tasks);
+            showToast('✅ کار اضافه شد');
+            loadDailyChecklistTab();
+        };
+        window.dclAdminRemoveTask = async function (id) {
+            if (!confirm('این کار حذف شود؟')) return;
+            let tasks = await dclLoadTasks();
+            tasks = tasks.map(function (t) {
+                if (t.id === id) return Object.assign({}, t, { active: false });
+                return t;
+            });
+            await dclSaveTasks(tasks);
+            dclTasksCache = null;
+            showToast('حذف شد');
+            loadDailyChecklistTab();
+        };
+
+        function dclShowOverlay(mode) {
+            // mode: 'entry' | 'exit'
+            return new Promise(async function (resolve) {
+                const tasks = await dclLoadTasks();
+                const marks = await dclLoadMarks();
+                const mine = dclTasksForUser(tasks, currentRole, currentSessionUser && currentSessionUser.username);
+                const ov = document.getElementById('dclOverlay');
+                const list = document.getElementById('dclOverlayList');
+                const title = document.getElementById('dclOverlayTitle');
+                const sub = document.getElementById('dclOverlaySub');
+                const okBtn = document.getElementById('dclOverlayOkBtn');
+                const closeBtn = document.getElementById('dclOverlayCloseBtn');
+                if (!ov || !list) { resolve('ok'); return; }
+
+                if (mode === 'entry') {
+                    title.textContent = 'چک‌لیست امروز · یادآوری';
+                    sub.textContent = 'این کارها را در طول شیفت انجام دهید. هنگام خروج تیک بزنید.';
+                    list.innerHTML = mine.map(function (t) {
+                        return '<div style="display:flex;gap:8px;align-items:center;padding:8px 10px;margin-bottom:6px;border-radius:12px;background:rgba(15,23,42,.85);font-size:13px;"><span>📌</span><span style="flex:1;text-align:right;">' + dclEsc(t.title) + '</span></div>';
+                    }).join('') || '<p class="hint">کاری تعریف نشده.</p>';
+                    okBtn.textContent = 'متوجه شدم ✓';
+                    okBtn.onclick = function () { ov.style.display = 'none'; resolve('ok'); };
+                    closeBtn.style.display = 'none';
+                } else {
+                    title.textContent = 'قبل از خروج · تیک بزنید';
+                    sub.textContent = 'کارهایی که انجام دادید را تیک بزنید. بدون تیک = انجام نشده برای مدیر.';
+                    list.innerHTML = mine.map(function (t) {
+                        const ok = !!marks[t.id];
+                        return '<label style="display:flex;gap:10px;align-items:center;padding:10px;margin-bottom:6px;border-radius:12px;background:rgba(15,23,42,.85);border:1px solid rgba(148,163,184,.2);cursor:pointer;font-size:13px;">' +
+                            '<input type="checkbox" data-dcl-id="' + dclEsc(t.id) + '" ' + (ok ? 'checked' : '') + ' style="width:20px;height:20px;accent-color:#10b981;">' +
+                            '<span style="flex:1;text-align:right;">' + dclEsc(t.title) + '</span></label>';
+                    }).join('') || '<p class="hint">کاری تعریف نشده.</p>';
+                    okBtn.textContent = 'ثبت و ادامه خروج ✓';
+                    okBtn.onclick = async function () {
+                        const boxes = list.querySelectorAll('input[data-dcl-id]');
+                        for (let i = 0; i < boxes.length; i++) {
+                            await dclSetMark(boxes[i].getAttribute('data-dcl-id'), boxes[i].checked);
+                        }
+                        ov.style.display = 'none';
+                        resolve('yes');
+                    };
+                    closeBtn.style.display = 'block';
+                    closeBtn.textContent = 'انصراف از خروج';
+                    closeBtn.onclick = function () { ov.style.display = 'none'; resolve('no'); };
+                }
+                ov.style.display = 'flex';
+            });
+        }
+
+        async function dclAskOnExit() {
+            if (!(currentRole === 'morning_seller' || currentRole === 'evening_seller')) return 'yes';
+            return dclShowOverlay('exit');
+        }
+
+        async function dclMaybeRemindOnLogin() {
+            if (!(currentRole === 'morning_seller' || currentRole === 'evening_seller')) return;
+            const key = 'dcl_entry_seen_' + dclToday() + '_' + ((currentSessionUser && currentSessionUser.username) || '');
+            try { if (sessionStorage.getItem(key) === '1') return; } catch (e) {}
+            try {
+                const tasks = await dclLoadTasks();
+                const mine = dclTasksForUser(tasks, currentRole, currentSessionUser && currentSessionUser.username);
+                if (!mine.length) return;
+                await dclShowOverlay('entry');
+                try { sessionStorage.setItem(key, '1'); } catch (e) {}
+            } catch (e) {}
+        }
+        window.dclMaybeRemindOnLogin = dclMaybeRemindOnLogin;
 
         // پیدا کردن آخرین ورودی که خروج نداره و مال امروز هم نیست — یعنی دفعه‌ی قبل یادش رفته خروج بزنه
         // --- محافظ در برابر «قفل شدن» دکمه‌ها وقتی اینترنت قطع/فیلتر است ---
@@ -25092,18 +25449,81 @@ notify pgrst, 'reload schema';`;
         if (page === 'track') catRenderTrackPage();
         if (page === 'account') catRenderAccountPage();
     };
-    function catRenderMyOrdersPage() {
+    function catOrderStatusFa(st) {
+        const map = {
+            open: { t: '⏳ در انتظار پرداخت', c: '#fbbf24' },
+            paying: { t: '💳 در حال پرداخت', c: '#38bdf8' },
+            receipt: { t: '📷 رسید ارسال شد — منتظر تأیید', c: '#38bdf8' },
+            approved: { t: '✅ تأیید شد — در صف آماده‌سازی', c: '#34d399' },
+            preparing: { t: '👨‍🍳 در حال آماده‌سازی', c: '#34d399' },
+            ready: { t: '📦 آماده تحویل / ارسال', c: '#38bdf8' },
+            shipped: { t: '🚚 ارسال شد', c: '#38bdf8' },
+            delivered: { t: '🏁 تحویل داده شد', c: '#34d399' },
+            problem: { t: '⚠️ نیاز به اصلاح', c: '#fbbf24' },
+            cancelled: { t: '❌ لغو شده', c: '#f87171' },
+            rejected: { t: '❌ رد شده', c: '#f87171' },
+            expired: { t: '⌛ منقضی شده', c: '#94a3b8' }
+        };
+        return map[st] || { t: st || 'نامشخص', c: '#94a3b8' };
+    }
+    async function catRenderMyOrdersPage() {
         const box = document.getElementById('catPageOrders');
         if (!box) return;
+        box.innerHTML = '<h2 style="margin:0 0 12px;color:#34d399;">📦 سفارش‌های من</h2><p class="hint">در حال بروزرسانی وضعیت‌ها...</p>';
         let mine = [];
         try { mine = JSON.parse(localStorage.getItem('cat_my_orders_v1') || '[]'); } catch (e) {}
+
+        // آخرین وضعیت را از سرور بگیر
+        try {
+            if (typeof _supabase !== 'undefined' && _supabase && mine.length) {
+                const codes = mine.map(function (o) { return o.order_code; }).filter(Boolean).slice(0, 30);
+                if (codes.length) {
+                    const { data } = await _supabase.from('payment_links').select('order_code,status,amount,created_at,pay_method,delivery_type,manager_note').in('order_code', codes);
+                    if (data && data.length) {
+                        const byCode = {};
+                        data.forEach(function (r) { byCode[r.order_code] = r; });
+                        mine = mine.map(function (o) {
+                            const r = byCode[o.order_code];
+                            if (!r) return o;
+                            return Object.assign({}, o, {
+                                status: r.status || o.status,
+                                amount: r.amount != null ? r.amount : o.amount,
+                                pay_method: r.pay_method || o.pay_method,
+                                delivery_type: r.delivery_type || o.delivery_type,
+                                manager_note: r.manager_note || o.manager_note
+                            });
+                        });
+                        try { localStorage.setItem('cat_my_orders_v1', JSON.stringify(mine.slice(0, 30))); } catch (e) {}
+                    }
+                }
+            }
+        } catch (e) {}
+
+        if (!mine.length) {
+            box.innerHTML = '<h2 style="margin:0 0 12px;color:#34d399;">📦 سفارش‌های من</h2><p class="hint">هنوز سفارشی ثبت نکرده‌اید.</p>';
+            return;
+        }
+
         box.innerHTML = '<h2 style="margin:0 0 12px;color:#34d399;">📦 سفارش‌های من</h2>' +
-            (mine.length ? mine.map(function (o) {
-                return '<div class="summary-mini" style="flex-direction:column;gap:6px;margin-bottom:10px;cursor:pointer;" onclick="location.href=\'?track=' + encodeURIComponent(o.order_code) + '\'">' +
-                    '<div><b dir="ltr">' + catEsc(o.order_code) + '</b></div>' +
-                    '<div style="font-size:12px;">' + Number(o.amount || 0).toLocaleString('fa-IR') + ' تومان · ' + catEsc(o.status || '') + '</div>' +
-                    '<div style="font-size:11px;opacity:.7;">' + catEsc(o.created_at ? new Date(o.created_at).toLocaleString('fa-IR') : '') + '</div></div>';
-            }).join('') : '<p class="hint">هنوز سفارشی ثبت نکرده‌اید.</p>');
+            '<p class="hint" style="margin-bottom:10px;">برای دیدن جزئیات روی هر سفارش بزنید.</p>' +
+            mine.map(function (o) {
+                const info = catOrderStatusFa(o.status);
+                const payTxt = o.pay_method === 'cash'
+                    ? (o.delivery_type === 'pickup' ? '💵 پرداخت در فروشگاه' : '💵 پرداخت درب منزل')
+                    : (o.pay_method === 'online' ? '💳 آنلاین' : '');
+                return '<div class="summary-mini" style="flex-direction:column;gap:6px;margin-bottom:10px;cursor:pointer;border-color:' + info.c + '33;" onclick="location.href=\'?track=' + encodeURIComponent(o.order_code) + '\'">' +
+                    '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">' +
+                    '<b dir="ltr" style="color:#fbbf24;">' + catEsc(o.order_code) + '</b>' +
+                    '<span style="font-size:11px;font-weight:800;color:' + info.c + ';">' + catEsc(info.t) + '</span>' +
+                    '</div>' +
+                    '<div style="font-size:13px;"><b>' + Number(o.amount || 0).toLocaleString('fa-IR') + ' تومان</b>' +
+                    (payTxt ? ' <span style="font-size:11px;opacity:.85;">· ' + payTxt + '</span>' : '') + '</div>' +
+                    (o.manager_note && (o.status === 'cancelled' || o.status === 'problem')
+                        ? '<div style="font-size:11px;line-height:1.6;opacity:.9;padding:6px 8px;border-radius:8px;background:rgba(15,23,42,.7);">' + catEsc(String(o.manager_note).slice(0, 120)) + (String(o.manager_note).length > 120 ? '…' : '') + '</div>'
+                        : '') +
+                    '<div style="font-size:11px;opacity:.7;">' + catEsc(o.created_at ? new Date(o.created_at).toLocaleString('fa-IR') : '') + ' · ضربه = پیگیری</div>' +
+                    '</div>';
+            }).join('');
     }
     function catRenderTrackPage() {
         const box = document.getElementById('catPageTrack');
