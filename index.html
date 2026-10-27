@@ -68,7 +68,7 @@
         .cat-qty button{width:28px;height:28px;border-radius:8px;border:1px solid rgba(148,163,184,.35);background:#1e293b;color:#fff;font-weight:800;cursor:pointer}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v187 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v188 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -3713,7 +3713,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v187 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v188 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3897,7 +3897,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=187', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=188', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -11449,6 +11449,28 @@ function sbRenderAdminLists(cfg) {
             return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
 
+        function dclIsActiveStaff(u) {
+            if (!u) return false;
+            if (u.is_terminated) return false;
+            try {
+                const label = (typeof firedLabelOf === 'function') ? firedLabelOf(u) : ((roleLabels[u.role] || u.role) + ' - ' + (u.full_name || u.username));
+                if (typeof isInactiveStaff === 'function' && isInactiveStaff(label)) return false;
+                if (typeof firedInfo === 'function' && firedInfo(label)) return false;
+            } catch (e) {}
+            return true;
+        }
+        function dclTargetLabel(target, staff) {
+            if (!target || target === 'all') return 'همه فروشنده‌ها';
+            if (target === 'morning_seller') return 'فروشنده‌های صبح';
+            if (target === 'evening_seller') return 'فروشنده‌های شب';
+            if (String(target).indexOf('user:') === 0) {
+                const un = String(target).slice(5);
+                const u = (staff || []).find(function (x) { return x.username === un; });
+                return u ? ('فقط ' + (u.full_name || u.username)) : ('فقط ' + un);
+            }
+            return target;
+        }
+
         window.loadDailyChecklistTab = async function () {
             const box = document.getElementById('dclContent');
             const hint = document.getElementById('dclHint');
@@ -11456,18 +11478,26 @@ function sbRenderAdminLists(cfg) {
             box.innerHTML = '<p class="hint">در حال بارگذاری...</p>';
             const isAdmin = currentRole === 'admin';
             const today = dclToday();
+            let todayFa = today;
+            try {
+                todayFa = new Intl.DateTimeFormat('fa-IR-u-ca-persian', { timeZone: 'Asia/Tehran', weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
+            } catch (e) {}
             const tasks = await dclLoadTasks();
             if (isAdmin) {
-                if (hint) hint.textContent = 'برای هر فروشنده کار تعریف کنید و وضعیت امروز همه را اینجا ببینید.';
-                // لیست فروشنده‌ها
+                if (hint) hint.textContent = 'تعریف، ویرایش و پیگیری کارهای روزانه فروشنده‌ها — فقط پرسنل فعال.';
+                try { if (typeof loadFiredStaff === 'function') await loadFiredStaff(); } catch (e) {}
                 let staff = [];
                 try {
                     if (typeof _supabase !== 'undefined' && _supabase) {
-                        const { data } = await _supabase.from('users').select('username,full_name,role').in('role', ['morning_seller', 'evening_seller']);
-                        staff = data || [];
+                        const { data } = await _supabase.from('users').select('username,full_name,role,is_terminated').in('role', ['morning_seller', 'evening_seller']);
+                        staff = (data || []).filter(dclIsActiveStaff);
                     }
-                } catch (e) {}
-                // marks همه
+                } catch (e) {
+                    try {
+                        const { data } = await _supabase.from('users').select('username,full_name,role').in('role', ['morning_seller', 'evening_seller']);
+                        staff = (data || []).filter(dclIsActiveStaff);
+                    } catch (e2) {}
+                }
                 let allMarks = {};
                 try {
                     if (typeof _supabase !== 'undefined' && _supabase) {
@@ -11478,49 +11508,76 @@ function sbRenderAdminLists(cfg) {
                         });
                     }
                 } catch (e) {}
-                // اگر سرور خالی بود از local هم ببین
                 staff.forEach(function (u) {
                     if (!allMarks[u.username]) allMarks[u.username] = dclLoadMarksLocal(today, u.username);
                 });
 
-                let html = '<div style="margin-bottom:14px;padding:12px;border-radius:14px;background:rgba(15,23,42,.85);border:1px solid rgba(52,211,153,.25);">';
-                html += '<div style="font-weight:800;margin-bottom:8px;color:#34d399;">📝 تعریف کار جدید</div>';
-                html += '<input type="text" id="dclNewTitle" dir="auto" placeholder="مثال: تمیزی داخل یخچال" style="width:100%;margin-bottom:8px;">';
-                html += '<select id="dclNewTarget" style="width:100%;margin-bottom:8px;">';
-                html += '<option value="all">همه فروشنده‌ها</option>';
-                html += '<option value="morning_seller">فقط فروشنده صبح</option>';
-                html += '<option value="evening_seller">فقط فروشنده شب</option>';
+                // آمار کلی
+                let totalDone = 0, totalAll = 0;
+                staff.forEach(function (u) {
+                    const mine = dclTasksForUser(tasks, u.role, u.username);
+                    const marks = allMarks[u.username] || {};
+                    totalAll += mine.length;
+                    totalDone += mine.filter(function (t) { return marks[t.id]; }).length;
+                });
+                const overallPct = totalAll ? Math.round(totalDone / totalAll * 100) : 0;
+
+                let html = '';
+                // هدر حرفه‌ای
+                html += '<div style="padding:16px;border-radius:18px;background:linear-gradient(135deg,#0f172a 0%,#134e4a 100%);border:1px solid rgba(52,211,153,.35);margin-bottom:14px;">';
+                html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">';
+                html += '<div><div style="font-size:11px;opacity:.75;">امروز</div><div style="font-weight:900;font-size:15px;color:#6ee7b7;">' + dclEsc(todayFa) + '</div></div>';
+                html += '<div style="text-align:left;"><div style="font-size:11px;opacity:.75;">پیشرفت کل</div><div style="font-weight:900;font-size:18px;color:#fbbf24;">' + overallPct + '٪</div></div></div>';
+                html += '<div style="margin-top:10px;height:10px;border-radius:99px;background:rgba(15,23,42,.5);overflow:hidden;"><div style="height:100%;width:' + overallPct + '%;background:linear-gradient(90deg,#10b981,#34d399);border-radius:99px;"></div></div>';
+                html += '<div style="margin-top:8px;font-size:11px;opacity:.8;">' + totalDone + ' از ' + totalAll + ' کار · ' + staff.length + ' فروشنده فعال</div></div>';
+
+                // فرم افزودن / ویرایش
+                html += '<div style="margin-bottom:14px;padding:14px;border-radius:16px;background:rgba(15,23,42,.9);border:1px solid rgba(56,189,248,.3);">';
+                html += '<div style="font-weight:800;margin-bottom:10px;color:#38bdf8;" id="dclFormTitle">➕ کار جدید</div>';
+                html += '<input type="hidden" id="dclEditId" value="">';
+                html += '<label style="font-size:11px;opacity:.8;">عنوان کار</label>';
+                html += '<input type="text" id="dclNewTitle" dir="auto" placeholder="مثال: تمیزی داخل یخچال و شیشه‌ها" style="width:100%;margin:4px 0 10px;">';
+                html += '<label style="font-size:11px;opacity:.8;">برای چه کسی؟</label>';
+                html += '<select id="dclNewTarget" style="width:100%;margin:4px 0 10px;">';
+                html += '<option value="all">همه فروشنده‌های فعال</option>';
+                html += '<option value="morning_seller">فقط فروشنده‌های صبح</option>';
+                html += '<option value="evening_seller">فقط فروشنده‌های شب</option>';
                 staff.forEach(function (u) {
                     const lab = (u.full_name || u.username) + (u.role === 'morning_seller' ? ' (صبح)' : ' (شب)');
                     html += '<option value="user:' + dclEsc(u.username) + '">فقط: ' + dclEsc(lab) + '</option>';
                 });
                 html += '</select>';
-                html += '<button type="button" class="submit-btn" onclick="dclAdminAddTask()">➕ افزودن به چک‌لیست</button>';
+                html += '<div style="display:flex;gap:8px;">';
+                html += '<button type="button" class="submit-btn" style="flex:1;margin:0;" id="dclSaveBtn" onclick="dclAdminSaveTask()">💾 ذخیره</button>';
+                html += '<button type="button" class="row-btn edit-btn" style="flex:0 0 auto;width:auto;padding:10px 14px;display:none;" id="dclCancelEditBtn" onclick="dclAdminCancelEdit()">انصراف</button>';
+                html += '</div></div>';
+
+                // لیست کارها با ویرایش
+                html += '<div style="margin-bottom:18px;">';
+                html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><b style="font-size:14px;">📋 کارهای تعریف‌شده</b><span style="font-size:11px;opacity:.7;">' + tasks.length + ' مورد</span></div>';
+                if (!tasks.length) {
+                    html += '<div style="padding:20px;text-align:center;border-radius:14px;border:1px dashed rgba(148,163,184,.3);opacity:.8;">هنوز کاری تعریف نشده</div>';
+                } else {
+                    tasks.forEach(function (t, idx) {
+                        const who = dclTargetLabel(t.target, staff);
+                        html += '<div style="display:flex;align-items:center;gap:8px;padding:12px;margin-bottom:8px;border-radius:14px;background:linear-gradient(100deg,rgba(30,41,59,.95),rgba(15,23,42,.95));border:1px solid rgba(148,163,184,.18);">';
+                        html += '<div style="width:28px;height:28px;border-radius:8px;background:rgba(56,189,248,.15);color:#38bdf8;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;">' + (idx + 1) + '</div>';
+                        html += '<div style="flex:1;text-align:right;min-width:0;">';
+                        html += '<div style="font-size:13px;font-weight:700;line-height:1.4;">' + dclEsc(t.title) + '</div>';
+                        html += '<div style="font-size:11px;opacity:.7;margin-top:2px;">🎯 ' + dclEsc(who) + '</div></div>';
+                        html += '<button type="button" class="row-btn fill-btn" style="width:auto;padding:7px 10px;font-size:11px;" onclick="dclAdminStartEdit(\'' + dclEsc(t.id) + '\')">✏️</button>';
+                        html += '<button type="button" class="row-btn edit-btn" style="width:auto;padding:7px 10px;font-size:11px;color:#fca5a5;" onclick="dclAdminRemoveTask(\'' + dclEsc(t.id) + '\')">🗑️</button>';
+                        html += '</div>';
+                    });
+                }
                 html += '</div>';
 
-                // مدیریت لیست کارها
-                html += '<div style="margin-bottom:16px;"><div style="font-weight:800;margin-bottom:8px;">کارهای تعریف‌شده</div>';
-                if (!tasks.length) html += '<p class="hint">هنوز کاری تعریف نشده.</p>';
-                tasks.forEach(function (t) {
-                    let who = 'همه';
-                    if (t.target === 'morning_seller') who = 'فروشنده صبح';
-                    else if (t.target === 'evening_seller') who = 'فروشنده شب';
-                    else if (String(t.target || '').indexOf('user:') === 0) {
-                        const un = String(t.target).slice(5);
-                        const u = staff.find(function (x) { return x.username === un; });
-                        who = u ? (u.full_name || u.username) : un;
-                    }
-                    html += '<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;margin-bottom:6px;border-radius:12px;background:rgba(15,23,42,.7);border:1px solid rgba(148,163,184,.2);">';
-                    html += '<div style="flex:1;text-align:right;"><b style="font-size:13px;">' + dclEsc(t.title) + '</b><div style="font-size:11px;opacity:.7;">🎯 ' + dclEsc(who) + '</div></div>';
-                    html += '<button type="button" class="row-btn edit-btn" style="width:auto;padding:6px 10px;font-size:11px;color:#fca5a5;" onclick="dclAdminRemoveTask(\'' + dclEsc(t.id) + '\')">حذف</button>';
-                    html += '</div>';
-                });
-                html += '</div>';
-
-                // وضعیت امروز
-                html += '<div style="font-weight:800;margin-bottom:8px;color:#38bdf8;">📊 وضعیت امروز · ' + dclEsc(today) + '</div>';
+                // وضعیت امروز فروشنده‌های فعال
+                html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">';
+                html += '<b style="font-size:14px;color:#6ee7b7;">📊 وضعیت امروز</b>';
+                html += '<button type="button" class="row-btn fill-btn" style="width:auto;padding:6px 12px;font-size:11px;" onclick="loadDailyChecklistTab()">🔄 بروزرسانی</button></div>';
                 if (!staff.length) {
-                    html += '<p class="hint">فروشنده‌ای یافت نشد.</p>';
+                    html += '<p class="hint">فروشنده فعالی یافت نشد.</p>';
                 } else {
                     staff.forEach(function (u) {
                         const role = u.role || '';
@@ -11530,45 +11587,56 @@ function sbRenderAdminLists(cfg) {
                         const total = mine.length;
                         const pct = total ? Math.round(doneN / total * 100) : 0;
                         const barColor = pct >= 80 ? '#34d399' : (pct >= 40 ? '#fbbf24' : '#f87171');
-                        const lab = (u.full_name || u.username) + (role === 'morning_seller' ? ' · صبح' : ' · شب');
-                        html += '<div style="margin-bottom:10px;padding:12px;border-radius:14px;background:rgba(15,23,42,.85);border:1px solid rgba(148,163,184,.2);">';
-                        html += '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;">';
-                        html += '<b style="font-size:13px;">' + dclEsc(lab) + '</b>';
-                        html += '<span style="font-size:12px;font-weight:800;color:' + barColor + ';">' + doneN + ' / ' + total + '</span></div>';
-                        html += '<div style="height:8px;border-radius:99px;background:rgba(148,163,184,.2);overflow:hidden;margin-bottom:8px;"><div style="height:100%;width:' + pct + '%;background:' + barColor + ';border-radius:99px;"></div></div>';
-                        mine.forEach(function (t) {
-                            const ok = !!marks[t.id];
-                            html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(148,163,184,.1);font-size:12px;">';
-                            html += '<span style="font-size:16px;">' + (ok ? '✅' : '⬜') + '</span>';
-                            html += '<span style="flex:1;text-align:right;' + (ok ? 'opacity:.85;' : 'color:#fca5a5;') + '">' + dclEsc(t.title) + '</span>';
-                            html += '<span style="font-size:10px;opacity:.7;">' + (ok ? 'انجام شد' : 'انجام نشد') + '</span>';
-                            html += '</div>';
-                        });
+                        const shiftBadge = role === 'morning_seller'
+                            ? '<span style="font-size:10px;padding:2px 8px;border-radius:99px;background:rgba(251,191,36,.15);color:#fbbf24;">صبح</span>'
+                            : '<span style="font-size:10px;padding:2px 8px;border-radius:99px;background:rgba(129,140,248,.15);color:#a5b4fc;">شب</span>';
+                        const lab = u.full_name || u.username;
+                        html += '<div style="margin-bottom:12px;padding:14px;border-radius:16px;background:rgba(15,23,42,.9);border:1px solid rgba(148,163,184,.15);box-shadow:0 4px 20px rgba(0,0,0,.2);">';
+                        html += '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;">';
+                        html += '<div style="display:flex;align-items:center;gap:8px;"><b style="font-size:14px;">' + dclEsc(lab) + '</b>' + shiftBadge + '</div>';
+                        html += '<span style="font-size:13px;font-weight:900;color:' + barColor + ';">' + doneN + '/' + total + '</span></div>';
+                        html += '<div style="height:8px;border-radius:99px;background:rgba(148,163,184,.15);overflow:hidden;margin-bottom:10px;"><div style="height:100%;width:' + pct + '%;background:' + barColor + ';border-radius:99px;transition:width .3s;"></div></div>';
+                        if (!mine.length) {
+                            html += '<div style="font-size:11px;opacity:.6;">کاری برای این نفر تعریف نشده</div>';
+                        } else {
+                            mine.forEach(function (t) {
+                                const ok = !!marks[t.id];
+                                html += '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(148,163,184,.08);font-size:12px;">';
+                                html += '<span style="width:22px;text-align:center;font-size:15px;">' + (ok ? '✅' : '⬜') + '</span>';
+                                html += '<span style="flex:1;text-align:right;' + (ok ? 'opacity:.75;' : 'color:#fca5a5;font-weight:600;') + '">' + dclEsc(t.title) + '</span>';
+                                html += '<span style="font-size:10px;padding:2px 7px;border-radius:99px;background:' + (ok ? 'rgba(52,211,153,.15)' : 'rgba(248,113,113,.12)') + ';color:' + (ok ? '#34d399' : '#fca5a5') + ';">' + (ok ? 'انجام شد' : 'انجام نشد') + '</span>';
+                                html += '</div>';
+                            });
+                        }
                         html += '</div>';
                     });
                 }
                 box.innerHTML = html;
             } else {
-                // فروشنده
-                if (hint) hint.textContent = 'کارهای امروز شما. در خروج حتماً تیک بزنید.';
+                if (hint) hint.textContent = 'کارهای امروز شما · هنگام خروج هم می‌توانید تیک بزنید.';
                 const marks = await dclLoadMarks(today);
                 const mine = dclTasksForUser(tasks, currentRole, currentSessionUser && currentSessionUser.username);
                 const doneN = mine.filter(function (t) { return marks[t.id]; }).length;
-                let html = '<div style="padding:12px;border-radius:14px;background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(56,189,248,.08));border:1px solid rgba(52,211,153,.3);margin-bottom:12px;text-align:center;">';
-                html += '<div style="font-size:13px;opacity:.85;">پیشرفت امروز</div>';
-                html += '<div style="font-size:22px;font-weight:900;color:#34d399;margin-top:4px;">' + doneN + ' از ' + mine.length + '</div></div>';
+                const pct = mine.length ? Math.round(doneN / mine.length * 100) : 0;
+                let html = '';
+                html += '<div style="padding:16px;border-radius:18px;background:linear-gradient(135deg,#0f172a,#134e4a);border:1px solid rgba(52,211,153,.3);margin-bottom:14px;text-align:center;">';
+                html += '<div style="font-size:11px;opacity:.75;">' + dclEsc(todayFa) + '</div>';
+                html += '<div style="font-size:28px;font-weight:900;color:#6ee7b7;margin:6px 0;">' + pct + '٪</div>';
+                html += '<div style="font-size:12px;opacity:.85;">' + doneN + ' از ' + mine.length + ' کار انجام شده</div>';
+                html += '<div style="margin-top:10px;height:8px;border-radius:99px;background:rgba(15,23,42,.5);overflow:hidden;"><div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,#10b981,#34d399);border-radius:99px;"></div></div></div>';
                 if (!mine.length) {
-                    html += '<p class="hint">مدیر هنوز کاری برای شما تعریف نکرده.</p>';
+                    html += '<div style="padding:24px;text-align:center;border-radius:14px;border:1px dashed rgba(148,163,184,.3);opacity:.8;">مدیر هنوز کاری برای شما تعریف نکرده</div>';
                 } else {
                     mine.forEach(function (t) {
                         const ok = !!marks[t.id];
-                        html += '<label style="display:flex;align-items:center;gap:10px;padding:12px;margin-bottom:8px;border-radius:14px;background:rgba(15,23,42,.8);border:1px solid ' + (ok ? 'rgba(52,211,153,.45)' : 'rgba(148,163,184,.25)') + ';cursor:pointer;">';
-                        html += '<input type="checkbox" ' + (ok ? 'checked' : '') + ' onchange="dclToggleTask(\'' + dclEsc(t.id) + '\', this.checked)" style="width:20px;height:20px;accent-color:#10b981;">';
-                        html += '<span style="flex:1;text-align:right;font-size:13px;font-weight:600;' + (ok ? 'text-decoration:line-through;opacity:.7;' : '') + '">' + dclEsc(t.title) + '</span>';
+                        html += '<label style="display:flex;align-items:center;gap:12px;padding:14px;margin-bottom:8px;border-radius:16px;background:' + (ok ? 'rgba(16,185,129,.1)' : 'rgba(15,23,42,.85)') + ';border:1.5px solid ' + (ok ? 'rgba(52,211,153,.45)' : 'rgba(148,163,184,.2)') + ';cursor:pointer;transition:all .15s;">';
+                        html += '<input type="checkbox" ' + (ok ? 'checked' : '') + ' onchange="dclToggleTask(\'' + dclEsc(t.id) + '\', this.checked);loadDailyChecklistTab();" style="width:22px;height:22px;accent-color:#10b981;flex-shrink:0;">';
+                        html += '<span style="flex:1;text-align:right;font-size:13px;font-weight:600;line-height:1.5;' + (ok ? 'text-decoration:line-through;opacity:.65;' : '') + '">' + dclEsc(t.title) + '</span>';
+                        html += '<span style="font-size:11px;color:' + (ok ? '#34d399' : '#94a3b8') + ';">' + (ok ? '✓' : '') + '</span>';
                         html += '</label>';
                     });
                 }
-                html += '<p class="hint" style="margin-top:10px;">با زدن تیک، برای مدیر هم ثبت می‌شود که انجام داده‌اید.</p>';
+                html += '<p class="hint" style="margin-top:12px;text-align:center;">با تیک زدن، وضعیت برای مدیر هم بروز می‌شود.</p>';
                 box.innerHTML = html;
             }
         };
@@ -11576,20 +11644,61 @@ function sbRenderAdminLists(cfg) {
         window.dclToggleTask = async function (taskId, done) {
             await dclSetMark(taskId, done);
             try { showToast(done ? '✅ انجام شد' : '⬜ برداشته شد'); } catch (e) {}
-            // اگر در تب هستیم رفرش نکن تا UX نرم بماند — فقط progress در overlay مهم است
         };
 
-        window.dclAdminAddTask = async function () {
+        window.dclAdminStartEdit = async function (id) {
+            const tasks = await dclLoadTasks();
+            const t = tasks.find(function (x) { return x.id === id; });
+            if (!t) return;
+            const idEl = document.getElementById('dclEditId');
+            const titleEl = document.getElementById('dclNewTitle');
+            const targetEl = document.getElementById('dclNewTarget');
+            const formTitle = document.getElementById('dclFormTitle');
+            const cancelBtn = document.getElementById('dclCancelEditBtn');
+            const saveBtn = document.getElementById('dclSaveBtn');
+            if (idEl) idEl.value = t.id;
+            if (titleEl) titleEl.value = t.title || '';
+            if (targetEl) targetEl.value = t.target || 'all';
+            if (formTitle) formTitle.textContent = '✏️ ویرایش کار';
+            if (cancelBtn) cancelBtn.style.display = 'inline-block';
+            if (saveBtn) saveBtn.textContent = '💾 ذخیره تغییرات';
+            try { titleEl && titleEl.focus(); titleEl && titleEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}
+        };
+        window.dclAdminCancelEdit = function () {
+            const idEl = document.getElementById('dclEditId');
+            const titleEl = document.getElementById('dclNewTitle');
+            const formTitle = document.getElementById('dclFormTitle');
+            const cancelBtn = document.getElementById('dclCancelEditBtn');
+            const saveBtn = document.getElementById('dclSaveBtn');
+            if (idEl) idEl.value = '';
+            if (titleEl) titleEl.value = '';
+            if (formTitle) formTitle.textContent = '➕ کار جدید';
+            if (cancelBtn) cancelBtn.style.display = 'none';
+            if (saveBtn) saveBtn.textContent = '💾 ذخیره';
+        };
+        window.dclAdminSaveTask = async function () {
+            const editId = ((document.getElementById('dclEditId') || {}).value || '').trim();
             const title = ((document.getElementById('dclNewTitle') || {}).value || '').trim();
             const target = ((document.getElementById('dclNewTarget') || {}).value || 'all');
             if (!title) return showToast('❌ عنوان کار را بنویسید');
-            const tasks = await dclLoadTasks();
-            const id = 't' + Date.now().toString(36);
-            tasks.push({ id: id, title: title, target: target, order: tasks.length + 1, active: true });
-            await dclSaveTasks(tasks);
-            showToast('✅ کار اضافه شد');
+            let tasks = await dclLoadTasks();
+            if (editId) {
+                tasks = tasks.map(function (t) {
+                    if (t.id === editId) return Object.assign({}, t, { title: title, target: target });
+                    return t;
+                });
+                await dclSaveTasks(tasks);
+                showToast('✅ ویرایش ذخیره شد');
+            } else {
+                const id = 't' + Date.now().toString(36);
+                tasks.push({ id: id, title: title, target: target, order: tasks.length + 1, active: true });
+                await dclSaveTasks(tasks);
+                showToast('✅ کار اضافه شد');
+            }
+            dclTasksCache = null;
             loadDailyChecklistTab();
         };
+        window.dclAdminAddTask = window.dclAdminSaveTask;
         window.dclAdminRemoveTask = async function (id) {
             if (!confirm('این کار حذف شود؟')) return;
             let tasks = await dclLoadTasks();
