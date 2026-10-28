@@ -68,7 +68,7 @@
         .cat-qty button{width:28px;height:28px;border-radius:8px;border:1px solid rgba(148,163,184,.35);background:#1e293b;color:#fff;font-weight:800;cursor:pointer}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v190 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v191 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -3716,7 +3716,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v190 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v191 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3900,7 +3900,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=190', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=191', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -25551,18 +25551,29 @@ notify pgrst, 'reload schema';`;
 
         inner.innerHTML =
             '<div id="catPageHome">' +
-            '<div class="cat-hero">' +
-            '<div style="font-size:36px;">🛒</div>' +
-            '<h1>تازه مارکت</h1>' +
-            '<div style="font-size:12px;opacity:.85;">کاتالوگ آنلاین · لبنیات · ترشیجات · سوسیس و کالباس فله</div>' +
-            (disc > 0 ? '<div class="cat-badge">🎁 ' + disc + '٪ تخفیف ویژه سفارش آنلاین</div>' : '') +
-            (minOrder > 0 ? '<div style="margin-top:6px;font-size:11px;opacity:.85;">حداقل سفارش: ' + minOrder.toLocaleString('fa-IR') + ' تومان</div>' : '') +
+            '<div class="cat-hero" style="padding-bottom:14px;">' +
+            '<div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:6px;">' +
+            '<div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,#10b981,#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 8px 24px rgba(16,185,129,.35);">🛒</div>' +
+            '</div>' +
+            '<h1 style="margin:0;font-size:24px;letter-spacing:-.3px;">تازه مارکت</h1>' +
+            '<div style="font-size:12px;opacity:.9;margin-top:4px;">فروشگاه حضوری غرفه فامیلی · سفارش آنلاین مطمئن</div>' +
+            (disc > 0 ? '<div class="cat-badge" style="margin-top:10px;">🎁 ' + disc + '٪ تخفیف ویژه سفارش از اینستاگرام</div>' : '') +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px;text-align:right;">' +
+            '<div style="padding:10px;border-radius:14px;background:rgba(15,23,42,.55);border:1px solid rgba(52,211,153,.25);font-size:11px;line-height:1.6;"><b style="color:#6ee7b7;">🔒 اطلاعات محفوظ</b><br><span style="opacity:.85;">نام و آدرس فقط برای ارسال سفارش</span></div>' +
+            '<div style="padding:10px;border-radius:14px;background:rgba(15,23,42,.55);border:1px solid rgba(56,189,248,.25);font-size:11px;line-height:1.6;"><b style="color:#7dd3fc;">📦 پیگیری آنلاین</b><br><span style="opacity:.85;">شماره پیگیری اختصاصی هر سفارش</span></div>' +
+            '<div style="padding:10px;border-radius:14px;background:rgba(15,23,42,.55);border:1px solid rgba(251,191,36,.25);font-size:11px;line-height:1.6;"><b style="color:#fde68a;">🏪 فروشگاه واقعی</b><br><span style="opacity:.85;">غرفه فامیلی · بیرجند</span></div>' +
+            '<div style="padding:10px;border-radius:14px;background:rgba(15,23,42,.55);border:1px solid rgba(167,139,250,.25);font-size:11px;line-height:1.6;"><b style="color:#c4b5fd;">💳 پرداخت امن</b><br><span style="opacity:.85;">کارت‌به‌کارت یا حضوری</span></div>' +
+            '</div>' +
+            (minOrder > 0 ? '<div style="margin-top:10px;font-size:11px;opacity:.85;">حداقل سفارش: ' + minOrder.toLocaleString('fa-IR') + ' تومان</div>' : '') +
             (cfg.shopHours ? '<div style="margin-top:4px;font-size:11px;opacity:.8;">🕐 ' + catEsc(cfg.shopHours) + '</div>' : '') +
             (cfg.shopAddr ? '<div style="margin-top:4px;font-size:11px;opacity:.8;">📍 ' + catEsc(cfg.shopAddr) + '</div>' : '') +
-            (cfg.phone ? '<div style="margin-top:8px;font-size:12px;"><a href="tel:' + catEsc(cfg.phone) + '" style="color:#38bdf8;text-decoration:none;">📞 ' + catEsc(cfg.phone) + '</a></div>' : '') +
-            (support ? '<div style="margin-top:8px;"><a href="' + catEsc(support) + '" target="_blank" rel="noopener" style="display:inline-block;padding:8px 14px;border-radius:999px;background:linear-gradient(100deg,#25d366,#128c7e);color:#fff;font-size:12px;font-weight:800;text-decoration:none;">💬 پشتیبانی</a></div>' : '') +
+            '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px;">' +
+            (cfg.phone ? '<a href="tel:' + catEsc(cfg.phone) + '" style="padding:8px 14px;border-radius:999px;background:rgba(56,189,248,.15);border:1px solid rgba(56,189,248,.35);color:#7dd3fc;font-size:12px;font-weight:800;text-decoration:none;">📞 تماس</a>' : '') +
+            (support ? '<a href="' + catEsc(support) + '" target="_blank" rel="noopener" style="padding:8px 14px;border-radius:999px;background:linear-gradient(100deg,#25d366,#128c7e);color:#fff;font-size:12px;font-weight:800;text-decoration:none;">💬 پشتیبانی</a>' : '') +
+            '<a href="https://instagram.com/taze.market.ali" target="_blank" rel="noopener" style="padding:8px 14px;border-radius:999px;background:linear-gradient(100deg,#f59e0b,#ec4899);color:#fff;font-size:12px;font-weight:800;text-decoration:none;">📷 اینستاگرام</a>' +
             '</div>' +
-            '<div style="padding:0 10px 8px;"><input type="search" id="catSearchInput" dir="auto" placeholder="🔍 جستجوی محصول..." value="' + catEsc(catSearchQ) + '" oninput="catSearch(this.value)" style="width:100%;padding:12px 14px;border-radius:14px;border:1px solid rgba(148,163,184,.3);background:rgba(15,23,42,.9);color:#e2e8f0;font:inherit;"></div>' +
+            '</div>' +
+            '<div style="padding:0 10px 8px;"><input type="search" id="catSearchInput" dir="auto" placeholder="🔍 جستجوی محصول (مثلاً پنیر، خیارشور...)" value="' + catEsc(catSearchQ) + '" oninput="catSearch(this.value)" style="width:100%;padding:12px 14px;border-radius:14px;border:1px solid rgba(148,163,184,.3);background:rgba(15,23,42,.9);color:#e2e8f0;font:inherit;"></div>' +
             '<div class="cat-tabs">' +
             tabsList.map(function (f) {
                 return '<button type="button" class="cat-tab' + (catFilter === f ? ' on' : '') + '" data-f="' + f + '" onclick="catFilterTo(\'' + f + '\')">' + catLabel(f) + '</button>';
@@ -25642,19 +25653,29 @@ notify pgrst, 'reload schema';`;
             if (typeof _supabase !== 'undefined' && _supabase && mine.length) {
                 const codes = mine.map(function (o) { return o.order_code; }).filter(Boolean).slice(0, 30);
                 if (codes.length) {
-                    const { data } = await _supabase.from('payment_links').select('order_code,status,amount,created_at,pay_method,delivery_type,manager_note').in('order_code', codes);
+                    const { data } = await _supabase.from('payment_links').select('order_code,status,amount,created_at,pay_method,delivery_type,manager_note,cancel_reason').in('order_code', codes);
                     if (data && data.length) {
                         const byCode = {};
                         data.forEach(function (r) { byCode[r.order_code] = r; });
                         mine = mine.map(function (o) {
                             const r = byCode[o.order_code];
-                            if (!r) return o;
+                            if (!r) {
+                                // اگر روی سرور نیست ولی محلی بوده ممکن است پاک شده باشد
+                                if (o.status && o.status !== 'cancelled' && o.status !== 'delivered') {
+                                    return Object.assign({}, o, {
+                                        status: 'cancelled',
+                                        manager_note: o.manager_note || 'این سفارش از سیستم فروشگاه حذف شده است. برای جزئیات با پشتیبانی تماس بگیرید.'
+                                    });
+                                }
+                                return o;
+                            }
                             return Object.assign({}, o, {
                                 status: r.status || o.status,
                                 amount: r.amount != null ? r.amount : o.amount,
                                 pay_method: r.pay_method || o.pay_method,
                                 delivery_type: r.delivery_type || o.delivery_type,
-                                manager_note: r.manager_note || o.manager_note
+                                manager_note: r.manager_note || o.manager_note,
+                                cancel_reason: r.cancel_reason || o.cancel_reason
                             });
                         });
                         try { localStorage.setItem('cat_my_orders_v1', JSON.stringify(mine.slice(0, 30))); } catch (e) {}
@@ -25675,6 +25696,21 @@ notify pgrst, 'reload schema';`;
                 const payTxt = o.pay_method === 'cash'
                     ? (o.delivery_type === 'pickup' ? '💵 پرداخت در فروشگاه' : '💵 پرداخت درب منزل')
                     : (o.pay_method === 'online' ? '💳 آنلاین' : '');
+                let reasonBox = '';
+                if (o.status === 'cancelled' || o.status === 'rejected') {
+                    const why = (o.cancel_reason || '').trim() || (function () {
+                        const n = String(o.manager_note || '');
+                        const m = n.match(/علت:\s*([^\n]+)/);
+                        return m ? m[1].trim() : n;
+                    })();
+                    reasonBox =
+                        '<div style="font-size:12px;line-height:1.75;padding:10px;border-radius:12px;background:rgba(239,68,68,.12);border:1px solid rgba(248,113,113,.35);color:#fecaca;">' +
+                        '<b>❌ این سفارش از سیستم حذف/لغو شده</b><br>' +
+                        (why ? ('علت: ' + catEsc(why.slice(0, 160)) + (why.length > 160 ? '…' : '') + '<br>') : 'علت توسط فروشگاه ثبت شده است.<br>') +
+                        '<span style="opacity:.9;font-size:11px;">در صورت نیاز دوباره سفارش دهید · @taze.market.ali</span></div>';
+                } else if (o.manager_note && o.status === 'problem') {
+                    reasonBox = '<div style="font-size:11px;line-height:1.6;padding:8px;border-radius:10px;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.35);">⚠️ ' + catEsc(String(o.manager_note).slice(0, 140)) + '</div>';
+                }
                 return '<div class="summary-mini" style="flex-direction:column;gap:6px;margin-bottom:10px;cursor:pointer;border-color:' + info.c + '33;" onclick="location.href=\'?track=' + encodeURIComponent(o.order_code) + '\'">' +
                     '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">' +
                     '<b dir="ltr" style="color:#fbbf24;">' + catEsc(o.order_code) + '</b>' +
@@ -25682,9 +25718,7 @@ notify pgrst, 'reload schema';`;
                     '</div>' +
                     '<div style="font-size:13px;"><b>' + Number(o.amount || 0).toLocaleString('fa-IR') + ' تومان</b>' +
                     (payTxt ? ' <span style="font-size:11px;opacity:.85;">· ' + payTxt + '</span>' : '') + '</div>' +
-                    (o.manager_note && (o.status === 'cancelled' || o.status === 'problem')
-                        ? '<div style="font-size:11px;line-height:1.6;opacity:.9;padding:6px 8px;border-radius:8px;background:rgba(15,23,42,.7);">' + catEsc(String(o.manager_note).slice(0, 120)) + (String(o.manager_note).length > 120 ? '…' : '') + '</div>'
-                        : '') +
+                    reasonBox +
                     '<div style="font-size:11px;opacity:.7;">' + catEsc(o.created_at ? new Date(o.created_at).toLocaleString('fa-IR') : '') + ' · ضربه = پیگیری</div>' +
                     '</div>';
             }).join('');
@@ -25744,7 +25778,13 @@ notify pgrst, 'reload schema';`;
             // اگر بعد از pull عوض شد، دوباره رندر نکن مگر خالی بوده
         }); } catch (e) {}
         const p = catCustomerProfile;
+        const myCode = (typeof catCustomerCode === 'function' && p.phone) ? catCustomerCode(p.phone) : '';
         box.innerHTML = '<h2 style="margin:0 0 12px;color:#34d399;">👤 حساب من</h2>' +
+            '<div style="padding:12px;border-radius:16px;background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(14,165,233,.1));border:1px solid rgba(52,211,153,.3);margin-bottom:14px;font-size:12px;line-height:1.75;">' +
+            '<b style="color:#6ee7b7;">🔒 حریم خصوصی شما مهم است</b><br>' +
+            'نام، موبایل و آدرس فقط برای آماده‌سازی و تحویل سفارش استفاده می‌شود و به دیگران داده نمی‌شود.' +
+            (myCode ? ('<div style="margin-top:8px;font-size:11px;opacity:.9;">کد مشتری شما: <b dir="ltr" style="color:#fbbf24;">' + catEsc(myCode) + '</b></div>') : '') +
+            '</div>' +
             '<label>نام و نام خانوادگی</label>' +
             '<input type="text" id="accEditName" dir="auto" value="' + catEsc(p.name || '') + '" placeholder="نام کامل">' +
             '<label>شماره تماس</label>' +
@@ -25756,8 +25796,8 @@ notify pgrst, 'reload schema';`;
                     '<span>' + catEsc(a.full || '') + '</span></div>';
             }).join('') || '<p class="hint">هنوز آدرسی ذخیره نشده — با اولین سفارش ارسال ذخیره می‌شود.</p>') +
             '<button type="button" class="submit-btn" style="margin-top:10px;" id="accSaveBtn">💾 ذخیره و همگام‌سازی</button>' +
-            '<p class="hint" style="margin-top:8px;">با ذخیره، اطلاعات برای سفارش‌های بعدی و فروشگاه همگام می‌شود.</p>' +
-            '<div style="margin-top:12px;padding:10px;border-radius:12px;background:rgba(15,23,42,.8);font-size:12px;">اینستاگرام تازه مارکت: <b dir="ltr">@taze.market.ali</b></div>' +
+            '<p class="hint" style="margin-top:8px;">با ذخیره، دفعه‌های بعد نیازی به وارد کردن دوباره نیست.</p>' +
+            '<div style="margin-top:12px;padding:10px;border-radius:12px;background:rgba(15,23,42,.8);font-size:12px;">اینستاگرام: <b dir="ltr">@taze.market.ali</b></div>' +
             '<button type="button" class="row-btn edit-btn" style="width:100%;margin-top:10px;" id="catClearProfileBtn">🗑️ پاک کردن اطلاعات این گوشی</button>';
         const save = document.getElementById('accSaveBtn');
         if (save) save.onclick = async function () {
@@ -25888,8 +25928,11 @@ notify pgrst, 'reload schema';`;
                         : 'پرداخت حضوری — مبلغ هنگام مراجعه به فروشگاه دریافت می‌شود') +
                     '</div>')
                 : '') +
-            (row.status === 'cancelled' && row.manager_note
-                ? ('<div style="margin-top:8px;padding:10px;border-radius:12px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.35);font-size:12px;line-height:1.8;">❌ سفارش لغو شد<br>' + catEsc(row.manager_note) + '<br><span style="opacity:.9;">از همراهی‌تان سپاسگزاریم 🙏 · اینستاگرام: <b dir="ltr">@taze.market.ali</b></span></div>')
+            (row.status === 'cancelled'
+                ? ('<div style="margin-top:8px;padding:12px;border-radius:14px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);font-size:13px;line-height:1.85;">' +
+                    '<b>❌ این سفارش از سیستم حذف/لغو شده است</b><br>' +
+                    catEsc(row.manager_note || row.cancel_reason || 'علت توسط فروشگاه ثبت شده است.') +
+                    '<br><span style="opacity:.9;font-size:12px;">از همراهی‌تان سپاسگزاریم 🙏 · <b dir="ltr">@taze.market.ali</b></span></div>')
                 : '') +
             (row.status === 'open' || row.status === 'paying' ? '<a class="submit-btn" style="display:block;margin-top:14px;text-decoration:none;" href="' + catEsc(payLinkUrl(row.token)) + '">💳 ادامه / انجام پرداخت</a>' : '') +
             (row.status === 'problem' ? '<button type="button" class="submit-btn" style="margin-top:12px;" id="trackBtnFix">✏️ اصلاح و سفارش دوباره</button>' : '') +
@@ -26146,15 +26189,16 @@ notify pgrst, 'reload schema';`;
         const extra = { status: status };
         if (status === 'approved') extra.approved_at = new Date().toISOString();
         if (status === 'cancelled') {
-            const reason = prompt('علت لغو سفارش را برای مشتری بنویسید (الزامی):', 'متأسفانه امکان آماده‌سازی این سفارش وجود نداشت');
+            const reason = prompt('علت لغو/حذف سفارش را برای مشتری بنویسید (الزامی):\nاین متن عیناً به مشتری نشان داده می‌شود.', 'متأسفانه امکان آماده‌سازی این سفارش وجود نداشت');
             if (reason == null) return;
-            if (!String(reason).trim()) return showToast('❌ علت لغو را بنویسید');
+            if (!String(reason).trim()) return showToast('❌ علت را حتماً بنویسید تا برای مشتری ثبت شود');
             extra.manager_note =
-                'متأسفانه سفارش شما لغو شد.\n' +
+                'این سفارش توسط فروشگاه از سیستم حذف/لغو شد.\n' +
                 'علت: ' + String(reason).trim() + '\n' +
-                'در صورت تمایل دوباره از کاتالوگ سفارش ثبت کنید.\n' +
-                'از همراهی‌تان سپاسگزاریم 🙏\n' +
-                'اینستاگرام: @taze.market.ali';
+                'در صورت نیاز می‌توانید دوباره از کاتالوگ سفارش ثبت کنید.\n' +
+                'از همراهی‌تان سپاسگزاریم 🙏 · اینستاگرام: @taze.market.ali';
+            extra.cancelled_at = new Date().toISOString();
+            extra.cancel_reason = String(reason).trim();
         }
         try {
             if (typeof _supabase !== 'undefined' && _supabase) {
