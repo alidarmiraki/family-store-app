@@ -68,7 +68,7 @@
         .cat-qty button{width:28px;height:28px;border-radius:8px;border:1px solid rgba(148,163,184,.35);background:#1e293b;color:#fff;font-weight:800;cursor:pointer}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v188 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v190 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -3405,9 +3405,12 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             <input type="text" id="payCfgShopHours" dir="auto" placeholder="هر روز ۹ تا ۲۲">
             <label>لینک واتساپ / تلگرام پشتیبانی (اختیاری):</label>
             <input type="url" id="payCfgSupportLink" dir="ltr" placeholder="https://wa.me/98912..." style="text-align:left;direction:ltr;">
-            <label>آدرس عمومی سایت / دامنه اختصاصی (برای لینک کاتالوگ و پرداخت):</label>
+            <label>آدرس عمومی سایت / دامنه اختصاصی (برای لینک پرداخت):</label>
             <input type="url" id="payCfgCatalogBase" dir="ltr" placeholder="https://example.com" style="text-align:left;direction:ltr;">
-            <div class="hint">اگر دامنه خودت را به سایت وصل کرده‌ای، اینجا بنویس تا لینک دایرکت دیگر github.io نباشد. خالی = همان آدرسی که الان با آن وارد شده‌ای.</div>
+            <div class="hint">اگر دامنه خودت را به سایت وصل کرده‌ای، اینجا بنویس. خالی = همان آدرس فعلی سایت.</div>
+            <label>لینک کوتاه / اختصاصی کاتالوگ (برای دایرکت و اشتراک):</label>
+            <input type="url" id="payCfgCatalogShare" dir="ltr" placeholder="https://rebrand.ly/taze-market" style="text-align:left;direction:ltr;">
+            <div class="hint">مثلاً لینک Rebrandly. اگر پر باشد، «کپی لینک کاتالوگ» و پیام دایرکت دقیقاً همین را می‌فرستند (بدون تغییر).</div>
             <button type="button" class="submit-btn" style="margin-top:8px;" onclick="savePayLinkSettings()">💾 ذخیره تنظیمات</button>
         </div>
 
@@ -3713,7 +3716,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v188 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v190 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3897,7 +3900,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=188', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=190', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -23367,7 +23370,8 @@ notify pgrst, 'reload schema';`;
                             shopAddr: data.shop_addr || (c && c.shopAddr),
                             shopHours: data.shop_hours || (c && c.shopHours),
                             supportLink: data.support_link || (c && c.supportLink),
-                            catalogBase: data.catalog_base || (c && c.catalogBase)
+                            catalogBase: data.catalog_base || (c && c.catalogBase),
+                            catalogShare: data.catalog_share || (c && c.catalogShare)
                         });
                     }
                 } catch (e) {}
@@ -23455,6 +23459,7 @@ notify pgrst, 'reload schema';`;
                     shop_hours: cfg.shopHours || '',
                     support_link: cfg.supportLink || '',
                     catalog_base: cfg.catalogBase || '',
+                    catalog_share: cfg.catalogShare || '',
                     updated_at: new Date().toISOString()
                 };
                 const { error } = await _supabase.from('pay_link_settings').upsert([row], { onConflict: 'id' });
@@ -23489,6 +23494,11 @@ notify pgrst, 'reload schema';`;
             catalogBase = catalogBase.replace(/\/$/, '');
             if (!/^https?:\/\//i.test(catalogBase)) catalogBase = 'https://' + catalogBase;
         }
+        let catalogShare = ((document.getElementById('payCfgCatalogShare') || {}).value || '').trim();
+        if (catalogShare) {
+            catalogShare = catalogShare.replace(/\s+/g, '');
+            if (!/^https?:\/\//i.test(catalogShare)) catalogShare = 'https://' + catalogShare;
+        }
         if (card.length !== 16) return showToast('❌ شماره کارت باید ۱۶ رقم باشد');
         const cfg = {
             card: card, holder: holder, phone: phone, mins: mins,
@@ -23496,6 +23506,7 @@ notify pgrst, 'reload schema';`;
             shipCost: shipCost, shipNote: shipNote || (shipCost <= 0 ? 'ارسال رایگان' : ''),
             minOrder: minOrder, shopAddr: shopAddr, shopHours: shopHours, supportLink: supportLink,
             catalogBase: catalogBase,
+            catalogShare: catalogShare,
             updatedAt: new Date().toISOString()
         };
         paySaveCfg(cfg);
@@ -23565,6 +23576,8 @@ notify pgrst, 'reload schema';`;
         if (sh) sh.value = cfg.shopHours || '';
         if (sl) sl.value = cfg.supportLink || '';
         if (b) b.value = cfg.catalogBase || '';
+        const cs = document.getElementById('payCfgCatalogShare');
+        if (cs) cs.value = cfg.catalogShare || '';
         try { window.renderCatalogShareBox && window.renderCatalogShareBox(); } catch (e) {}
         try { if (payIsAdmin()) loadCatalogOrdersAdmin(); } catch (e) {}
         await renderPayLinkList();
@@ -23573,9 +23586,18 @@ notify pgrst, 'reload schema';`;
     window.catalogPublicUrl = function () {
         try {
             const cfg = payLoadCfg();
+            // اگر لینک کوتاه/اختصاصی تنظیم شده، همان را برای اشتراک بده
+            let share = (cfg.catalogShare || '').trim();
+            if (share) {
+                if (!/^https?:\/\//i.test(share)) share = 'https://' + share;
+                return share;
+            }
             let base = (cfg.catalogBase || '').replace(/\/$/, '');
             if (base) {
                 if (!/^https?:\/\//i.test(base)) base = 'https://' + base;
+                // اگر خود لینک از قبل کوتاه‌کننده است، ?catalog=1 اضافه نکن
+                if (/rebrand\.ly|bit\.ly|cutt\.ly|tinyurl\.com|is\.gd|t\.co\//i.test(base)) return base;
+                if (/[?&]catalog=1\b/i.test(base)) return base;
                 return base + (base.indexOf('?') >= 0 ? '&' : '?') + 'catalog=1';
             }
             const u = new URL(location.href);
@@ -23732,6 +23754,7 @@ notify pgrst, 'reload schema';`;
             return '<div class="summary-mini" style="flex-direction:column;align-items:stretch;gap:' + (compact ? '4' : '6') + 'px;margin-bottom:' + (compact ? '6' : '10') + 'px;padding:' + (compact ? '8px 10px' : '') + ';opacity:' + (compact ? '.88' : '1') + ';">' +
                 '<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;">' +
                 '<span style="font-size:' + (compact ? '12' : '13') + 'px;"><b>' + payEsc(r.customer_name) + '</b> — ' + Number(r.amount).toLocaleString('fa-IR') + ' تومان' +
+                (r.customer_code || catCustomerCode(r.phone) ? ' <span style="font-size:10px;direction:ltr;opacity:.85;color:#38bdf8;">' + payEsc(r.customer_code || catCustomerCode(r.phone)) + '</span>' : '') +
                 (r.order_code ? ' <span style="font-size:10px;direction:ltr;opacity:.9;">#' + payEsc(r.order_code) + '</span>' : '') +
                 (isInsta ? ' <span style="font-size:10px;background:linear-gradient(100deg,#f59e0b,#ef4444);color:#fff;padding:2px 6px;border-radius:6px;">اینستا</span>' : '') +
                 (compact ? '' : '<br>') +
@@ -24312,26 +24335,34 @@ notify pgrst, 'reload schema';`;
         const cardHtml = payRenderCard(row.card, row.holder);
         const toman = Number(row.amount) || 0;
         const rial = toman * 10;
+        const orderCodeShow = row.order_code || '';
+        const custCodeShow = row.customer_code || catCustomerCode(row.phone);
         inner.innerHTML =
-            '<div class="report-card" style="padding:16px;">' +
-            '<div style="text-align:center;font-weight:900;font-size:15px;margin-bottom:4px;">غرفه فامیلی</div>' +
-            '<div class="hint" style="text-align:center;margin:0 0 12px;">پرداخت کارت‌به‌کارت</div>' +
-            (row.customer_name ? '<p style="text-align:center;margin:0 0 8px;">مشتری: <b>' + payEsc(row.customer_name) + '</b></p>' : '') +
-            (row.note ? '<p class="hint" style="text-align:center;">بابت: ' + payEsc(row.note) + '</p>' : '') +
-            '<div style="text-align:center;opacity:.8;font-size:12px;">مبلغ قابل پرداخت (ریال) — ضربه بزنید تا کپی شود</div>' +
-            '<div class="pay-amt-big" role="button" style="cursor:pointer;" onclick="payCopyAmount(' + rial + ')">' + rial.toLocaleString('fa-IR') + ' <span style="font-size:16px;">ریال</span></div>' +
-            '<div style="text-align:center;font-size:13px;opacity:.85;margin-bottom:8px;cursor:pointer;" onclick="payCopyAmount(' + toman + ')">معادل ' + toman.toLocaleString('fa-IR') + ' تومان · 👆 کپی</div>' +
+            '<div style="padding:0 0 20px;direction:rtl;">' +
+            '<div style="text-align:center;padding:18px 14px 12px;border-radius:0 0 24px 24px;background:linear-gradient(160deg,#0f172a,#134e4a 90%);margin-bottom:14px;">' +
+            '<div style="font-size:28px;">💳</div>' +
+            '<div style="font-weight:900;font-size:18px;color:#6ee7b7;margin-top:4px;">پرداخت امن · تازه مارکت</div>' +
+            '<div style="font-size:12px;opacity:.8;margin-top:4px;">کارت‌به‌کارت · غرفه فامیلی</div>' +
+            (orderCodeShow ? '<div style="margin-top:10px;display:inline-block;padding:4px 12px;border-radius:99px;background:rgba(251,191,36,.15);color:#fbbf24;font-size:12px;font-weight:800;direction:ltr;">' + payEsc(orderCodeShow) + '</div>' : '') +
+            '</div>' +
+            '<div class="report-card" style="padding:16px;border-radius:18px;border:1px solid rgba(52,211,153,.25);">' +
+            (row.customer_name ? '<p style="text-align:center;margin:0 0 4px;font-size:13px;">مشتری: <b>' + payEsc(row.customer_name) + '</b></p>' : '') +
+            (custCodeShow ? '<p style="text-align:center;margin:0 0 8px;font-size:11px;opacity:.8;">کد مشتری: <b dir="ltr">' + payEsc(custCodeShow) + '</b></p>' : '') +
+            '<div style="text-align:center;opacity:.8;font-size:12px;margin-top:8px;">مبلغ قابل پرداخت — ضربه = کپی</div>' +
+            '<div class="pay-amt-big" role="button" style="cursor:pointer;margin:6px 0;" onclick="payCopyAmount(' + rial + ')">' + rial.toLocaleString('fa-IR') + ' <span style="font-size:16px;">ریال</span></div>' +
+            '<div style="text-align:center;font-size:13px;opacity:.85;margin-bottom:10px;cursor:pointer;" onclick="payCopyAmount(' + toman + ')">معادل ' + toman.toLocaleString('fa-IR') + ' تومان</div>' +
             '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:12px;">' +
-            '<button type="button" class="row-btn fill-btn" onclick="payCopyAmount(' + rial + ')">📋 کپی مبلغ (ریال)</button>' +
+            '<button type="button" class="row-btn fill-btn" onclick="payCopyAmount(' + rial + ')">📋 کپی ریال</button>' +
             '<button type="button" class="row-btn edit-btn" onclick="payCopyAmount(' + toman + ')">کپی تومان</button>' +
             '</div>' +
-            '<div class="pay-warn">⚠️ مبلغ را <b>دقیقاً به ریال</b> بفرستید (حتی یک ریال کم/زیاد شناسایی سخت می‌شود).</div>' +
+            '<div class="pay-warn" style="border-radius:12px;">⚠️ مبلغ را <b>دقیقاً به ریال</b> واریز کنید.</div>' +
             cardHtml +
             '<button type="button" class="submit-btn" style="margin-top:12px;" onclick="payCopyCard(\'' + payEsc(row.card) + '\')">📋 کپی شماره کارت</button>' +
-            '<div class="pay-timer" id="payTimerEl">مهلت پرداخت: <b>' + leftMin + ':' + String(leftSec).padStart(2, '0') + '</b></div>' +
-            (row.phone ? '<p style="text-align:center;font-size:13px;margin:8px 0;cursor:pointer;" onclick="payCopy(\'' + payEsc(row.phone) + '\',\'شماره پشتیبانی کپی شد\')">📞 پشتیبانی: <b dir="ltr">' + payEsc(row.phone) + '</b><br><span style="font-size:11px;opacity:.75;">👆 ضربه = کپی شماره</span></p>' : '') +
-            '<div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(148,163,184,.25);">' +
-            '<label>بعد از واریز، عکس رسید بانکی را بفرستید تا پرداخت شما ثبت شود:</label>' +
+            '<div class="pay-timer" id="payTimerEl" style="margin-top:10px;text-align:center;padding:10px;border-radius:12px;background:rgba(251,191,36,.1);">⏳ مهلت: <b>' + leftMin + ':' + String(leftSec).padStart(2, '0') + '</b></div>' +
+            (row.phone ? '<p style="text-align:center;font-size:13px;margin:10px 0;cursor:pointer;" onclick="payCopy(\'' + payEsc(row.phone) + '\',\'شماره پشتیبانی کپی شد\')">📞 پشتیبانی: <b dir="ltr">' + payEsc(row.phone) + '</b></p>' : '') +
+            '<div style="margin-top:16px;padding:14px;border-radius:16px;background:rgba(15,23,42,.6);border:1px solid rgba(148,163,184,.2);">' +
+            '<div style="font-weight:800;margin-bottom:8px;text-align:center;">📷 ارسال رسید بانکی</div>' +
+            '<div style="font-size:12px;opacity:.85;text-align:center;margin-bottom:10px;">بعد از واریز، عکس رسید را بفرستید</div>' +
             '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;">' +
             '<button type="button" class="row-btn fill-btn" style="flex:1;" id="payBtnCam">📷 دوربین</button>' +
             '<button type="button" class="row-btn edit-btn" style="flex:1;" id="payBtnGal">🖼️ گالری</button>' +
@@ -24341,8 +24372,8 @@ notify pgrst, 'reload schema';`;
             '<div id="payReceiptPreview" style="display:none;margin:8px 0;text-align:center;"></div>' +
             '<div id="payReceiptStatus" style="text-align:center;font-size:12px;min-height:18px;margin:6px 0;color:#94a3b8;"></div>' +
             '<button type="button" class="submit-btn" id="payReceiptBtn" data-pay-token="' + payEsc(token) + '" style="display:none;background:linear-gradient(100deg,#10b981,#059669);">✅ تأیید و ارسال رسید</button>' +
-            '<p class="hint" style="text-align:center;margin-top:6px;">از اعتماد شما سپاسگزاریم 🙏 بعد از ارسال رسید، نتیجه تأیید همین‌جا نمایش داده می‌شود.</p>' +
-            '</div></div>';
+            '<p class="hint" style="text-align:center;margin-top:8px;">نتیجه تأیید مدیر همین‌جا نمایش داده می‌شود 🙏</p>' +
+            '</div></div></div>';
 
         // اتصال دکمه‌ها بدون اتکا به onclick رشته‌ای
         setTimeout(function () {
@@ -24526,6 +24557,16 @@ notify pgrst, 'reload schema';`;
         const day = String(d.getDate()).padStart(2, '0');
         const rnd = Math.floor(1000 + Math.random() * 9000);
         return 'TM' + y + m + day + '-' + rnd;
+    }
+    // شماره ثابت مشتری بر اساس موبایل — همیشه یکسان برای همان شماره
+    function catCustomerCode(phone) {
+        const p = String(phone || '').replace(/\D/g, '');
+        if (!p || p.length < 8) return '';
+        let h = 0;
+        for (let i = 0; i < p.length; i++) h = ((h << 5) - h + p.charCodeAt(i)) | 0;
+        const body = Math.abs(h).toString(36).toUpperCase().slice(0, 4);
+        const tail = p.slice(-4);
+        return 'CUS-' + tail + body;
     }
 
     function catEsc(s) {
@@ -25243,6 +25284,7 @@ notify pgrst, 'reload schema';`;
         const discAmt = Math.round(sub * disc / 100);
         const amount = Math.max(0, sub - discAmt + ship);
         const orderCode = catOrderCode();
+        const customerCode = catCustomerCode(phone);
         const fullAddr = (recv === 'delivery') ? (catComposeAddress() || address) : address;
         const itemsTxt = keys.map(function (k) {
             const it = catCart[k];
@@ -25251,6 +25293,7 @@ notify pgrst, 'reload schema';`;
         const orderNote =
             '[سفارش اینستاگرام]\n' +
             '🔖 شماره پیگیری: ' + orderCode + '\n' +
+            (customerCode ? ('👤 کد مشتری: ' + customerCode + '\n') : '') +
             '📞 ' + phone + '\n' +
             (isCash
                 ? (recv === 'delivery' ? '💵 پرداخت: حضوری درب منزل (هنگام تحویل)\n' : '💵 پرداخت: حضوری در فروشگاه (هنگام مراجعه)\n')
@@ -25270,6 +25313,7 @@ notify pgrst, 'reload schema';`;
         const row = {
             token: token,
             order_code: orderCode,
+            customer_code: customerCode,
             customer_name: name,
             amount: amount,
             note: orderNote,
@@ -25394,34 +25438,45 @@ notify pgrst, 'reload schema';`;
             problem: 'نیاز به اصلاح', cancelled: 'لغو شده', rejected: 'رد شده', expired: 'منقضی'
         })[row.status] || row.status;
         const isMgr = role === 'manager' || role === 'seller';
-        const title = isMgr ? 'برگه آماده‌سازی / ارسال سفارش' : 'فاکتور مشتری — تازه مارکت';
-        const subtitle = isMgr
-            ? 'این برگه را به بسته بچسبانید · غرفه فامیلی'
-            : 'رسید خرید شما · غرفه فامیلی · تازه مارکت';
+        const title = isMgr ? 'برگه آماده‌سازی / ارسال' : 'فاکتور خرید';
+        const custCode = row.customer_code || catCustomerCode(row.phone);
+        const printDate = new Date().toLocaleString('fa-IR');
         let body =
             '<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
             '<title>' + esc(title) + ' ' + esc(row.order_code || code) + '</title>' +
-            '<style>body{font-family:Tahoma,Arial,sans-serif;padding:20px;color:#111;max-width:420px;margin:0 auto;background:#fff}h1{font-size:17px;margin:0 0 6px}.box{border:2px solid #222;border-radius:8px;padding:12px;margin:10px 0;line-height:1.9}.muted{color:#555;font-size:12px}.big{font-size:22px;font-weight:900;letter-spacing:1px;direction:ltr;text-align:center;margin:8px 0}@media print{button{display:none!important}}</style></head><body>' +
-            '<h1>' + esc(title) + '</h1>' +
-            '<div class="muted">' + esc(subtitle) + '</div>' +
-            '<div class="big">' + esc(row.order_code || code) + '</div>' +
+            '<style>' +
+            '*{box-sizing:border-box}body{font-family:Tahoma,"Segoe UI",Arial,sans-serif;padding:16px;color:#0f172a;max-width:440px;margin:0 auto;background:#fff}' +
+            '.head{text-align:center;padding:14px 10px;border-radius:14px;background:linear-gradient(135deg,#0f766e,#134e4a);color:#fff;margin-bottom:14px}' +
+            '.head h1{margin:0;font-size:16px;font-weight:900}.head .sub{font-size:11px;opacity:.9;margin-top:4px}' +
+            '.code{font-size:22px;font-weight:900;letter-spacing:1px;direction:ltr;text-align:center;padding:10px;margin:10px 0;border:2px dashed #0f766e;border-radius:12px;background:#f0fdfa;color:#0f766e}' +
+            '.box{border:1.5px solid #cbd5e1;border-radius:12px;padding:12px 14px;margin:10px 0;line-height:1.85;font-size:13px}' +
+            '.box b{color:#0f172a}.row{display:flex;justify-content:space-between;gap:8px;padding:3px 0;border-bottom:1px solid #f1f5f9}.row:last-child{border:0}' +
+            '.muted{color:#64748b;font-size:11px;text-align:center;margin-top:12px}' +
+            '.badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;background:#ecfdf5;color:#047857;font-weight:700}' +
+            '.dash{border-style:dashed;background:#fffbeb}' +
+            'pre{white-space:pre-wrap;font-family:Tahoma,Arial;font-size:12px;margin:6px 0 0;line-height:1.7}' +
+            '@media print{button{display:none!important}body{padding:8px}.head{-webkit-print-color-adjust:exact;print-color-adjust:exact}}' +
+            '</style></head><body>' +
+            '<div class="head"><h1>🛒 تازه مارکت · غرفه فامیلی</h1><div class="sub">' + esc(title) + (isMgr ? ' · بچسبانید روی بسته' : ' · رسید مشتری') + '</div></div>' +
+            '<div class="code">' + esc(row.order_code || code) + '</div>' +
+            '<div style="text-align:center;margin-bottom:8px;"><span class="badge">' + esc(st) + '</span></div>' +
             '<div class="box">' +
-            '<div><b>مشتری:</b> ' + esc(row.customer_name || '—') + '</div>' +
-            '<div><b>تلفن:</b> <span dir="ltr">' + esc(row.phone || '—') + '</span></div>' +
-            '<div><b>وضعیت:</b> ' + esc(st) + '</div>' +
-            '<div><b>مبلغ قابل پرداخت:</b> ' + Number(row.amount || 0).toLocaleString('fa-IR') + ' تومان</div>' +
-            (row.delivery_type === 'pickup' ? '<div><b>نوع تحویل:</b> حضوری از درب فروشگاه</div>' : '<div><b>نوع تحویل:</b> ارسال درب منزل</div>') +
-            (row.delivery_when ? '<div><b>زمان:</b> ' + esc(row.delivery_when) + '</div>' : '') +
-            (row.address ? '<div><b>آدرس:</b> ' + esc(row.address) + '</div>' : '') +
+            '<div class="row"><span>مشتری</span><b>' + esc(row.customer_name || '—') + '</b></div>' +
+            (custCode ? '<div class="row"><span>کد مشتری</span><b dir="ltr">' + esc(custCode) + '</b></div>' : '') +
+            '<div class="row"><span>تلفن</span><b dir="ltr">' + esc(row.phone || '—') + '</b></div>' +
+            '<div class="row"><span>مبلغ</span><b style="color:#0f766e;">' + Number(row.amount || 0).toLocaleString('fa-IR') + ' تومان</b></div>' +
+            '<div class="row"><span>تحویل</span><b>' + (row.delivery_type === 'pickup' ? 'حضوری فروشگاه' : 'ارسال درب منزل') + '</b></div>' +
+            (row.delivery_when ? '<div class="row"><span>زمان</span><b>' + esc(row.delivery_when) + '</b></div>' : '') +
+            (row.address ? '<div style="margin-top:6px;font-size:12px;"><b>آدرس:</b> ' + esc(row.address) + '</div>' : '') +
             '</div>';
         if (isMgr) {
-            body += '<div class="box" style="border-style:dashed;"><b>جزئیات برای آماده‌سازی:</b><pre style="white-space:pre-wrap;font-family:Tahoma;font-size:12px;margin:8px 0 0;">' + esc(row.note || '') + '</pre></div>' +
-                '<div class="muted">تماس با مشتری: ' + esc(row.phone || '—') + ' · چاپ: ' + new Date().toLocaleString('fa-IR') + '</div>';
+            body += '<div class="box dash"><b>جزئیات آماده‌سازی</b><pre>' + esc(row.note || '') + '</pre></div>' +
+                '<div class="muted">تماس: ' + esc(row.phone || '—') + ' · چاپ: ' + esc(printDate) + '</div>';
         } else {
-            body += '<div class="box"><b>اقلام سفارش:</b><pre style="white-space:pre-wrap;font-family:Tahoma;font-size:12px;margin:8px 0 0;">' + esc(row.note || '') + '</pre></div>' +
-                '<p class="muted">از خرید شما سپاسگزاریم 🙏 · ' + new Date().toLocaleString('fa-IR') + '</p>';
+            body += '<div class="box"><b>اقلام سفارش</b><pre>' + esc(row.note || '') + '</pre></div>' +
+                '<div class="muted">از خرید شما سپاسگزاریم 🙏 · ' + esc(printDate) + '<br>@taze.market.ali</div>';
         }
-        body += '<button onclick="window.print()" style="margin-top:12px;padding:10px 16px;font-size:14px;">🖨️ چاپ</button></body></html>';
+        body += '<div style="text-align:center;margin-top:14px;"><button onclick="window.print()" style="padding:12px 20px;font-size:14px;border-radius:10px;border:0;background:#0f766e;color:#fff;font-weight:800;cursor:pointer;">🖨️ چاپ فاکتور</button></div></body></html>';
 
         try {
             let frame = document.getElementById('invoicePrintFrame');
@@ -25657,6 +25712,7 @@ notify pgrst, 'reload schema';`;
             const row = {
                 phone: phone,
                 name: catCustomerProfile.name || '',
+                customer_code: catCustomerCode(phone),
                 addresses: catCustomerProfile.addresses || [],
                 updated_at: new Date().toISOString()
             };
@@ -26007,6 +26063,7 @@ notify pgrst, 'reload schema';`;
                 return '<div class="summary-mini" style="flex-direction:column;gap:4px;margin-bottom:8px;opacity:.85;cursor:pointer;" id="' + id + '_wrap">' +
                     '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;" onclick="catMgrToggleOrder(' + idx + ')">' +
                     '<div><b>' + payEsc(r.customer_name) + '</b> · ' + Number(r.amount || 0).toLocaleString('fa-IR') + ' ت' +
+                    (r.customer_code || (typeof catCustomerCode === 'function' && catCustomerCode(r.phone)) ? ' <span dir="ltr" style="color:#38bdf8;font-size:11px;">' + payEsc(r.customer_code || catCustomerCode(r.phone)) + '</span>' : '') +
                     (r.order_code ? ' <span dir="ltr">#' + payEsc(r.order_code) + '</span>' : '') +
                     '<br><span style="font-size:11px;">🏁 تحویل شده · برای جزئیات ضربه بزنید</span></div>' +
                     '<span style="font-size:18px;" id="' + id + '_chev">▸</span></div>' +
@@ -26017,6 +26074,7 @@ notify pgrst, 'reload schema';`;
             }
             return '<div class="summary-mini" style="flex-direction:column;align-items:stretch;gap:6px;margin-bottom:10px;">' +
                 '<div><b>' + payEsc(r.customer_name) + '</b> · ' + Number(r.amount || 0).toLocaleString('fa-IR') + ' ت' +
+                (r.customer_code || (typeof catCustomerCode === 'function' && catCustomerCode(r.phone)) ? ' <span dir="ltr" style="color:#38bdf8;font-size:11px;">' + payEsc(r.customer_code || catCustomerCode(r.phone)) + '</span>' : '') +
                 (r.order_code ? ' <span dir="ltr">#' + payEsc(r.order_code) + '</span>' : '') +
                 '<br><span style="font-size:11px;opacity:.85;">' + (stMap[st] || st) +
                 (r.pay_method === 'cash'
