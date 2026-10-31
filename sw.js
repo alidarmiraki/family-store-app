@@ -1,5 +1,5 @@
 // v130 — Service Worker: آفلاین کامل شل اپ + کش کتابخانه‌ها + نصب PWA
-const V = 'v162', SHELL = 'shell-' + V, LIBS = 'libs-v1';
+const V = 'v194', SHELL = 'shell-' + V, LIBS = 'libs-v1';
 const CDN = /(^|\.)(cdn\.jsdelivr\.net|unpkg\.com|cdnjs\.cloudflare\.com|fonts\.googleapis\.com|fonts\.gstatic\.com)$/;
 
 self.addEventListener('message', (e) => {
@@ -11,7 +11,7 @@ self.addEventListener('install', (e) => {
   e.waitUntil((async () => {
     try {
       const c = await caches.open(SHELL);
-      await c.addAll(['./', './index.html', './sw.js'].map(u => new Request(u, { cache: 'reload' })));
+      await c.addAll(['./', './index.html', './sw.js', './manifest.json'].map(u => new Request(u, { cache: 'reload' })));
     } catch (err) {}
   })());
 });

@@ -151,7 +151,7 @@
         .cat-qty button{width:28px;height:28px;border-radius:8px;border:1px solid rgba(148,163,184,.35);background:#1e293b;color:#fff;font-weight:800;cursor:pointer}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v193 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v194 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -3799,7 +3799,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v193 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v194 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3983,7 +3983,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=193', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=194', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -14720,22 +14720,34 @@ function sbRenderAdminLists(cfg) {
                 if (!sure2) return;
             }
 
-            // آپلود عکس محصول (برای کاتالوگ)
+            // آپلود عکس محصول (برای کاتالوگ) — خطا را پنهان نمی‌کنیم تا عکس از دست نرود
             let image_url = (document.getElementById('pImageUrl') && document.getElementById('pImageUrl').value) || '';
             try {
                 const fileInput = document.getElementById('pImageFile');
                 if (fileInput && fileInput.files && fileInput.files[0] && _supabase) {
                     showToast('⏳ در حال آپلود عکس محصول...');
                     const file = fileInput.files[0];
-                    const path = 'products/' + (code || Date.now()) + '_' + Date.now() + '.jpg';
+                    const path = 'products/' + String(code || 'p').replace(/[^\w\u0600-\u06FF-]+/g, '_') + '_' + Date.now() + '.jpg';
                     const buf = await file.arrayBuffer();
                     const up = await _supabase.storage.from('product-images').upload(path, buf, { contentType: file.type || 'image/jpeg', upsert: true });
-                    if (!up.error) {
-                        const { data: pub } = _supabase.storage.from('product-images').getPublicUrl(path);
-                        if (pub && pub.publicUrl) image_url = pub.publicUrl;
+                    if (up.error) {
+                        showToast('❌ آپلود عکس ناموفق: ' + (up.error.message || up.error) + '\nباکت product-images باید Public باشد.');
+                        return;
+                    }
+                    const { data: pub } = _supabase.storage.from('product-images').getPublicUrl(path);
+                    if (pub && pub.publicUrl) {
+                        image_url = pub.publicUrl;
+                        const iu = document.getElementById('pImageUrl');
+                        if (iu) iu.value = image_url;
+                    } else {
+                        showToast('❌ لینک عمومی عکس ساخته نشد. باکت product-images را Public کنید.');
+                        return;
                     }
                 }
-            } catch (e) {}
+            } catch (e) {
+                showToast('❌ خطا در آپلود عکس: ' + (e && e.message ? e.message : e));
+                return;
+            }
 
             const catalog_show = !!(document.getElementById('pCatalogShow') && document.getElementById('pCatalogShow').checked);
 
@@ -14744,15 +14756,31 @@ function sbRenderAdminLists(cfg) {
                 if (currentRole === 'admin') {
                     updateData.buy_price = buy_price;
                 }
-                if (image_url) updateData.image_url = image_url;
+                if (image_url) {
+                    updateData.image_url = image_url;
+                    updateData.photo_url = image_url; // سازگاری با کاتالوگ و فیلدهای قدیمی
+                }
                 const { error } = await _supabase.from('products').update(updateData).eq('id', editingProductId);
 
                 if (error) {
                     showToast(buildProductSaveErrorMessage(error, code));
                 } else {
-                    showToast('✅ کالا با موفقیت به‌روزرسانی شد');
+                    showToast(image_url ? '✅ کالا و عکس به‌روزرسانی شد (در کاتالوگ هم می‌آید)' : '✅ کالا با موفقیت به‌روزرسانی شد');
                     logInventoryChange(name, 'ویرایش کالا', `موجودی انبار: ${stock} کیلوگرم | موجودی غرفه: ${boothStock} کیلوگرم`);
-                    try { if (cachedInventoryFull) { const ix = cachedInventoryFull.findIndex(x => String(x.id) === String(editingProductId)); if (ix >= 0) { cachedInventoryFull[ix] = Object.assign({}, cachedInventoryFull[ix], { name, code, sell_price, buy_price, category, image_url: image_url || cachedInventoryFull[ix].image_url }); } } refreshPriceChangeBanner(); } catch (e) {}
+                    try {
+                        if (cachedInventoryFull) {
+                            const ix = cachedInventoryFull.findIndex(x => String(x.id) === String(editingProductId));
+                            if (ix >= 0) {
+                                cachedInventoryFull[ix] = Object.assign({}, cachedInventoryFull[ix], {
+                                    name, code, sell_price, buy_price, category, catalog_show,
+                                    image_url: image_url || cachedInventoryFull[ix].image_url,
+                                    photo_url: image_url || cachedInventoryFull[ix].photo_url
+                                });
+                            }
+                            try { offlineSaveProducts(cachedInventoryFull); } catch (e2) {}
+                        }
+                        refreshPriceChangeBanner();
+                    } catch (e) {}
                     // cancelEdit خودش restoreInventoryView را صدا می‌زند اگر invReturnState باشد
                     const hadReturn = !!invReturnState;
                     cancelEdit();
@@ -14766,7 +14794,10 @@ function sbRenderAdminLists(cfg) {
                 const insertRow = {
                     code, name, category, container_capacity: capacity, stock, booth_stock: boothStock, min_stock, booth_min_stock, sell_price, buy_price, booth_only, catalog_show
                 };
-                if (image_url) insertRow.image_url = image_url;
+                if (image_url) {
+                    insertRow.image_url = image_url;
+                    insertRow.photo_url = image_url;
+                }
                 const { error } = await _supabase.from('products').insert([insertRow]);
 
                 if (error) {
@@ -16872,8 +16903,13 @@ function sbRenderAdminLists(cfg) {
                 const m = (isAdmin && sp > 0 && bp > 0) ? Math.round((sp - bp) / sp * 100) : null;
                 const nm = (p.name || '').replace(/'/g, "\\'");
                 const sus = invSusp(p), vMain = (Number(p.stock) || 0) * c.v, vBooth = (Number(p.booth_stock) || 0) * c.v;
+                const imgSrc = p.image_url || p.photo_url || '';
+                const imgHtml = imgSrc
+                    ? `<div style="width:56px;height:56px;border-radius:12px;overflow:hidden;flex-shrink:0;background:#0f172a;border:1px solid rgba(148,163,184,.25);"><img src="${v77Esc(imgSrc)}" alt="" style="width:100%;height:100%;object-fit:cover;" loading="lazy" onerror="this.parentNode.style.display='none'"></div>`
+                    : `<div style="width:56px;height:56px;border-radius:12px;flex-shrink:0;background:rgba(15,23,42,.8);border:1px dashed rgba(148,163,184,.35);display:flex;align-items:center;justify-content:center;font-size:20px;opacity:.5;">📷</div>`;
+                const catOn = !(p.catalog_show === false || p.catalog_show === 0 || p.catalog_show === 'false');
                 return `<div class="inv-card ${low && !p.no_restock ? 'low' : (soon ? 'soon' : '')}${sus.any ? ' susp' : ''}" data-inv-id="${p.id}">
-                    <div class="inv-h"><div><b>${v77Esc(p.name)}${p.category === 'sausage' ? ' 🌭' : ''}${p.booth_only ? ' <span style="font-size:9px;color:#fbbf24;">فقط غرفه</span>' : ''}</b><div class="inv-code">کد: ${v77Esc(p.code || '—')}</div></div>${badge}</div>
+                    <div class="inv-h" style="align-items:center;gap:10px;">${imgHtml}<div style="flex:1;min-width:0;"><b>${v77Esc(p.name)}${p.category === 'sausage' ? ' 🌭' : ''}${p.booth_only ? ' <span style="font-size:9px;color:#fbbf24;">فقط غرفه</span>' : ''}</b><div class="inv-code">کد: ${v77Esc(p.code || '—')}${imgSrc ? ' · 🖼️ عکس دارد' : ''}${catOn ? ' · 📱 کاتالوگ' : ' · 🚫 خارج کاتالوگ'}</div></div>${badge}</div>
                     <div class="inv-cols">
                         <div class="inv-col"><span>📦 انبار اصلی</span><b style="color:${p.booth_only ? '#94a3b8' : col};">${p.booth_only ? '—' : fa(stV) + ' کیلو'}${sus.main ? ' ⚠️' : ''}</b>${bar}${isAdmin && !p.booth_only ? `<span class="bz-sub">ارزش: ${Math.round(vMain).toLocaleString('fa-IR')}${c.est ? ' ≈' : ''}</span>` : ''}</div>
                         <div class="inv-col"><span>🧊 موجودی غرفه</span><b>${fa(Number(p.booth_stock || 0))} کیلو${sus.booth ? ' ⚠️' : ''}</b>${isAdmin ? `<span class="bz-sub">ارزش: ${Math.round(vBooth).toLocaleString('fa-IR')}${c.est ? ' ≈' : ''}</span>` : ''}</div>
@@ -24749,8 +24785,18 @@ notify pgrst, 'reload schema';`;
         let list = [];
         try {
             if (typeof _supabase !== 'undefined' && _supabase) {
-                const { data, error } = await _supabase.from('products').select('id,name,code,category,sell_price,unit_price,price,stock,booth_stock,image_url,photo_url,catalog_show').order('name');
-                if (!error && data) list = data;
+                const { data, error } = await _supabase
+                    .from('products')
+                    .select('id,name,code,category,sell_price,unit_price,price,stock,booth_stock,image_url,photo_url,catalog_show')
+                    .order('name');
+                if (!error && data && data.length) {
+                    list = data;
+                    // همگام با کش آفلاین تا عکس‌های جدید در همه گوشی‌ها بیاید
+                    try {
+                        if (typeof offlineSaveProducts === 'function') offlineSaveProducts(data);
+                        else localStorage.setItem('offline_products_v1', JSON.stringify(data));
+                    } catch (e) {}
+                }
             }
         } catch (e) {}
         if (!list.length) {
@@ -24769,7 +24815,8 @@ notify pgrst, 'reload schema';`;
         return catProducts;
     }
     function catImg(p) {
-        return p.image_url || p.photo_url || '';
+        const u = (p && (p.image_url || p.photo_url)) || '';
+        return u ? String(u).trim() : '';
     }
     function catImgHtml(p) {
         const src = catImg(p);
@@ -26418,6 +26465,11 @@ notify pgrst, 'reload schema';`;
     function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
     function toast(m) { try { showToast(m); } catch (e) {} }
     function setBtn() { var w = document.getElementById('installBtnWrap'); if (w) w.style.display = standalone ? 'none' : ''; }
+    // دکمه نصب همیشه دیده شود (مگر قبلاً نصب شده)
+    try {
+        var wrap0 = document.getElementById('installBtnWrap');
+        if (wrap0) wrap0.style.display = standalone ? 'none' : 'inline-flex';
+    } catch (e) {}
     setBtn();
     if (standalone) return;
 
@@ -26503,11 +26555,29 @@ notify pgrst, 'reload schema';`;
         });
         document.body.appendChild(b);
     }
-    window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); dp = e; window.__dp = e; banner(); });
-    window.addEventListener('appinstalled', function () { dp = null; standalone = true; setBtn(); var b = document.getElementById('pwaBanner'); if (b) b.remove(); hide(); toast('✅ برنامه نصب شد! از آیکون «' + 'فامیلی فروشگاه' + '» روی صفحه‌ی اصلی باز کن.'); });
+    window.addEventListener('beforeinstallprompt', function (e) {
+        e.preventDefault();
+        dp = e;
+        window.__dp = e;
+        banner();
+        try {
+            var w = document.getElementById('installBtnWrap');
+            if (w) w.style.display = 'inline-flex';
+        } catch (er) {}
+    });
+    window.addEventListener('appinstalled', function () {
+        dp = null;
+        standalone = true;
+        setBtn();
+        var b = document.getElementById('pwaBanner');
+        if (b) b.remove();
+        hide();
+        toast('✅ برنامه نصب شد! از آیکون «تازه مارکت / غرفه فامیلی» روی صفحه اصلی باز کن.');
+    });
     window.installPWA = install;
     window.openInstallHelp = openHelp;
-    if (isIOS) setTimeout(banner, 5000);
+    // بنر نصب زودتر برای آیفون و اندروید
+    setTimeout(banner, isIOS ? 1200 : 2500);
 })();
 </script>
 <script>
