@@ -81,16 +81,21 @@
                     return false;
                 }
             }, true);
-            // تشخیص تقریبی باز بودن DevTools (مخصوصاً روی دسکتاپ)
+            // تشخیص DevTools فقط روی دسکتاپ — در اینستاگرام/تلگرام/وب‌ویو گوشی
+            // outerWidth فرق دارد و قبلاً باعث رفرش مداوم و خالی‌ماندن کاتالوگ می‌شد.
             var strikes = 0;
+            var uaSec = navigator.userAgent || '';
+            var isInAppSec = /Instagram|Telegram|FBAN|FBAV|Line\/|Eitaa|Bale|Rubika|Soroush|; wv\)/i.test(uaSec);
+            var isMobileSec = /Android|iPhone|iPad|iPod|Mobile/i.test(uaSec);
             function checkDevtools() {
                 try {
+                    if (isInAppSec || isMobileSec) return; // هرگز در موبایل/اینستا رفرش اجباری نکن
                     if (!isGuest() && !HARD) return;
                     var threshold = 160;
                     var open = (window.outerWidth - window.innerWidth > threshold)
                         || (window.outerHeight - window.innerHeight > threshold);
-                    // debugger timing — فقط در حالت مهمان تا ادمین اذیت نشود
-                    if (isGuest()) {
+                    // debugger فقط دسکتاپ
+                    if (isGuest() && !isMobileSec) {
                         var t0 = performance.now();
                         // eslint-disable-next-line no-debugger
                         debugger;
@@ -98,13 +103,13 @@
                     }
                     if (open) {
                         strikes++;
-                        if (strikes >= 2) softReload();
+                        if (strikes >= 3) softReload();
                     } else {
                         strikes = 0;
                     }
                 } catch (e) {}
             }
-            setInterval(checkDevtools, 1800);
+            if (!isInAppSec && !isMobileSec) setInterval(checkDevtools, 2500);
             // جلوگیری از باز شدن در iframe مخرب
             try {
                 if (window.top !== window.self && isGuest()) {
@@ -151,7 +156,7 @@
         .cat-qty button{width:28px;height:28px;border-radius:8px;border:1px solid rgba(148,163,184,.35);background:#1e293b;color:#fff;font-weight:800;cursor:pointer}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v194 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v196 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -3799,7 +3804,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v194 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v196 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3983,7 +3988,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=194', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=196', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -24740,12 +24745,11 @@ notify pgrst, 'reload schema';`;
         const n = catNorm(p.name || '');
         // سوسیس و کالباس — اول
         if (c === 'sausage' || /سوسیس|کالباس|هات\s*داگ|هاتداگ|همبرگر|ژامبون|مورتادلا/.test(n)) return 'sausage';
-        // ترشیجات / شور / خیارشور / زیتون — قبل از لبنیات تا اشتباه نرود
+        // ترشیجات / لواشک / ترشک / شور — قبل از لبنیات
         if (
             c.indexOf('ترشی') >= 0 ||
-            /ترشی|خیار\s*شور|خیارشور|شور|زیتون|بندری|لیته|هفت\s*بیجار|سیر|کلم|فلفل|مخلوط|بادمجان|شکم\s*پر|سالاد|آلبالو|گوجه\s*سبز|غوره|هویج|کرفس|خیار|زیتونون|نول/.test(n)
+            /ترشی|ترشک|لواشک|قره\s*قروت|قره‌قروت|خیار\s*شور|خیارشور|شور|زیتون|بندری|لیته|هفت\s*بیجار|سیر|کلم|فلفل|مخلوط|بادمجان|شکم\s*پر|سالاد|آلبالو|گوجه\s*سبز|غوره|هویج|کرفس|زیتونون|نول/.test(n)
         ) {
-            // اگر فقط «شیر» یا لبنیات خالص بود، ترشی نگیر
             if (/^(ماست|پنیر|کشک|دوغ|کره|خامه)$/.test(n)) return 'dairy';
             return 'pickle';
         }
@@ -24781,37 +24785,166 @@ notify pgrst, 'reload schema';`;
         return Math.max(0, Math.round(t * (1 - d / 100)) + ship);
     }
 
-    async function catLoadProducts() {
-        let list = [];
+    // صبر تا کلاینت سوپابیس برای مهمان/کاتالوگ آماده شود (قبلاً زودتر از init صدا زده می‌شد)
+    async function catWaitSupabase(maxMs) {
+        maxMs = maxMs || 12000;
+        const t0 = Date.now();
+        while (Date.now() - t0 < maxMs) {
+            try {
+                if (typeof _supabase !== 'undefined' && _supabase) return true;
+            } catch (e) {}
+            await new Promise(function (r) { setTimeout(r, 200); });
+        }
+        return !!(typeof _supabase !== 'undefined' && _supabase);
+    }
+
+    function catIsInAppBrowser() {
         try {
-            if (typeof _supabase !== 'undefined' && _supabase) {
-                const { data, error } = await _supabase
-                    .from('products')
-                    .select('id,name,code,category,sell_price,unit_price,price,stock,booth_stock,image_url,photo_url,catalog_show')
-                    .order('name');
-                if (!error && data && data.length) {
-                    list = data;
-                    // همگام با کش آفلاین تا عکس‌های جدید در همه گوشی‌ها بیاید
-                    try {
-                        if (typeof offlineSaveProducts === 'function') offlineSaveProducts(data);
-                        else localStorage.setItem('offline_products_v1', JSON.stringify(data));
-                    } catch (e) {}
-                }
+            return /Instagram|Telegram|FBAN|FBAV|Line\/|Eitaa|Bale|Rubika|Soroush|; wv\)/i.test(navigator.userAgent || '');
+        } catch (e) { return false; }
+    }
+
+    // لیست پایه برای REST — مستقیم + پروکسی‌ها (اینستاگرام گاهی یکی را بلاک می‌کند)
+    function catRestBases() {
+        const bases = [];
+        const add = function (u) {
+            u = String(u || '').replace(/\/+$/, '');
+            if (u && bases.indexOf(u) < 0) bases.push(u);
+        };
+        add('https://kinjpmvoyioaslpdzujg.supabase.co');
+        try { if (typeof SUPABASE_REAL_URL === 'string') add(SUPABASE_REAL_URL); } catch (e) {}
+        try { if (typeof activeBaseUrl === 'string') add(activeBaseUrl); } catch (e) {}
+        try {
+            if (typeof PROXY_ENDPOINTS !== 'undefined' && Array.isArray(PROXY_ENDPOINTS)) {
+                PROXY_ENDPOINTS.forEach(add);
             }
         } catch (e) {}
-        if (!list.length) {
+        add('https://shop-proxy-1.adarmiraki.workers.dev');
+        return bases;
+    }
+
+    async function catFetchProductsFromBase(urlBase, key) {
+        const cols = 'id,name,code,category,sell_price,unit_price,price,stock,booth_stock,image_url,photo_url,catalog_show';
+        let all = [];
+        let from = 0;
+        const page = 1000;
+        for (let g = 0; g < 20; g++) {
+            const path = '/rest/v1/products?select=' + encodeURIComponent(cols) + '&order=name.asc';
+            const url = urlBase.replace(/\/$/, '') + path;
+            const headers = {
+                apikey: key,
+                Authorization: 'Bearer ' + key,
+                Accept: 'application/json',
+                'Range-Unit': 'items',
+                Range: from + '-' + (from + page - 1)
+            };
+            const res = await fetch(url, { headers: headers, cache: 'no-store', mode: 'cors' });
+            if (!res || !res.ok) throw new Error('HTTP ' + (res && res.status));
+            const chunk = await res.json();
+            if (!Array.isArray(chunk) || !chunk.length) break;
+            all = all.concat(chunk);
+            if (chunk.length < page) break;
+            from += page;
+        }
+        return all;
+    }
+
+    // واکشی مستقیم REST از چند مسیر موازی — مناسب اینستاگرام
+    async function catFetchProductsRest() {
+        const key = (typeof SUPABASE_KEY === 'string' && SUPABASE_KEY) ? SUPABASE_KEY : 'sb_publishable_k3wkzKalFmLFtfx8WZWr1g_fHKT-3Sl';
+        const bases = catRestBases();
+        const errors = [];
+        // موازی: اولین پاسخ موفق برنده است
+        const tasks = bases.map(function (base) {
+            return catFetchProductsFromBase(base, key).then(function (rows) {
+                if (rows && rows.length) return rows;
+                throw new Error('empty from ' + base);
+            }).catch(function (err) {
+                errors.push(String(err && err.message || err));
+                return null;
+            });
+        });
+        const results = await Promise.all(tasks);
+        for (let i = 0; i < results.length; i++) {
+            if (results[i] && results[i].length) return results[i];
+        }
+        if (errors.length) throw new Error(errors[0]);
+        return [];
+    }
+
+    async function catLoadProducts() {
+        let list = [];
+        let loadErr = null;
+        const inApp = catIsInAppBrowser();
+
+        // در اینستاگرام/وب‌ویو: اول REST (سریع‌تر و پایدارتر)، بعد supabase-js
+        // در کروم: هر دو
+        async function tryRest() {
+            try {
+                const rest = await catFetchProductsRest();
+                if (rest && rest.length) list = rest;
+            } catch (e2) {
+                loadErr = (e2 && e2.message) ? e2.message : String(e2);
+            }
+        }
+        async function tryClient() {
+            try {
+                const ready = await catWaitSupabase(inApp ? 2500 : 8000);
+                if (!ready || typeof _supabase === 'undefined' || !_supabase) return;
+                const pageSize = 1000;
+                let from = 0;
+                let tmp = [];
+                for (let guard = 0; guard < 30; guard++) {
+                    const { data, error } = await _supabase
+                        .from('products')
+                        .select('id,name,code,category,sell_price,unit_price,price,stock,booth_stock,image_url,photo_url,catalog_show')
+                        .order('name')
+                        .range(from, from + pageSize - 1);
+                    if (error) {
+                        if (!loadErr) loadErr = error.message || String(error);
+                        break;
+                    }
+                    if (!data || !data.length) break;
+                    tmp = tmp.concat(data);
+                    if (data.length < pageSize) break;
+                    from += pageSize;
+                }
+                if (tmp.length) list = tmp;
+            } catch (e) {
+                if (!loadErr) loadErr = (e && e.message) ? e.message : String(e);
+            }
+        }
+
+        if (inApp) {
+            await tryRest();
+            if (!list.length) await tryClient();
+        } else {
+            await Promise.all([tryRest(), tryClient()]);
+            // tryClient ممکن است list را بعداً پر کند؛ اگر REST زودتر پر کرد همان می‌ماند
+            if (!list.length) await tryRest();
+        }
+
+        if (list.length) {
+            try {
+                if (typeof offlineSaveProducts === 'function') offlineSaveProducts(list);
+                else localStorage.setItem('offline_products_v1', JSON.stringify(list));
+            } catch (e) {}
+        } else {
             try {
                 const raw = localStorage.getItem('offline_products_v1');
                 if (raw) list = JSON.parse(raw) || [];
             } catch (e) {}
         }
-        // فقط کالاهایی که مدیر برای کاتالوگ اینستا فعال کرده (catalog_show !== false)
-        // اگر ستون خالی/null باشد = نمایش داده می‌شود تا مدیر بعداً خاموش کند
+
         catProducts = (list || []).filter(function (p) {
-            if (!p || !p.name || !(catPrice(p) > 0)) return false;
-            if (p.catalog_show === false || p.catalog_show === 0 || p.catalog_show === 'false') return false;
+            if (!p || !p.name) return false;
+            const show = p.catalog_show;
+            if (show === false || show === 0 || show === 'false' || show === '0') return false;
             return true;
         });
+        catProducts._loadErr = loadErr || null;
+        catProducts._rawCount = (list || []).length;
+        catProducts._inApp = inApp;
         return catProducts;
     }
     function catImg(p) {
@@ -24826,6 +24959,32 @@ notify pgrst, 'reload schema';`;
         }
         return '<div class="cat-img-wrap"><div class="cat-emoji" style="display:flex">' + emoji + '</div></div>';
     }
+
+
+    window.catOpenInChrome = function () {
+        try {
+            var url = location.href;
+            var ua = navigator.userAgent || '';
+            if (/Android/i.test(ua)) {
+                var intent = 'intent://' + location.host + location.pathname + location.search + location.hash +
+                    '#Intent;scheme=https;package=com.android.chrome;end';
+                location.href = intent;
+                setTimeout(function () { location.href = url; }, 900);
+                return;
+            }
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url).then(function () {
+                    alert('لینک کپی شد.\nاز منوی اینستاگرام گزینه Open in Browser / باز کردن در مرورگر را بزن.');
+                }).catch(function () {
+                    prompt('این لینک را کپی کن و در Chrome باز کن:', url);
+                });
+            } else {
+                prompt('این لینک را کپی کن و در Chrome باز کن:', url);
+            }
+        } catch (e) {
+            try { prompt('لینک کاتالوگ:', location.href); } catch (e2) {}
+        }
+    };
 
     window.catAdd = function (id) {
         const p = catProducts.find(function (x) { return String(x.id) === String(id); });
@@ -24988,7 +25147,23 @@ notify pgrst, 'reload schema';`;
             list = list.filter(function (p) { return catNorm(p.name).indexOf(q) >= 0 || catNorm(p.code || '').indexOf(q) >= 0; });
         }
         if (!list.length) {
-            grid.innerHTML = '<p class="hint" style="grid-column:1/-1;text-align:center;padding:30px;">' + (catSearchQ ? 'نتیجه‌ای برای جستجو پیدا نشد.' : 'فعلاً محصولی برای نمایش نیست.') + '</p>';
+            let msg = catSearchQ ? 'نتیجه‌ای برای جستجو پیدا نشد.' : 'فعلاً محصولی در این دسته نیست.';
+            if (!catSearchQ && !(catProducts && catProducts.length)) {
+                const err = catProducts && catProducts._loadErr;
+                const raw = catProducts && catProducts._rawCount;
+                const inApp = catProducts && catProducts._inApp;
+                if (inApp) msg = 'این صفحه داخل مرورگر اینستاگرام باز شده و ممکن است لیست کالا کامل نیاید. روی دکمه زیر بزن و در Chrome باز کن.';
+                else if (err) msg = '⚠️ اتصال به سرور برای دریافت کالا برقرار نشد. صفحه را رفرش کنید.';
+                else if (raw > 0) msg = 'کالاهایی در انبار هست ولی برای کاتالوگ فعال نشده‌اند.';
+                else msg = 'هنوز کالایی از سرور دریافت نشده. دوباره تلاش کنید.';
+            }
+            const openChromeBtn = (catProducts && catProducts._inApp)
+                ? '<button type="button" onclick="catOpenInChrome()" style="padding:12px 18px;border-radius:12px;border:0;background:linear-gradient(100deg,#f59e0b,#ef4444);color:#fff;font:inherit;font-weight:800;cursor:pointer;margin-top:8px;">🌐 باز کردن در مرورگر Chrome</button>'
+                : '';
+            grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:28px 16px;">' +
+                '<p class="hint" style="margin:0 0 12px;line-height:1.8;">' + msg + '</p>' +
+                '<button type="button" onclick="openCatalogPublic()" style="padding:10px 18px;border-radius:12px;border:0;background:linear-gradient(100deg,#0ea5e9,#10b981);color:#fff;font:inherit;font-weight:800;cursor:pointer;">🔄 تلاش مجدد</button>' +
+                openChromeBtn + '</div>';
             return;
         }
         grid.innerHTML = list.map(function (p) {
@@ -25697,15 +25872,30 @@ notify pgrst, 'reload schema';`;
                 '<div style="margin-top:10px;font-size:14px;opacity:.9;line-height:1.8;">در حال ورود به کاتالوگ فروشگاه<br><b>تازه مارکت</b></div></div>';
         }
 
-        await catLoadProducts();
-        await payPullCfgFromCloud();
+        // چند بار تلاش تا محصول‌ها از سرور همگام شوند (گوشی جدید کش ندارد)
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await catLoadProducts();
+            if (catProducts && catProducts.length) break;
+            await new Promise(function (r) { setTimeout(r, 600 * (attempt + 1)); });
+        }
+        try { await payPullCfgFromCloud(); } catch (e) {}
         const disc = catDiscPct();
         const cfg = payLoadCfg();
 
         // تب‌ها: بدون «همه» — فقط سه دسته اصلی (+ سایر اگر کالا داشت)
         const hasOther = catProducts.some(function (p) { return catCat(p) === 'other'; });
         const tabsList = ['dairy', 'pickle', 'sausage'].concat(hasOther ? ['other'] : []);
-        if (tabsList.indexOf(catFilter) < 0) catFilter = 'dairy';
+        // اگر تب فعلی خالی است، اولین تب دارای کالا را باز کن
+        (function pickTab() {
+            const countIn = function (k) {
+                return catProducts.filter(function (p) { return catCat(p) === k; }).length;
+            };
+            if (countIn(catFilter) > 0) return;
+            for (let i = 0; i < tabsList.length; i++) {
+                if (countIn(tabsList[i]) > 0) { catFilter = tabsList[i]; return; }
+            }
+            catFilter = tabsList[0] || 'dairy';
+        })();
         const minOrder = Number(cfg.minOrder) || 0;
         const support = cfg.supportLink || (cfg.phone ? ('tel:' + cfg.phone) : '');
 
@@ -25718,6 +25908,7 @@ notify pgrst, 'reload schema';`;
             '<h1 style="margin:0;font-size:24px;letter-spacing:-.3px;">تازه مارکت</h1>' +
             '<div style="font-size:12px;opacity:.9;margin-top:4px;">فروشگاه حضوری غرفه فامیلی · سفارش آنلاین مطمئن</div>' +
             (disc > 0 ? '<div class="cat-badge" style="margin-top:10px;">🎁 ' + disc + '٪ تخفیف ویژه سفارش از اینستاگرام</div>' : '') +
+            (catIsInAppBrowser() ? '<div style="margin-top:10px;padding:10px 12px;border-radius:12px;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.4);font-size:12px;line-height:1.7;">اگر لیست کالا خالی است، <b onclick="catOpenInChrome()" style="color:#fbbf24;text-decoration:underline;cursor:pointer;">اینجا بزن و در Chrome باز کن</b></div>' : '') +
             '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px;text-align:right;">' +
             '<div style="padding:10px;border-radius:14px;background:rgba(15,23,42,.55);border:1px solid rgba(52,211,153,.25);font-size:11px;line-height:1.6;"><b style="color:#6ee7b7;">🔒 اطلاعات محفوظ</b><br><span style="opacity:.85;">نام و آدرس فقط برای ارسال سفارش</span></div>' +
             '<div style="padding:10px;border-radius:14px;background:rgba(15,23,42,.55);border:1px solid rgba(56,189,248,.25);font-size:11px;line-height:1.6;"><b style="color:#7dd3fc;">📦 پیگیری آنلاین</b><br><span style="opacity:.85;">شماره پیگیری اختصاصی هر سفارش</span></div>' +
@@ -26412,7 +26603,10 @@ notify pgrst, 'reload schema';`;
             if (u.searchParams.get('catalog') === '1' || /catalog/i.test(u.hash || '')) {
                 document.documentElement.classList.add('catalog-guest-mode');
                 openCatalogPublic();
-                setTimeout(openCatalogPublic, 200);
+                // چند بار بعد از آماده شدن سوپابیس دوباره همگام شود
+                setTimeout(function () { openCatalogPublic(); }, 400);
+                setTimeout(function () { openCatalogPublic(); }, 1500);
+                setTimeout(function () { openCatalogPublic(); }, 3500);
             }
         } catch (e) {}
     }
