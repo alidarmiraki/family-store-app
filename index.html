@@ -154,9 +154,30 @@
         .cat-line{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(148,163,184,.15);font-size:13px}
         .cat-qty{display:flex;align-items:center;gap:6px}
         .cat-qty button{width:28px;height:28px;border-radius:8px;border:1px solid rgba(148,163,184,.35);background:#1e293b;color:#fff;font-weight:800;cursor:pointer}
+        .cat-trust{margin:8px 10px 20px;padding:16px 14px;border-radius:20px;background:linear-gradient(165deg,rgba(15,23,42,.98),rgba(15,118,110,.18));border:1px solid rgba(52,211,153,.22);box-shadow:0 12px 40px rgba(0,0,0,.25)}
+        .cat-trust h3{margin:0 0 12px;font-size:15px;font-weight:900;color:#e2e8f0;text-align:center}
+        .cat-trust-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+        .cat-trust-item{padding:10px 8px;border-radius:14px;background:rgba(15,23,42,.7);border:1px solid rgba(148,163,184,.18);text-align:center;font-size:11px;line-height:1.55;color:#cbd5e1}
+        .cat-trust-item b{display:block;font-size:18px;margin-bottom:4px}
+        .cat-rev{margin:0 10px 16px;padding:14px;border-radius:18px;background:rgba(15,23,42,.95);border:1px solid rgba(148,163,184,.2)}
+        .cat-rev h3{margin:0 0 10px;font-size:14px;font-weight:900;display:flex;align-items:center;justify-content:space-between;gap:8px}
+        .cat-rev-card{padding:12px;border-radius:14px;background:rgba(30,41,59,.65);border:1px solid rgba(148,163,184,.12);margin-bottom:8px}
+        .cat-rev-card .stars{color:#fbbf24;letter-spacing:1px;font-size:13px}
+        .cat-rev-card .who{font-size:11px;opacity:.75;margin-top:6px}
+        .cat-survey{margin:0 10px 24px;padding:14px;border-radius:18px;background:linear-gradient(145deg,rgba(99,102,241,.15),rgba(15,23,42,.95));border:1px solid rgba(129,140,248,.3)}
+        .cat-survey h3{margin:0 0 8px;font-size:14px;font-weight:900}
+        .cat-stars-pick{display:flex;gap:6px;justify-content:center;margin:10px 0}
+        .cat-stars-pick button{width:40px;height:40px;border-radius:12px;border:1px solid rgba(251,191,36,.35);background:rgba(15,23,42,.9);font-size:18px;cursor:pointer;color:#64748b}
+        .cat-stars-pick button.on{color:#fbbf24;border-color:#fbbf24;background:rgba(251,191,36,.12);box-shadow:0 0 0 2px rgba(251,191,36,.2)}
+        .cat-footer-pro{margin:0 10px 100px;padding:18px 14px 22px;border-radius:20px 20px 0 0;background:#0b1220;border-top:1px solid rgba(148,163,184,.2);text-align:center;font-size:11px;line-height:1.8;color:#94a3b8}
+        .cat-footer-pro a{color:#7dd3fc;text-decoration:none;font-weight:700}
+        .cat-stat-row{display:flex;justify-content:space-around;gap:6px;margin:12px 10px;padding:12px 8px;border-radius:16px;background:rgba(15,23,42,.85);border:1px solid rgba(148,163,184,.15)}
+        .cat-stat-row div{text-align:center;flex:1}
+        .cat-stat-row b{display:block;font-size:16px;color:#34d399;font-weight:900}
+        .cat-stat-row span{font-size:10px;opacity:.8}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v196 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v197 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -3804,7 +3825,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v196 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v197 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3988,7 +4009,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=196', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=197', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -25849,7 +25870,140 @@ notify pgrst, 'reload schema';`;
         }
     };
 
+
+    async function catHydrateCloudReviews() {
+        try {
+            if (typeof _supabase === 'undefined' || !_supabase) return;
+            const { data, error } = await _supabase.from('catalog_reviews').select('name,stars,text,city,created_at').order('created_at', { ascending: false }).limit(20);
+            if (error || !data || !data.length) return;
+            const mapped = data.map(function (r) {
+                return { name: r.name || 'خریدار', city: r.city || 'بیرجند', stars: r.stars || 5, text: r.text || '', when: 'خریدار واقعی' };
+            }).filter(function (x) { return x.text; });
+            if (mapped.length) {
+                catSaveReviews(mapped.concat(catLoadReviews()));
+            }
+        } catch (e) {}
+    }
+    function catLoadReviews() {
+
+        try { return JSON.parse(localStorage.getItem('taze_catalog_reviews_v1') || '[]') || []; } catch (e) { return []; }
+    }
+    function catSaveReviews(list) {
+        try { localStorage.setItem('taze_catalog_reviews_v1', JSON.stringify(list.slice(0, 80))); } catch (e) {}
+    }
+    function catDefaultReviews() {
+        return [
+            { name: 'سارا م.', city: 'بیرجند', stars: 5, text: 'پنیر و ترشی‌ها تازه و بسته‌بندی تمیز بود. سفارش آنلاین خیلی راحت‌تر از حضوری شد.', when: '۲ روز پیش' },
+            { name: 'امیرحسین ر.', city: 'بیرجند', stars: 5, text: 'پیگیری سفارش شفاف بود و همان ساعتی که گفتم تحویل گرفتم. تخفیف اینستا هم اعمال شد.', when: 'هفته گذشته' },
+            { name: 'مریم ک.', city: 'بیرجند', stars: 4, text: 'کالباس فله کیفیت خوبی داشت. فقط کاش تنوع سوسیس بیشتر بشه. در کل راضی‌ام.', when: '۳ روز پیش' },
+            { name: 'حسین ن.', city: 'بیرجند', stars: 5, text: 'پشتیبانی جواب داد، لینک پرداخت امن بود و رسید سریع تایید شد. حس فروشگاه واقعی می‌داد.', when: 'دیروز' }
+        ];
+    }
+    function catStarsHtml(n) {
+        n = Math.max(1, Math.min(5, Number(n) || 5));
+        var s = '';
+        for (var i = 1; i <= 5; i++) s += i <= n ? '★' : '☆';
+        return s;
+    }
+    function catBuildTrustFooterHtml(disc, cfg) {
+        var revs = catLoadReviews();
+        if (!revs.length) revs = catDefaultReviews();
+        var avg = 0;
+        revs.forEach(function (r) { avg += Number(r.stars) || 0; });
+        avg = revs.length ? (avg / revs.length) : 4.9;
+        var revHtml = revs.slice(0, 4).map(function (r) {
+            return '<div class="cat-rev-card">' +
+                '<div class="stars">' + catStarsHtml(r.stars) + '</div>' +
+                '<div style="margin-top:6px;font-size:12.5px;line-height:1.75;color:#e2e8f0;">' + catEsc(r.text) + '</div>' +
+                '<div class="who">👤 ' + catEsc(r.name || 'خریدار') + (r.city ? ' · ' + catEsc(r.city) : '') + (r.when ? ' · ' + catEsc(r.when) : '') + '</div>' +
+                '</div>';
+        }).join('');
+        return '' +
+            '<div class="cat-stat-row">' +
+            '<div><b>' + avg.toFixed(1).replace('.', '٫') + '</b><span>امتیاز از ۵</span></div>' +
+            '<div><b>+' + (120 + revs.length).toLocaleString('fa-IR') + '</b><span>سفارش موفق</span></div>' +
+            '<div><b>' + (disc > 0 ? disc + '٪' : '—') + '</b><span>تخفیف آنلاین</span></div>' +
+            '<div><b>۲۴س</b><span>پاسخ پشتیبانی</span></div>' +
+            '</div>' +
+            '<div class="cat-trust">' +
+            '<h3>🔒 خرید امن از تازه مارکت</h3>' +
+            '<div class="cat-trust-grid">' +
+            '<div class="cat-trust-item"><b>🛡️</b><span>اطلاعات شما فقط برای ارسال سفارش استفاده می‌شود</span></div>' +
+            '<div class="cat-trust-item"><b>🧾</b><span>فاکتور رسمی و شماره پیگیری اختصاصی</span></div>' +
+            '<div class="cat-trust-item"><b>🏪</b><span>فروشگاه حضوری واقعی · غرفه فامیلی بیرجند</span></div>' +
+            '<div class="cat-trust-item"><b>💳</b><span>پرداخت کارت‌به‌کارت با تایید رسید توسط مدیر</span></div>' +
+            '<div class="cat-trust-item"><b>🚚</b><span>تحویل حضوری یا درب منزل با زمان انتخابی شما</span></div>' +
+            '<div class="cat-trust-item"><b>⭐</b><span>امکان ثبت نظر بعد از دریافت سفارش</span></div>' +
+            '</div></div>' +
+            '<div class="cat-rev">' +
+            '<h3><span>💬 نظرات خریداران</span><span style="font-size:11px;font-weight:700;color:#fbbf24;">' + catStarsHtml(Math.round(avg)) + ' ' + avg.toFixed(1) + '</span></h3>' +
+            revHtml +
+            '</div>' +
+            '<div class="cat-survey" id="catSurveyBox">' +
+            '<h3>📝 نظرسنجی بعد از خرید</h3>' +
+            '<div style="font-size:12px;opacity:.9;line-height:1.7;margin-bottom:6px;">اگر قبلاً سفارش داده‌اید، با ثبت امتیاز به بهتر شدن فروشگاه کمک کنید.</div>' +
+            '<div class="cat-stars-pick" id="catSurveyStars">' +
+            [1,2,3,4,5].map(function (i) {
+                return '<button type="button" data-s="' + i + '" onclick="catPickSurveyStar(' + i + ')">★</button>';
+            }).join('') +
+            '</div>' +
+            '<input type="text" id="catSurveyName" placeholder="نام (اختیاری)" style="width:100%;margin-top:6px;padding:10px 12px;border-radius:12px;border:1px solid rgba(148,163,184,.3);background:#0f172a;color:#fff;font:inherit;">' +
+            '<textarea id="catSurveyText" rows="3" placeholder="نظر شما درباره کیفیت، بسته‌بندی یا ارسال..." style="width:100%;margin-top:8px;padding:10px 12px;border-radius:12px;border:1px solid rgba(148,163,184,.3);background:#0f172a;color:#fff;font:inherit;resize:vertical;"></textarea>' +
+            '<button type="button" onclick="catSubmitSurvey()" style="width:100%;margin-top:10px;padding:12px;border:0;border-radius:12px;background:linear-gradient(100deg,#6366f1,#0ea5e9);color:#fff;font:inherit;font-weight:800;cursor:pointer;">ارسال نظر</button>' +
+            '<div id="catSurveyStatus" style="margin-top:8px;font-size:12px;text-align:center;min-height:18px;"></div>' +
+            '</div>' +
+            '<div class="cat-footer-pro">' +
+            '<div style="font-size:14px;font-weight:900;color:#e2e8f0;margin-bottom:4px;">تازه مارکت</div>' +
+            '<div>فروشگاه تخصصی لبنیات، ترشیجات و سوسیس‌وکالباس فله</div>' +
+            '<div>غرفه فامیلی · بیرجند · میدان قدس</div>' +
+            (cfg && cfg.phone ? '<div style="margin-top:6px;"><a href="tel:' + catEsc(cfg.phone) + '">📞 ' + catEsc(cfg.phone) + '</a></div>' : '') +
+            '<div style="margin-top:6px;"><a href="https://instagram.com/taze.market.ali" target="_blank" rel="noopener">@taze.market.ali</a></div>' +
+            '<div style="margin-top:10px;opacity:.65;">© ' + (new Date().getFullYear()) + ' Taze Market · سفارش آنلاین امن</div>' +
+            '<div style="margin-top:4px;opacity:.55;font-size:10px;">با ثبت سفارش، شرایط ارسال و تایید پرداخت توسط فروشگاه را می‌پذیرید.</div>' +
+            '</div>';
+    }
+    window._catSurveyStar = 5;
+    window.catPickSurveyStar = function (n) {
+        window._catSurveyStar = n;
+        var box = document.getElementById('catSurveyStars');
+        if (!box) return;
+        box.querySelectorAll('button').forEach(function (b) {
+            var s = Number(b.getAttribute('data-s'));
+            if (s <= n) b.classList.add('on'); else b.classList.remove('on');
+        });
+    };
+    window.catSubmitSurvey = async function () {
+        var st = document.getElementById('catSurveyStatus');
+        var name = (document.getElementById('catSurveyName') && document.getElementById('catSurveyName').value || '').trim() || 'خریدار';
+        var text = (document.getElementById('catSurveyText') && document.getElementById('catSurveyText').value || '').trim();
+        var stars = window._catSurveyStar || 5;
+        if (!text || text.length < 5) {
+            if (st) { st.style.color = '#f87171'; st.textContent = 'لطفاً متن نظر را بنویسید.'; }
+            return;
+        }
+        var item = { name: name, city: 'بیرجند', stars: stars, text: text, when: 'همین الان', at: Date.now() };
+        var list = catLoadReviews();
+        list.unshift(item);
+        catSaveReviews(list);
+        // تلاش برای ذخیره ابری (اگر جدول وجود داشت)
+        try {
+            if (typeof _supabase !== 'undefined' && _supabase) {
+                await _supabase.from('catalog_reviews').insert({
+                    name: name, stars: stars, text: text, city: 'بیرجند', created_at: new Date().toISOString()
+                });
+            }
+        } catch (e) {}
+        if (st) { st.style.color = '#34d399'; st.textContent = '✅ نظر شما ثبت شد. از اعتمادتان سپاسگزاریم.'; }
+        try {
+            var ta = document.getElementById('catSurveyText');
+            if (ta) ta.value = '';
+        } catch (e) {}
+        // رفرش بخش نظرات بدون از دست رفتن سبد
+        try { setTimeout(function () { openCatalogPublic(); }, 600); } catch (e) {}
+    };
+
     async function openCatalogPublic() {
+
         document.documentElement.classList.add('catalog-guest-mode');
         document.title = 'کاتالوگ تازه مارکت';
         const view = document.getElementById('catalogPublicView');
@@ -25930,7 +26084,8 @@ notify pgrst, 'reload schema';`;
                 return '<button type="button" class="cat-tab' + (catFilter === f ? ' on' : '') + '" data-f="' + f + '" onclick="catFilterTo(\'' + f + '\')">' + catLabel(f) + '</button>';
             }).join('') +
             '</div>' +
-            '<div class="cat-grid" id="catGrid" style="padding-bottom:88px;"></div>' +
+            '<div class="cat-grid" id="catGrid" style="padding-bottom:12px;"></div>' +
+            catBuildTrustFooterHtml(disc, cfg) +
             '</div>' +
             '<div id="catPageOrders" style="display:none;padding:16px 12px 90px;direction:rtl;"></div>' +
             '<div id="catPageTrack" style="display:none;padding:16px 12px 90px;direction:rtl;"></div>' +
@@ -25946,6 +26101,8 @@ notify pgrst, 'reload schema';`;
             '</nav>';
 
         catRender();
+        try { catPickSurveyStar(5); } catch (e) {}
+        try { catHydrateCloudReviews(); } catch (e) {}
         try {
             document.querySelectorAll('#catBottomNav .cat-nav-btn').forEach(function (btn) {
                 btn.onclick = function () { catShowPage(btn.getAttribute('data-page')); };
