@@ -30,6 +30,89 @@
             } catch (e2) {}
         })();
     </script>
+    <!-- محافظت ظاهری در برابر ویرایش/Inspect — امنیت واقعی سمت سرور (Supabase RLS) است -->
+    <script>
+        (function () {
+            var HARD = true; // روی کاتالوگ و مهمان سخت‌گیرتر
+            function isGuest() {
+                try {
+                    return document.documentElement.classList.contains('catalog-guest-mode')
+                        || document.documentElement.classList.contains('pay-guest-mode')
+                        || /[?&](catalog|pay|track)=/.test(location.search || '');
+                } catch (e) { return false; }
+            }
+            function softReload() {
+                try {
+                    if (window.__secReloading) return;
+                    window.__secReloading = true;
+                    location.replace(location.href.split('#')[0]);
+                } catch (e) {
+                    try { location.reload(); } catch (e2) {}
+                }
+            }
+            // راست‌کلیک
+            document.addEventListener('contextmenu', function (e) {
+                if (!HARD && !isGuest()) return;
+                e.preventDefault();
+                return false;
+            }, true);
+            // کلیدهای رایج Inspect / View Source / Save
+            document.addEventListener('keydown', function (e) {
+                var k = e.key || '';
+                var ctrl = e.ctrlKey || e.metaKey;
+                var shift = e.shiftKey;
+                var block = false;
+                if (k === 'F12') block = true;
+                if (ctrl && shift && (k === 'I' || k === 'i' || k === 'J' || k === 'j' || k === 'C' || k === 'c' || k === 'K' || k === 'k')) block = true;
+                if (ctrl && (k === 'U' || k === 'u' || k === 'S' || k === 's')) block = true;
+                // بعضی گوشی‌ها / کیبوردها
+                if (e.keyCode === 123) block = true;
+                if (block) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (isGuest() || HARD) softReload();
+                    return false;
+                }
+            }, true);
+            // درگ تصویر
+            document.addEventListener('dragstart', function (e) {
+                if (e.target && e.target.tagName === 'IMG') {
+                    e.preventDefault();
+                    return false;
+                }
+            }, true);
+            // تشخیص تقریبی باز بودن DevTools (مخصوصاً روی دسکتاپ)
+            var strikes = 0;
+            function checkDevtools() {
+                try {
+                    if (!isGuest() && !HARD) return;
+                    var threshold = 160;
+                    var open = (window.outerWidth - window.innerWidth > threshold)
+                        || (window.outerHeight - window.innerHeight > threshold);
+                    // debugger timing — فقط در حالت مهمان تا ادمین اذیت نشود
+                    if (isGuest()) {
+                        var t0 = performance.now();
+                        // eslint-disable-next-line no-debugger
+                        debugger;
+                        if (performance.now() - t0 > 100) open = true;
+                    }
+                    if (open) {
+                        strikes++;
+                        if (strikes >= 2) softReload();
+                    } else {
+                        strikes = 0;
+                    }
+                } catch (e) {}
+            }
+            setInterval(checkDevtools, 1800);
+            // جلوگیری از باز شدن در iframe مخرب
+            try {
+                if (window.top !== window.self && isGuest()) {
+                    window.top.location = window.self.location;
+                }
+            } catch (e) {}
+        })();
+    </script>
     <style id="payGuestCss">
         html.pay-guest-mode body > *:not(#payPublicView) { display: none !important; }
         html.pay-guest-mode #payPublicView { display: block !important; min-height: 100vh; padding: 12px 8px 40px; }
@@ -68,7 +151,7 @@
         .cat-qty button{width:28px;height:28px;border-radius:8px;border:1px solid rgba(148,163,184,.35);background:#1e293b;color:#fff;font-weight:800;cursor:pointer}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v191 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v193 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -3716,7 +3799,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v191 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v193 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -3900,7 +3983,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=191', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=193', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -18534,13 +18617,43 @@ function sbRenderAdminLists(cfg) {
             else if (key === 'evening') rolePrefix = 'فروشنده شب';
             else if (key === 'admin') rolePrefix = 'مدیر';
 
-            const { data: sales, error } = await _supabase
-                .from('sales')
-                .select('id, product_code, quantity, sell_price, created_at, seller_name, sale_type, shift_label, edit_count')
-                .order('created_at', { ascending: false });
+            // قبلاً بدون فیلتر تاریخ و بدون صفحه‌بندی فقط ~۱۰۰۰ ردیف آخر می‌آمد
+            // و مجموع ماه ناقص می‌شد (با گزارش رشد و افت یکی نبود). الان مثل رشد و افت،
+            // همان بازه را با صفحه‌بندی کامل از سرور می‌گیریم.
+            let rangeBounds;
+            try {
+                if (typeof tehranDateRangeToISOBounds === 'function') {
+                    rangeBounds = tehranDateRangeToISOBounds(startDateStr, endDateStr);
+                } else {
+                    const startUTC = new Date(Date.parse(startDateStr + 'T00:00:00.000Z') - 3.5 * 60 * 60 * 1000).toISOString();
+                    const endUTC = new Date(Date.parse(endDateStr + 'T00:00:00.000Z') - 3.5 * 60 * 60 * 1000 + 24 * 60 * 60 * 1000).toISOString();
+                    rangeBounds = { startUTC, endUTC };
+                }
+            } catch (e) {
+                resultBox.innerHTML = '❌ خطا در محاسبه بازه تاریخ';
+                return;
+            }
 
-            if (error) {
-                resultBox.innerHTML = '❌ خطا در دریافت گزارش: ' + error.message;
+            let sales = [];
+            try {
+                const pageSize = 1000;
+                let from = 0;
+                for (let guard = 0; guard < 50; guard++) {
+                    const { data, error } = await _supabase
+                        .from('sales')
+                        .select('id, product_code, quantity, sell_price, created_at, seller_name, sale_type, shift_label, edit_count')
+                        .gte('created_at', rangeBounds.startUTC)
+                        .lt('created_at', rangeBounds.endUTC)
+                        .order('created_at', { ascending: false })
+                        .range(from, from + pageSize - 1);
+                    if (error) throw error;
+                    if (!data || !data.length) break;
+                    sales = sales.concat(data);
+                    if (data.length < pageSize) break;
+                    from += pageSize;
+                }
+            } catch (error) {
+                resultBox.innerHTML = '❌ خطا در دریافت گزارش: ' + (error.message || error);
                 return;
             }
 
