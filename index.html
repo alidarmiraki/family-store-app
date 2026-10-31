@@ -132,8 +132,8 @@
         html.catalog-guest-mode .header-clock,
         html.catalog-guest-mode .build-tag { display: none !important; }
         #invoicePrintFrame { position: fixed !important; right: 0 !important; bottom: 0 !important; width: 0 !important; height: 0 !important; border: 0 !important; opacity: 0 !important; }
-        .cat-hero{text-align:center;padding:22px 14px 10px;background:linear-gradient(160deg,#0f172a 0%,#1e293b 50%,#0f766e 140%);border-radius:0 0 24px 24px;margin-bottom:12px}
-        .cat-hero h1{margin:8px 0 4px;font-size:22px;font-weight:900;background:linear-gradient(90deg,#fbbf24,#34d399,#38bdf8);-webkit-background-clip:text;background-clip:text;color:transparent}
+        .cat-hero{text-align:center;padding:12px 12px 10px;background:linear-gradient(160deg,#0f172a 0%,#1e293b 55%,#0f766e 150%);border-radius:0 0 18px 18px;margin-bottom:8px}
+        .cat-hero h1{margin:0;font-size:18px;font-weight:900;background:linear-gradient(90deg,#fbbf24,#34d399,#38bdf8);-webkit-background-clip:text;background-clip:text;color:transparent}
         .cat-badge{display:inline-block;background:linear-gradient(100deg,#f59e0b,#ef4444);color:#fff;font-size:11px;font-weight:800;padding:5px 12px;border-radius:999px;margin-top:6px;box-shadow:0 4px 14px rgba(245,158,11,.35)}
         .cat-tabs{display:flex;gap:6px;overflow-x:auto;padding:0 10px 8px;-webkit-overflow-scrolling:touch}
         .cat-tab{flex:0 0 auto;border:1px solid rgba(148,163,184,.3);background:rgba(15,23,42,.8);color:#e2e8f0;border-radius:999px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer}
@@ -177,7 +177,7 @@
         .cat-stat-row span{font-size:10px;opacity:.8}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v197 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v199 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -3825,7 +3825,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v197 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v199 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -4009,7 +4009,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=197', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=199', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -24764,28 +24764,35 @@ notify pgrst, 'reload schema';`;
     function catCat(p) {
         const c = catNorm(p.category || '');
         const n = catNorm(p.name || '');
-        // سوسیس و کالباس — اول
-        if (c === 'sausage' || /سوسیس|کالباس|هات\s*داگ|هاتداگ|همبرگر|ژامبون|مورتادلا/.test(n)) return 'sausage';
-        // ترشیجات / لواشک / ترشک / شور — قبل از لبنیات
+        // سوسیس و کالباس
+        if (c === 'sausage' || /سوسیس|کالباس|هات\s*داگ|هاتداگ|همبرگر|ژامبون|مورتادلا|هات\s*داگ/.test(n)) return 'sausage';
+        // حلواجات / شیره / ارده
+        if (
+            c.indexOf('حلوا') >= 0 || c.indexOf('شیرینی') >= 0 ||
+            /حلوا|شیره|ارده|کرم\s*کنجد|کنجدی|عسل|مربا|مربّا|نبات|بامیه|نوتلا|شکلات|سس\s*شکلات|رب\s*انار|پودر\s*پسته|پسته\s*ساییده/.test(n)
+        ) return 'halva';
+        // ترشیجات / لواشک / ترشک / شور
         if (
             c.indexOf('ترشی') >= 0 ||
-            /ترشی|ترشک|لواشک|قره\s*قروت|قره‌قروت|خیار\s*شور|خیارشور|شور|زیتون|بندری|لیته|هفت\s*بیجار|سیر|کلم|فلفل|مخلوط|بادمجان|شکم\s*پر|سالاد|آلبالو|گوجه\s*سبز|غوره|هویج|کرفس|زیتونون|نول/.test(n)
+            /ترشی|ترشک|لواشک|قره\s*قروت|قره‌قروت|خیار\s*شور|خیارشور|شور(?!با)|زیتون|بندری|لیته|هفت\s*بیجار|سیر\s*ترشی|کلم\s*شور|فلفل\s*ترشی|مخلوط|بادمجان|شکم\s*پر|آلبالو\s*ترشی|گوجه\s*سبز|غوره|هویج\s*شور|کرفس\s*شور/.test(n)
         ) {
-            if (/^(ماست|پنیر|کشک|دوغ|کره|خامه)$/.test(n)) return 'dairy';
+            if (/^(ماست|پنیر|کشک|دوغ|کره|خامه|شیر)$/.test(n)) return 'dairy';
             return 'pickle';
         }
         // لبنیات
-        if (/پنیر|ماست|کشک|دوغ|کره|خامه|شیر|سرشیر|کفیر|لور|کاله|آران|سرلاکت/.test(n)) return 'dairy';
-        // سایر (شیرینی و متفرقه)
-        if (/بامیه|شیره|عسل|کرم\s*کنجد|ارده|حلوا|مربا|مربّا|نبات|سس|رب|نوتلا|شکلات/.test(n)) return 'other';
-        // پیش‌فرض: لبنیات
+        if (
+            c.indexOf('لبنی') >= 0 ||
+            /پنیر|ماست|کشک|دوغ|کره|خامه|شیر|سرشیر|کفیر|لور|کاله|آران|سرلاکت|آغوز/.test(n)
+        ) return 'dairy';
+        // پیش‌فرض بر اساس category انبار
+        if (c === 'sausage') return 'sausage';
         return 'dairy';
     }
     function catLabel(k) {
-        return ({ dairy: '🧀 لبنیات', pickle: '🥒 ترشیجات', sausage: '🌭 سوسیس‌وکالباس', other: '🧺 سایر' })[k] || k;
+        return ({ dairy: '🧀 لبنیات', pickle: '🥒 ترشیجات', sausage: '🌭 سوسیس‌وکالباس', halva: '🍯 حلواجات' })[k] || k;
     }
     function catEmoji(k) {
-        return ({ dairy: '🧀', pickle: '🥒', sausage: '🌭', other: '🧺' })[k] || '🛒';
+        return ({ dairy: '🧀', pickle: '🥒', sausage: '🌭', halva: '🍯' })[k] || '🛒';
     }
     function catCartCount() {
         return Object.keys(catCart).reduce(function (s, k) { return s + (catCart[k].qty || 0); }, 0);
@@ -25204,7 +25211,7 @@ notify pgrst, 'reload schema';`;
                 catImgHtml(p) +
                 '<div class="cn">' + catEsc(p.name) + '</div>' +
                 '<div class="cp">' + price.toLocaleString('fa-IR') + ' <span style="font-size:11px;">تومان</span></div>' +
-                '<div class="cu">قیمت هر کیلو · ' + catLabel(catCat(p)) + '</div>' +
+                '<div class="cu">قیمت هر کیلو · ' + catLabel(catCat(p)).replace(/^[^\s]+\s/, '') + '</div>' +
                 qtyBtns +
                 '</div>';
         }).join('');
@@ -25702,6 +25709,7 @@ notify pgrst, 'reload schema';`;
         local.unshift(row);
         payLocalSave(local);
         try { await payUpsertRemote(row); } catch (e) {}
+        try { await catNotifyNewOrder(row); } catch (e) {}
         try {
             const mine = JSON.parse(localStorage.getItem('cat_my_orders_v1') || '[]');
             mine.unshift({ order_code: orderCode, token: token, amount: amount, created_at: row.created_at, status: row.status, pay_method: row.pay_method });
@@ -25891,39 +25899,150 @@ notify pgrst, 'reload schema';`;
     function catSaveReviews(list) {
         try { localStorage.setItem('taze_catalog_reviews_v1', JSON.stringify(list.slice(0, 80))); } catch (e) {}
     }
-    function catDefaultReviews() {
-        return [
-            { name: 'سارا م.', city: 'بیرجند', stars: 5, text: 'پنیر و ترشی‌ها تازه و بسته‌بندی تمیز بود. سفارش آنلاین خیلی راحت‌تر از حضوری شد.', when: '۲ روز پیش' },
-            { name: 'امیرحسین ر.', city: 'بیرجند', stars: 5, text: 'پیگیری سفارش شفاف بود و همان ساعتی که گفتم تحویل گرفتم. تخفیف اینستا هم اعمال شد.', when: 'هفته گذشته' },
-            { name: 'مریم ک.', city: 'بیرجند', stars: 4, text: 'کالباس فله کیفیت خوبی داشت. فقط کاش تنوع سوسیس بیشتر بشه. در کل راضی‌ام.', when: '۳ روز پیش' },
-            { name: 'حسین ن.', city: 'بیرجند', stars: 5, text: 'پشتیبانی جواب داد، لینک پرداخت امن بود و رسید سریع تایید شد. حس فروشگاه واقعی می‌داد.', when: 'دیروز' }
-        ];
-    }
+    function catDefaultReviews() { return []; }
+
     function catStarsHtml(n) {
         n = Math.max(1, Math.min(5, Number(n) || 5));
         var s = '';
         for (var i = 1; i <= 5; i++) s += i <= n ? '★' : '☆';
         return s;
     }
-    function catBuildTrustFooterHtml(disc, cfg) {
-        var revs = catLoadReviews();
-        if (!revs.length) revs = catDefaultReviews();
+
+    async function catFetchSuccessOrderCount() {
+        var n = 0;
+        try {
+            if (typeof _supabase !== 'undefined' && _supabase) {
+                // فقط سفارش‌های کاتالوگ اینستا که لغو/منقضی نشده‌اند
+                var { data, error } = await _supabase
+                    .from('payment_links')
+                    .select('id,status,source,created_by,order_code');
+                if (!error && data && data.length) {
+                    n = data.filter(function (x) {
+                        var st = String(x.status || '').toLowerCase();
+                        if (/cancel|deleted|expired|rejected|refund/.test(st)) return false;
+                        var src = String(x.source || '') + ' ' + String(x.created_by || '');
+                        return /instagram|کاتالوگ|catalog/i.test(src) || (x.order_code && String(x.order_code).indexOf('TM-') === 0);
+                    }).length;
+                }
+            }
+        } catch (e) {}
+        if (!n) {
+            try {
+                var local = (typeof payLocalAll === 'function') ? payLocalAll() : [];
+                n = (local || []).filter(function (x) {
+                    var st = String(x.status || '').toLowerCase();
+                    if (/cancel|deleted|expired|rejected|refund/.test(st)) return false;
+                    var src = String(x.source || '') + ' ' + String(x.created_by || '');
+                    return /instagram|کاتالوگ|catalog/i.test(src) || (x.order_code && String(x.order_code).indexOf('TM-') === 0);
+                }).length;
+            } catch (e2) {}
+        }
+        return n || 0;
+    }
+
+    async function catNotifyNewOrder(row) {
+        try {
+            if (!row) return;
+            var itemsHint = '';
+            try {
+                var note = String(row.note || '');
+                var lines = note.split('\\n').filter(function (l) { return l.indexOf('•') === 0; }).slice(0, 8);
+                itemsHint = lines.join('\\n');
+            } catch (e) {}
+            var payTxt = (row.pay_method === 'cash')
+                ? (row.delivery_type === 'delivery' ? 'پرداخت حضوری درب منزل' : 'پرداخت حضوری فروشگاه')
+                : 'پرداخت آنلاین / کارت‌به‌کارت';
+            var recvTxt = (row.delivery_type === 'pickup') ? 'تحویل حضوری فروشگاه' : ('ارسال درب منزل' + (row.address ? ('\\n📍 ' + row.address) : ''));
+            var text =
+                '🛒 سفارش جدید — تازه مارکت\\n\\n' +
+                '🔖 پیگیری: ' + (row.order_code || '') + '\\n' +
+                '👤 ' + (row.customer_name || '') + '\\n' +
+                '📞 ' + (row.phone || '') + '\\n' +
+                '💰 مبلغ: ' + Number(row.amount || 0).toLocaleString('fa-IR') + ' تومان\\n' +
+                '💳 ' + payTxt + '\\n' +
+                '📦 ' + recvTxt + '\\n' +
+                (row.delivery_when ? ('⏰ ' + row.delivery_when + '\\n') : '') +
+                (row.status ? ('📌 وضعیت: ' + row.status + '\\n') : '') +
+                (itemsHint ? ('\\nاقلام:\\n' + itemsHint + '\\n') : '') +
+                '\\nاز پنل مدیر / لینک پرداخت سفارش را پیگیری کنید.';
+
+            // روش ۱: تابع اصلی سایت
+            try {
+                if (typeof sendTelegramNotification === 'function') {
+                    await sendTelegramNotification(text);
+                    return;
+                }
+            } catch (e) {}
+
+            // روش ۲: خواندن تنظیمات تلگرام از سوپابیس + ارسال مستقیم/پروکسی
+            var botToken = '', chatId = '', enabled = true;
+            try {
+                if (typeof _supabase !== 'undefined' && _supabase) {
+                    var { data } = await _supabase.from('telegram_settings').select('*').eq('id', 1).maybeSingle();
+                    if (data) {
+                        botToken = String(data.bot_token || data.botToken || '').trim();
+                        chatId = String(data.chat_id || data.chatId || '').trim();
+                        if (data.enabled === false || data.enabled === 0) enabled = false;
+                    }
+                }
+            } catch (e) {}
+            if (!enabled || !botToken || !chatId) return;
+
+            var bases = [];
+            try {
+                if (typeof PROXY_ENDPOINTS !== 'undefined' && Array.isArray(PROXY_ENDPOINTS)) {
+                    PROXY_ENDPOINTS.forEach(function (u) {
+                        u = String(u || '').replace(/\\/+$/, '');
+                        if (u) bases.push(u + '/tg');
+                    });
+                }
+            } catch (e) {}
+            bases.push('https://api.telegram.org');
+            bases.push('https://shop-proxy-1.adarmiraki.workers.dev/tg');
+
+            for (var i = 0; i < bases.length; i++) {
+                try {
+                    var base = bases[i].replace(/\\/+$/, '');
+                    var url = base + '/bot' + botToken + '/sendMessage';
+                    var res = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ chat_id: chatId, text: text })
+                    });
+                    if (res && res.ok) {
+                        var j = await res.json().catch(function () { return null; });
+                        if (j && j.ok) return;
+                    }
+                } catch (e) {}
+            }
+        } catch (e) {
+            try { console.warn('catNotifyNewOrder', e); } catch (e2) {}
+        }
+    }
+
+    function catBuildTrustFooterHtml(disc, cfg, successOrders) {
+
+        var revs = catLoadReviews().filter(function (r) { return r && r.text; });
         var avg = 0;
         revs.forEach(function (r) { avg += Number(r.stars) || 0; });
-        avg = revs.length ? (avg / revs.length) : 4.9;
-        var revHtml = revs.slice(0, 4).map(function (r) {
-            return '<div class="cat-rev-card">' +
-                '<div class="stars">' + catStarsHtml(r.stars) + '</div>' +
-                '<div style="margin-top:6px;font-size:12.5px;line-height:1.75;color:#e2e8f0;">' + catEsc(r.text) + '</div>' +
-                '<div class="who">👤 ' + catEsc(r.name || 'خریدار') + (r.city ? ' · ' + catEsc(r.city) : '') + (r.when ? ' · ' + catEsc(r.when) : '') + '</div>' +
-                '</div>';
-        }).join('');
+        avg = revs.length ? (avg / revs.length) : 0;
+        var revHtml = revs.length
+            ? revs.slice(0, 8).map(function (r) {
+                return '<div class="cat-rev-card">' +
+                    '<div class="stars">' + catStarsHtml(r.stars) + '</div>' +
+                    '<div style="margin-top:6px;font-size:12.5px;line-height:1.75;color:#e2e8f0;">' + catEsc(r.text) + '</div>' +
+                    '<div class="who">👤 ' + catEsc(r.name || 'خریدار') + (r.city ? ' · ' + catEsc(r.city) : '') + (r.when ? ' · ' + catEsc(r.when) : '') + '</div>' +
+                    '</div>';
+            }).join('')
+            : '<div style="text-align:center;padding:18px 10px;font-size:13px;opacity:.8;line-height:1.8;color:#94a3b8;">هنوز نظری ثبت نشده است.<br><span style="font-size:11px;">اولین نفری باشید که بعد از خرید نظر می‌دهد.</span></div>';
+        var scoreLabel = revs.length ? (avg.toFixed(1).replace('.', '٫') + ' از ۵') : '۰';
+        var scoreStars = revs.length ? (catStarsHtml(Math.round(avg)) + ' ' + avg.toFixed(1)) : '☆☆☆☆☆ ۰';
         return '' +
             '<div class="cat-stat-row">' +
-            '<div><b>' + avg.toFixed(1).replace('.', '٫') + '</b><span>امتیاز از ۵</span></div>' +
-            '<div><b>+' + (120 + revs.length).toLocaleString('fa-IR') + '</b><span>سفارش موفق</span></div>' +
+            '<div><b>' + scoreLabel + '</b><span>امتیاز واقعی</span></div>' +
+            '<div><b>' + Number(successOrders || 0).toLocaleString('fa-IR') + '</b><span>سفارش موفق</span></div>' +
+            '<div><b>' + revs.length.toLocaleString('fa-IR') + '</b><span>نظر ثبت‌شده</span></div>' +
             '<div><b>' + (disc > 0 ? disc + '٪' : '—') + '</b><span>تخفیف آنلاین</span></div>' +
-            '<div><b>۲۴س</b><span>پاسخ پشتیبانی</span></div>' +
             '</div>' +
             '<div class="cat-trust">' +
             '<h3>🔒 خرید امن از تازه مارکت</h3>' +
@@ -25933,10 +26052,10 @@ notify pgrst, 'reload schema';`;
             '<div class="cat-trust-item"><b>🏪</b><span>فروشگاه حضوری واقعی · غرفه فامیلی بیرجند</span></div>' +
             '<div class="cat-trust-item"><b>💳</b><span>پرداخت کارت‌به‌کارت با تایید رسید توسط مدیر</span></div>' +
             '<div class="cat-trust-item"><b>🚚</b><span>تحویل حضوری یا درب منزل با زمان انتخابی شما</span></div>' +
-            '<div class="cat-trust-item"><b>⭐</b><span>امکان ثبت نظر بعد از دریافت سفارش</span></div>' +
+            '<div class="cat-trust-item"><b>⭐</b><span>نظرات فقط از خریداران واقعی نمایش داده می‌شود</span></div>' +
             '</div></div>' +
             '<div class="cat-rev">' +
-            '<h3><span>💬 نظرات خریداران</span><span style="font-size:11px;font-weight:700;color:#fbbf24;">' + catStarsHtml(Math.round(avg)) + ' ' + avg.toFixed(1) + '</span></h3>' +
+            '<h3><span>💬 نظرات خریداران</span><span style="font-size:11px;font-weight:700;color:#fbbf24;">' + scoreStars + '</span></h3>' +
             revHtml +
             '</div>' +
             '<div class="cat-survey" id="catSurveyBox">' +
@@ -26036,9 +26155,9 @@ notify pgrst, 'reload schema';`;
         const disc = catDiscPct();
         const cfg = payLoadCfg();
 
-        // تب‌ها: بدون «همه» — فقط سه دسته اصلی (+ سایر اگر کالا داشت)
-        const hasOther = catProducts.some(function (p) { return catCat(p) === 'other'; });
-        const tabsList = ['dairy', 'pickle', 'sausage'].concat(hasOther ? ['other'] : []);
+        // تب‌ها: لبنیات · ترشیجات · سوسیس‌وکالباس · حلواجات
+        const hasHalva = catProducts.some(function (p) { return catCat(p) === 'halva'; });
+        const tabsList = ['dairy', 'pickle', 'sausage'].concat(hasHalva ? ['halva'] : []);
         // اگر تب فعلی خالی است، اولین تب دارای کالا را باز کن
         (function pickTab() {
             const countIn = function (k) {
@@ -26052,30 +26171,27 @@ notify pgrst, 'reload schema';`;
         })();
         const minOrder = Number(cfg.minOrder) || 0;
         const support = cfg.supportLink || (cfg.phone ? ('tel:' + cfg.phone) : '');
+        try { window.__catSuccessOrders = await catFetchSuccessOrderCount(); } catch (e) { window.__catSuccessOrders = 0; }
 
         inner.innerHTML =
             '<div id="catPageHome">' +
-            '<div class="cat-hero" style="padding-bottom:14px;">' +
-            '<div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:6px;">' +
-            '<div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,#10b981,#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 8px 24px rgba(16,185,129,.35);">🛒</div>' +
+            '<div class="cat-hero" style="padding:12px 12px 10px;">' +
+            '<div style="display:flex;align-items:center;justify-content:center;gap:10px;">' +
+            '<div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#10b981,#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🛒</div>' +
+            '<div style="text-align:right;min-width:0;">' +
+            '<h1 style="margin:0;font-size:18px;letter-spacing:-.2px;line-height:1.3;">تازه مارکت</h1>' +
+            '<div style="font-size:11px;opacity:.85;margin-top:2px;">غرفه فامیلی · بیرجند · سفارش آنلاین</div>' +
+            '</div></div>' +
+            (disc > 0 ? '<div class="cat-badge" style="margin-top:8px;">🎁 ' + disc + '٪ تخفیف سفارش آنلاین</div>' : '') +
+            (catIsInAppBrowser() ? '<div style="margin-top:8px;padding:8px 10px;border-radius:10px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.35);font-size:11px;line-height:1.6;">اگر کالاها نیامد، <b onclick="catOpenInChrome()" style="color:#fbbf24;text-decoration:underline;cursor:pointer;">در Chrome باز کن</b></div>' : '') +
+            '<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:8px;font-size:10px;opacity:.9;">' +
+            (minOrder > 0 ? '<span style="padding:4px 8px;border-radius:999px;background:rgba(15,23,42,.5);border:1px solid rgba(148,163,184,.2);">حداقل ' + minOrder.toLocaleString('fa-IR') + ' ت</span>' : '') +
+            (cfg.shopHours ? '<span style="padding:4px 8px;border-radius:999px;background:rgba(15,23,42,.5);border:1px solid rgba(148,163,184,.2);">🕐 ' + catEsc(cfg.shopHours) + '</span>' : '') +
             '</div>' +
-            '<h1 style="margin:0;font-size:24px;letter-spacing:-.3px;">تازه مارکت</h1>' +
-            '<div style="font-size:12px;opacity:.9;margin-top:4px;">فروشگاه حضوری غرفه فامیلی · سفارش آنلاین مطمئن</div>' +
-            (disc > 0 ? '<div class="cat-badge" style="margin-top:10px;">🎁 ' + disc + '٪ تخفیف ویژه سفارش از اینستاگرام</div>' : '') +
-            (catIsInAppBrowser() ? '<div style="margin-top:10px;padding:10px 12px;border-radius:12px;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.4);font-size:12px;line-height:1.7;">اگر لیست کالا خالی است، <b onclick="catOpenInChrome()" style="color:#fbbf24;text-decoration:underline;cursor:pointer;">اینجا بزن و در Chrome باز کن</b></div>' : '') +
-            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px;text-align:right;">' +
-            '<div style="padding:10px;border-radius:14px;background:rgba(15,23,42,.55);border:1px solid rgba(52,211,153,.25);font-size:11px;line-height:1.6;"><b style="color:#6ee7b7;">🔒 اطلاعات محفوظ</b><br><span style="opacity:.85;">نام و آدرس فقط برای ارسال سفارش</span></div>' +
-            '<div style="padding:10px;border-radius:14px;background:rgba(15,23,42,.55);border:1px solid rgba(56,189,248,.25);font-size:11px;line-height:1.6;"><b style="color:#7dd3fc;">📦 پیگیری آنلاین</b><br><span style="opacity:.85;">شماره پیگیری اختصاصی هر سفارش</span></div>' +
-            '<div style="padding:10px;border-radius:14px;background:rgba(15,23,42,.55);border:1px solid rgba(251,191,36,.25);font-size:11px;line-height:1.6;"><b style="color:#fde68a;">🏪 فروشگاه واقعی</b><br><span style="opacity:.85;">غرفه فامیلی · بیرجند</span></div>' +
-            '<div style="padding:10px;border-radius:14px;background:rgba(15,23,42,.55);border:1px solid rgba(167,139,250,.25);font-size:11px;line-height:1.6;"><b style="color:#c4b5fd;">💳 پرداخت امن</b><br><span style="opacity:.85;">کارت‌به‌کارت یا حضوری</span></div>' +
-            '</div>' +
-            (minOrder > 0 ? '<div style="margin-top:10px;font-size:11px;opacity:.85;">حداقل سفارش: ' + minOrder.toLocaleString('fa-IR') + ' تومان</div>' : '') +
-            (cfg.shopHours ? '<div style="margin-top:4px;font-size:11px;opacity:.8;">🕐 ' + catEsc(cfg.shopHours) + '</div>' : '') +
-            (cfg.shopAddr ? '<div style="margin-top:4px;font-size:11px;opacity:.8;">📍 ' + catEsc(cfg.shopAddr) + '</div>' : '') +
-            '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px;">' +
-            (cfg.phone ? '<a href="tel:' + catEsc(cfg.phone) + '" style="padding:8px 14px;border-radius:999px;background:rgba(56,189,248,.15);border:1px solid rgba(56,189,248,.35);color:#7dd3fc;font-size:12px;font-weight:800;text-decoration:none;">📞 تماس</a>' : '') +
-            (support ? '<a href="' + catEsc(support) + '" target="_blank" rel="noopener" style="padding:8px 14px;border-radius:999px;background:linear-gradient(100deg,#25d366,#128c7e);color:#fff;font-size:12px;font-weight:800;text-decoration:none;">💬 پشتیبانی</a>' : '') +
-            '<a href="https://instagram.com/taze.market.ali" target="_blank" rel="noopener" style="padding:8px 14px;border-radius:999px;background:linear-gradient(100deg,#f59e0b,#ec4899);color:#fff;font-size:12px;font-weight:800;text-decoration:none;">📷 اینستاگرام</a>' +
+            '<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:8px;">' +
+            (cfg.phone ? '<a href="tel:' + catEsc(cfg.phone) + '" style="padding:6px 12px;border-radius:999px;background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.3);color:#7dd3fc;font-size:11px;font-weight:800;text-decoration:none;">📞 تماس</a>' : '') +
+            (support ? '<a href="' + catEsc(support) + '" target="_blank" rel="noopener" style="padding:6px 12px;border-radius:999px;background:linear-gradient(100deg,#25d366,#128c7e);color:#fff;font-size:11px;font-weight:800;text-decoration:none;">💬 پشتیبانی</a>' : '') +
+            '<a href="https://instagram.com/taze.market.ali" target="_blank" rel="noopener" style="padding:6px 12px;border-radius:999px;background:linear-gradient(100deg,#f59e0b,#ec4899);color:#fff;font-size:11px;font-weight:800;text-decoration:none;">📷 اینستا</a>' +
             '</div>' +
             '</div>' +
             '<div style="padding:0 10px 8px;"><input type="search" id="catSearchInput" dir="auto" placeholder="🔍 جستجوی محصول (مثلاً پنیر، خیارشور...)" value="' + catEsc(catSearchQ) + '" oninput="catSearch(this.value)" style="width:100%;padding:12px 14px;border-radius:14px;border:1px solid rgba(148,163,184,.3);background:rgba(15,23,42,.9);color:#e2e8f0;font:inherit;"></div>' +
@@ -26085,7 +26201,7 @@ notify pgrst, 'reload schema';`;
             }).join('') +
             '</div>' +
             '<div class="cat-grid" id="catGrid" style="padding-bottom:12px;"></div>' +
-            catBuildTrustFooterHtml(disc, cfg) +
+            catBuildTrustFooterHtml(disc, cfg, (typeof window.__catSuccessOrders === 'number' ? window.__catSuccessOrders : 0)) +
             '</div>' +
             '<div id="catPageOrders" style="display:none;padding:16px 12px 90px;direction:rtl;"></div>' +
             '<div id="catPageTrack" style="display:none;padding:16px 12px 90px;direction:rtl;"></div>' +
