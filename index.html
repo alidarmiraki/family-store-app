@@ -177,7 +177,7 @@
         .cat-stat-row span{font-size:10px;opacity:.8}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v208 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v209 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -3021,10 +3021,12 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <select id="pCategory" onchange="updatePricingAdvisor()">
             <option value="dairy">🧀 لبنیات</option>
             <option value="pickle">🥒 ترشیجات</option>
+            <option value="olive">🫒 زیتون</option>
+            <option value="lavashak">🍃 لواشک و ترشک</option>
             <option value="sausage">🌭 سوسیس و کالباس</option>
             <option value="halva">🍯 حلواجات</option>
         </select>
-        <div class="hint">حتماً یکی از این ۴ دسته را انتخاب کن تا در کاتالوگ درست دیده شود.</div>
+        <div class="hint">دسته را دقیق انتخاب کن: زیتون‌ها جدا، لواشک و ترشک با هم، بقیه ترشی‌ها در ترشیجات.</div>
 
         <label>ظرفیت ظرف یخچال غرفه (کیلوگرم):</label>
         <input type="text" inputmode="decimal" id="pCapacity" step="0.1" value="7.0" placeholder="مثلاً 7 کیلو">
@@ -3948,7 +3950,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v208 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v209 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -4132,7 +4134,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=208', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=209', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -15210,7 +15212,7 @@ function sbRenderAdminLists(cfg) {
             document.getElementById('pName').value = product.name || '';
             document.getElementById('pCategory').value = (function () {
                 var c = product.category || 'general';
-                if (['dairy','pickle','sausage','halva','general'].indexOf(c) >= 0) return c;
+                if (['dairy','pickle','olive','lavashak','sausage','halva'].indexOf(c) >= 0) return c;
                 if (c === 'sausage') return 'sausage';
                 return c || 'general';
             })();
@@ -25096,25 +25098,32 @@ notify pgrst, 'reload schema';`;
     function catCat(p) {
         const c = catNorm(p.category || '');
         const n = catNorm(p.name || '');
-        // نگاشت دسته انبار (فارسی/انگلیسی)
+        // نگاشت دسته انبار (اولویت با انتخاب مدیر)
         if (c === 'sausage' || c.indexOf('سوسیس') >= 0 || c.indexOf('کالباس') >= 0) return 'sausage';
-        if (c === 'pickle' || c.indexOf('ترشی') >= 0 || c.indexOf('شور') >= 0 || c.indexOf('لواشک') >= 0) return 'pickle';
+        if (c === 'olive' || c === 'olives' || c.indexOf('زیتون') >= 0) return 'olive';
+        if (c === 'lavashak' || c === 'torshak' || c.indexOf('لواشک') >= 0 || c.indexOf('ترشک') >= 0) return 'lavashak';
+        if (c === 'pickle' || c.indexOf('ترشی') >= 0 || c.indexOf('شور') >= 0) return 'pickle';
         if (c === 'halva' || c.indexOf('حلوا') >= 0 || c.indexOf('شیرینی') >= 0) return 'halva';
         if (c === 'dairy' || c.indexOf('لبنی') >= 0) return 'dairy';
 
         // سوسیس و کالباس
         if (/سوسیس|کالباس|هات\s*داگ|هاتداگ|همبرگر|ژامبون|مورتادلا/.test(n)) return 'sausage';
 
-        // ترشیجات اول — قبل از حلوا و لبنیات (پرورده، بامیه، رب انار و ...)
+        // زیتون‌ها (جدا از ترشیجات)
+        if (/زیتون/.test(n)) return 'olive';
+
+        // لواشک و ترشک (با هم)
+        if (/لواشک|ترشک/.test(n)) return 'lavashak';
+
+        // ترشیجات (پرورده، بامیه، رب انار، خیارشور و ...)
         if (
-            /ترشی|ترشک|لواشک|پرورده|بامیه|رب\s*انار|انار\s*رب|قره\s*قروت|قره‌قروت|خیار\s*شور|خیارشور|زیتون|بندری|لیته|هفت\s*بیجار|سیر\s*ترشی|کلم\s*شور|فلفل\s*ترشی|بادمجان|شکم\s*پر|آلبالو|گوجه\s*سبز|غوره|هویج\s*شور|کرفس\s*شور|شور\s*مخلوط|مخلوط\s*شور|سالاد\s*فصل|شور(?!با)/.test(n)
+            /ترشی|پرورده|بامیه|رب\s*انار|انار\s*رب|قره\s*قروت|قره‌قروت|خیار\s*شور|خیارشور|بندری|لیته|هفت\s*بیجار|سیر\s*ترشی|کلم\s*شور|فلفل\s*ترشی|بادمجان|شکم\s*پر|آلبالو|گوجه\s*سبز|غوره|هویج\s*شور|کرفس\s*شور|شور\s*مخلوط|مخلوط\s*شور|سالاد\s*فصل|شور(?!با)/.test(n)
         ) {
-            // استثنا: فقط نام خالص لبنیات
             if (/^(ماست|پنیر|کشک|دوغ|کره|خامه|شیر)$/.test(n)) return 'dairy';
             return 'pickle';
         }
 
-        // حلواجات / شیره / ارده (بدون بامیه و رب انار)
+        // حلواجات
         if (/حلوا|شیره|ارده|کرم\s*کنجد|کنجدی|عسل|مربا|مربّا|نبات|نوتلا|شکلات|سس\s*شکلات|پودر\s*پسته|پسته\s*ساییده/.test(n)) {
             return 'halva';
         }
@@ -25125,10 +25134,17 @@ notify pgrst, 'reload schema';`;
         return 'dairy';
     }
     function catLabel(k) {
-        return ({ dairy: '🧀 لبنیات', pickle: '🥒 ترشیجات', sausage: '🌭 سوسیس‌وکالباس', halva: '🍯 حلواجات' })[k] || k;
+        return ({
+            dairy: '🧀 لبنیات',
+            pickle: '🥒 ترشیجات',
+            olive: '🫒 زیتون',
+            lavashak: '🍃 لواشک‌وترشک',
+            sausage: '🌭 سوسیس‌وکالباس',
+            halva: '🍯 حلواجات'
+        })[k] || k;
     }
     function catEmoji(k) {
-        return ({ dairy: '🧀', pickle: '🥒', sausage: '🌭', halva: '🍯' })[k] || '🛒';
+        return ({ dairy: '🧀', pickle: '🥒', olive: '🫒', lavashak: '🍃', sausage: '🌭', halva: '🍯' })[k] || '🛒';
     }
     function catCartCount() {
         return Object.keys(catCart).reduce(function (s, k) { return s + (catCart[k].qty || 0); }, 0);
@@ -26691,8 +26707,11 @@ notify pgrst, 'reload schema';`;
             try { disc = (typeof catDiscPct === 'function') ? (catDiscPct() || 0) : (Number(cfg.onlineDisc) || 0); } catch (e) {}
 
             function buildShell() {
-                const hasHalva = catProducts.some(function (p) { return catCat(p) === 'halva'; });
-                const tabsList = ['dairy', 'pickle', 'sausage'].concat(hasHalva ? ['halva'] : []);
+                const allTabs = ['dairy', 'pickle', 'olive', 'lavashak', 'sausage', 'halva'];
+                const tabsList = allTabs.filter(function (k) {
+                    return catProducts.some(function (p) { return catCat(p) === k; });
+                });
+                if (!tabsList.length) tabsList.push('dairy');
                 (function pickTab() {
                     const countIn = function (k) {
                         return catProducts.filter(function (p) { return catCat(p) === k; }).length;
