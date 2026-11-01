@@ -177,7 +177,7 @@
         .cat-stat-row span{font-size:10px;opacity:.8}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v202 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v203 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2133,6 +2133,97 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         </div>
     </div>
     <style>@keyframes catSpin{to{transform:rotate(360deg)}}</style>
+<script>
+/* بوت اضطراری کاتالوگ — اگر اسکریپت اصلی خطا داشت، حداقل کاتالوگ باز شود */
+(function () {
+  try {
+    var q = location.search || '';
+    if (!/[?&]catalog=/.test(q) && !/#catalog/.test(location.hash || '')) return;
+    document.documentElement.classList.add('catalog-guest-mode');
+    var KEY = 'sb_publishable_k3wkzKalFmLFtfx8WZWr1g_fHKT-3Sl';
+    var HOSTS = [
+      'https://kinjpmvoyioaslpdzujg.supabase.co',
+      'https://shop-proxy-1.adarmiraki.workers.dev'
+    ];
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+      });
+    }
+    function priceOf(p) {
+      var n = Number(p.sell_price || p.unit_price || p.price || 0);
+      return n > 0 ? n : 0;
+    }
+    function show(list) {
+      var view = document.getElementById('catalogPublicView');
+      var inner = document.getElementById('catalogPublicInner');
+      if (!view || !inner) return;
+      view.style.display = 'block';
+      if (inner.querySelector('.cat-hero')) return; // اسکریپت اصلی رسید
+      list = (list || []).filter(function (p) {
+        if (!p || !p.name) return false;
+        var s = p.catalog_show;
+        if (s === false || s === 0 || s === 'false' || s === '0') return false;
+        return true;
+      });
+      try { localStorage.setItem('offline_products_v1', JSON.stringify(list.slice(0, 800))); } catch (e) {}
+      var html = '<div class="cat-hero" style="padding:14px;text-align:center;background:linear-gradient(160deg,#0f172a,#0f766e);border-radius:0 0 18px 18px;">' +
+        '<div style="font-size:22px;font-weight:900;color:#34d399;">تازه مارکت</div>' +
+        '<div style="font-size:12px;opacity:.85;margin-top:4px;">سفارش آنلاین · غرفه فامیلی بیرجند</div></div>' +
+        '<div style="padding:10px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">';
+      if (!list.length) {
+        html += '<div style="grid-column:1/-1;text-align:center;padding:24px;opacity:.85;">کالایی پیدا نشد. اتصال اینترنت را چک کنید یا در Chrome باز کنید.</div>';
+      } else {
+        list.slice(0, 200).forEach(function (p) {
+          var pr = priceOf(p);
+          html += '<div style="background:#0f172a;border:1px solid rgba(148,163,184,.25);border-radius:14px;padding:10px;">' +
+            '<div style="font-weight:800;font-size:13px;min-height:2.4em;">' + esc(p.name) + '</div>' +
+            '<div style="color:#fbbf24;font-weight:900;margin:6px 0;">' + (pr ? pr.toLocaleString('fa-IR') + ' ت/کیلو' : '—') + '</div>' +
+            '</div>';
+        });
+      }
+      html += '</div><div style="padding:16px;text-align:center;font-size:12px;opacity:.7;">اگر سبد خرید ندیدید، صفحه را یک‌بار رفرش کنید</div>';
+      inner.innerHTML = html;
+    }
+    function fetchHost(host) {
+      var url = host.replace(/\/+$/, '') + '/rest/v1/products?select=id,name,code,category,sell_price,unit_price,price,image_url,photo_url,catalog_show&order=name.asc';
+      var ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+      var to = setTimeout(function () { try { ctl && ctl.abort(); } catch (e) {} }, 5000);
+      return fetch(url, {
+        headers: { apikey: KEY, Authorization: 'Bearer ' + KEY, Accept: 'application/json' },
+        cache: 'no-store',
+        signal: ctl ? ctl.signal : undefined
+      }).then(function (r) {
+        clearTimeout(to);
+        if (!r.ok) throw new Error('http');
+        return r.json();
+      });
+    }
+    // اگر بعد از ۲٫۸ ثانیه هنوز اسکریپت اصلی کاتالوگ را نساخته، خودمان می‌سازیم
+    setTimeout(function () {
+      try {
+        var inner = document.getElementById('catalogPublicInner');
+        if (!inner) return;
+        if (inner.querySelector('.cat-hero')) return;
+        var cached = [];
+        try { cached = JSON.parse(localStorage.getItem('offline_products_v1') || '[]') || []; } catch (e) {}
+        if (cached.length) show(cached);
+        var pending = HOSTS.length, done = false;
+        HOSTS.forEach(function (h) {
+          fetchHost(h).then(function (rows) {
+            if (done) return;
+            if (rows && rows.length) { done = true; show(rows); }
+          }).catch(function () {}).finally(function () {
+            pending--;
+            if (!done && pending <= 0 && !inner.querySelector('.cat-hero')) show(cached);
+          });
+        });
+      } catch (e) {}
+    }, 2800);
+  } catch (e) {}
+})();
+</script>
+
 
     <!-- صفحه ورود -->
     <div id="loginScreen" class="login-box login-fancy" style="max-width:380px; margin:40px auto 0; animation: cardFadeIn 0.4s ease;">
@@ -3825,7 +3916,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v202 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v203 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -4009,7 +4100,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=202', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=203', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -26127,7 +26218,7 @@ notify pgrst, 'reload schema';`;
             try {
                 if (typeof PROXY_ENDPOINTS !== 'undefined' && Array.isArray(PROXY_ENDPOINTS)) {
                     PROXY_ENDPOINTS.forEach(function (u) {
-                        u = String(u || '').replace(/\\/+$/, '');
+                        u = String(u || '').replace(/\/+$/, '');
                         if (u) bases.push(u + '/tg');
                     });
                 }
@@ -26137,7 +26228,7 @@ notify pgrst, 'reload schema';`;
 
             for (var i = 0; i < bases.length; i++) {
                 try {
-                    var base = bases[i].replace(/\\/+$/, '');
+                    var base = bases[i].replace(/\/+$/, '');
                     var url = base + '/bot' + botToken + '/sendMessage';
                     var res = await fetch(url, {
                         method: 'POST',
