@@ -177,7 +177,7 @@
         .cat-stat-row span{font-size:10px;opacity:.8}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v201 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v202 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -3825,7 +3825,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v201 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v202 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -4009,7 +4009,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=201', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=202', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -26257,122 +26257,158 @@ notify pgrst, 'reload schema';`;
     };
 
     async function openCatalogPublic() {
-        if (window.__catOpenBusy) return;
-        window.__catOpenBusy = true;
+        // قفل کوتاه — اگر قبلاً گیر کرده بود، بعد از ۳ ثانیه آزاد کن
         try {
-        document.documentElement.classList.add('catalog-guest-mode');
-        document.title = 'کاتالوگ تازه مارکت';
-        const view = document.getElementById('catalogPublicView');
-        const inner = document.getElementById('catalogPublicInner');
-        if (!view || !inner) return;
-        view.style.display = 'block';
-        const login = document.getElementById('loginScreen');
-        const tabs = document.getElementById('tabContainer');
-        const clock = document.getElementById('liveClock');
-        if (login) login.style.display = 'none';
-        if (tabs) tabs.style.display = 'none';
-        if (clock) clock.style.display = 'none';
-
-        // اگر هنوز لود نشده، همان پیام تازه مارکت بماند
-        if (!inner.querySelector('.cat-hero')) {
-            inner.innerHTML =
-                '<div style="min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;">' +
-                '<div style="font-size:48px;margin-bottom:12px;">🛒</div>' +
-                '<div style="font-size:22px;font-weight:900;color:#34d399;">تازه مارکت</div>' +
-                '<div style="margin-top:10px;font-size:14px;opacity:.9;line-height:1.8;">در حال ورود به کاتالوگ فروشگاه<br><b>تازه مارکت</b></div></div>';
-        }
-
-        // بارگذاری سریع با سقف زمانی — اینستاگرام نباید گیر کند
-        try {
-            await catWithTimeout(catLoadProducts(), catIsInAppBrowser() ? 6000 : 9000, catProducts || []);
-        } catch (e) {}
-        if (!Array.isArray(catProducts)) catProducts = [];
-        try { await catWithTimeout(Promise.resolve(payPullCfgFromCloud()), 2500, null); } catch (e) {}
-        const disc = catDiscPct();
-        const cfg = payLoadCfg();
-
-        // تب‌ها: لبنیات · ترشیجات · سوسیس‌وکالباس · حلواجات
-        const hasHalva = catProducts.some(function (p) { return catCat(p) === 'halva'; });
-        const tabsList = ['dairy', 'pickle', 'sausage'].concat(hasHalva ? ['halva'] : []);
-        (function pickTab() {
-            const countIn = function (k) {
-                return catProducts.filter(function (p) { return catCat(p) === k; }).length;
-            };
-            if (countIn(catFilter) > 0) return;
-            for (let i = 0; i < tabsList.length; i++) {
-                if (countIn(tabsList[i]) > 0) { catFilter = tabsList[i]; return; }
+            if (window.__catOpenBusy) {
+                if (Date.now() - (window.__catOpenBusyAt || 0) < 3000) return;
             }
-            catFilter = tabsList[0] || 'dairy';
-        })();
-        const minOrder = Number(cfg.minOrder) || 0;
-        const support = cfg.supportLink || (cfg.phone ? ('tel:' + cfg.phone) : '');
-        // شمارش سفارش را بلاک نکن — بعداً پر می‌شود
-        window.__catSuccessOrders = window.__catSuccessOrders || 0;
-        try {
-            catWithTimeout(catFetchSuccessOrderCount(), 4000, 0).then(function (n) {
-                window.__catSuccessOrders = n || 0;
-                var el = document.querySelector('.cat-stat-row div:nth-child(2) b');
-                if (el) el.textContent = Number(n || 0).toLocaleString('fa-IR');
-            });
+            window.__catOpenBusy = true;
+            window.__catOpenBusyAt = Date.now();
         } catch (e) {}
 
-        inner.innerHTML =
-            '<div id="catPageHome">' +
-            '<div class="cat-hero" style="padding:12px 12px 10px;">' +
-            '<div style="display:flex;align-items:center;justify-content:center;gap:10px;">' +
-            '<div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#10b981,#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🛒</div>' +
-            '<div style="text-align:right;min-width:0;">' +
-            '<h1 style="margin:0;font-size:18px;letter-spacing:-.2px;line-height:1.3;">تازه مارکت</h1>' +
-            '<div style="font-size:11px;opacity:.85;margin-top:2px;">غرفه فامیلی · بیرجند · سفارش آنلاین</div>' +
-            '</div></div>' +
-            (disc > 0 ? '<div class="cat-badge" style="margin-top:8px;">🎁 ' + disc + '٪ تخفیف سفارش آنلاین</div>' : '') +
-            (catIsInAppBrowser() ? '<div style="margin-top:8px;padding:8px 10px;border-radius:10px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.35);font-size:11px;line-height:1.6;">اگر کالاها نیامد، <b onclick="catOpenInChrome()" style="color:#fbbf24;text-decoration:underline;cursor:pointer;">در Chrome باز کن</b></div>' : '') +
-            '<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:8px;font-size:10px;opacity:.9;">' +
-            (minOrder > 0 ? '<span style="padding:4px 8px;border-radius:999px;background:rgba(15,23,42,.5);border:1px solid rgba(148,163,184,.2);">حداقل ' + minOrder.toLocaleString('fa-IR') + ' ت</span>' : '') +
-            (cfg.shopHours ? '<span style="padding:4px 8px;border-radius:999px;background:rgba(15,23,42,.5);border:1px solid rgba(148,163,184,.2);">🕐 ' + catEsc(cfg.shopHours) + '</span>' : '') +
-            '</div>' +
-            '<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:8px;">' +
-            (cfg.phone ? '<a href="tel:' + catEsc(cfg.phone) + '" style="padding:6px 12px;border-radius:999px;background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.3);color:#7dd3fc;font-size:11px;font-weight:800;text-decoration:none;">📞 تماس</a>' : '') +
-            (support ? '<a href="' + catEsc(support) + '" target="_blank" rel="noopener" style="padding:6px 12px;border-radius:999px;background:linear-gradient(100deg,#25d366,#128c7e);color:#fff;font-size:11px;font-weight:800;text-decoration:none;">💬 پشتیبانی</a>' : '') +
-            '<a href="https://instagram.com/taze.market.ali" target="_blank" rel="noopener" style="padding:6px 12px;border-radius:999px;background:linear-gradient(100deg,#f59e0b,#ec4899);color:#fff;font-size:11px;font-weight:800;text-decoration:none;">📷 اینستا</a>' +
-            '</div>' +
-            '</div>' +
-            '<div style="padding:0 10px 8px;"><input type="search" id="catSearchInput" dir="auto" placeholder="🔍 جستجوی محصول (مثلاً پنیر، خیارشور...)" value="' + catEsc(catSearchQ) + '" oninput="catSearch(this.value)" style="width:100%;padding:12px 14px;border-radius:14px;border:1px solid rgba(148,163,184,.3);background:rgba(15,23,42,.9);color:#e2e8f0;font:inherit;"></div>' +
-            '<div class="cat-tabs">' +
-            tabsList.map(function (f) {
-                return '<button type="button" class="cat-tab' + (catFilter === f ? ' on' : '') + '" data-f="' + f + '" onclick="catFilterTo(\'' + f + '\')">' + catLabel(f) + '</button>';
-            }).join('') +
-            '</div>' +
-            '<div class="cat-grid" id="catGrid" style="padding-bottom:12px;"></div>' +
-            catBuildTrustFooterHtml(disc, cfg, (typeof window.__catSuccessOrders === 'number' ? window.__catSuccessOrders : 0)) +
-            '</div>' +
-            '<div id="catPageOrders" style="display:none;padding:16px 12px 90px;direction:rtl;"></div>' +
-            '<div id="catPageTrack" style="display:none;padding:16px 12px 90px;direction:rtl;"></div>' +
-            '<div id="catPageAccount" style="display:none;padding:16px 12px 90px;direction:rtl;"></div>' +
-            '<div class="cat-cartbar" id="catCartBar" style="display:none;bottom:64px;"></div>' +
-            '<div class="cat-sheet" id="catSheet" style="display:none;" onclick="if(event.target===this)catCloseCart()">' +
-            '<div class="cat-sheet-in" id="catSheetBody"></div></div>' +
-            '<nav id="catBottomNav" style="position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;background:rgba(15,23,42,.97);border-top:1px solid rgba(148,163,184,.25);padding:6px 4px calc(6px + env(safe-area-inset-bottom));backdrop-filter:blur(10px);">' +
-            '<button type="button" class="cat-nav-btn on" data-page="home" style="flex:1;background:none;border:0;color:#94a3b8;padding:8px 4px;font:inherit;font-size:11px;cursor:pointer;"><div style="font-size:18px;">🏠</div>خانه</button>' +
-            '<button type="button" class="cat-nav-btn" data-page="orders" style="flex:1;background:none;border:0;color:#94a3b8;padding:8px 4px;font:inherit;font-size:11px;cursor:pointer;"><div style="font-size:18px;">📦</div>سفارش‌ها</button>' +
-            '<button type="button" class="cat-nav-btn" data-page="track" style="flex:1;background:none;border:0;color:#94a3b8;padding:8px 4px;font:inherit;font-size:11px;cursor:pointer;"><div style="font-size:18px;">🔎</div>پیگیری</button>' +
-            '<button type="button" class="cat-nav-btn" data-page="account" style="flex:1;background:none;border:0;color:#94a3b8;padding:8px 4px;font:inherit;font-size:11px;cursor:pointer;"><div style="font-size:18px;">👤</div>حساب</button>' +
-            '</nav>';
+        try {
+            document.documentElement.classList.add('catalog-guest-mode');
+            document.title = 'کاتالوگ تازه مارکت';
+            const view = document.getElementById('catalogPublicView');
+            const inner = document.getElementById('catalogPublicInner');
+            if (!view || !inner) return;
+            view.style.display = 'block';
+            try {
+                const login = document.getElementById('loginScreen');
+                const tabs = document.getElementById('tabContainer');
+                const clock = document.getElementById('liveClock');
+                if (login) login.style.display = 'none';
+                if (tabs) tabs.style.display = 'none';
+                if (clock) clock.style.display = 'none';
+            } catch (e) {}
 
-        catRender();
-        try { catPickSurveyStar(5); } catch (e) {}
-        try { catHydrateCloudReviews(); } catch (e) {}
-        try {
-            document.querySelectorAll('#catBottomNav .cat-nav-btn').forEach(function (btn) {
-                btn.onclick = function () { catShowPage(btn.getAttribute('data-page')); };
-            });
-        } catch (e) {}
-        try {
-            clearInterval(window._catLiveT);
-            window._catLiveT = setInterval(function () { try { catSyncLiveCart(); } catch (e) {} }, 20000);
-        } catch (e) {}
+            // اول از کش محلی سریع نشان بده تا صفحه نچرخد
+            if (!Array.isArray(catProducts) || !catProducts.length) {
+                try {
+                    const raw = localStorage.getItem('offline_products_v1');
+                    if (raw) {
+                        const list = JSON.parse(raw) || [];
+                        catProducts = (list || []).filter(function (p) {
+                            if (!p || !p.name) return false;
+                            const show = p.catalog_show;
+                            if (show === false || show === 0 || show === 'false' || show === '0') return false;
+                            return true;
+                        });
+                    }
+                } catch (e) {}
+            }
+            if (!Array.isArray(catProducts)) catProducts = [];
+
+            // تنظیمات محلی فوری
+            let disc = 0, cfg = {};
+            try { cfg = (typeof payLoadCfg === 'function') ? (payLoadCfg() || {}) : {}; } catch (e) { cfg = {}; }
+            try { disc = (typeof catDiscPct === 'function') ? (catDiscPct() || 0) : (Number(cfg.onlineDisc) || 0); } catch (e) {}
+
+            function buildShell() {
+                const hasHalva = catProducts.some(function (p) { return catCat(p) === 'halva'; });
+                const tabsList = ['dairy', 'pickle', 'sausage'].concat(hasHalva ? ['halva'] : []);
+                (function pickTab() {
+                    const countIn = function (k) {
+                        return catProducts.filter(function (p) { return catCat(p) === k; }).length;
+                    };
+                    if (countIn(catFilter) > 0) return;
+                    for (let i = 0; i < tabsList.length; i++) {
+                        if (countIn(tabsList[i]) > 0) { catFilter = tabsList[i]; return; }
+                    }
+                    catFilter = tabsList[0] || 'dairy';
+                })();
+                const minOrder = Number(cfg.minOrder) || 0;
+                const support = cfg.supportLink || (cfg.phone ? ('tel:' + cfg.phone) : '');
+                const successOrders = window.__catSuccessOrders || 0;
+
+                inner.innerHTML =
+                    '<div id="catPageHome">' +
+                    '<div class="cat-hero" style="padding:12px 12px 10px;">' +
+                    '<div style="display:flex;align-items:center;justify-content:center;gap:10px;">' +
+                    '<div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#10b981,#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🛒</div>' +
+                    '<div style="text-align:right;min-width:0;">' +
+                    '<h1 style="margin:0;font-size:18px;letter-spacing:-.2px;line-height:1.3;">تازه مارکت</h1>' +
+                    '<div style="font-size:11px;opacity:.85;margin-top:2px;">غرفه فامیلی · بیرجند · سفارش آنلاین</div>' +
+                    '</div></div>' +
+                    (disc > 0 ? '<div class="cat-badge" style="margin-top:8px;">🎁 ' + disc + '٪ تخفیف سفارش آنلاین</div>' : '') +
+                    (catIsInAppBrowser() ? '<div style="margin-top:8px;padding:8px 10px;border-radius:10px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.35);font-size:11px;line-height:1.6;">اگر کالاها نیامد، <b onclick="catOpenInChrome()" style="color:#fbbf24;text-decoration:underline;cursor:pointer;">در Chrome باز کن</b></div>' : '') +
+                    '<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:8px;font-size:10px;opacity:.9;">' +
+                    (minOrder > 0 ? '<span style="padding:4px 8px;border-radius:999px;background:rgba(15,23,42,.5);border:1px solid rgba(148,163,184,.2);">حداقل ' + minOrder.toLocaleString('fa-IR') + ' ت</span>' : '') +
+                    (cfg.shopHours ? '<span style="padding:4px 8px;border-radius:999px;background:rgba(15,23,42,.5);border:1px solid rgba(148,163,184,.2);">🕐 ' + catEsc(cfg.shopHours) + '</span>' : '') +
+                    '</div>' +
+                    '<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:8px;">' +
+                    (cfg.phone ? '<a href="tel:' + catEsc(cfg.phone) + '" style="padding:6px 12px;border-radius:999px;background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.3);color:#7dd3fc;font-size:11px;font-weight:800;text-decoration:none;">📞 تماس</a>' : '') +
+                    (support ? '<a href="' + catEsc(support) + '" target="_blank" rel="noopener" style="padding:6px 12px;border-radius:999px;background:linear-gradient(100deg,#25d366,#128c7e);color:#fff;font-size:11px;font-weight:800;text-decoration:none;">💬 پشتیبانی</a>' : '') +
+                    '<a href="https://instagram.com/taze.market.ali" target="_blank" rel="noopener" style="padding:6px 12px;border-radius:999px;background:linear-gradient(100deg,#f59e0b,#ec4899);color:#fff;font-size:11px;font-weight:800;text-decoration:none;">📷 اینستا</a>' +
+                    '</div></div>' +
+                    '<div style="padding:0 10px 8px;"><input type="search" id="catSearchInput" dir="auto" placeholder="🔍 جستجوی محصول (مثلاً پنیر، خیارشور...)" value="' + catEsc(catSearchQ || '') + '" oninput="catSearch(this.value)" style="width:100%;padding:12px 14px;border-radius:14px;border:1px solid rgba(148,163,184,.3);background:rgba(15,23,42,.9);color:#e2e8f0;font:inherit;"></div>' +
+                    '<div class="cat-tabs">' +
+                    tabsList.map(function (f) {
+                        return '<button type="button" class="cat-tab' + (catFilter === f ? ' on' : '') + '" data-f="' + f + '" onclick="catFilterTo(\'' + f + '\')">' + catLabel(f) + '</button>';
+                    }).join('') +
+                    '</div>' +
+                    '<div class="cat-grid" id="catGrid" style="padding-bottom:12px;"></div>' +
+                    (typeof catBuildTrustFooterHtml === 'function' ? catBuildTrustFooterHtml(disc, cfg, successOrders) : '') +
+                    '</div>' +
+                    '<div id="catPageOrders" style="display:none;padding:16px 12px 90px;direction:rtl;"></div>' +
+                    '<div id="catPageTrack" style="display:none;padding:16px 12px 90px;direction:rtl;"></div>' +
+                    '<div id="catPageAccount" style="display:none;padding:16px 12px 90px;direction:rtl;"></div>' +
+                    '<nav id="catBottomNav" style="position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;background:rgba(11,18,32,.96);border-top:1px solid rgba(148,163,184,.25);padding:6px 4px calc(6px + env(safe-area-inset-bottom));backdrop-filter:blur(10px);">' +
+                    '<button type="button" class="cat-nav-btn" data-page="home" style="flex:1;border:0;background:transparent;color:#e2e8f0;font:inherit;font-size:11px;padding:8px 4px;cursor:pointer;">🏠<br>خانه</button>' +
+                    '<button type="button" class="cat-nav-btn" data-page="orders" style="flex:1;border:0;background:transparent;color:#94a3b8;font:inherit;font-size:11px;padding:8px 4px;cursor:pointer;">📦<br>سفارش‌ها</button>' +
+                    '<button type="button" class="cat-nav-btn" data-page="track" style="flex:1;border:0;background:transparent;color:#94a3b8;font:inherit;font-size:11px;padding:8px 4px;cursor:pointer;">🔍<br>پیگیری</button>' +
+                    '<button type="button" class="cat-nav-btn" data-page="account" style="flex:1;border:0;background:transparent;color:#94a3b8;font:inherit;font-size:11px;padding:8px 4px;cursor:pointer;">👤<br>حساب</button>' +
+                    '</nav>';
+
+                try { catRender(); } catch (e) {}
+                try { catPickSurveyStar(5); } catch (e) {}
+                try {
+                    document.querySelectorAll('#catBottomNav .cat-nav-btn').forEach(function (btn) {
+                        btn.onclick = function () { catShowPage(btn.getAttribute('data-page')); };
+                    });
+                } catch (e) {}
+            }
+
+            // فوری UI را نشان بده (دیگر صفحه لود بی‌پایان نیست)
+            buildShell();
+
+            // سپس در پس‌زمینه محصولات و تنظیمات را تازه کن
+            (async function refreshLater() {
+                try {
+                    await catWithTimeout(catLoadProducts(), 5000, catProducts);
+                    if (!Array.isArray(catProducts)) catProducts = [];
+                } catch (e) {}
+                try {
+                    await catWithTimeout(Promise.resolve(typeof payPullCfgFromCloud === 'function' ? payPullCfgFromCloud() : null), 2000, null);
+                    cfg = (typeof payLoadCfg === 'function') ? (payLoadCfg() || cfg) : cfg;
+                    disc = (typeof catDiscPct === 'function') ? (catDiscPct() || disc) : disc;
+                } catch (e) {}
+                try {
+                    const n = await catWithTimeout(catFetchSuccessOrderCount(), 3000, 0);
+                    window.__catSuccessOrders = n || 0;
+                } catch (e) {}
+                try { buildShell(); } catch (e) {}
+                try { catHydrateCloudReviews(); } catch (e) {}
+            })();
+
+            try {
+                clearInterval(window._catLiveT);
+                window._catLiveT = setInterval(function () { try { catSyncLiveCart(); } catch (e) {} }, 20000);
+            } catch (e) {}
+        } catch (err) {
+            try {
+                const inner = document.getElementById('catalogPublicInner');
+                if (inner) {
+                    inner.innerHTML = '<div style="padding:28px 16px;text-align:center;direction:rtl;">' +
+                        '<div style="font-size:40px;">🛒</div><h2>تازه مارکت</h2>' +
+                        '<p style="opacity:.85;line-height:1.8;">بارگذاری کاتالوگ طول کشید.</p>' +
+                        '<button type="button" onclick="window.__catOpenBusy=false;openCatalogPublic()" style="padding:12px 18px;border:0;border-radius:12px;background:linear-gradient(100deg,#0ea5e9,#10b981);color:#fff;font:inherit;font-weight:800;cursor:pointer;">🔄 تلاش مجدد</button>' +
+                        (catIsInAppBrowser() ? '<div style="margin-top:12px;"><button type="button" onclick="catOpenInChrome()" style="padding:10px 16px;border:0;border-radius:12px;background:#f59e0b;color:#fff;font:inherit;font-weight:800;">🌐 باز کردن در Chrome</button></div>' : '') +
+                        '</div>';
+                }
+            } catch (e2) {}
         } finally {
-            window.__catOpenBusy = false;
+            try { window.__catOpenBusy = false; } catch (e) {}
         }
     }
 
@@ -27244,7 +27280,7 @@ notify pgrst, 'reload schema';`;
     async function ask(it) {
         try {
             if (it.id === 'notif') { await subscribeToPushNotifications(currentRole); return; }
-            if (it.id === 'geo') return await new Promise(function (res) { navigator.geolocation.getCurrentPosition(function () { res(true); }, function () { res(false); }, { timeout: 20000, maximumAge: 0 }); });
+            if (it.id === 'geo') return await new Promise(function (res) { navigator.geolocation.getCurrentPosition(function () { res(true); }, function () { res(false); }, { timeout: 12000, maximumAge: 600000 }); });
             if (it.id === 'cam') return await media({ video: { facingMode: 'user' } });
             if (it.id === 'mic') return await media({ audio: true });
             if (it.id === 'stor') return await navigator.storage.persist();
@@ -27297,7 +27333,7 @@ notify pgrst, 'reload schema';`;
         }
         busy = false; all.disabled = false; all.textContent = '🔓 فعال‌سازی همه‌ی دسترسی‌ها';
         await render(denied.length ? helpText(denied) : '');
-        if (!denied.length && typeof showToast === 'function') showToast('✅ همه‌ی دسترسی‌ها بررسی و فعال شد.');
+        if (!denied.length) { try { localStorage.setItem('permWizardAllOk', '1'); localStorage.setItem('permWizardAt', String(Date.now())); } catch (e) {} if (typeof showToast === 'function') showToast('✅ همه‌ی دسترسی‌ها بررسی و فعال شد.'); }
     }
     function open() {
         if (box) return;
@@ -27307,12 +27343,21 @@ notify pgrst, 'reload schema';`;
             '<div style="font-weight:800;font-size:15px;">🔐 دسترسی‌های گوشی</div>' +
             '<div style="font-size:12px;opacity:.8;margin:2px 0 8px;">برای اینکه برنامه کامل کار کند، این دسترسی‌ها را فعال کن. هر مورد پنجره‌ی رسمی خود گوشی را باز می‌کند و فقط با «اجازه‌ی» تو فعال می‌شود.</div>' +
             '<div data-body><div style="padding:12px;text-align:center;opacity:.7;">در حال بررسی...</div></div>' +
-            '<div style="display:flex;gap:8px;margin-top:12px;"><button type="button" data-all style="flex:1;border:0;border-radius:12px;padding:11px;background:#22d3ee;color:#06121a;font:inherit;font-weight:800;cursor:pointer;">🔓 فعال‌سازی همه‌ی دسترسی‌ها</button>' +
-            '<button type="button" data-ok style="display:none;flex:1;border:0;border-radius:12px;padding:11px;background:#34d399;color:#04140d;font:inherit;font-weight:800;cursor:pointer;">✅ همه فعال است</button>' +
-            '<button type="button" data-x style="border:1px solid rgba(148,163,184,.4);border-radius:12px;padding:11px 16px;background:transparent;color:inherit;font:inherit;cursor:pointer;">بستن</button></div></div>';
+            '<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;"><button type="button" data-all style="flex:1;min-width:140px;border:0;border-radius:12px;padding:11px;background:#22d3ee;color:#06121a;font:inherit;font-weight:800;cursor:pointer;">🔓 فعال‌سازی همه</button>' +
+            '<button type="button" data-ok style="display:none;flex:1;min-width:120px;border:0;border-radius:12px;padding:11px;background:#34d399;color:#04140d;font:inherit;font-weight:800;cursor:pointer;">✅ همه فعال است</button>' +
+            '<button type="button" data-x style="border:1px solid rgba(148,163,184,.4);border-radius:12px;padding:11px 16px;background:transparent;color:inherit;font:inherit;cursor:pointer;">بستن</button>' +
+            '<button type="button" data-never style="width:100%;border:0;border-radius:12px;padding:10px;background:transparent;color:#94a3b8;font:inherit;font-size:12px;cursor:pointer;">دیگر این پنجره را نشان نده</button></div></div>';
         box.addEventListener('click', async function (e) {
             var t = e.target;
-            if (t === box || (t.hasAttribute && (t.hasAttribute('data-x') || t.hasAttribute('data-ok')))) { box.remove(); box = null; return; }
+            if (t === box || (t.hasAttribute && (t.hasAttribute('data-x') || t.hasAttribute('data-ok') || t.hasAttribute('data-never')))) {
+                try {
+                    localStorage.setItem('permWizardAt', String(Date.now()));
+                    if (t.hasAttribute && t.hasAttribute('data-ok')) localStorage.setItem('permWizardAllOk', '1');
+                    if (t.hasAttribute && t.hasAttribute('data-never')) localStorage.setItem('permWizardNever', '1');
+                    if (t.hasAttribute && t.hasAttribute('data-x')) localStorage.setItem('permWizardDismissed', String(Date.now()));
+                } catch (e) {}
+                box.remove(); box = null; return;
+            }
             if (t.hasAttribute && t.hasAttribute('data-all')) return runAll();
             var id = t.getAttribute && t.getAttribute('data-id'); if (!id || busy) return;
             var it = ITEMS.filter(function (x) { return x.id === id; })[0];
@@ -27338,9 +27383,20 @@ notify pgrst, 'reload schema';`;
     // بعد از ورود: اگر هنوز مجوزی نپرسیده/نیمه‌فعال مانده، (حداکثر هر ۳ روز یک بار) پنجره را نشان بده
     window.maybeShowPermWizard = async function () {
         if (box) return;
+        // اگر کاربر گفته «دیگر نشان نده» یا همه قبلاً فعال شده — دیگر خودکار باز نشود
+        try {
+            if (localStorage.getItem('permWizardNever') === '1') return;
+            if (localStorage.getItem('permWizardAllOk') === '1') return;
+        } catch (e) {}
         var last = 0; try { last = +localStorage.getItem('permWizardAt') || 0; } catch (e) {}
-        if (Date.now() - last < 3 * 86400000) return;
+        // حداکثر هر ۳۰ روز یک‌بار (نه هر چند روز)
+        if (Date.now() - last < 30 * 86400000) return;
         var st = await Promise.all(ITEMS.map(getState));
+        var allOk = st.every(function (s) { return s === 'granted' || s === 'unsupported' || s === 'denied'; });
+        if (allOk) {
+            try { localStorage.setItem('permWizardAllOk', '1'); } catch (e) {}
+            return;
+        }
         if (st.some(function (s) { return s === 'prompt' || s === 'half'; })) open();
     };
 })();
