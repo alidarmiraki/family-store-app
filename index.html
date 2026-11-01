@@ -177,7 +177,7 @@
         .cat-stat-row span{font-size:10px;opacity:.8}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v205 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v206 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -3942,7 +3942,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v205 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v206 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -4126,7 +4126,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=205', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=206', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -15004,18 +15004,31 @@ function sbRenderAdminLists(cfg) {
                 } else {
                     showToast(image_url ? '✅ کالا و عکس به‌روزرسانی شد (در کاتالوگ هم می‌آید)' : '✅ کالا با موفقیت به‌روزرسانی شد');
                 try {
-                    // همگام‌سازی خودکار کاتالوگ بعد از تغییر کالا
-                    setTimeout(async function () {
+                    // همگام‌سازی فوری کاتالوگ (همان لحظه)
+                    (async function () {
                         try {
-                            if (typeof catLoadProducts === 'function') {
-                                const list = await catLoadProducts();
-                                if (list && list.length) await catSyncProductsAuto(list, { publish: true });
-                            } else if (typeof _supabase !== 'undefined' && _supabase) {
-                                const { data } = await _supabase.from('products').select('id,name,code,category,sell_price,stock,booth_stock,image_url,catalog_show').order('name');
-                                if (data && data.length) await catSyncProductsAuto(data, { publish: true });
+                            let data = null;
+                            if (typeof _supabase !== 'undefined' && _supabase) {
+                                const res = await _supabase.from('products').select('id,name,code,category,sell_price,stock,booth_stock,image_url,catalog_show').order('name');
+                                data = res.data;
+                            }
+                            if (data && data.length) {
+                                if (typeof catSyncProductsAuto === 'function') await catSyncProductsAuto(data, { publish: true });
+                                else {
+                                    try { localStorage.setItem('offline_products_v1', JSON.stringify(data)); } catch (e) {}
+                                }
+                                // اگر کاتالوگ روی همین گوشی باز است، همان لحظه رفرش
+                                try {
+                                    if (typeof catLoadProducts === 'function') await catLoadProducts();
+                                    if (typeof catRender === 'function') catRender();
+                                    if (document.documentElement.classList.contains('catalog-guest-mode') && typeof openCatalogPublic === 'function') {
+                                        window.__catOpenBusy = false;
+                                        openCatalogPublic();
+                                    }
+                                } catch (e2) {}
                             }
                         } catch (e) {}
-                    }, 400);
+                    })();
                 } catch (e) {}
 
                     logInventoryChange(name, 'ویرایش کالا', `موجودی انبار: ${stock} کیلوگرم | موجودی غرفه: ${boothStock} کیلوگرم`);
@@ -15057,18 +15070,31 @@ function sbRenderAdminLists(cfg) {
                 } else {
                     showToast('✅ کالای جدید با موفقیت ذخیره شد');
                 try {
-                    // همگام‌سازی خودکار کاتالوگ بعد از تغییر کالا
-                    setTimeout(async function () {
+                    // همگام‌سازی فوری کاتالوگ (همان لحظه)
+                    (async function () {
                         try {
-                            if (typeof catLoadProducts === 'function') {
-                                const list = await catLoadProducts();
-                                if (list && list.length) await catSyncProductsAuto(list, { publish: true });
-                            } else if (typeof _supabase !== 'undefined' && _supabase) {
-                                const { data } = await _supabase.from('products').select('id,name,code,category,sell_price,stock,booth_stock,image_url,catalog_show').order('name');
-                                if (data && data.length) await catSyncProductsAuto(data, { publish: true });
+                            let data = null;
+                            if (typeof _supabase !== 'undefined' && _supabase) {
+                                const res = await _supabase.from('products').select('id,name,code,category,sell_price,stock,booth_stock,image_url,catalog_show').order('name');
+                                data = res.data;
+                            }
+                            if (data && data.length) {
+                                if (typeof catSyncProductsAuto === 'function') await catSyncProductsAuto(data, { publish: true });
+                                else {
+                                    try { localStorage.setItem('offline_products_v1', JSON.stringify(data)); } catch (e) {}
+                                }
+                                // اگر کاتالوگ روی همین گوشی باز است، همان لحظه رفرش
+                                try {
+                                    if (typeof catLoadProducts === 'function') await catLoadProducts();
+                                    if (typeof catRender === 'function') catRender();
+                                    if (document.documentElement.classList.contains('catalog-guest-mode') && typeof openCatalogPublic === 'function') {
+                                        window.__catOpenBusy = false;
+                                        openCatalogPublic();
+                                    }
+                                } catch (e2) {}
                             }
                         } catch (e) {}
-                    }, 400);
+                    })();
                 } catch (e) {}
 
                     clearProductForm();
@@ -15253,18 +15279,31 @@ function sbRenderAdminLists(cfg) {
                 if (stillThereMsg) { showToast(stillThereMsg); return; }
                 showToast('✅ کالا حذف شد');
                 try {
-                    // همگام‌سازی خودکار کاتالوگ بعد از تغییر کالا
-                    setTimeout(async function () {
+                    // همگام‌سازی فوری کاتالوگ (همان لحظه)
+                    (async function () {
                         try {
-                            if (typeof catLoadProducts === 'function') {
-                                const list = await catLoadProducts();
-                                if (list && list.length) await catSyncProductsAuto(list, { publish: true });
-                            } else if (typeof _supabase !== 'undefined' && _supabase) {
-                                const { data } = await _supabase.from('products').select('id,name,code,category,sell_price,stock,booth_stock,image_url,catalog_show').order('name');
-                                if (data && data.length) await catSyncProductsAuto(data, { publish: true });
+                            let data = null;
+                            if (typeof _supabase !== 'undefined' && _supabase) {
+                                const res = await _supabase.from('products').select('id,name,code,category,sell_price,stock,booth_stock,image_url,catalog_show').order('name');
+                                data = res.data;
+                            }
+                            if (data && data.length) {
+                                if (typeof catSyncProductsAuto === 'function') await catSyncProductsAuto(data, { publish: true });
+                                else {
+                                    try { localStorage.setItem('offline_products_v1', JSON.stringify(data)); } catch (e) {}
+                                }
+                                // اگر کاتالوگ روی همین گوشی باز است، همان لحظه رفرش
+                                try {
+                                    if (typeof catLoadProducts === 'function') await catLoadProducts();
+                                    if (typeof catRender === 'function') catRender();
+                                    if (document.documentElement.classList.contains('catalog-guest-mode') && typeof openCatalogPublic === 'function') {
+                                        window.__catOpenBusy = false;
+                                        openCatalogPublic();
+                                    }
+                                } catch (e2) {}
                             }
                         } catch (e) {}
-                    }, 400);
+                    })();
                 } catch (e) {}
 
                 loadInventory();
@@ -25020,28 +25059,32 @@ notify pgrst, 'reload schema';`;
     function catCat(p) {
         const c = catNorm(p.category || '');
         const n = catNorm(p.name || '');
+        // نگاشت دسته انبار (فارسی/انگلیسی)
+        if (c === 'sausage' || c.indexOf('سوسیس') >= 0 || c.indexOf('کالباس') >= 0) return 'sausage';
+        if (c === 'pickle' || c.indexOf('ترشی') >= 0 || c.indexOf('شور') >= 0 || c.indexOf('لواشک') >= 0) return 'pickle';
+        if (c === 'halva' || c.indexOf('حلوا') >= 0 || c.indexOf('شیرینی') >= 0) return 'halva';
+        if (c === 'dairy' || c.indexOf('لبنی') >= 0) return 'dairy';
+
         // سوسیس و کالباس
-        if (c === 'sausage' || /سوسیس|کالباس|هات\s*داگ|هاتداگ|همبرگر|ژامبون|مورتادلا|هات\s*داگ/.test(n)) return 'sausage';
-        // حلواجات / شیره / ارده
+        if (/سوسیس|کالباس|هات\s*داگ|هاتداگ|همبرگر|ژامبون|مورتادلا/.test(n)) return 'sausage';
+
+        // ترشیجات اول — قبل از حلوا و لبنیات (پرورده، بامیه، رب انار و ...)
         if (
-            c.indexOf('حلوا') >= 0 || c.indexOf('شیرینی') >= 0 ||
-            /حلوا|شیره|ارده|کرم\s*کنجد|کنجدی|عسل|مربا|مربّا|نبات|بامیه|نوتلا|شکلات|سس\s*شکلات|رب\s*انار|پودر\s*پسته|پسته\s*ساییده/.test(n)
-        ) return 'halva';
-        // ترشیجات / لواشک / ترشک / شور
-        if (
-            c.indexOf('ترشی') >= 0 ||
-            /ترشی|ترشک|لواشک|قره\s*قروت|قره‌قروت|خیار\s*شور|خیارشور|شور(?!با)|زیتون|بندری|لیته|هفت\s*بیجار|سیر\s*ترشی|کلم\s*شور|فلفل\s*ترشی|مخلوط|بادمجان|شکم\s*پر|آلبالو\s*ترشی|گوجه\s*سبز|غوره|هویج\s*شور|کرفس\s*شور/.test(n)
+            /ترشی|ترشک|لواشک|پرورده|بامیه|رب\s*انار|انار\s*رب|قره\s*قروت|قره‌قروت|خیار\s*شور|خیارشور|زیتون|بندری|لیته|هفت\s*بیجار|سیر\s*ترشی|کلم\s*شور|فلفل\s*ترشی|بادمجان|شکم\s*پر|آلبالو|گوجه\s*سبز|غوره|هویج\s*شور|کرفس\s*شور|شور\s*مخلوط|مخلوط\s*شور|سالاد\s*فصل|شور(?!با)/.test(n)
         ) {
+            // استثنا: فقط نام خالص لبنیات
             if (/^(ماست|پنیر|کشک|دوغ|کره|خامه|شیر)$/.test(n)) return 'dairy';
             return 'pickle';
         }
+
+        // حلواجات / شیره / ارده (بدون بامیه و رب انار)
+        if (/حلوا|شیره|ارده|کرم\s*کنجد|کنجدی|عسل|مربا|مربّا|نبات|نوتلا|شکلات|سس\s*شکلات|پودر\s*پسته|پسته\s*ساییده/.test(n)) {
+            return 'halva';
+        }
+
         // لبنیات
-        if (
-            c.indexOf('لبنی') >= 0 ||
-            /پنیر|ماست|کشک|دوغ|کره|خامه|شیر|سرشیر|کفیر|لور|کاله|آران|سرلاکت|آغوز/.test(n)
-        ) return 'dairy';
-        // پیش‌فرض بر اساس category انبار
-        if (c === 'sausage') return 'sausage';
+        if (/پنیر|ماست|کشک|دوغ|کره|خامه|شیر|سرشیر|کفیر|لور|کاله|آران|سرلاکت|آغوز/.test(n)) return 'dairy';
+
         return 'dairy';
     }
     function catLabel(k) {
