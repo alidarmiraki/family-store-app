@@ -177,7 +177,7 @@
         .cat-stat-row span{font-size:10px;opacity:.8}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v211 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v212 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -3952,7 +3952,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v211 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v212 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -4136,7 +4136,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=211', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=212', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -23864,8 +23864,65 @@ notify pgrst, 'reload schema';`;
     // مسیر پشتیبان: shared_config و جدول pay_link_settings
     async function payPullCfgFromCloud() {
         try {
-            if (typeof _supabase === 'undefined' || !_supabase) return false;
             let c = null;
+            const key = (typeof SUPABASE_KEY === 'string' && SUPABASE_KEY) ? SUPABASE_KEY : 'sb_publishable_k3wkzKalFmLFtfx8WZWr1g_fHKT-3Sl';
+            // REST مستقیم — برای مهمان کاتالوگ/اینستاگرام بدون نیاز به supabase-js
+            async function restJson(url) {
+                const ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+                const to = setTimeout(function () { try { if (ctl) ctl.abort(); } catch (e) {} }, 4500);
+                try {
+                    const r = await fetch(url, {
+                        headers: { apikey: key, Authorization: 'Bearer ' + key, Accept: 'application/json' },
+                        cache: 'no-store',
+                        signal: ctl ? ctl.signal : undefined
+                    });
+                    if (!r || !r.ok) return null;
+                    return await r.json();
+                } catch (e) { return null; }
+                finally { clearTimeout(to); }
+            }
+            try {
+                const hosts = [
+                    'https://kinjpmvoyioaslpdzujg.supabase.co',
+                    'https://shop-proxy-1.adarmiraki.workers.dev',
+                    'https://shop-proxy-1.adarmiraki.workers.dev/supabase'
+                ];
+                for (let hi = 0; hi < hosts.length && (!c || c.instaDisc == null); hi++) {
+                    const host = hosts[hi].replace(/\/$/, '');
+                    // app_shared_config
+                    const rows = await restJson(host + '/rest/v1/app_shared_config?id=eq.1&select=config');
+                    const row = Array.isArray(rows) ? rows[0] : rows;
+                    if (row && row.config) {
+                        const cfg = typeof row.config === 'string' ? JSON.parse(row.config) : row.config;
+                        if (cfg && cfg.payLink) c = Object.assign({}, c || {}, cfg.payLink);
+                    }
+                    if (!c || c.instaDisc == null) {
+                        const pl = await restJson(host + '/rest/v1/pay_link_settings?id=eq.1&select=*');
+                        const prow = Array.isArray(pl) ? pl[0] : pl;
+                        if (prow) {
+                            c = Object.assign({}, c || {}, {
+                                card: prow.card || (c && c.card),
+                                holder: prow.holder || (c && c.holder),
+                                phone: prow.phone || (c && c.phone),
+                                mins: prow.mins || (c && c.mins),
+                                instaDisc: prow.insta_disc != null ? Number(prow.insta_disc) : (c && c.instaDisc),
+                                instoreDisc: prow.instore_disc != null ? Number(prow.instore_disc) : (c && c.instoreDisc),
+                                shipCost: prow.ship_cost != null ? Number(prow.ship_cost) : (c && c.shipCost),
+                                shipNote: prow.ship_note || (c && c.shipNote),
+                                minOrder: prow.min_order != null ? Number(prow.min_order) : (c && c.minOrder),
+                                shopAddr: prow.shop_addr || (c && c.shopAddr),
+                                shopHours: prow.shop_hours || (c && c.shopHours),
+                                supportLink: prow.support_link || (c && c.supportLink),
+                                catalogBase: prow.catalog_base || (c && c.catalogBase),
+                                catalogShare: prow.catalog_share || (c && c.catalogShare)
+                            });
+                        }
+                    }
+                }
+            } catch (e) {}
+
+            if (typeof _supabase !== 'undefined' && _supabase) {
+            // ادامه با کلاینت سوپابیس
 
             // 1) app_shared_config.config.payLink
             try {
@@ -23909,9 +23966,16 @@ notify pgrst, 'reload schema';`;
                 } catch (e) {}
             }
 
+            } // end supabase client paths
+
             if (c && typeof c === 'object') {
-                // همیشه کامل ذخیره کن (حتی اگر فقط آدرس/تلفن باشد)
                 const prev = payLoadCfg();
+                // اعداد را عدد کن
+                if (c.instaDisc != null) c.instaDisc = Number(c.instaDisc);
+                if (c.instoreDisc != null) c.instoreDisc = Number(c.instoreDisc);
+                if (c.mins != null) c.mins = Number(c.mins);
+                if (c.minOrder != null) c.minOrder = Number(c.minOrder);
+                if (c.shipCost != null) c.shipCost = Number(c.shipCost);
                 paySaveCfg(Object.assign({}, prev, c, { syncedAt: new Date().toISOString() }));
                 return true;
             }
@@ -25662,11 +25726,12 @@ notify pgrst, 'reload schema';`;
         return Math.max(0, Number(cfg.shipCost) || 0);
     }
     function catDiscFor(recv, payMethod) {
-        const cfg = payLoadCfg();
-        // پرداخت حضوری (نقدی در فروشگاه) → تخفیف کمتر
+        const cfg = payLoadCfg() || {};
         const pm = payMethod || catFormDraft.payMethod || 'online';
         if (pm === 'cash') return Math.max(0, Number(cfg.instoreDisc) || 0);
-        return Math.max(0, Number(cfg.instaDisc) || 0);
+        // تخفیف آنلاین از تنظیمات مدیر — اگر هنوز همگام نشده، null نگذار
+        const d = Number(cfg.instaDisc);
+        return Math.max(0, Number.isFinite(d) ? d : 0);
     }
     function catUpsellHints() {
         const keys = Object.keys(catCart);
@@ -26507,51 +26572,78 @@ notify pgrst, 'reload schema';`;
 
     async function catNotifyNewOrder(row) {
         try {
-            if (!row) return;
+            if (!row) return false;
             var itemsHint = '';
             try {
                 var note = String(row.note || '');
-                var lines = note.split('\\n').filter(function (l) { return l.indexOf('•') === 0; }).slice(0, 8);
-                itemsHint = lines.join('\\n');
+                var lines = note.split('\n').filter(function (l) { return l.indexOf('•') === 0 || l.indexOf('-') === 0; }).slice(0, 10);
+                itemsHint = lines.join('\n');
             } catch (e) {}
             var payTxt = (row.pay_method === 'cash')
                 ? (row.delivery_type === 'delivery' ? 'پرداخت حضوری درب منزل' : 'پرداخت حضوری فروشگاه')
                 : 'پرداخت آنلاین / کارت‌به‌کارت';
-            var recvTxt = (row.delivery_type === 'pickup') ? 'تحویل حضوری فروشگاه' : ('ارسال درب منزل' + (row.address ? ('\\n📍 ' + row.address) : ''));
+            var recvTxt = (row.delivery_type === 'pickup') ? 'تحویل حضوری فروشگاه' : ('ارسال درب منزل' + (row.address ? ('\n📍 ' + row.address) : ''));
             var text =
-                '🛒 سفارش جدید — تازه مارکت\\n\\n' +
-                '🔖 پیگیری: ' + (row.order_code || '') + '\\n' +
-                '👤 ' + (row.customer_name || '') + '\\n' +
-                '📞 ' + (row.phone || '') + '\\n' +
-                '💰 مبلغ: ' + Number(row.amount || 0).toLocaleString('fa-IR') + ' تومان\\n' +
-                '💳 ' + payTxt + '\\n' +
-                '📦 ' + recvTxt + '\\n' +
-                (row.delivery_when ? ('⏰ ' + row.delivery_when + '\\n') : '') +
-                (row.status ? ('📌 وضعیت: ' + row.status + '\\n') : '') +
-                (itemsHint ? ('\\nاقلام:\\n' + itemsHint + '\\n') : '') +
-                '\\nاز پنل مدیر / لینک پرداخت سفارش را پیگیری کنید.';
+                '🛒 سفارش جدید — تازه مارکت\n\n' +
+                '🔖 پیگیری: ' + (row.order_code || '') + '\n' +
+                '👤 ' + (row.customer_name || '') + '\n' +
+                '📞 ' + (row.phone || '') + '\n' +
+                '💰 مبلغ: ' + Number(row.amount || 0).toLocaleString('fa-IR') + ' تومان\n' +
+                '💳 ' + payTxt + '\n' +
+                '📦 ' + recvTxt + '\n' +
+                (row.delivery_when ? ('⏰ ' + row.delivery_when + '\n') : '') +
+                (row.status ? ('📌 وضعیت: ' + row.status + '\n') : '') +
+                (itemsHint ? ('\nاقلام:\n' + itemsHint + '\n') : '') +
+                '\nاز پنل مدیر سفارش را پیگیری کنید.';
 
-            // روش ۱: تابع اصلی سایت
             try {
                 if (typeof sendTelegramNotification === 'function') {
                     await sendTelegramNotification(text);
-                    return;
                 }
             } catch (e) {}
 
-            // روش ۲: خواندن تنظیمات تلگرام از سوپابیس + ارسال مستقیم/پروکسی
             var botToken = '', chatId = '', enabled = true;
             try {
-                if (typeof _supabase !== 'undefined' && _supabase) {
-                    var { data } = await _supabase.from('telegram_settings').select('*').eq('id', 1).maybeSingle();
+                if (typeof getTelegramSettings === 'function') {
+                    var s = await getTelegramSettings(true);
+                    if (s) {
+                        botToken = String(s.botToken || '').trim();
+                        chatId = String(s.chatId || '').trim();
+                        if (s.enabled === false) enabled = false;
+                    }
+                }
+            } catch (e) {}
+            try {
+                if ((!botToken || !chatId) && typeof _supabase !== 'undefined' && _supabase) {
+                    var res = await _supabase.from('telegram_settings').select('*').eq('id', 1).maybeSingle();
+                    var data = res && res.data;
                     if (data) {
-                        botToken = String(data.bot_token || data.botToken || '').trim();
-                        chatId = String(data.chat_id || data.chatId || '').trim();
+                        botToken = String(data.bot_token || data.botToken || botToken || '').trim();
+                        chatId = String(data.chat_id || data.chatId || chatId || '').trim();
                         if (data.enabled === false || data.enabled === 0) enabled = false;
                     }
                 }
             } catch (e) {}
-            if (!enabled || !botToken || !chatId) return;
+            // REST تنظیمات تلگرام برای مهمان
+            if (!botToken || !chatId) {
+                try {
+                    var key = (typeof SUPABASE_KEY === 'string' && SUPABASE_KEY) ? SUPABASE_KEY : 'sb_publishable_k3wkzKalFmLFtfx8WZWr1g_fHKT-3Sl';
+                    var r = await fetch('https://kinjpmvoyioaslpdzujg.supabase.co/rest/v1/telegram_settings?id=eq.1&select=*', {
+                        headers: { apikey: key, Authorization: 'Bearer ' + key, Accept: 'application/json' },
+                        cache: 'no-store'
+                    });
+                    if (r && r.ok) {
+                        var arr = await r.json();
+                        var d0 = Array.isArray(arr) ? arr[0] : arr;
+                        if (d0) {
+                            botToken = String(d0.bot_token || d0.botToken || '').trim();
+                            chatId = String(d0.chat_id || d0.chatId || '').trim();
+                            if (d0.enabled === false || d0.enabled === 0) enabled = false;
+                        }
+                    }
+                } catch (e) {}
+            }
+            if (!enabled || !botToken || !chatId) return false;
 
             var bases = [];
             try {
@@ -26562,26 +26654,28 @@ notify pgrst, 'reload schema';`;
                     });
                 }
             } catch (e) {}
-            bases.push('https://api.telegram.org');
             bases.push('https://shop-proxy-1.adarmiraki.workers.dev/tg');
+            bases.push('https://api.telegram.org');
 
             for (var i = 0; i < bases.length; i++) {
                 try {
                     var base = bases[i].replace(/\/+$/, '');
                     var url = base + '/bot' + botToken + '/sendMessage';
-                    var res = await fetch(url, {
+                    var res2 = await fetch(url, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ chat_id: chatId, text: text })
                     });
-                    if (res && res.ok) {
-                        var j = await res.json().catch(function () { return null; });
-                        if (j && j.ok) return;
+                    if (res2 && res2.ok) {
+                        var j = await res2.json().catch(function () { return null; });
+                        if (j && j.ok) return true;
                     }
                 } catch (e) {}
             }
+            return false;
         } catch (e) {
             try { console.warn('catNotifyNewOrder', e); } catch (e2) {}
+            return false;
         }
     }
 
@@ -26731,8 +26825,16 @@ notify pgrst, 'reload schema';`;
 
             // تنظیمات محلی فوری
             let disc = 0, cfg = {};
+            try {
+                if (typeof payPullCfgFromCloud === 'function') {
+                    await payPullCfgFromCloud();
+                }
+            } catch (e) {}
             try { cfg = (typeof payLoadCfg === 'function') ? (payLoadCfg() || {}) : {}; } catch (e) { cfg = {}; }
-            try { disc = (typeof catDiscPct === 'function') ? (catDiscPct() || 0) : (Number(cfg.onlineDisc) || 0); } catch (e) {}
+            try {
+                disc = Number(cfg.instaDisc);
+                if (!Number.isFinite(disc)) disc = (typeof catDiscPct === 'function') ? (catDiscPct() || 0) : 0;
+            } catch (e) { disc = 0; }
 
             function buildShell() {
                 const allTabs = ['dairy', 'pickle', 'olive', 'lavashak', 'sausage', 'halva'];
@@ -27183,22 +27285,31 @@ notify pgrst, 'reload schema';`;
             (row.delivery_when ? '<div>زمان تحویل: ' + catEsc(row.delivery_when) + '</div>' : '') +
             (row.address ? '<div>آدرس/تحویل: ' + catEsc(row.address) + '</div>' : '') +
             '</div>' +
-            (row.pay_method === 'cash'
-                ? ('<div style="margin-top:8px;padding:8px;border-radius:10px;background:rgba(251,191,36,.12);font-size:12px;">💵 ' +
-                    (row.delivery_type === 'delivery' || (row.note && String(row.note).indexOf('درب منزل') >= 0)
-                        ? 'پرداخت حضوری — مبلغ هنگام تحویل درب منزل دریافت می‌شود'
-                        : 'پرداخت حضوری — مبلغ هنگام مراجعه به فروشگاه دریافت می‌شود') +
-                    '</div>')
-                : '') +
             (row.status === 'cancelled'
                 ? ('<div style="margin-top:8px;padding:12px;border-radius:14px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);font-size:13px;line-height:1.85;">' +
-                    '<b>❌ این سفارش از سیستم حذف/لغو شده است</b><br>' +
-                    catEsc(row.manager_note || row.cancel_reason || 'علت توسط فروشگاه ثبت شده است.') +
+                    '<b>❌ این سفارش لغو شده است</b><br>' +
+                    catEsc(row.cancel_reason || row.manager_note || 'علت ثبت شده است.') +
                     '<br><span style="opacity:.9;font-size:12px;">از همراهی‌تان سپاسگزاریم 🙏 · <b dir="ltr">@taze.market.ali</b></span></div>')
-                : '') +
+                : (row.pay_method === 'cash'
+                    ? ('<div style="margin-top:8px;padding:8px;border-radius:10px;background:rgba(251,191,36,.12);font-size:12px;">💵 ' +
+                        (row.delivery_type === 'delivery' || (row.note && String(row.note).indexOf('درب منزل') >= 0)
+                            ? 'پرداخت حضوری — مبلغ هنگام تحویل درب منزل دریافت می‌شود'
+                            : 'پرداخت حضوری — مبلغ هنگام مراجعه به فروشگاه دریافت می‌شود') +
+                        '</div>')
+                    : '')) +
             (row.status === 'open' || row.status === 'paying' ? '<a class="submit-btn" style="display:block;margin-top:14px;text-decoration:none;" href="' + catEsc(payLinkUrl(row.token)) + '">💳 ادامه / انجام پرداخت</a>' : '') +
             (row.status === 'problem' ? '<button type="button" class="submit-btn" style="margin-top:12px;" id="trackBtnFix">✏️ اصلاح و سفارش دوباره</button>' : '') +
-            (row.status === 'delivered' ? '<div style="margin:12px 0;padding:12px;border-radius:12px;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.4);font-size:13px;">🏁 سفارشتان تحویل شد. تا چند ثانیه به کاتالوگ برمی‌گردید...</div>' : '') +
+            (row.status === 'delivered' ? (
+                '<div style="margin:12px 0;padding:14px;border-radius:14px;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.4);font-size:13px;line-height:1.8;">🏁 سفارشتان تحویل شد. از خریدتان ممنونیم!</div>' +
+                '<div class="cat-survey" style="margin:12px 0;text-align:right;">' +
+                '<h3 style="margin:0 0 8px;">⭐ نظر شما درباره این سفارش</h3>' +
+                '<div class="cat-stars" id="trackSurveyStars">' +
+                [1,2,3,4,5].map(function(i){ return '<button type="button" data-s="'+i+'" onclick="catPickSurveyStar('+i+')">★</button>'; }).join('') +
+                '</div>' +
+                '<input type="text" id="catSurveyText" dir="auto" placeholder="نظر کوتاه (اختیاری)" style="width:100%;margin-top:8px;padding:10px;border-radius:10px;border:1px solid rgba(148,163,184,.3);background:#0f172a;color:#e2e8f0;font:inherit;">' +
+                '<button type="button" onclick="catSubmitSurvey()" style="width:100%;margin-top:10px;padding:12px;border:0;border-radius:12px;background:linear-gradient(100deg,#6366f1,#0ea5e9);color:#fff;font:inherit;font-weight:800;cursor:pointer;">ارسال نظر</button>' +
+                '</div>'
+            ) : '') +
             '<button type="button" class="row-btn fill-btn" style="width:100%;margin-top:10px;" id="trackBtnPrint">🖨️ چاپ فاکتور مشتری</button>' +
             '<button type="button" class="row-btn fill-btn" style="width:100%;margin-top:8px;" id="trackBtnCopyCode">📋 کپی شماره پیگیری</button>' +
             '<button type="button" class="row-btn fill-btn" style="width:100%;margin-top:8px;" id="trackBtnCopyLink">🔗 کپی لینک پیگیری</button>' +
@@ -27240,10 +27351,19 @@ notify pgrst, 'reload schema';`;
             bind('trackBtnCancel', function () { window.catCustomerCancelOrder(row); });
         }, 30);
 
-        // بعد از تحویل → بازگشت به کاتالوگ
-        if (row.status === 'delivered' && !window._trackDeliveredRedirect) {
-            window._trackDeliveredRedirect = orderCode;
-            setTimeout(function () { location.href = '?catalog=1'; }, 5000);
+        // بعد از تحویل: نظرسنجی نشان داده می‌شود؛ بعد از ۳۰ ثانیه اگر نخواست به کاتالوگ برگردد
+        if (row.status === 'delivered') {
+            try { catPickSurveyStar(5); } catch (e) {}
+            if (!window._trackDeliveredRedirect) {
+                window._trackDeliveredRedirect = orderCode;
+                setTimeout(function () {
+                    try {
+                        if (!sessionStorage.getItem('cat_survey_done_' + orderCode)) {
+                            // هنوز فرصت نظر دارد — اجبار به ترک صفحه نکن
+                        }
+                    } catch (e) {}
+                }, 30000);
+            }
         }
 
         try {
@@ -27257,32 +27377,59 @@ notify pgrst, 'reload schema';`;
     window.catCustomerCancelOrder = async function (row) {
         if (!row || !row.token) return;
         const paid = ['receipt', 'approved', 'preparing', 'ready', 'shipped', 'delivered'].indexOf(row.status) >= 0 && row.pay_method !== 'cash';
-        const cfg = payLoadCfg();
+        const cfg = payLoadCfg() || {};
         const mgrPhone = cfg.phone || '';
-        let msg = 'سفارش لغو شود؟';
         if (paid) {
-            msg = 'این سفارش پرداخت شده است.\nبرای برگشت وجه با مدیر تماس بگیرید' + (mgrPhone ? (': ' + mgrPhone) : '') + '\n\nآیا از لغو مطمئن هستید؟';
+            const ok = confirm('این سفارش پرداخت شده است.\nبرای برگشت وجه با مدیر تماس بگیرید' + (mgrPhone ? (': ' + mgrPhone) : '') + '\n\nآیا از لغو مطمئن هستید؟');
+            if (!ok) return;
+        } else {
+            if (!confirm('سفارش لغو شود؟')) return;
         }
-        if (!confirm(msg)) return;
+        let reason = '';
+        try {
+            reason = window.prompt('لطفاً دلیل لغو سفارش را بنویسید (برای فروشگاه ارسال می‌شود):', '') || '';
+        } catch (e) { reason = ''; }
+        reason = String(reason || '').trim() || 'بدون توضیح';
+        const cancelNote = 'لغو توسط مشتری: ' + reason;
         try {
             if (typeof _supabase !== 'undefined' && _supabase) {
                 await _supabase.from('payment_links').update({
                     status: 'cancelled',
-                    manager_note: (row.manager_note ? row.manager_note + '\n' : '') + 'لغو توسط مشتری'
+                    cancel_reason: reason,
+                    manager_note: (row.manager_note ? row.manager_note + '\n' : '') + cancelNote,
+                    cancelled_at: new Date().toISOString()
                 }).eq('token', row.token);
             }
         } catch (e) {}
         try {
             const local = payLocalAll().map(function (r) {
-                if (r.token === row.token) return Object.assign({}, r, { status: 'cancelled' });
+                if (r.token === row.token) return Object.assign({}, r, { status: 'cancelled', cancel_reason: reason, manager_note: cancelNote });
                 return r;
             });
             payLocalSave(local);
         } catch (e) {}
+        // اطلاع به مدیر
+        try {
+            await catNotifyNewOrder(Object.assign({}, row, {
+                status: 'cancelled',
+                note: (row.note || '') + '\n❌ لغو توسط مشتری\nدلیل: ' + reason,
+                amount: row.amount
+            }));
+            // پیام اختصاصی لغو
+            var cancelText = '❌ لغو سفارش توسط مشتری\n\n' +
+                '🔖 ' + (row.order_code || '') + '\n' +
+                '👤 ' + (row.customer_name || '') + '\n' +
+                '📞 ' + (row.phone || '') + '\n' +
+                '💰 ' + Number(row.amount || 0).toLocaleString('fa-IR') + ' تومان\n' +
+                '📝 دلیل: ' + reason;
+            if (typeof sendTelegramNotification === 'function') await sendTelegramNotification(cancelText);
+            else await catNotifyNewOrder(Object.assign({}, row, { note: cancelText, status: 'cancelled' }));
+        } catch (e) {}
         if (paid && mgrPhone) {
-            alert('سفارش لغو شد.\nبرای برگشت وجه با این شماره تماس بگیرید:\n' + mgrPhone);
+            alert('سفارش لغو شد.\nدلیل شما ثبت شد.\nبرای برگشت وجه با این شماره تماس بگیرید:\n' + mgrPhone);
         } else {
-            if (typeof catToast === 'function') catToast('سفارش لغو شد', true);
+            if (typeof catToast === 'function') catToast('سفارش لغو شد — دلیل برای فروشگاه ارسال شد', true);
+            else alert('سفارش لغو شد');
         }
         openTrackPublic(row.order_code || row.token, { silent: false });
     };
