@@ -177,7 +177,7 @@
         .cat-stat-row span{font-size:10px;opacity:.8}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v199 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v201 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -3825,7 +3825,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v199 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v201 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -4009,7 +4009,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=199', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=201', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -11931,7 +11931,7 @@ function sbRenderAdminLists(cfg) {
                 .select('type, created_at')
                 .eq('seller_name', currentUserLabel)
                 .order('created_at', { ascending: false })
-                .limit(10), 12000, 'بررسی شیفت قبلی');
+                .limit(10), 6000, 'بررسی شیفت قبلی');
             if (!data || data.length === 0) return null;
             // «مرخصی» رو نادیده می‌گیریم و دنبال آخرین ورود/خروج واقعی می‌گردیم — وگرنه اگه
             // فروشنده به‌جای ثبت خروجِ جاافتاده، مستقیم یه مرخصی بزنه، آخرین رکورد «مرخصی»
@@ -11991,19 +11991,46 @@ function sbRenderAdminLists(cfg) {
 
         async function getTodayAttendanceStatus() {
             const todayISO = getTehranISODate(new Date());
-            const { data } = await withTimeout(_supabase.from('attendance')
-                .select('type, created_at, note')
-                .eq('seller_name', currentUserLabel)
-                .order('created_at', { ascending: true }), 12000, 'بررسی وضعیت امروز');
-            const todayRecords = (data || []).filter(r => getTehranISODate(new Date(r.created_at)) === todayISO);
-            // خروج جاافتاده (مال یه شیفت قبلی که همین امروز داره جبران/ثبت می‌شه) نباید به‌عنوان
-            // «خروج امروز» حساب بشه — وگرنه بلافاصله بعد از ثبت ورود واقعی امروز، سیستم فکر می‌کنه
-            // شیفت امروز از قبل کامل شده و می‌پره روی «مرخصی»
+            const localKey = 'att_local_' + String(currentUserLabel || '') + '_' + todayISO;
+            let local = {};
+            try { local = JSON.parse(localStorage.getItem(localKey) || '{}') || {}; } catch (e) { local = {}; }
+
+            let todayRecords = [];
+            try {
+                // فقط ۲۴ ساعت اخیر — سبک‌تر و سریع‌تر از کل تاریخچه
+                const since = new Date(Date.now() - 36 * 3600 * 1000).toISOString();
+                const { data, error } = await withTimeout(_supabase.from('attendance')
+                    .select('type, created_at, note')
+                    .eq('seller_name', currentUserLabel)
+                    .gte('created_at', since)
+                    .order('created_at', { ascending: true }), 6000, 'بررسی وضعیت امروز');
+                if (!error && data) {
+                    todayRecords = data.filter(r => getTehranISODate(new Date(r.created_at)) === todayISO);
+                }
+            } catch (e) {
+                console.warn('getTodayAttendanceStatus', e);
+            }
+
+            let hasEntry = todayRecords.some(r => r.type === 'entry') || !!local.hasEntry;
+            let hasExit = todayRecords.some(r => r.type === 'exit' && !(r.note && String(r.note).includes('خروج جاافتاده'))) || !!local.hasExit;
+            // اگر لوکال می‌گوید ورود زده ولی سرور هنوز نرسیده، همان را باور کن
             return {
-                hasEntry: todayRecords.some(r => r.type === 'entry'),
-                hasExit: todayRecords.some(r => r.type === 'exit' && !(r.note && r.note.includes('خروج جاافتاده'))),
-                records: todayRecords
+                hasEntry: hasEntry,
+                hasExit: hasExit,
+                records: todayRecords,
+                local: local
             };
+        }
+        function markLocalAttendance(type) {
+            try {
+                const todayISO = getTehranISODate(new Date());
+                const localKey = 'att_local_' + String(currentUserLabel || '') + '_' + todayISO;
+                const local = JSON.parse(localStorage.getItem(localKey) || '{}') || {};
+                if (type === 'entry') local.hasEntry = true;
+                if (type === 'exit') local.hasExit = true;
+                local.ts = Date.now();
+                localStorage.setItem(localKey, JSON.stringify(local));
+            } catch (e) {}
         }
 
         // دکمه «نوع ثبت» را خودکار روی گزینه‌ی درست می‌گذارد تا اشتباهی «ورود» زده نشود
@@ -12769,7 +12796,7 @@ function sbRenderAdminLists(cfg) {
                 // خطای روشن ببینه و بتونه دوباره تلاش کنه یا از چهره اختصاصی استفاده کنه.
                 const credential = await Promise.race([
                     credentialPromise,
-                    new Promise((_, reject) => setTimeout(() => reject(new DOMException('سنسور گوشی بیش از ۲۰ ثانیه جواب نداد', 'TimeoutError')), 20000))
+                    new Promise((_, reject) => setTimeout(() => reject(new DOMException('سنسور گوشی بیش از ۱۲ ثانیه جواب نداد', 'TimeoutError')), 12000))
                 ]);
 
                 if (!credential) { showToast('⛔ ثبت اثر انگشت لغو شد.'); return; }
@@ -12843,7 +12870,7 @@ function sbRenderAdminLists(cfg) {
             const [deviceResult, faceResult] = await withTimeout(Promise.all([
                 _supabase.from('staff_devices').select('*').eq('username', currentSessionUser.username).maybeSingle(),
                 _supabase.from('staff_face_data').select('username').eq('username', currentSessionUser.username).maybeSingle()
-            ]), 12000, 'بررسی اثر انگشت ثبت‌شده');
+            ]), 5000, 'بررسی اثر انگشت ثبت‌شده');
             const deviceRow = deviceResult.data;
             const deviceErr = deviceResult.error;
             const hasCustomFace = !!(faceResult.data);
@@ -12892,7 +12919,7 @@ function sbRenderAdminLists(cfg) {
                 // سراغ روش جایگزین (تشخیص چهره اختصاصی یا ادامه با عکس/موقعیت مکانی).
                 const assertion = await Promise.race([
                     credentialPromise,
-                    new Promise((_, reject) => setTimeout(() => reject(new DOMException('سنسور گوشی بیش از ۲۰ ثانیه جواب نداد', 'TimeoutError')), 20000))
+                    new Promise((_, reject) => setTimeout(() => reject(new DOMException('سنسور گوشی بیش از ۱۲ ثانیه جواب نداد', 'TimeoutError')), 12000))
                 ]);
 
                 if (!assertion) {
@@ -13048,6 +13075,12 @@ function sbRenderAdminLists(cfg) {
             }
         }
 
+        function attResetSubmitBtn() {
+            try {
+                const b = document.querySelector('#attendanceTab .submit-btn');
+                if (b) { b.disabled = false; b.innerText = 'ثبت در سیستم حضور و غیاب'; }
+            } catch (e) {}
+        }
         async function submitAttendance() {
             const type = document.getElementById('attType').value;
             const val = parseFloat(document.getElementById('attOvertimeVal').value) || 0;
@@ -13082,14 +13115,17 @@ function sbRenderAdminLists(cfg) {
                     offline_queued: true
                 };
                 queueOfflineAttendance(payload);
+                try { markLocalAttendance(type); } catch (e) {}
                 selectedPhotoDataUrl = null;
                 selectedLocationText = null;
                 try { document.getElementById('attNote').value = ''; } catch (e) {}
+                attResetSubmitBtn();
                 return;
             }
 
             if (type !== 'leave' && type !== 'leave_hourly' && !selectedPhotoDataUrl && !selectedLocationText) {
                 showToast('⛔ خطا: جهت ثبت ورود و خروج ارسال عکس یا موقعیت مکانی **الزامی** می‌باشد!');
+                attResetSubmitBtn();
                 return;
             }
 
@@ -13162,6 +13198,7 @@ function sbRenderAdminLists(cfg) {
                     showToast(`⛔ دفعه قبل (${missedDateFa}) یادت رفت خروج بزنی! این سری فقط خروج همون شیفت رو بزن — دفعه بعد حتماً همون شب یادت باشه، خودم بهت یادآوری می‌کنم.`);
                     document.getElementById('attType').value = 'exit';
                     toggleAttendanceFields();
+                    attResetSubmitBtn();
                     return;
                 }
             }
@@ -13188,6 +13225,7 @@ function sbRenderAdminLists(cfg) {
                     showToast('⛔ شما هنوز امروز «ورود» ثبت نکرده‌اید؛ ابتدا باید ورود بزنید.');
                     document.getElementById('attType').value = 'entry';
                     toggleAttendanceFields();
+                    attResetSubmitBtn();
                     return;
                 }
                 if (type === 'exit' && status.hasExit) {
@@ -13382,14 +13420,35 @@ function sbRenderAdminLists(cfg) {
 
                     photoUrl = publicUrlData ? publicUrlData.publicUrl : null;
                 } catch (uploadErr) {
-                    if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'ثبت در سیستم حضور و غیاب'; }
-                    showToast(`❌ آپلود عکس با مشکل مواجه شد و ثبت انجام نشد.\n\n📶 دلیل احتمالی: اینترنت شما (وای‌فای یا موبایل‌دیتا) در همین لحظه ضعیف یا قطع است.\n\nلطفاً:\n۱) آنتن یا وای‌فای خودتان را چک کنید و اگر می‌شود به یک سیگنال قوی‌تر وصل شوید\n۲) دوباره روی دکمه «ثبت در سیستم حضور و غیاب» بزنید\n۳) اگر باز هم درست نشد، می‌توانید به‌جای عکس از گزینه «📍 موقعیت مکانی» استفاده کنید که حجم کمتری دارد\n\n(جزئیات فنی: ${uploadErr.message})`);
-                    const wantsNotify = await showConfirm('آیا می‌خواهید همین الان یک پیام برای مدیر ارسال شود که در ثبت حضور/غیاب با مشکل اینترنت مواجه شده‌اید تا مدیر در جریان باشد؟');
-                    if (wantsNotify) {
-                        await notifyAdminAboutAttendanceIssue('خطا در آپلود عکس (احتمالاً به دلیل اینترنت ضعیف): ' + uploadErr.message);
-                        showToast('✅ پیام برای مدیر ارسال شد.');
+                    // دیگر کل ثبت را خراب نکن: اگر موقعیت هست بدون عکس ادامه بده،
+                    // وگرنه روی صف آفلاین بگذار تا بعداً ارسال شود
+                    if (selectedLocationText) {
+                        photoUrl = null;
+                        showToast('⚠️ آپلود عکس نشد؛ با موقعیت مکانی ادامه می‌دهیم...');
+                    } else {
+                        try {
+                            queueOfflineAttendance({
+                                seller_name: currentUserLabel,
+                                type: type,
+                                note: (note || '') + (note ? ' | ' : '') + 'ثبت آفلاین (خطا آپلود عکس) — ' + new Date().toLocaleString('fa-IR'),
+                                created_at: new Date().toISOString(),
+                                location_text: null,
+                                photo_data_url: selectedPhotoDataUrl ? String(selectedPhotoDataUrl).slice(0, 400000) : null,
+                                offline_queued: true,
+                                overtime_hours: overtimeHours || 0,
+                                delay_minutes: delayMinutes,
+                                exit_diff_minutes: exitDiffMinutes
+                            });
+                            markLocalAttendance(type);
+                            selectedPhotoDataUrl = null;
+                            selectedLocationText = null;
+                            showToast('📴 اینترنت برای آپلود عکس ضعیف بود؛ ورود/خروج روی گوشی ذخیره شد و به‌محض آنلاین شدن ارسال می‌شود.');
+                        } catch (qe) {
+                            showToast('❌ آپلود عکس و ذخیره آفلاین ناموفق: ' + (uploadErr.message || uploadErr));
+                        }
+                        if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'ثبت در سیستم حضور و غیاب'; }
+                        return;
                     }
-                    return;
                 }
                 if (submitBtn) { submitBtn.innerText = '⏳ در حال ثبت...'; }
             }
@@ -13444,7 +13503,9 @@ function sbRenderAdminLists(cfg) {
             if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'ثبت در سیستم حضور و غیاب'; }
 
             if (!error) {
-                let successMsg = `✅ اطلاعات حضور و غیاب با موفقیت ثبت گردید.\n⏱️ زمان ثبت: ${fullDateTimeStr}`;
+                try { markLocalAttendance(type); } catch (e) {}
+                let successMsg = `✅ اطلاعات حضور و غیاب با موفقیت ثبت گردید.
+⏱️ زمان ثبت: ${fullDateTimeStr}`;
                 if (type === 'entry' && (currentRole === 'morning_seller' || currentRole === 'evening_seller')) {
                     successMsg += `\n\n👋 ورودت رو ثبت کردم، خوش اومدی!`;
                 }
@@ -13611,15 +13672,32 @@ function sbRenderAdminLists(cfg) {
                 try { checkAttendanceReminders(); } catch (e) {}
                 syncAttendanceTypeSelector();
             } else {
-                showToast(`❌ ثبت حضور و غیاب ذخیره نشد.\n\n📶 دلیل احتمالی: قطعی یا ضعف اینترنت شما در این لحظه بوده است.\n\nلطفاً چند ثانیه صبر کنید و دوباره روی دکمه «ثبت در سیستم حضور و غیاب» بزنید. اگر چند بار امتحان کردید و باز هم ثبت نشد، می‌توانید به مدیر اطلاع دهید.\n\n(جزئیات فنی: ${error.message})`);
-                const wantsNotify = await showConfirm('آیا می‌خواهید همین الان یک پیام برای مدیر ارسال شود که در ثبت حضور/غیاب مشکل داشته‌اید؟');
-                if (wantsNotify) {
-                    await notifyAdminAboutAttendanceIssue('خطا در ذخیره رکورد حضور و غیاب: ' + error.message);
-                    showToast('✅ پیام برای مدیر ارسال شد.');
+                try {
+                    queueOfflineAttendance({
+                        seller_name: currentUserLabel,
+                        type: type,
+                        overtime_hours: overtimeHours || 0,
+                        delay_minutes: delayMinutes,
+                        exit_diff_minutes: exitDiffMinutes,
+                        photo_url: photoUrl || null,
+                        note: (note ? note + ' | ' : '') + (selectedLocationText ? selectedLocationText + ' | ' : '') + 'ثبت آفلاین (خطا سرور) — ' + fullDateTimeStr,
+                        created_at: now.toISOString(),
+                        photo_data_url: (!photoUrl && selectedPhotoDataUrl) ? String(selectedPhotoDataUrl).slice(0, 400000) : null,
+                        offline_queued: true
+                    });
+                    markLocalAttendance(type);
+                    selectedPhotoDataUrl = null;
+                    selectedLocationText = null;
+                    try { document.getElementById('attNote').value = ''; } catch (e) {}
+                    try { syncAttendanceTypeSelector(); } catch (e) {}
+                    showToast('📴 اینترنت/سرور الان جواب نداد؛ ورود/خروج روی گوشی ذخیره شد و به‌محض آنلاین شدن برای مدیر ارسال می‌شود.\n⏱️ ' + fullDateTimeStr);
+                } catch (qe) {
+                    showToast('❌ ثبت حضور ذخیره نشد: ' + (error && error.message ? error.message : error));
                 }
             }
 
             } catch (unexpectedErr) {
+                try { attResetSubmitBtn(); } catch (e) {}
                 // یعنی یک خطای پیش‌بینی‌نشده (غیر از خطاهای عادی که بالاتر مدیریت شده‌اند) رخ
                 // داده — مثلاً قطع ناگهانی اینترنت وسط کار، خطای دوربین/موقعیت مکانی، یا خطای
                 // بیومتریک. دکمه را از حالت یخ‌زده خارج می‌کنیم تا کاربر گیر نکند.
@@ -14540,6 +14618,22 @@ function sbRenderAdminLists(cfg) {
                 try {
                     const row = Object.assign({}, entry);
                     delete row.queuedAt;
+                    // اگر عکس فقط روی گوشی مانده، اول آپلود کن
+                    if (row.photo_data_url && !row.photo_url) {
+                        try {
+                            const blob = await (await fetch(row.photo_data_url)).blob();
+                            const safeName = String(row.seller_name || 'user').replace(/[^a-zA-Z0-9_-]+/g, '_');
+                            const fileName = 'offline_' + safeName + '_' + Date.now() + '.jpg';
+                            const up = await _supabase.storage.from(ATTENDANCE_BUCKET).upload(fileName, blob, { contentType: 'image/jpeg', upsert: true });
+                            if (!up.error) {
+                                const { data: pub } = _supabase.storage.from(ATTENDANCE_BUCKET).getPublicUrl(fileName);
+                                if (pub && pub.publicUrl) row.photo_url = pub.publicUrl;
+                            }
+                        } catch (pe) { console.warn('offline photo up', pe); }
+                    }
+                    delete row.photo_data_url;
+                    delete row.offline_queued;
+                    delete row.location_text;
                     const { error } = await _supabase.from('attendance').insert([row]);
                     if (error) throw error;
                     queue.shift();
@@ -24833,6 +24927,27 @@ notify pgrst, 'reload schema';`;
     }
 
     // لیست پایه برای REST — مستقیم + پروکسی‌ها (اینستاگرام گاهی یکی را بلاک می‌کند)
+    function catWithTimeout(promise, ms, fallback) {
+        return new Promise(function (resolve) {
+            var done = false;
+            var timer = setTimeout(function () {
+                if (done) return;
+                done = true;
+                resolve(fallback);
+            }, ms || 4000);
+            Promise.resolve(promise).then(function (v) {
+                if (done) return;
+                done = true;
+                clearTimeout(timer);
+                resolve(v);
+            }, function () {
+                if (done) return;
+                done = true;
+                clearTimeout(timer);
+                resolve(fallback);
+            });
+        });
+    }
     function catRestBases() {
         const bases = [];
         const add = function (u) {
@@ -24866,7 +24981,14 @@ notify pgrst, 'reload schema';`;
                 'Range-Unit': 'items',
                 Range: from + '-' + (from + page - 1)
             };
-            const res = await fetch(url, { headers: headers, cache: 'no-store', mode: 'cors' });
+            const ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+            const to = setTimeout(function () { try { if (ctl) ctl.abort(); } catch (e) {} }, 4500);
+            let res;
+            try {
+                res = await fetch(url, { headers: headers, cache: 'no-store', mode: 'cors', signal: ctl ? ctl.signal : undefined });
+            } finally {
+                clearTimeout(to);
+            }
             if (!res || !res.ok) throw new Error('HTTP ' + (res && res.status));
             const chunk = await res.json();
             if (!Array.isArray(chunk) || !chunk.length) break;
@@ -24883,21 +25005,34 @@ notify pgrst, 'reload schema';`;
         const bases = catRestBases();
         const errors = [];
         // موازی: اولین پاسخ موفق برنده است
-        const tasks = bases.map(function (base) {
-            return catFetchProductsFromBase(base, key).then(function (rows) {
-                if (rows && rows.length) return rows;
-                throw new Error('empty from ' + base);
-            }).catch(function (err) {
-                errors.push(String(err && err.message || err));
-                return null;
+        // اولین پاسخ موفق؛ بقیه را معطل نمی‌مانیم
+        return await new Promise(function (resolve) {
+            var settled = false;
+            var pending = bases.length;
+            if (!pending) { resolve([]); return; }
+            bases.forEach(function (base) {
+                catFetchProductsFromBase(base, key).then(function (rows) {
+                    pending--;
+                    if (!settled && rows && rows.length) {
+                        settled = true;
+                        resolve(rows);
+                    } else if (!settled && pending <= 0) {
+                        settled = true;
+                        resolve([]);
+                    }
+                }).catch(function (err) {
+                    pending--;
+                    errors.push(String(err && err.message || err));
+                    if (!settled && pending <= 0) {
+                        settled = true;
+                        resolve([]);
+                    }
+                });
             });
+            setTimeout(function () {
+                if (!settled) { settled = true; resolve([]); }
+            }, 5500);
         });
-        const results = await Promise.all(tasks);
-        for (let i = 0; i < results.length; i++) {
-            if (results[i] && results[i].length) return results[i];
-        }
-        if (errors.length) throw new Error(errors[0]);
-        return [];
     }
 
     async function catLoadProducts() {
@@ -24917,7 +25052,7 @@ notify pgrst, 'reload schema';`;
         }
         async function tryClient() {
             try {
-                const ready = await catWaitSupabase(inApp ? 2500 : 8000);
+                const ready = await catWaitSupabase(inApp ? 800 : 5000);
                 if (!ready || typeof _supabase === 'undefined' || !_supabase) return;
                 const pageSize = 1000;
                 let from = 0;
@@ -26122,7 +26257,9 @@ notify pgrst, 'reload schema';`;
     };
 
     async function openCatalogPublic() {
-
+        if (window.__catOpenBusy) return;
+        window.__catOpenBusy = true;
+        try {
         document.documentElement.classList.add('catalog-guest-mode');
         document.title = 'کاتالوگ تازه مارکت';
         const view = document.getElementById('catalogPublicView');
@@ -26145,20 +26282,18 @@ notify pgrst, 'reload schema';`;
                 '<div style="margin-top:10px;font-size:14px;opacity:.9;line-height:1.8;">در حال ورود به کاتالوگ فروشگاه<br><b>تازه مارکت</b></div></div>';
         }
 
-        // چند بار تلاش تا محصول‌ها از سرور همگام شوند (گوشی جدید کش ندارد)
-        for (let attempt = 0; attempt < 3; attempt++) {
-            await catLoadProducts();
-            if (catProducts && catProducts.length) break;
-            await new Promise(function (r) { setTimeout(r, 600 * (attempt + 1)); });
-        }
-        try { await payPullCfgFromCloud(); } catch (e) {}
+        // بارگذاری سریع با سقف زمانی — اینستاگرام نباید گیر کند
+        try {
+            await catWithTimeout(catLoadProducts(), catIsInAppBrowser() ? 6000 : 9000, catProducts || []);
+        } catch (e) {}
+        if (!Array.isArray(catProducts)) catProducts = [];
+        try { await catWithTimeout(Promise.resolve(payPullCfgFromCloud()), 2500, null); } catch (e) {}
         const disc = catDiscPct();
         const cfg = payLoadCfg();
 
         // تب‌ها: لبنیات · ترشیجات · سوسیس‌وکالباس · حلواجات
         const hasHalva = catProducts.some(function (p) { return catCat(p) === 'halva'; });
         const tabsList = ['dairy', 'pickle', 'sausage'].concat(hasHalva ? ['halva'] : []);
-        // اگر تب فعلی خالی است، اولین تب دارای کالا را باز کن
         (function pickTab() {
             const countIn = function (k) {
                 return catProducts.filter(function (p) { return catCat(p) === k; }).length;
@@ -26171,7 +26306,15 @@ notify pgrst, 'reload schema';`;
         })();
         const minOrder = Number(cfg.minOrder) || 0;
         const support = cfg.supportLink || (cfg.phone ? ('tel:' + cfg.phone) : '');
-        try { window.__catSuccessOrders = await catFetchSuccessOrderCount(); } catch (e) { window.__catSuccessOrders = 0; }
+        // شمارش سفارش را بلاک نکن — بعداً پر می‌شود
+        window.__catSuccessOrders = window.__catSuccessOrders || 0;
+        try {
+            catWithTimeout(catFetchSuccessOrderCount(), 4000, 0).then(function (n) {
+                window.__catSuccessOrders = n || 0;
+                var el = document.querySelector('.cat-stat-row div:nth-child(2) b');
+                if (el) el.textContent = Number(n || 0).toLocaleString('fa-IR');
+            });
+        } catch (e) {}
 
         inner.innerHTML =
             '<div id="catPageHome">' +
@@ -26228,6 +26371,9 @@ notify pgrst, 'reload schema';`;
             clearInterval(window._catLiveT);
             window._catLiveT = setInterval(function () { try { catSyncLiveCart(); } catch (e) {} }, 20000);
         } catch (e) {}
+        } finally {
+            window.__catOpenBusy = false;
+        }
     }
 
     window.catShowPage = function (page) {
@@ -26876,10 +27022,13 @@ notify pgrst, 'reload schema';`;
             if (u.searchParams.get('catalog') === '1' || /catalog/i.test(u.hash || '')) {
                 document.documentElement.classList.add('catalog-guest-mode');
                 openCatalogPublic();
-                // چند بار بعد از آماده شدن سوپابیس دوباره همگام شود
-                setTimeout(function () { openCatalogPublic(); }, 400);
-                setTimeout(function () { openCatalogPublic(); }, 1500);
-                setTimeout(function () { openCatalogPublic(); }, 3500);
+                // فقط یک تلاش کمکی کوتاه — رفرش مکرر باعث گیر کردن صفحه لود می‌شد
+                setTimeout(function () {
+                    try {
+                        if (!document.querySelector('.cat-hero')) openCatalogPublic();
+                        else if (!(window.catProducts && catProducts.length)) openCatalogPublic();
+                    } catch (e) {}
+                }, 2000);
             }
         } catch (e) {}
     }
