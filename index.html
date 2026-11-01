@@ -177,7 +177,7 @@
         .cat-stat-row span{font-size:10px;opacity:.8}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v206 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v207 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2999,26 +2999,34 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <label>نام محصول:</label>
         <input type="text" id="pName" dir="auto" placeholder="مثلاً پنیر محلی">
 
-        <label>📷 عکس محصول (برای کاتالوگ اینستا):</label>
-        <input type="file" id="pImageFile" accept="image/*" onchange="previewProductImage(event)">
-        <input type="hidden" id="pImageUrl" value="">
-        <img id="pImagePreview" class="photo-preview" style="display:none;max-height:160px;border-radius:12px;margin-top:6px;">
-        <div class="hint">عکس واضح از خود محصول بگذار تا در کاتالوگ آنلاین همان عکس نشان داده شود.</div>
-
-        <div class="report-card" style="margin:10px 0;padding:10px;border-color:rgba(245,158,11,.35);">
+        <div class="report-card" style="margin:10px 0;padding:12px;border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.06);">
+            <div style="font-weight:800;color:#fbbf24;margin-bottom:8px;">📱 تنظیمات کاتالوگ اینستاگرام (تازه مارکت)</div>
             <label style="display:flex;align-items:center;gap:8px;margin-top:0;cursor:pointer;">
                 <input type="checkbox" id="pCatalogShow" style="width:auto;" checked>
-                📱 نمایش این کالا در کاتالوگ اینستاگرام (تازه مارکت)
+                نمایش این کالا در کاتالوگ آنلاین
             </label>
-            <div class="hint" style="margin-top:4px;">فقط کالاهایی که این گزینه برایشان روشن باشد در لینک کاتالوگ مشتری دیده می‌شوند.</div>
+            <div class="hint" style="margin-top:4px;">نامی که بالا می‌نویسی <b>همان نام کاتالوگ</b> است. با ذخیره، همان لحظه در کاتالوگ هم عوض می‌شود.</div>
+            <label style="margin-top:10px;">📷 عکس مخصوص کاتالوگ:</label>
+            <input type="file" id="pImageFile" accept="image/*" capture="environment" onchange="previewProductImage(event)">
+            <input type="hidden" id="pImageUrl" value="">
+            <input type="hidden" id="pClearImage" value="0">
+            <img id="pImagePreview" class="photo-preview" style="display:none;max-height:160px;border-radius:12px;margin-top:6px;">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+                <button type="button" class="row-btn edit-btn" style="width:auto;padding:8px 12px;font-size:12px;" onclick="document.getElementById('pImageFile').click()">🖼️ انتخاب / تعویض عکس</button>
+                <button type="button" class="row-btn" style="width:auto;padding:8px 12px;font-size:12px;background:#ef4444;" onclick="clearProductCatalogImage()">🗑️ حذف عکس کاتالوگ</button>
+            </div>
+            <div class="hint" style="margin-top:6px;">عکس جدید جایگزین قبلی می‌شود. حذف عکس یعنی در کاتالوگ فقط ایموجی دسته نشان داده شود.</div>
         </div>
 
-        <label>نوع کالا:</label>
+        <label>نوع کالا (برای دسته‌بندی کاتالوگ و فروش):</label>
         <select id="pCategory" onchange="updatePricingAdvisor()">
-            <option value="general">🧀 لبنیات و ترشیجات (عادی)</option>
+            <option value="dairy">🧀 لبنیات</option>
+            <option value="pickle">🥒 ترشیجات</option>
             <option value="sausage">🌭 سوسیس و کالباس</option>
+            <option value="halva">🍯 حلواجات</option>
+            <option value="general">📦 عمومی</option>
         </select>
-        <div class="hint">کالاهایی که نوع آن‌ها «سوسیس و کالباس» انتخاب شود، فقط در تب مخصوص «ثبت فروش سوسیس و کالباس» به‌عنوان پیشنهاد نمایش داده می‌شوند.</div>
+        <div class="hint">با انتخاب «ترشیجات» کالا در تب ترشیجات کاتالوگ می‌آید (مثلاً بامیه، پرورده، رب انار).</div>
 
         <label>ظرفیت ظرف یخچال غرفه (کیلوگرم):</label>
         <input type="text" inputmode="decimal" id="pCapacity" step="0.1" value="7.0" placeholder="مثلاً 7 کیلو">
@@ -3942,7 +3950,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v206 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v207 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -4126,7 +4134,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=206', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=207', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -14923,10 +14931,32 @@ function sbRenderAdminLists(cfg) {
             }
         }
 
+        function clearProductCatalogImage() {
+            try {
+                const iu = document.getElementById('pImageUrl');
+                if (iu) iu.value = '';
+                const cl = document.getElementById('pClearImage');
+                if (cl) cl.value = '1';
+                const prev = document.getElementById('pImagePreview');
+                if (prev) { prev.src = ''; prev.style.display = 'none'; }
+                const fi = document.getElementById('pImageFile');
+                if (fi) fi.value = '';
+                showToast('عکس کاتالوگ حذف می‌شود؛ برای اعمال، ذخیره را بزن.');
+            } catch (e) {}
+        }
+        window.clearProductCatalogImage = clearProductCatalogImage;
         async function saveProduct() {
             const code = document.getElementById('pCode').value.trim();
             const name = document.getElementById('pName').value.trim();
-            const category = document.getElementById('pCategory').value;
+            let category = document.getElementById('pCategory').value;
+            // اگر دسته عمومی است، از روی نام حدس بزن تا کاتالوگ درست باشد
+            if (!category || category === 'general') {
+                try {
+                    if (typeof catCat === 'function') {
+                        category = catCat({ name: name, category: category }) || category;
+                    }
+                } catch (e) {}
+            }
             const capacity = parseFloat(document.getElementById('pCapacity').value) || 7.0;
             const booth_only = document.getElementById('pBoothOnly').checked;
             const stock = booth_only ? 0 : parseFloat(document.getElementById('pStock').value);
@@ -14987,22 +15017,25 @@ function sbRenderAdminLists(cfg) {
             }
 
             const catalog_show = !!(document.getElementById('pCatalogShow') && document.getElementById('pCatalogShow').checked);
+            const clearImg = (document.getElementById('pClearImage') && document.getElementById('pClearImage').value === '1');
 
             if (editingProductId) {
                 const updateData = { code, name, category, container_capacity: capacity, stock, booth_stock: boothStock, min_stock, booth_min_stock, sell_price, stock_confirmed_empty: false, booth_only, catalog_show };
                 if (currentRole === 'admin') {
                     updateData.buy_price = buy_price;
                 }
-                if (image_url) {
+                if (clearImg) {
+                    updateData.image_url = null;
+                } else if (image_url) {
                     updateData.image_url = image_url;
-                    updateData.photo_url = image_url; // سازگاری با کاتالوگ و فیلدهای قدیمی
                 }
                 const { error } = await _supabase.from('products').update(updateData).eq('id', editingProductId);
 
                 if (error) {
                     showToast(buildProductSaveErrorMessage(error, code));
                 } else {
-                    showToast(image_url ? '✅ کالا و عکس به‌روزرسانی شد (در کاتالوگ هم می‌آید)' : '✅ کالا با موفقیت به‌روزرسانی شد');
+                    try { const cl = document.getElementById('pClearImage'); if (cl) cl.value = '0'; } catch (e) {}
+                    showToast(clearImg ? '✅ کالا به‌روز شد و عکس کاتالوگ حذف شد' : (image_url ? '✅ کالا و عکس کاتالوگ به‌روزرسانی شد' : '✅ کالا با موفقیت به‌روزرسانی شد (نام در کاتالوگ هم عوض شد)'));
                 try {
                     // همگام‌سازی فوری کاتالوگ (همان لحظه)
                     (async function () {
@@ -15177,7 +15210,12 @@ function sbRenderAdminLists(cfg) {
             editingProductId = product.id;
             document.getElementById('pCode').value = product.code || '';
             document.getElementById('pName').value = product.name || '';
-            document.getElementById('pCategory').value = product.category || 'general';
+            document.getElementById('pCategory').value = (function () {
+                var c = product.category || 'general';
+                if (['dairy','pickle','sausage','halva','general'].indexOf(c) >= 0) return c;
+                if (c === 'sausage') return 'sausage';
+                return c || 'general';
+            })();
             try {
                 const imgUrl = product.image_url || product.photo_url || '';
                 const iu = document.getElementById('pImageUrl'); if (iu) iu.value = imgUrl;
@@ -15187,6 +15225,7 @@ function sbRenderAdminLists(cfg) {
                     else { ip.src = ''; ip.style.display = 'none'; }
                 }
                 const ifile = document.getElementById('pImageFile'); if (ifile) ifile.value = '';
+                const cl = document.getElementById('pClearImage'); if (cl) cl.value = '0';
                 const cs = document.getElementById('pCatalogShow');
                 if (cs) cs.checked = !(product.catalog_show === false || product.catalog_show === 0 || product.catalog_show === 'false');
             } catch (e) {}
@@ -25440,11 +25479,11 @@ notify pgrst, 'reload schema';`;
             }
         }
 
-        // ترتیب: کش ابری مشترک → REST/کلاینت → کش محلی گوشی
-        await tryCloudCache();
+        // ترتیب: همیشه اول داده زنده انبار، بعد کش (تا تغییر اسم/عکس مدیر فوری دیده شود)
         if (inApp) {
-            if (!list.length) await tryRest();
+            await tryRest();
             if (!list.length) await tryClient();
+            if (!list.length) await tryCloudCache();
         } else {
             await Promise.all([tryRest(), tryClient()]);
             if (!list.length) await tryRest();
