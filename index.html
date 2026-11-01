@@ -177,7 +177,7 @@
         .cat-stat-row span{font-size:10px;opacity:.8}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v207 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v208 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2217,7 +2217,6 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         if (inner.querySelector('.cat-hero')) return;
         var cached = [];
         try { cached = JSON.parse(localStorage.getItem('offline_products_v1') || '[]') || []; } catch (e) {}
-        if (cached.length) show(cached);
         var pending = HOSTS.length + 1, done = false;
         function win(rows) {
           if (done) return;
@@ -2996,8 +2995,8 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <label>کد کالا (بارکد/کد اختصاصی):</label>
         <input type="text" id="pCode" dir="auto" placeholder="مثلاً 2248441">
 
-        <label>نام محصول:</label>
-        <input type="text" id="pName" dir="auto" placeholder="مثلاً پنیر محلی">
+        <label>نام محصول (همین نام در کاتالوگ نشان داده می‌شود):</label>
+        <input type="text" id="pName" dir="auto" placeholder="مثلاً ترشی بامیه درجه یک">
 
         <div class="report-card" style="margin:10px 0;padding:12px;border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.06);">
             <div style="font-weight:800;color:#fbbf24;margin-bottom:8px;">📱 تنظیمات کاتالوگ اینستاگرام (تازه مارکت)</div>
@@ -3024,9 +3023,8 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             <option value="pickle">🥒 ترشیجات</option>
             <option value="sausage">🌭 سوسیس و کالباس</option>
             <option value="halva">🍯 حلواجات</option>
-            <option value="general">📦 عمومی</option>
         </select>
-        <div class="hint">با انتخاب «ترشیجات» کالا در تب ترشیجات کاتالوگ می‌آید (مثلاً بامیه، پرورده، رب انار).</div>
+        <div class="hint">حتماً یکی از این ۴ دسته را انتخاب کن تا در کاتالوگ درست دیده شود.</div>
 
         <label>ظرفیت ظرف یخچال غرفه (کیلوگرم):</label>
         <input type="text" inputmode="decimal" id="pCapacity" step="0.1" value="7.0" placeholder="مثلاً 7 کیلو">
@@ -3950,7 +3948,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v207 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v208 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -4134,7 +4132,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=207', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=208', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -25215,21 +25213,7 @@ notify pgrst, 'reload schema';`;
     async function catFetchProductsFromBase(urlBase, key) {
         const cols = 'id,name,code,category,sell_price,stock,booth_stock,image_url,catalog_show';
         const base = String(urlBase || '').replace(/\/$/, '');
-        // ۱) کش هم‌دامنه (بهترین برای اینستاگرام)
-        if (base && (base === location.origin || base.indexOf(location.hostname) >= 0)) {
-            try {
-                const cacheUrl = base + '/products-cache.json?v=' + Date.now();
-                const ctl0 = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-                const to0 = setTimeout(function () { try { if (ctl0) ctl0.abort(); } catch (e) {} }, 4000);
-                const r0 = await fetch(cacheUrl, { cache: 'no-store', signal: ctl0 ? ctl0.signal : undefined });
-                clearTimeout(to0);
-                if (r0 && r0.ok) {
-                    const j = await r0.json();
-                    if (Array.isArray(j) && j.length) return j;
-                }
-            } catch (e) {}
-        }
-        // ۲) REST با چند مسیر
+        // اگر همین دامنه است و مسیر REST ندارد، از products-cache فقط به‌عنوان آخرین امید استفاده می‌شود (پایین)
         const paths = [
             '/rest/v1/products?select=' + encodeURIComponent(cols) + '&order=name.asc',
             '/supabase/rest/v1/products?select=' + encodeURIComponent(cols) + '&order=name.asc'
@@ -25263,18 +25247,7 @@ notify pgrst, 'reload schema';`;
     // واکشی مستقیم REST از چند مسیر موازی — مناسب اینستاگرام
     async function catFetchProductsRest() {
         const key = (typeof SUPABASE_KEY === 'string' && SUPABASE_KEY) ? SUPABASE_KEY : 'sb_publishable_k3wkzKalFmLFtfx8WZWr1g_fHKT-3Sl';
-        // اول کش همین دامنه (اینستاگرام دوست دارد)
-        try {
-            const cacheUrl = (location.origin || '') + '/products-cache.json?v=' + Date.now();
-            const ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-            const to = setTimeout(function () { try { if (ctl) ctl.abort(); } catch (e) {} }, 3500);
-            const r = await fetch(cacheUrl, { cache: 'no-store', signal: ctl ? ctl.signal : undefined });
-            clearTimeout(to);
-            if (r && r.ok) {
-                const j = await r.json();
-                if (Array.isArray(j) && j.length) return j;
-            }
-        } catch (e) {}
+        // اول داده زنده از Supabase (تا تغییر اسم/عکس مدیر فوری باشد)
         const bases = catRestBases();
         const errors = [];
         // موازی: اولین پاسخ موفق برنده است
@@ -25302,7 +25275,21 @@ notify pgrst, 'reload schema';`;
                     }
                 });
             });
-            setTimeout(function () {
+            setTimeout(async function () {
+                if (settled) return;
+                // آخرین امید: فایل کش دامنه (ممکن است کمی قدیمی باشد)
+                try {
+                    const cacheUrl = (location.origin || '') + '/products-cache.json?v=' + Date.now();
+                    const r = await fetch(cacheUrl, { cache: 'no-store' });
+                    if (r && r.ok) {
+                        const j = await r.json();
+                        if (Array.isArray(j) && j.length) {
+                            settled = true;
+                            resolve(j);
+                            return;
+                        }
+                    }
+                } catch (e) {}
                 if (!settled) { settled = true; resolve([]); }
             }, 5500);
         });
@@ -25326,6 +25313,7 @@ notify pgrst, 'reload schema';`;
             const raw = Array.isArray(list) ? list : [];
             localStorage.setItem(CAT_CACHE_KEY, JSON.stringify(raw.slice(0, 1000)));
             localStorage.setItem(CAT_CACHE_TS_KEY, String(Date.now()));
+            localStorage.setItem('cat_cache_epoch', String(Date.now()));
         } catch (e) {}
     }
 
