@@ -147,7 +147,7 @@
         .cat-card .cp{color:#fbbf24;font-weight:900;font-size:14px}
         .cat-card .cu{font-size:10px;opacity:.7}
         .cat-card button{border:0;border-radius:12px;padding:9px;font:inherit;font-weight:800;cursor:pointer;background:linear-gradient(100deg,#10b981,#059669);color:#fff}
-        .cat-cartbar{position:fixed;left:10px;right:10px;bottom:12px;z-index:50;background:linear-gradient(100deg,#0f172a,#1e293b);border:1px solid rgba(56,189,248,.4);border-radius:18px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 12px 40px rgba(0,0,0,.5)}
+        .cat-cartbar{position:fixed;left:10px;right:10px;bottom:68px;z-index:55;background:linear-gradient(100deg,#0f172a,#1e293b);border:1px solid rgba(56,189,248,.4);border-radius:18px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 12px 40px rgba(0,0,0,.5)}
         .cat-cartbar button{border:0;border-radius:12px;padding:10px 16px;font:inherit;font-weight:800;background:linear-gradient(100deg,#f59e0b,#ef4444);color:#fff;cursor:pointer}
         .cat-sheet{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.65);display:flex;align-items:flex-end;justify-content:center}
         .cat-sheet-in{width:min(100%,480px);max-height:92vh;overflow:auto;background:#0f172a;border-radius:20px 20px 0 0;padding:16px;border:1px solid rgba(148,163,184,.25);direction:rtl}
@@ -177,7 +177,7 @@
         .cat-stat-row span{font-size:10px;opacity:.8}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v209 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v211 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2711,17 +2711,19 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
 
     <div id="attendanceTab" class="card">
         <h2>⏰ ثبت ورود، خروج و مرخصی</h2>
-        <div class="hint">⚠️ ثبت عکس یا موقعیت مکانی لحظه‌ای برای ورود و خروج **اجباری** است. برای ورود/خروج، تایید بیومتریک همان گوشی هم لازم است — گوشی خودش تشخیص می‌دهد از اثر انگشت استفاده کند یا تشخیص چهره (هرکدام که روی گوشی فعال باشد، خودکار همان استفاده می‌شود). سیستم تاخیرها و زودتر‌رفتن‌ها را اتوماتیک بررسی می‌کند.</div>
-
-        <div id="fingerprintStatusBox" class="hint" style="background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.3); border-radius:8px; padding:8px;">⏳ در حال بررسی وضعیت بیومتریک...</div>
-        <button type="button" class="row-btn edit-btn" style="width:100%; margin-bottom:10px;" onclick="registerFingerprint()">👆 / 🙂 ثبت بیومتریک این گوشی (اثر انگشت یا تشخیص چهره)</button>
-        <div class="hint" style="margin-top:-6px; margin-bottom:10px;">این دکمه با هر دو کار می‌کند: روی گوشی‌هایی که سنسور اثر انگشت دارند از همان استفاده می‌شود، روی گوشی‌هایی که Face ID/تشخیص چهره دارند از همان — نیازی به انتخاب دستی نیست، گوشی خودش تصمیم می‌گیرد.</div>
-
-        <div class="report-card" style="margin-top:2px; margin-bottom:12px;">
-            <h3 style="font-size:13px;">🆘 روش پشتیبان: تشخیص چهره اختصاصی برنامه</h3>
-            <div class="hint" style="margin-top:0;">اگر روی گوشی‌ات اثر انگشت/Face ID رسمی کار نمی‌کند (مثلاً روی بعضی آیفون‌ها)، این روش را ثبت کن — کاملاً مستقل است و توسط خود برنامه (نه سیستم‌عامل گوشی) تشخیص داده می‌شود.</div>
-            <button type="button" class="row-btn edit-btn" style="width:100%;" onclick="registerCustomFace()">🙂📸 ثبت چهره اختصاصی (روش پشتیبان)</button>
+        <div class="hint" style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.35);border-radius:10px;padding:10px;line-height:1.7;">
+            ✅ <b>ثبت سریع ورود/خروج:</b><br>
+            ۱) یک عکس بگیر <b>یا</b> دکمه موقعیت را بزن<br>
+            ۲) دکمه سبز «ثبت» را بزن<br>
+            اگر اثر انگشت کار نکرد، با همان عکس/موقعیت ثبت می‌شود — گیر نمی‌کنی.
         </div>
+
+        <details style="margin:10px 0;padding:8px;border-radius:10px;background:rgba(15,23,42,.5);border:1px solid rgba(148,163,184,.2);">
+            <summary style="cursor:pointer;font-weight:700;color:#7dd3fc;">اختیاری: ثبت اثر انگشت / چهره این گوشی</summary>
+            <div id="fingerprintStatusBox" class="hint" style="margin-top:8px;">⏳ در حال بررسی...</div>
+            <button type="button" class="row-btn edit-btn" style="width:100%; margin:8px 0;" onclick="registerFingerprint()">👆 ثبت بیومتریک گوشی</button>
+            <button type="button" class="row-btn edit-btn" style="width:100%;" onclick="registerCustomFace()">🙂 ثبت چهره پشتیبان</button>
+        </details>
 
         <div id="attendanceDayCompleteBox" class="report-card" style="display:none; border-color:#10b981; text-align:center;">
             <h3 style="color:#10b981;">✅ شیفت امروزت کامل شد!</h3>
@@ -2773,11 +2775,11 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
                 </div>
             </div>
 
-            <label>📸 آپلود عکس با ساعت (سلفی/عکس غرفه) - <span style="color:#ef4444; font-weight:bold;">الزامی*</span>:</label>
-            <input type="file" id="attPhoto" accept="image/*" onchange="previewAttPhoto(event)">
+            <label>📸 عکس سریع (دوربین) — یا فقط موقعیت بزن:</label>
+            <input type="file" id="attPhoto" accept="image/*" capture="environment" onchange="previewAttPhoto(event)">
             <img id="photoPreview" class="photo-preview">
             <div class="hint">اگر اجازه دسترسی به دوربین/گالری داده نشد یا عکس آپلود نشد، می‌توانید به‌جای عکس از موقعیت مکانی لحظه‌ای استفاده کنید:</div>
-            <button type="button" class="row-btn edit-btn" style="width:100%; padding:10px; margin-top:6px;" onclick="captureAttendanceLocation()">📍 استفاده از موقعیت مکانی به‌جای عکس</button>
+            <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;"><button type="button" class="row-btn edit-btn" style="flex:1;min-width:140px;padding:12px;font-weight:800;" onclick="document.getElementById('attPhoto').click()">📷 گرفتن عکس</button><button type="button" class="row-btn edit-btn" style="flex:1;min-width:140px;padding:12px;font-weight:800;background:linear-gradient(100deg,#0ea5e9,#0284c7);" onclick="captureAttendanceLocation()">📍 موقعیت مکانی</button></div>
             <div id="locationStatus" class="hint" style="display:none;"></div>
         </div>
 
@@ -3950,7 +3952,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v209 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v211 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -4134,7 +4136,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=209', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=211', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -12052,11 +12054,18 @@ function sbRenderAdminLists(cfg) {
         }
 
         async function getUnclosedPreviousShift() {
-            const { data } = await withTimeout(_supabase.from('attendance')
-                .select('type, created_at')
-                .eq('seller_name', currentUserLabel)
-                .order('created_at', { ascending: false })
-                .limit(10), 6000, 'بررسی شیفت قبلی');
+            let data = null;
+            try {
+                const res = await withTimeout(_supabase.from('attendance')
+                    .select('type, created_at')
+                    .eq('seller_name', currentUserLabel)
+                    .order('created_at', { ascending: false })
+                    .limit(10), 3500, 'بررسی شیفت قبلی');
+                data = res && res.data;
+            } catch (e) {
+                // اگر سرور جواب نداد، فروشنده را قفل نکن
+                return null;
+            }
             if (!data || data.length === 0) return null;
             // «مرخصی» رو نادیده می‌گیریم و دنبال آخرین ورود/خروج واقعی می‌گردیم — وگرنه اگه
             // فروشنده به‌جای ثبت خروجِ جاافتاده، مستقیم یه مرخصی بزنه، آخرین رکورد «مرخصی»
@@ -12921,7 +12930,7 @@ function sbRenderAdminLists(cfg) {
                 // خطای روشن ببینه و بتونه دوباره تلاش کنه یا از چهره اختصاصی استفاده کنه.
                 const credential = await Promise.race([
                     credentialPromise,
-                    new Promise((_, reject) => setTimeout(() => reject(new DOMException('سنسور گوشی بیش از ۱۲ ثانیه جواب نداد', 'TimeoutError')), 12000))
+                    new Promise((_, reject) => setTimeout(() => reject(new DOMException('سنسور گوشی بیش از ۸ ثانیه جواب نداد', 'TimeoutError')), 8000))
                 ]);
 
                 if (!credential) { showToast('⛔ ثبت اثر انگشت لغو شد.'); return; }
@@ -13044,7 +13053,7 @@ function sbRenderAdminLists(cfg) {
                 // سراغ روش جایگزین (تشخیص چهره اختصاصی یا ادامه با عکس/موقعیت مکانی).
                 const assertion = await Promise.race([
                     credentialPromise,
-                    new Promise((_, reject) => setTimeout(() => reject(new DOMException('سنسور گوشی بیش از ۱۲ ثانیه جواب نداد', 'TimeoutError')), 12000))
+                    new Promise((_, reject) => setTimeout(() => reject(new DOMException('سنسور گوشی بیش از ۸ ثانیه جواب نداد', 'TimeoutError')), 8000))
                 ]);
 
                 if (!assertion) {
@@ -13055,6 +13064,11 @@ function sbRenderAdminLists(cfg) {
                 const deviceUuid = getOrCreateDeviceUuid();
                 if (deviceRow.device_uuid && deviceRow.device_uuid !== deviceUuid) {
                     await notifyAdminAboutDeviceMismatch(deviceRow);
+                    // فروشنده از گوشی دیگر: بلاک سخت نکن — با عکس/موقعیت ادامه بدهد
+                    if (currentRole === 'morning_seller' || currentRole === 'evening_seller') {
+                        showToast('⚠️ این گوشی با گوشی ثبت‌شده فرق دارد؛ با عکس/موقعیت ادامه می‌دهیم (به مدیر خبر داده شد).');
+                        return { ok: false, fallbackReason: 'گوشی متفاوت با ثبت اولیه — ادامه با عکس/موقعیت', userCancelled: false };
+                    }
                     return await resolveBiometricFailure('این حساب قبلاً روی گوشی دیگری ثبت شده و این گوشی با آن تطابق ندارد (به مدیر گزارش شد).', hasCustomFace);
                 }
 
@@ -13093,9 +13107,16 @@ function sbRenderAdminLists(cfg) {
                 reasonText = 'اثر انگشت/Face ID رسمی و تشخیص چهره اختصاصی، هیچ‌کدام تایید نشدند.';
             }
 
+            // فروشنده اگر عکس یا موقعیت دارد → بدون پرسش اضافه ادامه بده (گیر نکند)
+            try {
+                if ((currentRole === 'morning_seller' || currentRole === 'evening_seller') && (selectedPhotoDataUrl || selectedLocationText)) {
+                    showToast('⚠️ بیومتریک نشد؛ با عکس/موقعیت ثبت می‌شود.');
+                    return { ok: false, fallbackReason: reasonText + ' | ادامه خودکار با عکس/موقعیت', userCancelled: false };
+                }
+            } catch (e) {}
             const proceed = await showConfirm(
                 '⚠️ تایید بیومتریک ممکن نشد.\n\n' + reasonText +
-                '\n\nمی‌خواهید بدون تایید بیومتریک، فقط با عکس/موقعیت مکانی ورود/خروج خود را ثبت کنید؟ (این مورد دقیقاً با همین دلیل به مدیر اطلاع داده می‌شود)'
+                '\n\nمی‌خواهید بدون تایید بیومتریک، فقط با عکس/موقعیت مکانی ورود/خروج خود را ثبت کنید؟ (به مدیر اطلاع داده می‌شود)'
             );
             return { ok: false, fallbackReason: proceed ? reasonText : null, userCancelled: !proceed };
         }
@@ -13396,16 +13417,17 @@ function sbRenderAdminLists(cfg) {
                         const attemptCount = await countThisMonthTimeRestrictionAttempts('early_entry');
                         let reason = null;
                         try { reason = window.prompt(`⛔ هنوز خیلی زوده! شیفت شما از ساعت ${targetStartTime} شروع می‌شود و حداکثر ${settings.earlyEntryWindow} دقیقه زودتر اجازه‌ی ثبت ورود دارید.\n\nاگه دلیل قانع‌کننده‌ای داری، اینجا بنویس تا برای مدیر فرستاده بشه، وگرنه خالی بذار و OK بزن:`); } catch (e) {}
-                        showToast(`⛔ هنوز خیلی زوده! شیفت شما از ساعت ${targetStartTime} شروع می‌شود و حداکثر ${settings.earlyEntryWindow} دقیقه زودتر اجازه‌ی ثبت ورود دارید. حدود ${tooEarlyBy} دقیقه دیگر دوباره تلاش کنید.`);
+                        showToast(`⏰ زودتر از حد معمول است؛ ورود ثبت می‌شود و به مدیر اطلاع داده می‌شود.`);
+                        window.__earlyEntryNote = 'ورود زودتر از حد مجاز';
                         _supabase.from('messages').insert([{
                             sender: "سیستم خودکار محدودیت زمانی",
                             recipient: "admin",
-                            title: `⚠️ تلاش برای ثبت ورود زودتر از حد مجاز: ${currentUserLabel}`,
-                            body: `کاربر ${currentUserLabel} ساعت ${timeStrNow} تلاش کرد ورود ثبت کند، در حالی که شیفتش از ${targetStartTime} شروع می‌شود و حداکثر ${settings.earlyEntryWindow} دقیقه زودتر مجاز است. این ثبت انجام نشد.${reason ? `\n\n📝 دلیلی که خودش نوشت: «${reason}»` : ''}\n\n📊 این ${attemptCount}اُمین باری است که این ماه این کاربر با این محدودیت مواجه شده — سعی کنید این تعداد بیشتر از ۳ بار نشود.`,
+                            title: `ℹ️ ورود زودهنگام ثبت‌شد: ${currentUserLabel}`,
+                            body: `کاربر ${currentUserLabel} ساعت ${timeStrNow} ورود ثبت کرد (زودتر از حد معمول نسبت به ${targetStartTime}).${reason ? `\n\n📝 دلیل: «${reason}»` : ''}\n\nثبت انجام شد.`,
                             created_at: now.toISOString()
                         }]).then(() => {});
-                        sendPushNotificationToRole('⚠️ تلاش ورود زودهنگام', `${currentUserLabel} خواست ساعت ${timeStrNow} ورود بزند (خیلی زودتر از حد مجاز).${reason ? ' دلیل: ' + reason : ''}`, 'admin');
-                        return;
+                        sendPushNotificationToRole('ℹ️ ورود زودهنگام', `${currentUserLabel} ساعت ${timeStrNow} ورود زد (زودتر از حد).${reason ? ' دلیل: ' + reason : ''}`, 'admin');
+                        // ادامه ثبت — بلاک نمی‌کنیم
                     }
                 }
 
@@ -13419,7 +13441,7 @@ function sbRenderAdminLists(cfg) {
                         const attemptCount = await countThisMonthTimeRestrictionAttempts('early_exit');
                         let reason = null;
                         try { reason = window.prompt(`⛔ الان نمی‌تونی خروج ثبت کنی! پایان شیفت شما ساعت ${targetEndTime} است و حدود ${tooEarlyBy2} دقیقه زودتر از حد مجازه.\n\nاگه دلیل قانع‌کننده‌ای داری (مثلاً اجازه از مدیر گرفتی)، اینجا بنویس تا برای مدیر فرستاده بشه، وگرنه خالی بذار و OK بزن:`); } catch (e) {}
-                        showToast(`⛔ این ثبت انجام نشد! پایان شیفت شما ساعت ${targetEndTime} است. لطفاً نزدیک همون ساعت دوباره تلاش کن.`);
+                        showToast(`⏰ زودتر از پایان شیفت؛ خروج ثبت می‌شود و به مدیر خبر داده می‌شود.`);
                         _supabase.from('messages').insert([{
                             sender: "سیستم خودکار محدودیت زمانی",
                             recipient: "admin",
@@ -13428,7 +13450,8 @@ function sbRenderAdminLists(cfg) {
                             created_at: now.toISOString()
                         }]).then(() => {});
                         sendPushNotificationToRole('⚠️ تلاش خروج زودهنگام', `${currentUserLabel} خواست ساعت ${timeStrNow} خروج بزند (زودتر از حد مجاز).${reason ? ' دلیل: ' + reason : ''}`, 'admin');
-                        return;
+                        window.__lateExitNote = (window.__lateExitNote ? window.__lateExitNote + ' | ' : '') + 'خروج زودتر از پایان شیفت';
+                        
                     }
 
                     if (nowMinutesB > endMinutesB + settings.lateExitWindow) {
@@ -25694,8 +25717,13 @@ notify pgrst, 'reload schema';`;
     };
     window.catOpenCart = function () {
         const sheet = document.getElementById('catSheet');
-        if (sheet) sheet.style.display = 'flex';
+        if (sheet) {
+            sheet.style.display = 'flex';
+            sheet.style.alignItems = 'flex-end';
+            sheet.style.justifyContent = 'center';
+        }
         catRenderCartSheet();
+        try { catRenderCartBar(); } catch (e) {}
     };
     window.catCloseCart = function () {
         const sheet = document.getElementById('catSheet');
@@ -26752,13 +26780,22 @@ notify pgrst, 'reload schema';`;
                         return '<button type="button" class="cat-tab' + (catFilter === f ? ' on' : '') + '" data-f="' + f + '" onclick="catFilterTo(\'' + f + '\')">' + catLabel(f) + '</button>';
                     }).join('') +
                     '</div>' +
-                    '<div class="cat-grid" id="catGrid" style="padding-bottom:12px;"></div>' +
+                    '<div class="cat-grid" id="catGrid" style="padding-bottom:140px;"></div>' +
                     (typeof catBuildTrustFooterHtml === 'function' ? catBuildTrustFooterHtml(disc, cfg, successOrders) : '') +
                     '</div>' +
-                    '<div id="catPageOrders" style="display:none;padding:16px 12px 90px;direction:rtl;"></div>' +
-                    '<div id="catPageTrack" style="display:none;padding:16px 12px 90px;direction:rtl;"></div>' +
-                    '<div id="catPageAccount" style="display:none;padding:16px 12px 90px;direction:rtl;"></div>' +
-                    '<nav id="catBottomNav" style="position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;background:rgba(11,18,32,.96);border-top:1px solid rgba(148,163,184,.25);padding:6px 4px calc(6px + env(safe-area-inset-bottom));backdrop-filter:blur(10px);">' +
+                    '<div id="catPageOrders" style="display:none;padding:16px 12px 100px;direction:rtl;"></div>' +
+                    '<div id="catPageTrack" style="display:none;padding:16px 12px 100px;direction:rtl;"></div>' +
+                    '<div id="catPageAccount" style="display:none;padding:16px 12px 100px;direction:rtl;"></div>' +
+                    // نوار سبد خرید شناور
+                    '<div id="catCartBar" class="cat-cartbar" style="display:none;bottom:68px;z-index:55;"></div>' +
+                    // شیت سبد و ثبت سفارش
+                    '<div id="catSheet" style="display:none;position:fixed;inset:0;z-index:70;background:rgba(2,6,23,.75);align-items:flex-end;justify-content:center;">' +
+                    '<div style="width:100%;max-width:480px;max-height:92vh;overflow:auto;background:#0f172a;border-radius:20px 20px 0 0;padding:14px 14px 28px;direction:rtl;box-shadow:0 -8px 40px rgba(0,0,0,.5);">' +
+                    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
+                    '<b style="font-size:16px;">🛒 سبد خرید و ثبت سفارش</b>' +
+                    '<button type="button" onclick="catCloseCart()" style="border:0;background:rgba(148,163,184,.15);color:#e2e8f0;font-size:18px;width:36px;height:36px;border-radius:10px;cursor:pointer;">✕</button>' +
+                    '</div><div id="catSheetBody"></div></div></div>' +
+                    '<nav id="catBottomNav" style="position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;background:rgba(11,18,32,.96);border-top:1px solid rgba(148,163,184,.25);padding:6px 4px calc(6px + env(safe-area-inset-bottom));backdrop-filter:blur(10px);">' +
                     '<button type="button" class="cat-nav-btn" data-page="home" style="flex:1;border:0;background:transparent;color:#e2e8f0;font:inherit;font-size:11px;padding:8px 4px;cursor:pointer;">🏠<br>خانه</button>' +
                     '<button type="button" class="cat-nav-btn" data-page="orders" style="flex:1;border:0;background:transparent;color:#94a3b8;font:inherit;font-size:11px;padding:8px 4px;cursor:pointer;">📦<br>سفارش‌ها</button>' +
                     '<button type="button" class="cat-nav-btn" data-page="track" style="flex:1;border:0;background:transparent;color:#94a3b8;font:inherit;font-size:11px;padding:8px 4px;cursor:pointer;">🔍<br>پیگیری</button>' +
