@@ -177,7 +177,7 @@
         .cat-stat-row span{font-size:10px;opacity:.8}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v203 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v205 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2142,8 +2142,10 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
     document.documentElement.classList.add('catalog-guest-mode');
     var KEY = 'sb_publishable_k3wkzKalFmLFtfx8WZWr1g_fHKT-3Sl';
     var HOSTS = [
+      (location.origin || '') + '',
       'https://kinjpmvoyioaslpdzujg.supabase.co',
-      'https://shop-proxy-1.adarmiraki.workers.dev'
+      'https://shop-proxy-1.adarmiraki.workers.dev',
+      'https://shop-proxy-1.adarmiraki.workers.dev/supabase'
     ];
     function esc(s) {
       return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -2151,7 +2153,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
       });
     }
     function priceOf(p) {
-      var n = Number(p.sell_price || p.unit_price || p.price || 0);
+      var n = Number(p.sell_price || p.price || p.unit_price || 0);
       return n > 0 ? n : 0;
     }
     function show(list) {
@@ -2159,7 +2161,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
       var inner = document.getElementById('catalogPublicInner');
       if (!view || !inner) return;
       view.style.display = 'block';
-      if (inner.querySelector('.cat-hero')) return; // اسکریپت اصلی رسید
+      if (inner.querySelector('.cat-hero') && inner.querySelector('.cat-card')) return; // فقط اگر کالا هم آمده
       list = (list || []).filter(function (p) {
         if (!p || !p.name) return false;
         var s = p.catalog_show;
@@ -2186,18 +2188,26 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
       inner.innerHTML = html;
     }
     function fetchHost(host) {
-      var url = host.replace(/\/+$/, '') + '/rest/v1/products?select=id,name,code,category,sell_price,unit_price,price,image_url,photo_url,catalog_show&order=name.asc';
-      var ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
-      var to = setTimeout(function () { try { ctl && ctl.abort(); } catch (e) {} }, 5000);
-      return fetch(url, {
-        headers: { apikey: KEY, Authorization: 'Bearer ' + KEY, Accept: 'application/json' },
-        cache: 'no-store',
-        signal: ctl ? ctl.signal : undefined
-      }).then(function (r) {
-        clearTimeout(to);
-        if (!r.ok) throw new Error('http');
-        return r.json();
-      });
+      host = String(host || '').replace(/\/+$/, '');
+      function get(url, withKey) {
+        var ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+        var to = setTimeout(function () { try { ctl && ctl.abort(); } catch (e) {} }, 5000);
+        var headers = { Accept: 'application/json' };
+        if (withKey) { headers.apikey = KEY; headers.Authorization = 'Bearer ' + KEY; }
+        return fetch(url, { headers: headers, cache: 'no-store', signal: ctl ? ctl.signal : undefined }).then(function (r) {
+          clearTimeout(to);
+          if (!r.ok) throw new Error('http');
+          return r.json();
+        });
+      }
+      // اول کش هم‌دامنه
+      if (!host || host === location.origin) {
+        return get((location.origin || '') + '/products-cache.json?v=' + Date.now(), false).catch(function () {
+          return get(host + '/rest/v1/products?select=id,name,code,category,sell_price,image_url,catalog_show&order=name.asc', true);
+        });
+      }
+      return get(host + '/rest/v1/products?select=id,name,code,category,sell_price,image_url,catalog_show&order=name.asc', true)
+        .catch(function () { return get(host + '/supabase/rest/v1/products?select=id,name,code,category,sell_price,image_url,catalog_show&order=name.asc', true); });
     }
     // اگر بعد از ۲٫۸ ثانیه هنوز اسکریپت اصلی کاتالوگ را نساخته، خودمان می‌سازیم
     setTimeout(function () {
@@ -2208,18 +2218,34 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         var cached = [];
         try { cached = JSON.parse(localStorage.getItem('offline_products_v1') || '[]') || []; } catch (e) {}
         if (cached.length) show(cached);
-        var pending = HOSTS.length, done = false;
+        var pending = HOSTS.length + 1, done = false;
+        function win(rows) {
+          if (done) return;
+          if (rows && rows.length) { done = true; show(rows); }
+        }
+        // کش ابری مشترک
+        try {
+          var curl = 'https://kinjpmvoyioaslpdzujg.supabase.co/rest/v1/catalog_product_cache?id=eq.1&select=products';
+          fetch(curl, { headers: { apikey: KEY, Authorization: 'Bearer ' + KEY, Accept: 'application/json' }, cache: 'no-store' })
+            .then(function (r) { return r.ok ? r.json() : []; })
+            .then(function (rows) {
+              var row = Array.isArray(rows) ? rows[0] : null;
+              if (row && row.products && row.products.length) win(row.products);
+            }).catch(function () {}).finally(function () {
+              pending--;
+              if (!done && pending <= 0) show(cached);
+            });
+        } catch (e) { pending--; }
         HOSTS.forEach(function (h) {
           fetchHost(h).then(function (rows) {
-            if (done) return;
-            if (rows && rows.length) { done = true; show(rows); }
+            win(rows);
           }).catch(function () {}).finally(function () {
             pending--;
-            if (!done && pending <= 0 && !inner.querySelector('.cat-hero')) show(cached);
+            if (!done && pending <= 0 && !(inner.querySelector('.cat-card'))) show(cached);
           });
         });
       } catch (e) {}
-    }, 2800);
+    }, 600);
   } catch (e) {}
 })();
 </script>
@@ -3916,7 +3942,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v203 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v205 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -4100,7 +4126,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=203', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=205', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -14977,6 +15003,21 @@ function sbRenderAdminLists(cfg) {
                     showToast(buildProductSaveErrorMessage(error, code));
                 } else {
                     showToast(image_url ? '✅ کالا و عکس به‌روزرسانی شد (در کاتالوگ هم می‌آید)' : '✅ کالا با موفقیت به‌روزرسانی شد');
+                try {
+                    // همگام‌سازی خودکار کاتالوگ بعد از تغییر کالا
+                    setTimeout(async function () {
+                        try {
+                            if (typeof catLoadProducts === 'function') {
+                                const list = await catLoadProducts();
+                                if (list && list.length) await catSyncProductsAuto(list, { publish: true });
+                            } else if (typeof _supabase !== 'undefined' && _supabase) {
+                                const { data } = await _supabase.from('products').select('id,name,code,category,sell_price,stock,booth_stock,image_url,catalog_show').order('name');
+                                if (data && data.length) await catSyncProductsAuto(data, { publish: true });
+                            }
+                        } catch (e) {}
+                    }, 400);
+                } catch (e) {}
+
                     logInventoryChange(name, 'ویرایش کالا', `موجودی انبار: ${stock} کیلوگرم | موجودی غرفه: ${boothStock} کیلوگرم`);
                     try {
                         if (cachedInventoryFull) {
@@ -15015,6 +15056,21 @@ function sbRenderAdminLists(cfg) {
                     showToast(buildProductSaveErrorMessage(error, code));
                 } else {
                     showToast('✅ کالای جدید با موفقیت ذخیره شد');
+                try {
+                    // همگام‌سازی خودکار کاتالوگ بعد از تغییر کالا
+                    setTimeout(async function () {
+                        try {
+                            if (typeof catLoadProducts === 'function') {
+                                const list = await catLoadProducts();
+                                if (list && list.length) await catSyncProductsAuto(list, { publish: true });
+                            } else if (typeof _supabase !== 'undefined' && _supabase) {
+                                const { data } = await _supabase.from('products').select('id,name,code,category,sell_price,stock,booth_stock,image_url,catalog_show').order('name');
+                                if (data && data.length) await catSyncProductsAuto(data, { publish: true });
+                            }
+                        } catch (e) {}
+                    }, 400);
+                } catch (e) {}
+
                     clearProductForm();
                     loadProductDatalist();
                     try { loadInventory(true); } catch (e) {}
@@ -15196,6 +15252,21 @@ function sbRenderAdminLists(cfg) {
                 const stillThereMsg = await confirmRowGone('products', { id });
                 if (stillThereMsg) { showToast(stillThereMsg); return; }
                 showToast('✅ کالا حذف شد');
+                try {
+                    // همگام‌سازی خودکار کاتالوگ بعد از تغییر کالا
+                    setTimeout(async function () {
+                        try {
+                            if (typeof catLoadProducts === 'function') {
+                                const list = await catLoadProducts();
+                                if (list && list.length) await catSyncProductsAuto(list, { publish: true });
+                            } else if (typeof _supabase !== 'undefined' && _supabase) {
+                                const { data } = await _supabase.from('products').select('id,name,code,category,sell_price,stock,booth_stock,image_url,catalog_show').order('name');
+                                if (data && data.length) await catSyncProductsAuto(data, { publish: true });
+                            }
+                        } catch (e) {}
+                    }, 400);
+                } catch (e) {}
+
                 loadInventory();
                 loadProductDatalist();
             }
@@ -25045,6 +25116,7 @@ notify pgrst, 'reload schema';`;
             u = String(u || '').replace(/\/+$/, '');
             if (u && bases.indexOf(u) < 0) bases.push(u);
         };
+        try { if (location && location.origin) add(location.origin); } catch (e) {}
         add('https://kinjpmvoyioaslpdzujg.supabase.co');
         try { if (typeof SUPABASE_REAL_URL === 'string') add(SUPABASE_REAL_URL); } catch (e) {}
         try { if (typeof activeBaseUrl === 'string') add(activeBaseUrl); } catch (e) {}
@@ -25054,45 +25126,73 @@ notify pgrst, 'reload schema';`;
             }
         } catch (e) {}
         add('https://shop-proxy-1.adarmiraki.workers.dev');
+        add('https://shop-proxy-1.adarmiraki.workers.dev/supabase');
         return bases;
     }
 
     async function catFetchProductsFromBase(urlBase, key) {
-        const cols = 'id,name,code,category,sell_price,unit_price,price,stock,booth_stock,image_url,photo_url,catalog_show';
-        let all = [];
-        let from = 0;
-        const page = 1000;
-        for (let g = 0; g < 20; g++) {
-            const path = '/rest/v1/products?select=' + encodeURIComponent(cols) + '&order=name.asc';
-            const url = urlBase.replace(/\/$/, '') + path;
-            const headers = {
-                apikey: key,
-                Authorization: 'Bearer ' + key,
-                Accept: 'application/json',
-                'Range-Unit': 'items',
-                Range: from + '-' + (from + page - 1)
-            };
-            const ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-            const to = setTimeout(function () { try { if (ctl) ctl.abort(); } catch (e) {} }, 4500);
-            let res;
+        const cols = 'id,name,code,category,sell_price,stock,booth_stock,image_url,catalog_show';
+        const base = String(urlBase || '').replace(/\/$/, '');
+        // ۱) کش هم‌دامنه (بهترین برای اینستاگرام)
+        if (base && (base === location.origin || base.indexOf(location.hostname) >= 0)) {
             try {
-                res = await fetch(url, { headers: headers, cache: 'no-store', mode: 'cors', signal: ctl ? ctl.signal : undefined });
-            } finally {
-                clearTimeout(to);
-            }
-            if (!res || !res.ok) throw new Error('HTTP ' + (res && res.status));
-            const chunk = await res.json();
-            if (!Array.isArray(chunk) || !chunk.length) break;
-            all = all.concat(chunk);
-            if (chunk.length < page) break;
-            from += page;
+                const cacheUrl = base + '/products-cache.json?v=' + Date.now();
+                const ctl0 = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+                const to0 = setTimeout(function () { try { if (ctl0) ctl0.abort(); } catch (e) {} }, 4000);
+                const r0 = await fetch(cacheUrl, { cache: 'no-store', signal: ctl0 ? ctl0.signal : undefined });
+                clearTimeout(to0);
+                if (r0 && r0.ok) {
+                    const j = await r0.json();
+                    if (Array.isArray(j) && j.length) return j;
+                }
+            } catch (e) {}
         }
-        return all;
+        // ۲) REST با چند مسیر
+        const paths = [
+            '/rest/v1/products?select=' + encodeURIComponent(cols) + '&order=name.asc',
+            '/supabase/rest/v1/products?select=' + encodeURIComponent(cols) + '&order=name.asc'
+        ];
+        let lastErr = null;
+        for (let pi = 0; pi < paths.length; pi++) {
+            try {
+                const url = base + paths[pi];
+                const headers = {
+                    apikey: key,
+                    Authorization: 'Bearer ' + key,
+                    Accept: 'application/json'
+                };
+                const ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+                const to = setTimeout(function () { try { if (ctl) ctl.abort(); } catch (e) {} }, 6000);
+                let res;
+                try {
+                    res = await fetch(url, { headers: headers, cache: 'no-store', mode: 'cors', signal: ctl ? ctl.signal : undefined });
+                } finally {
+                    clearTimeout(to);
+                }
+                if (!res || !res.ok) { lastErr = new Error('HTTP ' + (res && res.status)); continue; }
+                const chunk = await res.json();
+                if (Array.isArray(chunk) && chunk.length) return chunk;
+            } catch (e) { lastErr = e; }
+        }
+        if (lastErr) throw lastErr;
+        return [];
     }
 
     // واکشی مستقیم REST از چند مسیر موازی — مناسب اینستاگرام
     async function catFetchProductsRest() {
         const key = (typeof SUPABASE_KEY === 'string' && SUPABASE_KEY) ? SUPABASE_KEY : 'sb_publishable_k3wkzKalFmLFtfx8WZWr1g_fHKT-3Sl';
+        // اول کش همین دامنه (اینستاگرام دوست دارد)
+        try {
+            const cacheUrl = (location.origin || '') + '/products-cache.json?v=' + Date.now();
+            const ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+            const to = setTimeout(function () { try { if (ctl) ctl.abort(); } catch (e) {} }, 3500);
+            const r = await fetch(cacheUrl, { cache: 'no-store', signal: ctl ? ctl.signal : undefined });
+            clearTimeout(to);
+            if (r && r.ok) {
+                const j = await r.json();
+                if (Array.isArray(j) && j.length) return j;
+            }
+        } catch (e) {}
         const bases = catRestBases();
         const errors = [];
         // موازی: اولین پاسخ موفق برنده است
@@ -25126,17 +25226,145 @@ notify pgrst, 'reload schema';`;
         });
     }
 
+
+    const CAT_CACHE_KEY = 'offline_products_v1';
+    const CAT_CACHE_TS_KEY = 'offline_products_ts_v1';
+
+    function catNormalizeProductList(list) {
+        return (list || []).filter(function (p) {
+            if (!p || !p.name) return false;
+            const show = p.catalog_show;
+            if (show === false || show === 0 || show === 'false' || show === '0') return false;
+            return true;
+        });
+    }
+
+    function catSaveLocalProductCache(list) {
+        try {
+            const raw = Array.isArray(list) ? list : [];
+            localStorage.setItem(CAT_CACHE_KEY, JSON.stringify(raw.slice(0, 1000)));
+            localStorage.setItem(CAT_CACHE_TS_KEY, String(Date.now()));
+        } catch (e) {}
+    }
+
+    function catReadLocalProductCache() {
+        try {
+            const raw = localStorage.getItem(CAT_CACHE_KEY);
+            const list = raw ? JSON.parse(raw) : [];
+            return Array.isArray(list) ? list : [];
+        } catch (e) { return []; }
+    }
+
+    // انتشار خودکار کش عمومی در Supabase (برای اینستاگرام و گوشی‌های دیگر)
+    async function catPublishProductCache(list) {
+        if (!list || !list.length) return false;
+        const payload = {
+            id: 1,
+            products: list,
+            updated_at: new Date().toISOString()
+        };
+        // روش ۱: جدول کش
+        try {
+            if (typeof _supabase !== 'undefined' && _supabase) {
+                const { error } = await _supabase.from('catalog_product_cache').upsert([payload], { onConflict: 'id' });
+                if (!error) return true;
+            }
+        } catch (e) {}
+        // روش ۲: REST مستقیم (حتی بدون supabase-js)
+        try {
+            const key = (typeof SUPABASE_KEY === 'string' && SUPABASE_KEY) ? SUPABASE_KEY : 'sb_publishable_k3wkzKalFmLFtfx8WZWr1g_fHKT-3Sl';
+            const bases = [
+                'https://kinjpmvoyioaslpdzujg.supabase.co',
+                'https://shop-proxy-1.adarmiraki.workers.dev',
+                'https://shop-proxy-1.adarmiraki.workers.dev/supabase'
+            ];
+            for (let i = 0; i < bases.length; i++) {
+                try {
+                    const url = bases[i].replace(/\/$/, '') + '/rest/v1/catalog_product_cache';
+                    const res = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            apikey: key,
+                            Authorization: 'Bearer ' + key,
+                            'Content-Type': 'application/json',
+                            Prefer: 'resolution=merge-duplicates,return=minimal'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                    if (res && (res.ok || res.status === 201 || res.status === 200)) return true;
+                } catch (e) {}
+            }
+        } catch (e) {}
+        return false;
+    }
+
+    async function catPullCloudProductCache() {
+        // از جدول کش عمومی
+        try {
+            if (typeof _supabase !== 'undefined' && _supabase) {
+                const { data, error } = await _supabase.from('catalog_product_cache').select('products,updated_at').eq('id', 1).maybeSingle();
+                if (!error && data && Array.isArray(data.products) && data.products.length) {
+                    return data.products;
+                }
+            }
+        } catch (e) {}
+        try {
+            const key = (typeof SUPABASE_KEY === 'string' && SUPABASE_KEY) ? SUPABASE_KEY : 'sb_publishable_k3wkzKalFmLFtfx8WZWr1g_fHKT-3Sl';
+            const bases = [
+                'https://kinjpmvoyioaslpdzujg.supabase.co',
+                'https://shop-proxy-1.adarmiraki.workers.dev',
+                'https://shop-proxy-1.adarmiraki.workers.dev/supabase'
+            ];
+            for (let i = 0; i < bases.length; i++) {
+                try {
+                    const url = bases[i].replace(/\/$/, '') + '/rest/v1/catalog_product_cache?id=eq.1&select=products,updated_at';
+                    const ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+                    const to = setTimeout(function () { try { if (ctl) ctl.abort(); } catch (e) {} }, 4500);
+                    const res = await fetch(url, {
+                        headers: { apikey: key, Authorization: 'Bearer ' + key, Accept: 'application/json' },
+                        cache: 'no-store',
+                        signal: ctl ? ctl.signal : undefined
+                    });
+                    clearTimeout(to);
+                    if (!res || !res.ok) continue;
+                    const rows = await res.json();
+                    const row = Array.isArray(rows) ? rows[0] : rows;
+                    if (row && Array.isArray(row.products) && row.products.length) return row.products;
+                } catch (e) {}
+            }
+        } catch (e) {}
+        return null;
+    }
+
+    async function catSyncProductsAuto(list, opts) {
+        opts = opts || {};
+        if (!list || !list.length) return;
+        catSaveLocalProductCache(list);
+        // انتشار ابری — برای همگام‌سازی بقیه گوشی‌ها و اینستاگرام
+        try {
+            if (opts.publish !== false) {
+                // بدون await طولانی در UI: در پس‌زمینه
+                Promise.resolve(catPublishProductCache(list)).then(function () {});
+            }
+        } catch (e) {}
+    }
+
     async function catLoadProducts() {
         let list = [];
         let loadErr = null;
         const inApp = catIsInAppBrowser();
+        let fromLive = false;
 
-        // در اینستاگرام/وب‌ویو: اول REST (سریع‌تر و پایدارتر)، بعد supabase-js
-        // در کروم: هر دو
+        async function tryCloudCache() {
+            try {
+                const cloud = await catPullCloudProductCache();
+                if (cloud && cloud.length) list = cloud;
+            } catch (e) {}
+        }
         async function tryRest() {
             try {
                 const rest = await catFetchProductsRest();
-                if (rest && rest.length) list = rest;
+                if (rest && rest.length) { list = rest; fromLive = true; }
             } catch (e2) {
                 loadErr = (e2 && e2.message) ? e2.message : String(e2);
             }
@@ -25151,7 +25379,7 @@ notify pgrst, 'reload schema';`;
                 for (let guard = 0; guard < 30; guard++) {
                     const { data, error } = await _supabase
                         .from('products')
-                        .select('id,name,code,category,sell_price,unit_price,price,stock,booth_stock,image_url,photo_url,catalog_show')
+                        .select('id,name,code,category,sell_price,stock,booth_stock,image_url,catalog_show')
                         .order('name')
                         .range(from, from + pageSize - 1);
                     if (error) {
@@ -25163,42 +25391,39 @@ notify pgrst, 'reload schema';`;
                     if (data.length < pageSize) break;
                     from += pageSize;
                 }
-                if (tmp.length) list = tmp;
+                if (tmp.length) { list = tmp; fromLive = true; }
             } catch (e) {
                 if (!loadErr) loadErr = (e && e.message) ? e.message : String(e);
             }
         }
 
+        // ترتیب: کش ابری مشترک → REST/کلاینت → کش محلی گوشی
+        await tryCloudCache();
         if (inApp) {
-            await tryRest();
+            if (!list.length) await tryRest();
             if (!list.length) await tryClient();
         } else {
             await Promise.all([tryRest(), tryClient()]);
-            // tryClient ممکن است list را بعداً پر کند؛ اگر REST زودتر پر کرد همان می‌ماند
             if (!list.length) await tryRest();
+            if (!list.length) await tryCloudCache();
+        }
+        if (!list.length) {
+            try { list = catReadLocalProductCache() || []; } catch (e) {}
         }
 
         if (list.length) {
             try {
                 if (typeof offlineSaveProducts === 'function') offlineSaveProducts(list);
-                else localStorage.setItem('offline_products_v1', JSON.stringify(list));
             } catch (e) {}
-        } else {
-            try {
-                const raw = localStorage.getItem('offline_products_v1');
-                if (raw) list = JSON.parse(raw) || [];
-            } catch (e) {}
+            // همگام‌سازی خودکار محلی + انتشار ابری (اگر از منبع زنده آمده)
+            try { await catSyncProductsAuto(list, { publish: !!fromLive }); } catch (e) {}
         }
 
-        catProducts = (list || []).filter(function (p) {
-            if (!p || !p.name) return false;
-            const show = p.catalog_show;
-            if (show === false || show === 0 || show === 'false' || show === '0') return false;
-            return true;
-        });
+        catProducts = catNormalizeProductList(list);
         catProducts._loadErr = loadErr || null;
         catProducts._rawCount = (list || []).length;
         catProducts._inApp = inApp;
+        catProducts._fromLive = fromLive;
         return catProducts;
     }
     function catImg(p) {
@@ -26485,6 +26710,20 @@ notify pgrst, 'reload schema';`;
             try {
                 clearInterval(window._catLiveT);
                 window._catLiveT = setInterval(function () { try { catSyncLiveCart(); } catch (e) {} }, 20000);
+            } catch (e) {}
+            try {
+                clearInterval(window._catProdSyncT);
+                window._catProdSyncT = setInterval(async function () {
+                    try {
+                        const before = (catProducts && catProducts.length) || 0;
+                        await catLoadProducts();
+                        if ((catProducts && catProducts.length) !== before) {
+                            try { openCatalogPublic(); } catch (e) {}
+                        } else if (typeof catRender === 'function') {
+                            try { catRender(); } catch (e) {}
+                        }
+                    } catch (e) {}
+                }, 180000); // هر ۳ دقیقه همگام‌سازی خودکار
             } catch (e) {}
         } catch (err) {
             try {
