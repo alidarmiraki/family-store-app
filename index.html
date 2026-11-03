@@ -177,7 +177,7 @@
         .cat-stat-row span{font-size:10px;opacity:.8}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v214 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v215 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -3962,7 +3962,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v214 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v215 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -4146,7 +4146,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=214', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=215', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -12077,7 +12077,7 @@ function sbRenderAdminLists(cfg) {
                     .select('type, created_at')
                     .eq('seller_name', currentUserLabel)
                     .order('created_at', { ascending: false })
-                    .limit(10), 3500, 'بررسی شیفت قبلی');
+                    .limit(30), 4000, 'بررسی شیفت قبلی');
                 data = res && res.data;
             } catch (e) {
                 // اگر سرور جواب نداد، فروشنده را قفل نکن
@@ -12163,7 +12163,8 @@ function sbRenderAdminLists(cfg) {
             }
 
             let hasEntry = todayRecords.some(r => r.type === 'entry') || !!local.hasEntry;
-            let hasExit = todayRecords.some(r => r.type === 'exit' && !(r.note && String(r.note).includes('خروج جاافتاده'))) || !!local.hasExit;
+            // خروج جاافتاده = بستن شیفت قبل؛ خروج واقعی امروز حساب نشود
+            let hasExit = todayRecords.some(r => r.type === 'exit' && !(r.note && (String(r.note).includes('خروج جاافتاده') || String(r.note).includes('فراموش‌شده از شیفت قبل')))) || (!!local.hasExit && !!hasEntry);
             // اگر لوکال می‌گوید ورود زده ولی سرور هنوز نرسیده، همان را باور کن
             return {
                 hasEntry: hasEntry,
@@ -12178,7 +12179,7 @@ function sbRenderAdminLists(cfg) {
                 const localKey = 'att_local_' + String(currentUserLabel || '') + '_' + todayISO;
                 const local = JSON.parse(localStorage.getItem(localKey) || '{}') || {};
                 if (type === 'entry') local.hasEntry = true;
-                if (type === 'exit') { local.hasExit = true; local.hasEntry = true; }
+                if (type === 'exit') local.hasExit = true;
                 local.ts = Date.now();
                 localStorage.setItem(localKey, JSON.stringify(local));
                 try { markLocalAttDone(type, todayISO); } catch (e2) {}
@@ -12313,16 +12314,15 @@ function sbRenderAdminLists(cfg) {
                 dayISO = dayISO || getTehranISODate(new Date());
                 const st = getLocalAttDone(dayISO);
                 if (type === 'entry') st.entry = true;
-                if (type === 'exit') { st.exit = true; st.entry = true; } // خروج یعنی ورود هم بوده
+                if (type === 'exit') st.exit = true; // فقط خروج — ورود جداست (خروج جاافتاده نباید ورود امروز را کامل کند)
                 if (type === 'leave' || type === 'leave_hourly') st.leave = true;
                 st.ts = Date.now();
                 localStorage.setItem(attLocalKey(dayISO), JSON.stringify(st));
-                // همگام با کلید قدیمی att_local_
                 try {
                     const localKey = 'att_local_' + String(currentUserLabel || '') + '_' + dayISO;
                     const local = JSON.parse(localStorage.getItem(localKey) || '{}') || {};
                     if (type === 'entry') local.hasEntry = true;
-                    if (type === 'exit') { local.hasExit = true; local.hasEntry = true; }
+                    if (type === 'exit') local.hasExit = true;
                     local.ts = Date.now();
                     localStorage.setItem(localKey, JSON.stringify(local));
                 } catch (e2) {}
@@ -12387,9 +12387,17 @@ function sbRenderAdminLists(cfg) {
             const hasExitDb = !!(lastExit && (!lastEntry || new Date(lastExit.created_at) >= new Date(lastEntry.created_at)));
             const hasLeave = todayRecords.some(r => r.type === 'leave' || r.type === 'leave_hourly') || !!localDone.leave;
 
-            // کش محلی + سرور — اگر خروج زده، دیگر هرگز «ورود ثبت کن» نگو
-            const hasExit = hasExitDb || !!localDone.exit || !!localLegacy.hasExit;
-            const hasEntry = hasEntryDb || !!localDone.entry || !!localLegacy.hasEntry || hasExit;
+            // خروج جاافتاده (بستن شیفت قبل) نباید به‌عنوان خروج/اتمام شیفت امروز حساب شود
+            const isMakeupNote = function (n) {
+                return n && (String(n).indexOf('خروج جاافتاده') >= 0 || String(n).indexOf('فراموش‌شده از شیفت قبل') >= 0);
+            };
+            const realExitsToday = exits.filter(function (r) { return !isMakeupNote(r.note); });
+            const hasRealExitDb = realExitsToday.length > 0 && (!lastEntry || realExitsToday.some(function (x) {
+                return new Date(x.created_at) >= new Date(lastEntry.created_at);
+            }));
+            // کش محلی + سرور
+            const hasExit = hasRealExitDb || ((!!localDone.exit || !!localLegacy.hasExit) && (hasEntryDb || !!localDone.entry || !!localLegacy.hasEntry));
+            const hasEntry = hasEntryDb || !!localDone.entry || !!localLegacy.hasEntry;
 
             const panel = document.getElementById('attendanceReminderBanner');
             if (!panel) return;
@@ -13738,20 +13746,44 @@ function sbRenderAdminLists(cfg) {
             if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'ثبت در سیستم حضور و غیاب'; }
 
             if (!error) {
-                try { markLocalAttendance(type); } catch (e) {}
+                try {
+                    if (isMakeupExit && type === 'exit') {
+                        // فقط شیفت قبلی را ببند — امروز را آزاد بگذار تا ورود بزند
+                        try {
+                            const uncl = await getUnclosedPreviousShift();
+                            // بعد از ثبت، آخرین رکورد خروج است؛ روز قبلی را از note/created تخمین بزن
+                        } catch (e0) {}
+                        try {
+                            // پاک کردن کش امروز که ممکن است قبلاً اشتباه پر شده باشد
+                            const todayISO2 = getTehranISODate(now);
+                            localStorage.removeItem(attLocalKey(todayISO2));
+                            localStorage.removeItem('att_local_' + String(currentUserLabel || '') + '_' + todayISO2);
+                        } catch (e1) {}
+                    } else {
+                        markLocalAttendance(type);
+                    }
+                } catch (e) {}
                 let successMsg = `✅ اطلاعات حضور و غیاب با موفقیت ثبت گردید.
 ⏱️ زمان ثبت: ${fullDateTimeStr}`;
                 if (type === 'entry' && (currentRole === 'morning_seller' || currentRole === 'evening_seller')) {
                     successMsg += `\n\n👋 ورودت رو ثبت کردم، خوش اومدی!`;
                 }
                 if (isMakeupExit) {
-                    successMsg += `\n\n⏮️ خروج جاافتاده‌ی دفعه قبل ثبت شد. دفعه بعد حتماً همون شب یادت باشه خروج بزنی، خودم بهت یادآوری می‌کنم. الان می‌تونی ورود امروزت رو هم بزنی.`;
+                    successMsg += `\n\n⏮️ خروج جاافتاده‌ی شیفت قبل ثبت شد.\nالان حتماً «ورود امروز» را هم جداگانه ثبت کن.`;
+                    try {
+                        const sel = document.getElementById('attType');
+                        if (sel) { sel.value = 'entry'; toggleAttendanceFields(); }
+                        const formBox = document.getElementById('attendanceFormBox');
+                        const completeBox = document.getElementById('attendanceDayCompleteBox');
+                        if (formBox) formBox.style.display = 'block';
+                        if (completeBox) completeBox.style.display = 'none';
+                    } catch (e) {}
                 }
                 if (window.__lateExitNote) {
                     successMsg += `\n\n✅ مشکل قبلی برطرف شد — خروج دیرهنگامت با موفقیت ثبت شد. از این به بعد هر وقت بزنی، دیگه گیر نمی‌کنی.`;
                 }
-                if (type === 'exit') {
-                    // با ثبت خروج، هدف شیفت هم روی همین لحظه بسته می‌شود
+                if (type === 'exit' && !isMakeupExit) {
+                    // با ثبت خروج واقعی امروز، هدف شیفت بسته می‌شود (نه خروج جاافتاده شیفت قبل)
                     try {
                         const dayISO = getTehranISODate(now);
                         localStorage.setItem('sstGoalClosed_' + currentUserLabel + '_' + dayISO, String(Date.now()));
