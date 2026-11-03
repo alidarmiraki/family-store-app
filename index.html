@@ -177,7 +177,7 @@
         .cat-stat-row span{font-size:10px;opacity:.8}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v213 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v214 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2059,6 +2059,16 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
     </div>
 
     <!-- اورلی تشخیص چهره‌ی اختصاصی (جایگزین/کمکی برای وقتی Face ID/اثر انگشت گوشی کار نمی‌کند) -->
+
+    <!-- پیام انگیزشی ورود / خسته نباشی خروج -->
+    <div id="attSpiritOverlay" style="display:none;position:fixed;inset:0;z-index:10060;background:rgba(2,6,23,.88);align-items:center;justify-content:center;padding:18px;">
+        <div style="width:100%;max-width:360px;background:linear-gradient(160deg,#0f172a,#1e293b);border:1px solid rgba(56,189,248,.35);border-radius:22px;padding:22px 18px;text-align:center;direction:rtl;box-shadow:0 20px 60px rgba(0,0,0,.55);">
+            <div id="attSpiritEmoji" style="font-size:42px;margin-bottom:8px;">✨</div>
+            <h3 id="attSpiritTitle" style="margin:0 0 10px;color:#7dd3fc;font-size:16px;">بسم الله</h3>
+            <p id="attSpiritText" style="margin:0 0 16px;line-height:1.9;font-size:14px;color:#e2e8f0;"></p>
+            <button type="button" id="attSpiritBtn" onclick="closeAttSpiritModal()" style="width:100%;border:0;border-radius:14px;padding:14px;font:inherit;font-weight:800;cursor:pointer;background:linear-gradient(100deg,#0ea5e9,#10b981);color:#fff;">آمین 🤲</button>
+        </div>
+    </div>
     <div id="faceOverlay">
         <div class="scanner-box">
             <h3 style="color:#38bdf8; margin:0 0 10px 0; font-size:14px;" id="faceOverlayTitle">🙂 تشخیص چهره اختصاصی</h3>
@@ -3952,7 +3962,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v213 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v214 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -4136,7 +4146,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=213', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=214', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -4688,27 +4698,34 @@ ${PROXY_ENDPOINTS.map(u => `<div class="summary-mini" data-sel="${u}" style="gap
         function ensureFaceApiLoaded() {
             return ensureLibraryLoaded('faceapi', () => typeof faceapi !== 'undefined', [
                 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js',
-                'https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js'
-            ], 12000);
+                'https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js',
+                'https://cdnjs.cloudflare.com/ajax/libs/face-api.js/0.22.2/face-api.min.js'
+            ], 20000);
         }
-        const FACE_MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
+        const FACE_MODEL_URLS = [
+            'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/weights',
+            'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights',
+            'https://unpkg.com/face-api.js@0.22.2/weights'
+        ];
         let faceModelsReady = false;
         async function ensureFaceModelsLoaded() {
             if (faceModelsReady) return true;
             const libOk = await ensureFaceApiLoaded();
             if (!libOk || typeof faceapi === 'undefined') return false;
-            try {
-                await Promise.all([
-                    faceapi.nets.tinyFaceDetector.loadFromUri(FACE_MODEL_URL),
-                    faceapi.nets.faceLandmark68Net.loadFromUri(FACE_MODEL_URL),
-                    faceapi.nets.faceRecognitionNet.loadFromUri(FACE_MODEL_URL)
-                ]);
-                faceModelsReady = true;
-                return true;
-            } catch (e) {
-                console.error('خطا در بارگذاری مدل‌های تشخیص چهره:', e);
-                return false;
+            for (let i = 0; i < FACE_MODEL_URLS.length; i++) {
+                try {
+                    await Promise.all([
+                        faceapi.nets.tinyFaceDetector.loadFromUri(FACE_MODEL_URLS[i]),
+                        faceapi.nets.faceLandmark68Net.loadFromUri(FACE_MODEL_URLS[i]),
+                        faceapi.nets.faceRecognitionNet.loadFromUri(FACE_MODEL_URLS[i])
+                    ]);
+                    faceModelsReady = true;
+                    return true;
+                } catch (e) {
+                    console.warn('مدل چهره از منبع ' + (i + 1) + ' لود نشد', e);
+                }
             }
+            return false;
         }
 
         // تبدیل خودکار عدد فارسی/عربی به انگلیسی توی همه‌ی فیلدهای عددی: قبلاً این فیلدها
@@ -12772,11 +12789,11 @@ function sbRenderAdminLists(cfg) {
             faceDetectLoopActive = true;
             const video = document.getElementById('faceVideoEl');
             const guide = document.getElementById('faceOvalGuide');
-            const opts = new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.6 });
+            const opts = new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.4 });
             while (faceDetectLoopActive) {
                 try {
                     const result = await faceapi.detectSingleFace(video, opts).withFaceLandmarks().withFaceDescriptor();
-                    if (result && result.detection.score >= 0.7) {
+                    if (result && result.detection.score >= 0.5) {
                         guide.className = 'face-detected';
                         faceLastDescriptor = Array.from(result.descriptor);
                         onDescriptor(faceLastDescriptor);
@@ -12858,8 +12875,8 @@ function sbRenderAdminLists(cfg) {
             const ok = await openFaceOverlayCamera();
             if (!ok) { setTimeout(() => closeFaceOverlay(false), 2500); return false; }
 
-            const FACE_MATCH_THRESHOLD = 0.5; // سخت‌گیرانه‌تر از مقدار استاندارد ۰.۶ برای دقت بالاتر
-            const REQUIRED_CONSECUTIVE_MATCHES = 2;
+            const FACE_MATCH_THRESHOLD = 0.58; // قابل‌استفاده‌تر روی نور مغازه
+            const REQUIRED_CONSECUTIVE_MATCHES = 1;
             let consecutiveMatches = 0;
             return await new Promise((resolve) => {
                 const guide = document.getElementById('faceOvalGuide');
@@ -12869,9 +12886,9 @@ function sbRenderAdminLists(cfg) {
                     if (settled) return;
                     settled = true;
                     closeFaceOverlay(false);
-                    showToast('⏳ چهره در ۲۰ ثانیه با اطمینان کافی تایید نشد. دوباره تلاش کنید یا از روش دیگری استفاده کنید.');
+                    showToast('⏳ چهره در ۳۰ ثانیه تایید نشد. نور بهتر، دوربین جلو، یا فقط با عکس/موقعیت ثبت کنید.');
                     resolve(false);
-                }, 20000);
+                }, 30000);
 
                 runFaceDetectLoop((descriptor) => {
                     if (settled) return;
@@ -12901,54 +12918,54 @@ function sbRenderAdminLists(cfg) {
         async function registerFingerprint() {
             if (!currentSessionUser) { showToast('⚠️ ابتدا وارد حساب کاربری خود شوید.'); return; }
             if (!window.PublicKeyCredential || !navigator.credentials) {
-                showToast('❌ این دستگاه یا مرورگر از تایید اثر انگشت/فیس (WebAuthn) پشتیبانی نمی‌کند. لطفاً از مرورگر Chrome به‌روز یا برنامه رسمی تلگرام استفاده کنید.');
+                showToast('❌ این مرورگر از اثر انگشت/Face ID پشتیبانی نمی‌کند.\nChrome را باز کنید یا از «ثبت چهره اختصاصی» استفاده کنید. ثبت ورود/خروج با عکس هم ممکن است.');
                 return;
             }
 
             const { data: existing, error: existingErr } = await _supabase.from('staff_devices').select('device_label, registered_at, device_uuid').eq('username', currentSessionUser.username).maybeSingle();
             if (existingErr) {
-                showToast('❌ خطا در بررسی ثبت قبلی: ' + existingErr.message + '\n\nمطمئن شوید جدول staff_devices در Supabase ساخته شده است.');
+                showToast('❌ خطا در بررسی ثبت قبلی: ' + existingErr.message + '\n\nجدول staff_devices را در Supabase چک کنید.');
                 return;
             }
             if (existing) {
                 if (existing.device_uuid === getOrCreateDeviceUuid()) {
-                    showToast('✅ اثر انگشت شما از قبل روی همین گوشی ثبت است؛ نیازی به ثبت دوباره نیست.');
-                } else {
-                    showToast(`⚠️ شما قبلاً اثر انگشت خود را روی یک گوشی دیگر (${existing.device_label || ''}) ثبت کرده‌اید.\n\nاگر گوشی خود را عوض کرده‌اید، از مدیر بخواهید ثبت قبلی را از بخش «مدیریت اثر انگشت پرسنل» ریست کند تا بتوانید دوباره ثبت کنید.`);
+                    showToast('✅ اثر انگشت شما از قبل روی همین گوشی ثبت است.');
+                    loadFingerprintStatus();
+                    return;
                 }
-                loadFingerprintStatus();
-                return;
+                const wantReplace = await showConfirm('قبلاً روی گوشی دیگری ثبت شده (' + (existing.device_label || 'نامشخص') + ').\n\nمی‌خواهید همین گوشی جایگزین شود؟ (ثبت قبلی پاک می‌شود)');
+                if (!wantReplace) {
+                    loadFingerprintStatus();
+                    return;
+                }
+                try { await _supabase.from('staff_devices').delete().eq('username', currentSessionUser.username); } catch (e) {}
             }
 
             try {
                 const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-                if (!available) {
+                if (available === false) {
                     showToast(buildNoBiometricSensorMessage());
                     return;
                 }
-            } catch (e) { /* بعضی مرورگرهای قدیمی این متد را ندارند؛ ادامه می‌دهیم */ }
+            } catch (e) {}
 
             try {
                 const challenge = crypto.getRandomValues(new Uint8Array(32));
-                const userIdBytes = new TextEncoder().encode(currentSessionUser.username);
-
-                const credentialPromise = navigator.credentials.create({
-                    publicKey: {
-                        challenge,
-                        rp: { name: 'سیستم مدیریت غرفه فامیلی (دره میرکی)' },
-                        user: { id: userIdBytes, name: currentSessionUser.username, displayName: currentUserLabel || currentSessionUser.username },
-                        pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
-                        authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'discouraged' },
-                        timeout: 60000,
-                        attestation: 'none'
-                    }
-                });
-                // همون مشکل ثبت ورود/خروج: بعضی مرورگرها/PWA گیر می‌کنن و این Promise هیچ‌وقت
-                // جواب نمی‌ده؛ یه سقف زمانی ۲۰ ثانیه‌ای می‌ذاریم تا کاربر به‌جای گیر کردن ابدی،
-                // خطای روشن ببینه و بتونه دوباره تلاش کنه یا از چهره اختصاصی استفاده کنه.
+                const userIdBytes = new TextEncoder().encode(String(currentSessionUser.username || 'user').slice(0, 64));
+                const rpId = (location.hostname && location.hostname !== 'localhost') ? location.hostname : undefined;
+                const pubKey = {
+                    challenge,
+                    rp: rpId ? { name: 'تازه مارکت · غرفه فامیلی', id: rpId } : { name: 'تازه مارکت · غرفه فامیلی' },
+                    user: { id: userIdBytes, name: currentSessionUser.username, displayName: currentUserLabel || currentSessionUser.username },
+                    pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+                    authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'preferred', residentKey: 'discouraged' },
+                    timeout: 90000,
+                    attestation: 'none'
+                };
+                const credentialPromise = navigator.credentials.create({ publicKey: pubKey });
                 const credential = await Promise.race([
                     credentialPromise,
-                    new Promise((_, reject) => setTimeout(() => reject(new DOMException('سنسور گوشی بیش از ۸ ثانیه جواب نداد', 'TimeoutError')), 8000))
+                    new Promise((_, reject) => setTimeout(() => reject(new DOMException('سنسور گوشی بیش از ۴۵ ثانیه جواب نداد — دوباره تلاش کنید', 'TimeoutError')), 45000))
                 ]);
 
                 if (!credential) { showToast('⛔ ثبت اثر انگشت لغو شد.'); return; }
@@ -13071,7 +13088,7 @@ function sbRenderAdminLists(cfg) {
                 // سراغ روش جایگزین (تشخیص چهره اختصاصی یا ادامه با عکس/موقعیت مکانی).
                 const assertion = await Promise.race([
                     credentialPromise,
-                    new Promise((_, reject) => setTimeout(() => reject(new DOMException('سنسور گوشی بیش از ۸ ثانیه جواب نداد', 'TimeoutError')), 8000))
+                    new Promise((_, reject) => setTimeout(() => reject(new DOMException('سنسور گوشی بیش از ۲۵ ثانیه جواب نداد', 'TimeoutError')), 25000))
                 ]);
 
                 if (!assertion) {
@@ -13245,6 +13262,51 @@ function sbRenderAdminLists(cfg) {
                 if (b) { b.disabled = false; b.innerText = 'ثبت در سیستم حضور و غیاب'; }
             } catch (e) {}
         }
+
+        const ATT_ENTRY_SPIRIT = [
+            { e: '🌅', t: 'شروع با یاد خدا', m: 'بسم‌الله الرحمن الرحیم\nامروز را با توکل شروع کن؛ روزی دست خداست، تلاش از تو.', b: 'خدایا یاری‌ام کن 🤲' },
+            { e: '💚', t: 'نیت پاک', m: 'هر فروشی که امروز می‌زنی، اگر با صداقت باشد برکت می‌آورد.\nتو امانت‌دار روزی مردمی.', b: 'با نیت خیر شروع می‌کنم ✨' },
+            { e: '🌤️', t: 'صبح بخیر قهرمان', m: 'خدا قوت! امروز هم با انرژی و لبخند پشت پیشخوان.\n«إنّ مع العسر یسرا» — با سختی، آسانی هست.', b: 'الحمدلله، آماده‌ام 💪' },
+            { e: '🤲', t: 'توکل', m: 'کار را به خدا بسپار و بهترینت را بگذار.\nمشتری با اخلاق خوب تو، دوباره برمی‌گردد.', b: 'یا رزّاق، برکت بده 🌟' },
+            { e: '✨', t: 'روز تازه', m: 'هر روز فرصتی تازه است.\nبا ذکر و حوصله شروع کن؛ خدا همراهت است.', b: 'بسم الله، شروع می‌کنم' }
+        ];
+        const ATT_EXIT_SPIRIT = [
+            { e: '🌙', t: 'خسته نباشی', m: 'خسته نباشی، کار امروزت تمام شد.\nخدا از تلاش صادقانه‌ات قبول کند و اجر بدهد.', b: 'الحمدلله رب العالمین 🤲' },
+            { e: '🤲', t: 'شکر پایان روز', m: 'الهی شکر که روز را سالم به پایان رساندی.\nاستراحت کن؛ فردا با انرژی بیشتر.', b: 'خدایا شکرت 💚' },
+            { e: '⭐', t: 'اجر زحمت', m: 'هر لبخند و هر خدمتی که امروز کردی، بی‌اجر نمی‌ماند.\nخسته نباشی عزیز دل.', b: 'آمین، خداحافظ تا فردا 🌙' },
+            { e: '🕌', t: 'پایان شیفت', m: 'کار دنیا تمام شد؛ دلت را با یک صلوات سبک کن.\nخسته نباشی، خدا نگهدارت.', b: 'اللهم صل علی محمد ✨' },
+            { e: '💫', t: 'برکت شب', m: 'شبت بخیر.\nخداوند روزی‌ات را حلال و برکت‌دار کند و قلبت را آرام.', b: 'شب خوش، در پناه خدا 🙏' },
+            { e: '🌿', t: 'آرام باش', m: 'امروز ایستادی پای کار — دمت گرم.\nحالا برو پیش خانواده؛ خسته نباشی.', b: 'به امید دیدار فردا 💚' },
+            { e: '🕯️', t: 'سپاس', m: 'الهی شکرت برای توفیق کار و روزی.\nخسته نباشی؛ خدا بهترین‌ها را برایت بخواهد.', b: 'آمین یا رب العالمین' }
+        ];
+        function pickAttSpirit(list) {
+            try {
+                const d = getTehranISODate(new Date());
+                let h = 0;
+                for (let i = 0; i < d.length; i++) h = (h * 31 + d.charCodeAt(i)) >>> 0;
+                h = (h + (list.length * 7) + ((currentUserLabel || '').length)) >>> 0;
+                return list[h % list.length];
+            } catch (e) {
+                return list[Math.floor(Math.random() * list.length)];
+            }
+        }
+        window.closeAttSpiritModal = function () {
+            const o = document.getElementById('attSpiritOverlay');
+            if (o) o.style.display = 'none';
+        };
+        function showAttSpiritModal(kind) {
+            try {
+                const item = pickAttSpirit(kind === 'exit' ? ATT_EXIT_SPIRIT : ATT_ENTRY_SPIRIT);
+                const o = document.getElementById('attSpiritOverlay');
+                if (!o) return;
+                document.getElementById('attSpiritEmoji').textContent = item.e;
+                document.getElementById('attSpiritTitle').textContent = item.t;
+                document.getElementById('attSpiritText').textContent = item.m;
+                document.getElementById('attSpiritBtn').textContent = item.b;
+                o.style.display = 'flex';
+            } catch (e) {}
+        }
+
         async function submitAttendance() {
             const type = document.getElementById('attType').value;
             const val = parseFloat(document.getElementById('attOvertimeVal').value) || 0;
@@ -13496,18 +13558,25 @@ function sbRenderAdminLists(cfg) {
             let biometricFallbackReason = null;
             let biometricMethodLabel = null; // برای ثبت شفاف در گزارش مدیر که دقیقاً با چه روشی تایید شد
             if (type === 'entry' || type === 'exit') {
-                if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = '👆 در حال تایید اثر انگشت...'; }
-                const fpResult = await verifyFingerprintForAttendance();
-                if (!fpResult.ok) {
-                    if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'ثبت در سیستم حضور و غیاب'; }
-                    if (!fpResult.fallbackReason) return; // کاربر انصراف داد یا لغو کرد — ثبت نمی‌شود
-                    biometricFallbackReason = fpResult.fallbackReason; // کاربر خواست بدون بیومتریک ادامه دهد
-                } else if (fpResult.method === 'webauthn') {
-                    biometricMethodLabel = '✅ با اثر انگشت/Face ID رسمی گوشی تایید شد';
-                } else if (fpResult.method === 'custom_face') {
-                    biometricMethodLabel = '✅ با تشخیص چهره اختصاصی برنامه تایید شد';
-                } else if (fpResult.method === 'unsupported') {
-                    biometricMethodLabel = '⚠️ گوشی از بیومتریک پشتیبانی نمی‌کرد؛ بدون تایید بیومتریک رد شد';
+                // اگر عکس یا موقعیت آماده است، بیومتریک اختیاری است (فروشنده گیر نکند)
+                const hasPhotoOrLoc = !!(selectedPhotoDataUrl || selectedLocationText);
+                if (hasPhotoOrLoc && (currentRole === 'morning_seller' || currentRole === 'evening_seller')) {
+                    biometricMethodLabel = '📸 تایید با عکس/موقعیت مکانی';
+                    biometricFallbackReason = null;
+                } else {
+                    if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = '👆 در حال تایید اثر انگشت/چهره...'; }
+                    const fpResult = await verifyFingerprintForAttendance();
+                    if (!fpResult.ok) {
+                        if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'ثبت در سیستم حضور و غیاب'; }
+                        if (!fpResult.fallbackReason) return;
+                        biometricFallbackReason = fpResult.fallbackReason;
+                    } else if (fpResult.method === 'webauthn') {
+                        biometricMethodLabel = '✅ با اثر انگشت/Face ID رسمی گوشی تایید شد';
+                    } else if (fpResult.method === 'custom_face') {
+                        biometricMethodLabel = '✅ با تشخیص چهره اختصاصی برنامه تایید شد';
+                    } else if (fpResult.method === 'unsupported') {
+                        biometricMethodLabel = '⚠️ گوشی از بیومتریک پشتیبانی نمی‌کرد؛ بدون تایید بیومتریک رد شد';
+                    }
                 }
             }
 
@@ -13817,6 +13886,10 @@ function sbRenderAdminLists(cfg) {
                 }
 
                 showToast(successMsg);
+                try {
+                    if (type === 'entry') showAttSpiritModal('entry');
+                    if (type === 'exit') showAttSpiritModal('exit');
+                } catch (e) {}
 
                 // فوری: وضعیت محلی را علامت بزن و قفل/بنر را بردار تا دیگر «ورودت رو ثبت کن» نگوید
                 try {
