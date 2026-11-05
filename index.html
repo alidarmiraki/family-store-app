@@ -177,7 +177,7 @@
         .cat-stat-row span{font-size:10px;opacity:.8}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v219 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v220 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -3967,7 +3967,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v219 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v220 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -4151,7 +4151,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=219', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=220', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -17169,43 +17169,49 @@ function sbRenderAdminLists(cfg) {
 
 
 
-        // --- اکسل جزیره سرد (فرمت رسمی مثل فایل نمونه) ---
+
+        // --- اکسل جزیره سرد: فقط کالاهای بدون فرمت ۲۲xxxxxx ---
         function islandScaleCode(code) {
-            const c = String(code || '').replace(/[^\d]/g, '');
+            const c = String(code == null ? '' : code).trim().replace(/[^\d]/g, '');
+            // فقط دقیقاً فرمت جزیره: ۲۲ + حداقل ۵ رقم (مثل 2248409)
             return /^22\d{5,}$/.test(c) ? c : '';
+        }
+        function islandHasFakeOrEmptyCode(code) {
+            return !islandScaleCode(code);
         }
         function islandNormName(name) {
             let s = String(name || '');
-            s = s.replace(/[۰-۹]/g, function (d) { return '۰۱۲۳۴۵۶۷۸۹'.indexOf(d); })
-                .replace(/[٠-٩]/g, function (d) { return '٠١٢٣٤٥٦٧٨٩'.indexOf(d); });
+            s = s.replace(/[۰-۹]/g, function (d) { return String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)); })
+                .replace(/[٠-٩]/g, function (d) { return String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)); });
             s = s.replace(/ي/g, 'ی').replace(/ك/g, 'ک').toLowerCase();
-            s = s.replace(/[%٪]/g, ' ').replace(/[0-9]+/g, ' ');
+            s = s.replace(/[%٪]/g, ' ').replace(/[0-9۰-۹]+/g, ' ');
             s = s.replace(/[^\u0600-\u06FFa-z\s]/g, ' ').replace(/\s+/g, ' ').trim();
-            s = s.replace(/\b(درصد|فله|خانواده|ویژه|تازه|فروشگاهی|گوشتیران|تانیس|اروس|اطمینان|۲۰۲|202)\b/g, ' ');
+            s = s.replace(/(درصد|فله|خانواده|ویژه|تازه|فروشگاهی|گوشتیران|تانیس|اروس|اطمینان|آرزومان|مارال)/g, ' ');
             return s.replace(/\s+/g, ' ').trim();
         }
         function islandNameScore(a, b) {
             if (!a || !b) return 0;
             if (a === b) return 100;
-            if (a.indexOf(b) >= 0 || b.indexOf(a) >= 0) return 88;
-            const ta = a.split(' ').filter(function (x) { return x.length > 1; });
-            const tb = b.split(' ').filter(function (x) { return x.length > 1; });
+            if (a.length > 4 && b.length > 4 && (a.indexOf(b) >= 0 || b.indexOf(a) >= 0)) return 90;
+            const ta = a.split(' ').filter(function (x) { return x.length > 2; });
+            const tb = b.split(' ').filter(function (x) { return x.length > 2; });
             if (!ta.length || !tb.length) return 0;
             let hit = 0;
             ta.forEach(function (w) { if (tb.indexOf(w) >= 0) hit++; });
-            return Math.round((hit / Math.max(ta.length, tb.length)) * 75);
+            if (hit === 0) return 0;
+            return Math.round((hit / Math.max(ta.length, tb.length)) * 80);
         }
         function islandIsSausageFamily(p) {
             const name = String(p.name || '');
             const cat = String(p.category || '').toLowerCase();
-            if (/سوسیس|کالباس|هات\s*داگ|ژامبون|کوکتل|بوقالو|روال|لیونر|مارتادلا|پپرونی|بیکن/.test(name)) return true;
+            if (/سوسیس|کالباس|هات\s*داگ|هاتداگ|ژامبون|کوکتل|بوقالو|بوفالو|روال|لیونر|مارتادلا|پپرونی|بیکن|استیک|چیکو|چیلی/.test(name)) return true;
             if (/sausage/.test(cat)) return true;
             return false;
         }
         function islandPriceRial(p) {
-            const n = Number(p.sell_price) || 0;
-            // اگر از قبل خیلی بزرگ باشد (ریال)، همان؛ وگرنه تومان→ریال
-            if (n >= 100000) return Math.round(n);
+            // قیمت فروش در سایت به تومان است → برای اکسل نمونه ×۱۰ = ریال
+            const n = Number(p.sell_price);
+            if (!isFinite(n) || n <= 0) return '';
             return Math.round(n * 10);
         }
         window.exportIslandCodeExcel = async function () {
@@ -17222,19 +17228,18 @@ function sbRenderAdminLists(cfg) {
                     products = data || [];
                 }
 
-                // فقط خانواده سوسیس/کالباس برای این اکسل (مثل فایل نمونه)
                 const family = products.filter(function (p) { return p && p.name && islandIsSausageFamily(p); });
-                const withScale = [];
-                const withoutScale = [];
-                family.forEach(function (p) {
-                    const sc = islandScaleCode(p.code);
-                    if (sc) withScale.push(Object.assign({}, p, { scaleCode: sc }));
-                    else withoutScale.push(p);
-                });
 
+                // قدیم = فقط کد معتبر ۲۲xxxxxx
+                const withScale = family.filter(function (p) { return !!islandScaleCode(p.code); })
+                    .map(function (p) { return Object.assign({}, p, { scaleCode: islandScaleCode(p.code) }); });
+
+                // جدید = هر چیزی که فرمت ۲۲ ندارد (بدون کد، کد الکی، کد کوتاه، ...)
+                const withoutScale = family.filter(function (p) { return islandHasFakeOrEmptyCode(p.code); });
+
+                // تطبیق سخت‌گیرانه؛ اگر شک داشت خالی بگذار
                 const usedOld = {};
-                const rows = []; // { newName, price, oldName, oldCode }
-                withoutScale.forEach(function (np) {
+                const rows = withoutScale.map(function (np) {
                     const nn = islandNormName(np.name);
                     let best = null, bestScore = 0;
                     withScale.forEach(function (op) {
@@ -17243,21 +17248,20 @@ function sbRenderAdminLists(cfg) {
                         if (sc > bestScore) { bestScore = sc; best = op; }
                     });
                     const price = islandPriceRial(np);
-                    if (best && bestScore >= 50) {
+                    if (best && bestScore >= 70) {
                         usedOld[best.id] = true;
-                        rows.push({ newName: np.name, price: price, oldName: best.name, oldCode: best.scaleCode || String(best.code || '') });
-                    } else {
-                        rows.push({ newName: np.name, price: price, oldName: '', oldCode: '' });
+                        return { newName: np.name, price: price, oldName: best.name, oldCode: best.scaleCode, currentCode: String(np.code || '') };
                     }
+                    return { newName: np.name, price: price, oldName: '', oldCode: '', currentCode: String(np.code || '') };
                 });
-                // اول تطبیق‌شده‌ها، بعد بدون قدیم
+
                 rows.sort(function (a, b) {
                     const am = a.oldCode ? 0 : 1, bm = b.oldCode ? 0 : 1;
                     if (am !== bm) return am - bm;
                     return String(a.newName).localeCompare(String(b.newName), 'fa');
                 });
 
-                // لیست تغییر قیمت: کالاهای دارای کد ۲۲ (مرجع قدیم)
+                // شیت تغییر قیمت: کالاهای دارای کد ۲۲ با قیمت فعلی (مرجع)
                 const priceChange = withScale.map(function (p) {
                     return { name: p.name, code: p.scaleCode, price: islandPriceRial(p) };
                 }).sort(function (a, b) { return String(a.name).localeCompare(String(b.name), 'fa'); });
@@ -17277,26 +17281,23 @@ function sbRenderAdminLists(cfg) {
                 wb.created = new Date();
                 const todayFa = getTehranDateString(new Date());
 
-                // ===== شیت ۱: محصولات جدید جزیره سرد (مثل نمونه) =====
                 const ws1 = wb.addWorksheet('محصولات جدید جزیره سرد', {
                     views: [{ rightToLeft: true, showGridLines: true }],
                     pageSetup: { orientation: 'landscape', fitToPage: true, fitToWidth: 1, paperSize: 9 }
                 });
 
                 ws1.mergeCells('A1:D1');
-                const t1 = ws1.getCell('A1');
-                t1.value = 'نام محصولات جدید برای ایجاد کد جدید جزیره سرد';
-                t1.font = { bold: true, size: 13, color: { argb: C.titleFg }, name: 'Tahoma' };
-                t1.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.titleBg } };
-                t1.alignment = { horizontal: 'center', vertical: 'middle' };
+                ws1.getCell('A1').value = 'نام محصولات جدید برای ایجاد کد جدید جزیره سرد';
+                ws1.getCell('A1').font = { bold: true, size: 13, color: { argb: C.titleFg }, name: 'Tahoma' };
+                ws1.getCell('A1').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.titleBg } };
+                ws1.getCell('A1').alignment = { horizontal: 'center', vertical: 'middle' };
                 ws1.getRow(1).height = 28;
 
                 ws1.mergeCells('A2:D2');
-                ws1.getCell('A2').value = 'تازه مارکت · تاریخ: ' + todayFa + ' · بدون کد ۲۲: ' + rows.length.toLocaleString('fa-IR') + ' · دارای کد: ' + withScale.length.toLocaleString('fa-IR');
+                ws1.getCell('A2').value = 'تازه مارکت · تاریخ: ' + todayFa + ' · بدون فرمت ۲۲ (کد خالی/الکی): ' + rows.length.toLocaleString('fa-IR') + ' · کد معتبر ۲۲: ' + withScale.length.toLocaleString('fa-IR');
                 ws1.getCell('A2').font = { size: 10, name: 'Tahoma', color: { argb: 'FF334155' } };
                 ws1.getCell('A2').alignment = { horizontal: 'center', vertical: 'middle' };
 
-                // هدر جدول اصلی
                 const hr = ws1.getRow(3);
                 hr.values = [undefined, 'نام محصول جدید', 'قیمت  ریال', 'نام محصول قدیم', 'کد قدیم'];
                 hr.height = 24;
@@ -17312,9 +17313,14 @@ function sbRenderAdminLists(cfg) {
                 hr.getCell(4).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.oldCodeOrange } };
                 hr.getCell(4).font = { bold: true, size: 11, color: { argb: C.headerFg }, name: 'Tahoma' };
 
+                if (!rows.length) {
+                    const empty = ws1.getRow(4);
+                    empty.values = [undefined, 'هیچ کالای سوسیس/کالباسی بدون کد ۲۲ پیدا نشد', '', '', ''];
+                    [1, 2, 3, 4].forEach(function (c) { empty.getCell(c).border = thin; });
+                }
                 rows.forEach(function (r, i) {
                     const row = ws1.getRow(4 + i);
-                    row.values = [undefined, r.newName, r.price || '', r.oldName || '', r.oldCode || ''];
+                    row.values = [undefined, r.newName, r.price === '' ? '' : r.price, r.oldName || '', r.oldCode || ''];
                     row.height = 20;
                     [1, 2, 3, 4].forEach(function (c) {
                         const cell = row.getCell(c);
@@ -17323,7 +17329,7 @@ function sbRenderAdminLists(cfg) {
                         cell.font = { name: 'Tahoma', size: 10 };
                         if (i % 2 === 1) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.band } };
                     });
-                    if (r.price) {
+                    if (r.price !== '') {
                         row.getCell(2).numFmt = '#,##0';
                         row.getCell(2).font = { bold: true, name: 'Tahoma', size: 10, color: { argb: 'FFB45309' } };
                     }
@@ -17332,40 +17338,12 @@ function sbRenderAdminLists(cfg) {
                     }
                 });
 
-                ws1.getColumn(1).width = 38;
+                ws1.getColumn(1).width = 42;
                 ws1.getColumn(2).width = 14;
                 ws1.getColumn(3).width = 36;
                 ws1.getColumn(4).width = 12;
 
-                // جدول کناری تغییر قیمت روی همان شیت (مثل نمونه ستون‌های F-H)
-                ws1.getCell('F3').value = 'لیست تغییر قیمت';
-                ws1.getCell('G3').value = 'کد کالا';
-                ws1.getCell('H3').value = 'قیمت';
-                ['F', 'G', 'H'].forEach(function (col) {
-                    const cell = ws1.getCell(col + '3');
-                    cell.font = { bold: true, size: 11, color: { argb: C.headerFg }, name: 'Tahoma' };
-                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.headerDark } };
-                    cell.alignment = { horizontal: 'center', vertical: 'middle' };
-                    cell.border = thin;
-                });
-                priceChange.forEach(function (p, i) {
-                    const r = 4 + i;
-                    ws1.getCell('F' + r).value = p.name;
-                    ws1.getCell('G' + r).value = p.code;
-                    ws1.getCell('H' + r).value = p.price;
-                    ['F', 'G', 'H'].forEach(function (col) {
-                        const cell = ws1.getCell(col + r);
-                        cell.border = thin;
-                        cell.font = { name: 'Tahoma', size: 9 };
-                        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
-                    });
-                    ws1.getCell('H' + r).numFmt = '#,##0';
-                });
-                ws1.getColumn(6).width = 32;
-                ws1.getColumn(7).width = 12;
-                ws1.getColumn(8).width = 12;
-
-                // ===== شیت ۲: فقط تغییر قیمت (جدول تمیز) =====
+                // شیت ۲ — فقط کالاهای کد ۲۲ (مرجع / تغییر قیمت)
                 const ws2 = wb.addWorksheet('محصولات تغییر قیمت جزیره سرد', {
                     views: [{ rightToLeft: true, showGridLines: true }]
                 });
@@ -17386,7 +17364,7 @@ function sbRenderAdminLists(cfg) {
                 });
                 priceChange.forEach(function (p, i) {
                     const row = ws2.getRow(4 + i);
-                    row.values = [undefined, p.name, p.code, p.price];
+                    row.values = [undefined, p.name, p.code, p.price === '' ? '' : p.price];
                     [1, 2, 3].forEach(function (c) {
                         const cell = row.getCell(c);
                         cell.border = thin;
@@ -17394,11 +17372,21 @@ function sbRenderAdminLists(cfg) {
                         cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
                         if (i % 2 === 1) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.band } };
                     });
-                    row.getCell(3).numFmt = '#,##0';
+                    if (p.price !== '') row.getCell(3).numFmt = '#,##0';
                 });
-                ws2.getColumn(1).width = 40;
+                ws2.getColumn(1).width = 42;
                 ws2.getColumn(2).width = 14;
                 ws2.getColumn(3).width = 14;
+
+                // شیت ۳ — راهنما
+                const ws3 = wb.addWorksheet('راهنما', { views: [{ rightToLeft: true }] });
+                ws3.getCell('A1').value = 'چطور این فایل ساخته شده؟';
+                ws3.getCell('A1').font = { bold: true, size: 14, name: 'Tahoma' };
+                ws3.getCell('A3').value = 'شیت «محصولات جدید»: همه سوسیس/کالباس‌هایی که کدشان فرمت ۲۲xxxxxx نیست (خالی یا کد الکی).';
+                ws3.getCell('A4').value = 'اگر اسم نزدیک به یک کد ۲۲ قدیمی باشد، نام و کد قدیم پر می‌شود؛ وگرنه خالی می‌ماند تا کد جدید بسازی.';
+                ws3.getCell('A5').value = 'شیت «تغییر قیمت»: فقط کالاهایی که همین الان کد معتبر ۲۲ دارند.';
+                ws3.getCell('A6').value = 'قیمت ریال = قیمت فروش سایت (تومان) × ۱۰';
+                ws3.getColumn(1).width = 90;
 
                 const buffer = await wb.xlsx.writeBuffer();
                 const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -17410,8 +17398,7 @@ function sbRenderAdminLists(cfg) {
                 a.click();
                 setTimeout(function () { try { URL.revokeObjectURL(url); a.remove(); } catch (e) {} }, 1500);
                 const matchedN = rows.filter(function (r) { return !!r.oldCode; }).length;
-                const onlyNew = rows.length - matchedN;
-                showToast('✅ اکسل نمونه ساخته شد\nتطبیق با قدیم: ' + matchedN + '\nفقط کد جدید: ' + onlyNew + '\nکدهای ۲۲: ' + priceChange.length);
+                showToast('✅ اکسل آماده\nبدون کد ۲۲: ' + rows.length + '\nتطبیق قدیم: ' + matchedN + '\nکد معتبر ۲۲: ' + withScale.length);
             } catch (e) {
                 console.error(e);
                 showToast('❌ خطا در ساخت اکسل: ' + (e && e.message ? e.message : e));
