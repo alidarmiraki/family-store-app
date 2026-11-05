@@ -177,7 +177,7 @@
         .cat-stat-row span{font-size:10px;opacity:.8}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v220 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v221 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -3967,7 +3967,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v220 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v221 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -4151,7 +4151,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=220', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=221', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -12156,6 +12156,8 @@ function sbRenderAdminLists(cfg) {
             const s = String(note);
             return s.indexOf('خروج جاافتاده') >= 0 || s.indexOf('فراموش‌شده از شیفت قبل') >= 0 || s.indexOf('خروج خودکار جاافتاده') >= 0;
         }
+
+        // وضعیت امروز: سرور + کش محلی همان‌روز (کش تا آخر همان روز معتبر است)
         async function getTodayAttendanceStatus() {
             const todayISO = getTehranISODate(new Date());
             const localKey = 'att_local_' + String(currentUserLabel || '') + '_' + todayISO;
@@ -12165,46 +12167,76 @@ function sbRenderAdminLists(cfg) {
             try { localDone = getLocalAttDone(todayISO) || {}; } catch (e) {}
 
             let todayRecords = [];
+            let serverOk = false;
             try {
-                const since = new Date(Date.now() - 40 * 3600 * 1000).toISOString();
-                const { data, error } = await withTimeout(_supabase.from('attendance')
+                // ۱) دقیق با نام فعلی کاربر
+                const since = new Date(Date.now() - 48 * 3600 * 1000).toISOString();
+                let res = await withTimeout(_supabase.from('attendance')
                     .select('type, created_at, note, seller_name')
+                    .eq('seller_name', currentUserLabel)
                     .gte('created_at', since)
                     .order('created_at', { ascending: true })
-                    .limit(80), 6000, 'بررسی وضعیت امروز');
-                if (!error && data) {
-                    todayRecords = data.filter(function (r) {
-                        return attendanceBelongsToMe(r.seller_name) && getTehranISODate(new Date(r.created_at)) === todayISO;
+                    .limit(50), 7000, 'بررسی وضعیت امروز');
+                if (res && !res.error && res.data) {
+                    serverOk = true;
+                    todayRecords = (res.data || []).filter(function (r) {
+                        return getTehranISODate(new Date(r.created_at)) === todayISO;
                     });
+                }
+                // ۲) اگر خالی بود، جستجوی منعطف نام (فروشنده‌هایی که نام‌شان کمی فرق دارد)
+                if (serverOk && todayRecords.length === 0) {
+                    const res2 = await withTimeout(_supabase.from('attendance')
+                        .select('type, created_at, note, seller_name')
+                        .gte('created_at', since)
+                        .order('created_at', { ascending: false })
+                        .limit(100), 7000, 'بررسی وضعیت امروز۲');
+                    if (res2 && !res2.error && res2.data) {
+                        todayRecords = (res2.data || []).filter(function (r) {
+                            return attendanceBelongsToMe(r.seller_name) && getTehranISODate(new Date(r.created_at)) === todayISO;
+                        }).reverse();
+                    }
                 }
             } catch (e) {
                 console.warn('getTodayAttendanceStatus', e);
+                serverOk = false;
             }
 
-            // حقیقت فقط از سرور — کش محلی فقط اگر خیلی تازه باشد (۲ دقیقه) برای ثبت همین لحظه
             const realEntry = todayRecords.some(function (r) { return r.type === 'entry'; });
             const realExit = todayRecords.some(function (r) { return r.type === 'exit' && !isMakeupExitNote(r.note); });
-            const localFresh = (local.ts && (Date.now() - Number(local.ts) < 120000)) || (localDone.ts && (Date.now() - Number(localDone.ts) < 120000));
-            const hasEntry = realEntry || (localFresh && (!!local.hasEntry || !!localDone.entry));
-            const hasExit = realExit || (localFresh && hasEntry && (!!local.hasExit || !!localDone.exit));
 
-            // اگر سرور ورود ندارد ولی کش می‌گوید ورود زده → کش را دور بریز
-            if (!realEntry && (local.hasEntry || local.hasExit || localDone.entry || localDone.exit)) {
-                try { localStorage.removeItem(localKey); } catch (e) {}
-                try { localStorage.removeItem(attLocalKey(todayISO)); } catch (e) {}
-                local = {};
-                localDone = {};
+            // کش محلی همان روز — تا پایان روز معتبر (نه فقط ۲ دقیقه)
+            const localEntry = !!(local.hasEntry || localDone.entry);
+            const localExit = !!(local.hasExit || localDone.exit);
+
+            // همگام‌سازی: اگر سرور تأیید کرد، کش را با سرور یکی کن
+            if (serverOk) {
+                if (realEntry && !localEntry) {
+                    try { markLocalAttendance('entry'); local.hasEntry = true; } catch (e) {}
+                }
+                if (realExit && !localExit) {
+                    try { markLocalAttendance('exit'); local.hasExit = true; } catch (e) {}
+                }
+                // فقط وقتی سرور سالم جواب داد و ورود واقعی ندارد، کش ورود را پاک نکن
+                // مگر اینکه صراحتاً خروج واقعی هم نباشد و کش خیلی قدیمیِ روز دیگری باشد (اینجا همان روز است)
             }
+
+            // حقیقت عملیاتی برای فروشنده:
+            // ورود: سرور یا کش محلی امروز
+            // خروج: سرور یا (کش خروج + وجود ورود)
+            const hasEntry = realEntry || localEntry;
+            const hasExit = realExit || (localExit && hasEntry);
 
             return {
                 hasEntry: hasEntry,
                 hasExit: hasExit,
                 realEntry: realEntry,
                 realExit: realExit,
+                serverOk: serverOk,
                 records: todayRecords,
                 local: local
             };
         }
+
         function markLocalAttendance(type) {
             try {
                 const todayISO = getTehranISODate(new Date());
@@ -12213,6 +12245,7 @@ function sbRenderAdminLists(cfg) {
                 if (type === 'entry') local.hasEntry = true;
                 if (type === 'exit') local.hasExit = true;
                 local.ts = Date.now();
+                local.seller = String(currentUserLabel || '');
                 localStorage.setItem(localKey, JSON.stringify(local));
                 try { markLocalAttDone(type, todayISO); } catch (e2) {}
             } catch (e) {}
@@ -12236,21 +12269,7 @@ function sbRenderAdminLists(cfg) {
             // چون فقط وضعیت «امروز» رو می‌دید، گزینه‌ی «ورود» رو پیش‌فرض می‌ذاشت و «خروج»
             // رو غیرفعال می‌کرد؛ در نتیجه کاربر هیچ‌وقت نمی‌تونست خروجِ جاافتاده رو بزنه و
             // برای همیشه از ثبت ورود جدید هم قفل می‌موند.
-            // پاکسازی کش غلط: اگر سرور ورود واقعی امروز ندارد، کش محلی را خالی کن
             let status = await getTodayAttendanceStatus();
-            try {
-                const realEntry = (status.records || []).some(function (r) { return r.type === 'entry'; });
-                const realExit = (status.records || []).some(function (r) {
-                    return r.type === 'exit' && !(r.note && (String(r.note).indexOf('خروج جاافتاده') >= 0 || String(r.note).indexOf('فراموش‌شده از شیفت قبل') >= 0));
-                });
-                if (!realEntry && (status.local && (status.local.hasEntry || status.local.hasExit))) {
-                    const todayISO = getTehranISODate(new Date());
-                    try { localStorage.removeItem(attLocalKey(todayISO)); } catch (e) {}
-                    try { localStorage.removeItem('att_local_' + String(currentUserLabel || '') + '_' + todayISO); } catch (e) {}
-                    status = await getTodayAttendanceStatus();
-                }
-            } catch (e) {}
-
             const unclosed = await getUnclosedPreviousShift();
             if (unclosedHint) {
                 if (unclosed) {
@@ -12266,40 +12285,23 @@ function sbRenderAdminLists(cfg) {
             if (entryOption) entryOption.disabled = false;
 
             if (status.hasEntry && status.hasExit) {
-                // فقط وقتی واقعاً در سرور هم ورود+خروج هست فرم را مخفی کن
-                const realBoth = (status.records || []).some(function (r) { return r.type === 'entry'; }) &&
-                    (status.records || []).some(function (r) {
-                        return r.type === 'exit' && !(r.note && String(r.note).indexOf('خروج جاافتاده') >= 0);
-                    });
-                if (realBoth) {
-                    if (formBox) formBox.style.display = 'none';
-                    if (completeBox) completeBox.style.display = 'block';
-                    return;
-                }
+                if (formBox) formBox.style.display = 'none';
+                if (completeBox) completeBox.style.display = 'block';
+                return;
             }
             if (formBox) formBox.style.display = 'block';
             if (completeBox) completeBox.style.display = 'none';
-            if (formBox) formBox.style.display = 'block';
-            if (completeBox) completeBox.style.display = 'none';
-
-            // فقط ورود واقعی امروز از سرور → خروج؛ وگرنه همیشه ورود
-            const realEntry = !!(status.realEntry || (status.records || []).some(function (r) { return r.type === 'entry'; }));
-            const realExit = !!(status.realExit || (status.records || []).some(function (r) {
-                return r.type === 'exit' && !isMakeupExitNote(r.note);
-            }));
 
             if (entryOption) entryOption.disabled = false;
             if (exitOption) exitOption.disabled = false;
 
-            if (realEntry && !realExit) {
-                // امروز وارد شده، هنوز خروج نزده → پیش‌فرض خروج (ولی ورود هم فعال بماند)
+            // hasEntry/hasExit ترکیبی سرور+کش همان‌روز
+            if (status.hasEntry && status.hasExit) {
                 select.value = 'exit';
-            } else if (realEntry && realExit) {
-                select.value = 'entry'; // فرم معمولاً مخفی است
+            } else if (status.hasEntry && !status.hasExit) {
+                select.value = 'exit';
             } else {
-                // هیچ ورود واقعی امروز نیست → حتماً ورود
                 select.value = 'entry';
-                if (exitOption) exitOption.disabled = true; // بدون ورود، خروج معنی ندارد
             }
             toggleAttendanceFields();
         }
@@ -13512,29 +13514,32 @@ function sbRenderAdminLists(cfg) {
             if ((type === 'entry' || type === 'exit') && !isMakeupExit) {
                 const status = await getTodayAttendanceStatus();
                 if (type === 'entry' && status.hasEntry && !status.hasExit) {
-                    showToast('⛔ شما همین امروز قبلاً «ورود» ثبت کرده‌اید. الان فقط می‌توانید «خروج» بزنید.');
+                    showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج» را بزن.');
                     document.getElementById('attType').value = 'exit';
-                    toggleAttendanceFields();
-                    return;
-                }
-                if (type === 'entry' && status.hasEntry && status.hasExit) {
-                    showToast('⛔ شما همین امروز یک شیفت کامل (ورود و خروج) ثبت کرده‌اید. اگر امروز شیفت دومی دارید، لطفاً موضوع را با مدیر در میان بگذارید.');
-                    return;
-                }
-                if (type === 'exit' && !(status.realEntry || status.hasEntry)) {
-                    showToast('⛔ اول باید «ورود امروز» را ثبت کنی، بعد خروج.');
-                    document.getElementById('attType').value = 'entry';
-                    if (entryOption) {}
-                    try {
-                        const eo = document.querySelector('#attType option[value="exit"]');
-                        if (eo) eo.disabled = true;
-                    } catch (e) {}
                     toggleAttendanceFields();
                     attResetSubmitBtn();
                     return;
                 }
+                if (type === 'entry' && status.hasEntry && status.hasExit) {
+                    showToast('✅ شیفت امروز کامل است (ورود و خروج ثبت شده).');
+                    attResetSubmitBtn();
+                    return;
+                }
+                if (type === 'exit' && !status.hasEntry) {
+                    // اگر سرور قطع است ولی کاربر مصر است، اجازه بده ثبت کند تا گیر نکند
+                    if (status.serverOk === false) {
+                        showToast('⚠️ وضعیت ورود از سرور خوانده نشد؛ اگر مطمئنی ورود زدی، خروج ثبت می‌شود.');
+                    } else {
+                        showToast('⛔ اول «ورود امروز» را ثبت کن، بعد خروج.');
+                        document.getElementById('attType').value = 'entry';
+                        toggleAttendanceFields();
+                        attResetSubmitBtn();
+                        return;
+                    }
+                }
                 if (type === 'exit' && status.hasExit) {
-                    showToast('⛔ شما همین امروز قبلاً «خروج» ثبت کرده‌اید.');
+                    showToast('✅ خروج امروز قبلاً ثبت شده.');
+                    attResetSubmitBtn();
                     return;
                 }
             }
@@ -13819,17 +13824,7 @@ function sbRenderAdminLists(cfg) {
             if (!error) {
                 try {
                     if (isMakeupExit && type === 'exit') {
-                        // فقط شیفت قبلی را ببند — امروز را آزاد بگذار تا ورود بزند
-                        try {
-                            const uncl = await getUnclosedPreviousShift();
-                            // بعد از ثبت، آخرین رکورد خروج است؛ روز قبلی را از note/created تخمین بزن
-                        } catch (e0) {}
-                        try {
-                            // پاک کردن کش امروز که ممکن است قبلاً اشتباه پر شده باشد
-                            const todayISO2 = getTehranISODate(now);
-                            localStorage.removeItem(attLocalKey(todayISO2));
-                            localStorage.removeItem('att_local_' + String(currentUserLabel || '') + '_' + todayISO2);
-                        } catch (e1) {}
+                        // خروج جاافتاده مال امروز نیست — کش امروز را دست نزن
                     } else {
                         markLocalAttendance(type);
                     }
