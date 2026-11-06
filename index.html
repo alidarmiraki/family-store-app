@@ -5,7 +5,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="app-build" content="v225">
+    <meta name="app-build" content="v226">
     <!-- جلوگیری از کش‌شدن خود index.html توسط مرورگر/گوشی، تا نسخه‌ی جدید همیشه فوراً لود بشه
          (sw.js شما کش نمی‌کنه، ولی مرورگر یا هاست ممکنه خودش HTML رو کش کنه) -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -181,7 +181,7 @@
         .cat-stat-row span{font-size:10px;opacity:.8}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v225 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v226 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -3186,99 +3186,127 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
 
     <!-- عیب‌یابی و رفع خودکار — فقط مدیر -->
     <div id="diagnosticsTab" class="card">
-        <h2>🛠️ مرکز عیب‌یابی حرفه‌ای</h2>
-        <div class="hint">فقط مدیر · وضعیت همه بخش‌های حیاتی سایت را یکجا می‌بینی و با دکمه «درست کن» مشکلات رایج همان بخش را رفع می‌کنی. بازنویسی کامل کد از گوشی ممکن نیست؛ رفع کش، همگام‌سازی و اتصال‌ها از همین‌جا انجام می‌شود.</div>
+        <h2 style="margin-bottom:6px;">🛠️ عیب‌یابی</h2>
+        <div class="hint" style="margin:0 0 10px;">جمع‌وجور · روی هر بخش بزن تا باز شود</div>
 
-        <div style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 14px;">
-            <button type="button" class="submit-btn" style="flex:1;min-width:140px;background:linear-gradient(100deg,#2563eb,#7c3aed);" onclick="diagRunFullScan()">🔎 اسکن کامل همه بخش‌ها</button>
-            <button type="button" class="submit-btn" style="flex:1;min-width:140px;background:linear-gradient(100deg,#059669,#10b981);" onclick="diagRepairAll()">✨ رفع خودکار همه موارد رایج</button>
-            <button type="button" class="row-btn edit-btn" style="flex:1;min-width:120px;" onclick="diagForceUpdate()">🔄 نسخه جدید</button>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+            <button type="button" class="submit-btn" style="margin:0;padding:12px 8px;font-size:13px;background:linear-gradient(100deg,#2563eb,#7c3aed);" onclick="diagRunFullScan()">🔎 اسکن کامل</button>
+            <button type="button" class="submit-btn" style="margin:0;padding:12px 8px;font-size:13px;background:linear-gradient(100deg,#059669,#10b981);" onclick="diagRepairAll()">✨ رفع خودکار</button>
+            <button type="button" class="row-btn edit-btn" style="margin:0;padding:10px 8px;" onclick="diagForceUpdate()">🔄 نسخه جدید</button>
+            <button type="button" class="row-btn edit-btn" style="margin:0;padding:10px 8px;" onclick="diagCheckEveningSales()">🌙 فروش دیشب شب</button>
         </div>
-        <div id="diagFullScanResult" class="report-card" style="display:none;margin-bottom:12px;"></div>
+        <div id="diagFullScanResult" style="display:none;margin-bottom:10px;padding:10px;border-radius:12px;background:#0f172a;border:1px solid #334155;font-size:12px;line-height:1.7;"></div>
+        <div id="diagEveningSalesBox" style="display:none;margin-bottom:10px;padding:10px;border-radius:12px;background:#0f172a;border:1px solid #a78bfa;font-size:12px;line-height:1.7;"></div>
 
-        <div class="report-card" style="border-color:#38bdf8;">
-            <h3 style="color:#38bdf8;margin:0 0 8px;">📦 نسخه · کش · PWA</h3>
-            <div id="diagVersionLine" style="font-size:12px;line-height:1.7;">در حال خواندن...</div>
-            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
-                <button type="button" class="row-btn edit-btn" onclick="diagForceUpdate()">🔄 آپدیت اجباری</button>
-                <button type="button" class="row-btn edit-btn" onclick="diagClearAppCaches()">🧹 پاک‌سازی کش اپ</button>
+        <style>
+            .diag-acc{border:1px solid #334155;border-radius:12px;margin-bottom:8px;overflow:hidden;background:#0b1220;}
+            .diag-acc>summary{list-style:none;cursor:pointer;padding:12px 14px;font-weight:800;font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:8px;user-select:none;}
+            .diag-acc>summary::-webkit-details-marker{display:none;}
+            .diag-acc>summary::after{content:'▼';font-size:10px;opacity:.6;}
+            .diag-acc[open]>summary::after{content:'▲';}
+            .diag-acc .diag-body{padding:0 12px 12px;font-size:12px;line-height:1.65;color:#cbd5e1;}
+            .diag-acc .diag-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+            .diag-acc .diag-actions button{margin:0 !important;padding:8px 10px !important;font-size:11px !important;}
+        </style>
+
+        <details class="diag-acc" open>
+            <summary>📦 نسخه و کش</summary>
+            <div class="diag-body">
+                <div id="diagVersionLine">—</div>
+                <div class="diag-actions">
+                    <button type="button" class="row-btn edit-btn" onclick="diagForceUpdate()">آپدیت اجباری</button>
+                    <button type="button" class="row-btn edit-btn" onclick="diagClearAppCaches()">پاک‌سازی کش</button>
+                </div>
+                <div id="diagCacheResult"></div>
             </div>
-            <div id="diagCacheResult" style="margin-top:8px;font-size:12px;"></div>
-        </div>
+        </details>
 
-        <div class="report-card" style="border-color:#22c55e;">
-            <h3 style="color:#22c55e;margin:0 0 8px;">🌐 اتصال · پروکسی · سوپابیس</h3>
-            <div id="diagNetLine" style="font-size:12px;line-height:1.7;">—</div>
-            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
-                <button type="button" class="row-btn edit-btn" onclick="diagPingSupabase()">تست سوپابیس</button>
-                <button type="button" class="row-btn edit-btn" onclick="diagTestProxies()">تست پروکسی‌ها</button>
-                <button type="button" class="row-btn edit-btn" onclick="diagRepairConnection()">درست کن اتصال</button>
+        <details class="diag-acc">
+            <summary>🌐 اتصال و سوپابیس</summary>
+            <div class="diag-body">
+                <div id="diagNetLine">—</div>
+                <div class="diag-actions">
+                    <button type="button" class="row-btn edit-btn" onclick="diagPingSupabase()">تست سوپابیس</button>
+                    <button type="button" class="row-btn edit-btn" onclick="diagTestProxies()">تست پروکسی</button>
+                    <button type="button" class="row-btn edit-btn" onclick="diagRepairConnection()">تعمیر اتصال</button>
+                </div>
+                <div id="diagPingResult"></div>
             </div>
-            <div id="diagPingResult" style="margin-top:8px;font-size:12px;"></div>
-        </div>
+        </details>
 
-        <div class="report-card" style="border-color:#10b981;">
-            <h3 style="color:#10b981;margin:0 0 8px;">⏰ حضور و غیاب (ورود/خروج)</h3>
-            <div id="diagAttStatus" style="font-size:12px;line-height:1.7;">—</div>
-            <button type="button" class="submit-btn" style="margin-top:8px;background:linear-gradient(100deg,#059669,#10b981);" onclick="diagRepairAttendance()">✅ درست کن ورود/خروج</button>
-            <div id="diagAttResult" style="margin-top:8px;font-size:12px;"></div>
-        </div>
-
-        <div class="report-card" style="border-color:#a78bfa;">
-            <h3 style="color:#a78bfa;margin:0 0 8px;">📦 موجودی · کاتالوگ · محصولات</h3>
-            <div id="diagProductStatus" style="font-size:12px;line-height:1.7;">—</div>
-            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
-                <button type="button" class="row-btn edit-btn" onclick="diagRepairProducts()">همگام‌سازی محصولات</button>
-                <button type="button" class="row-btn edit-btn" onclick="diagRepairCatalog()">همگام‌سازی کاتالوگ</button>
+        <details class="diag-acc">
+            <summary>⏰ حضور و غیاب</summary>
+            <div class="diag-body">
+                <div id="diagAttStatus">—</div>
+                <div class="diag-actions">
+                    <button type="button" class="row-btn edit-btn" onclick="diagRepairAttendance()">درست کن ورود/خروج</button>
+                </div>
+                <div id="diagAttResult"></div>
             </div>
-            <div id="diagProductResult" style="margin-top:8px;font-size:12px;"></div>
-        </div>
+        </details>
 
-        <div class="report-card" style="border-color:#f472b6;">
-            <h3 style="color:#f472b6;margin:0 0 8px;">💰 فروش · صف آفلاین · هدف</h3>
-            <div id="diagSalesStatus" style="font-size:12px;line-height:1.7;">—</div>
-            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
-                <button type="button" class="row-btn edit-btn" onclick="diagFlushOfflineQueues()">ارسال صف‌های آفلاین</button>
-                <button type="button" class="row-btn edit-btn" onclick="diagRepairGoals()">پاک‌سازی کش هدف/پاداش</button>
+        <details class="diag-acc">
+            <summary>💰 فروش و صف آفلاین</summary>
+            <div class="diag-body">
+                <div id="diagSalesStatus">—</div>
+                <div class="diag-actions">
+                    <button type="button" class="row-btn edit-btn" onclick="diagCheckEveningSales()">بررسی فروش شب</button>
+                    <button type="button" class="row-btn edit-btn" onclick="diagFlushOfflineQueues()">ارسال صف آفلاین</button>
+                    <button type="button" class="row-btn edit-btn" onclick="diagRepairGoals()">پاک کش هدف</button>
+                </div>
+                <div id="diagSalesResult"></div>
             </div>
-            <div id="diagSalesResult" style="margin-top:8px;font-size:12px;"></div>
-        </div>
+        </details>
 
-        <div class="report-card" style="border-color:#38bdf8;">
-            <h3 style="color:#38bdf8;margin:0 0 8px;">📲 تلگرام · اعلان</h3>
-            <div id="diagTgStatus" style="font-size:12px;line-height:1.7;">—</div>
-            <button type="button" class="row-btn edit-btn" style="margin-top:6px;" onclick="diagTestTelegram()">تست ارسال تلگرام</button>
-            <div id="diagTgResult" style="margin-top:8px;font-size:12px;"></div>
-        </div>
-
-        <div class="report-card" style="border-color:#94a3b8;">
-            <h3 style="color:#94a3b8;margin:0 0 8px;">💾 حافظه محلی (localStorage)</h3>
-            <div id="diagStorageStatus" style="font-size:12px;line-height:1.7;">—</div>
-            <button type="button" class="row-btn edit-btn" style="margin-top:6px;background:#b45309;" onclick="diagTrimStorage()">فشرده‌سازی حافظه</button>
-            <div id="diagStorageResult" style="margin-top:8px;font-size:12px;"></div>
-        </div>
-
-        <div class="report-card" style="border-color:#f97316;">
-            <h3 style="color:#f97316;margin:0 0 8px;">📨 گزارش‌های فروشنده‌ها</h3>
-            <div class="hint" style="margin-top:0;">هر فروشنده می‌تواند از تب حضور یا حساب کاربری مشکلش را بنویسد؛ اینجا می‌آید. با «کپی برای پشتیبانی» متن کامل را بگیر و برای برنامه‌نویس بفرست.</div>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
-                <button type="button" class="row-btn edit-btn" onclick="diagLoadSellerReports()">بازخوانی گزارش‌ها</button>
-                <button type="button" class="submit-btn" style="background:linear-gradient(100deg,#ea580c,#f97316);padding:10px 14px;" onclick="diagCopySellerReports()">📋 کپی همه گزارش‌ها برای پشتیبانی</button>
+        <details class="diag-acc">
+            <summary>📦 محصولات و کاتالوگ</summary>
+            <div class="diag-body">
+                <div id="diagProductStatus">—</div>
+                <div class="diag-actions">
+                    <button type="button" class="row-btn edit-btn" onclick="diagRepairProducts()">همگام محصولات</button>
+                    <button type="button" class="row-btn edit-btn" onclick="diagRepairCatalog()">همگام کاتالوگ</button>
+                </div>
+                <div id="diagProductResult"></div>
             </div>
-            <div id="diagSellerReports" style="max-height:280px;overflow:auto;font-size:12px;"></div>
-        </div>
+        </details>
 
-        <div class="report-card" style="border-color:#f59e0b;">
-            <h3 style="color:#f59e0b;margin:0 0 8px;">📋 لاگ خطاهای زنده سیستم</h3>
-            <div class="hint" style="margin-top:0;">هر خطای جاوااسکریپت یا Promise ناموفق خودکار اینجا ثبت می‌شود. برای ارسال به پشتیبانی از دکمه کپی استفاده کن.</div>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                <button type="button" class="row-btn edit-btn" onclick="diagRefreshErrors()">بازخوانی</button>
-                <button type="button" class="submit-btn" style="background:linear-gradient(100deg,#d97706,#f59e0b);padding:10px 14px;" onclick="diagCopyAllErrors()">📋 کپی همه خطاها برای پشتیبانی</button>
-                <button type="button" class="row-btn edit-btn" style="background:#ef4444;" onclick="diagClearErrors()">پاک کردن</button>
+        <details class="diag-acc">
+            <summary>📲 تلگرام · حافظه</summary>
+            <div class="diag-body">
+                <div id="diagTgStatus">—</div>
+                <div id="diagStorageStatus" style="margin-top:4px;">—</div>
+                <div class="diag-actions">
+                    <button type="button" class="row-btn edit-btn" onclick="diagTestTelegram()">تست تلگرام</button>
+                    <button type="button" class="row-btn edit-btn" onclick="diagTrimStorage()">فشرده حافظه</button>
+                </div>
+                <div id="diagTgResult"></div>
+                <div id="diagStorageResult"></div>
             </div>
-            <div id="diagErrorList" style="margin-top:10px;max-height:260px;overflow:auto;font-size:11px;direction:ltr;text-align:left;"></div>
-            <textarea id="diagCopyScratch" style="position:fixed;left:-9999px;top:0;opacity:0;" aria-hidden="true"></textarea>
-        </div>
+        </details>
+
+        <details class="diag-acc">
+            <summary>📨 گزارش فروشنده‌ها</summary>
+            <div class="diag-body">
+                <div class="diag-actions">
+                    <button type="button" class="row-btn edit-btn" onclick="diagLoadSellerReports()">بازخوانی</button>
+                    <button type="button" class="row-btn edit-btn" style="background:#ea580c;" onclick="diagCopySellerReports()">کپی برای پشتیبانی</button>
+                </div>
+                <div id="diagSellerReports" style="max-height:200px;overflow:auto;margin-top:8px;"></div>
+            </div>
+        </details>
+
+        <details class="diag-acc">
+            <summary>📋 خطاهای سیستم</summary>
+            <div class="diag-body">
+                <div class="diag-actions">
+                    <button type="button" class="row-btn edit-btn" onclick="diagRefreshErrors()">بازخوانی</button>
+                    <button type="button" class="row-btn edit-btn" style="background:#d97706;" onclick="diagCopyAllErrors()">کپی برای پشتیبانی</button>
+                    <button type="button" class="row-btn edit-btn" style="background:#ef4444;" onclick="diagClearErrors()">پاک</button>
+                </div>
+                <div id="diagErrorList" style="max-height:180px;overflow:auto;margin-top:8px;direction:ltr;text-align:left;font-size:11px;"></div>
+                <textarea id="diagCopyScratch" style="position:fixed;left:-9999px;top:0;opacity:0;" aria-hidden="true"></textarea>
+            </div>
+        </details>
     </div>
 
     <!-- گزارش کارکرد ماهانه پرسنل مدیر -->
@@ -4076,7 +4104,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v225 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v226 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -4256,7 +4284,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             }
         })();
 
-        const APP_BUILD = 'v225';
+        const APP_BUILD = 'v226';
         try { const __bt=document.getElementById('buildTag'); if(__bt) __bt.textContent = APP_BUILD + ' - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )'; } catch(e){}
         // ثبت Service Worker برای قابلیت نصب روی صفحه اصلی گوشی (PWA)
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
@@ -15055,7 +15083,7 @@ function sbRenderAdminLists(cfg) {
             } catch (e) {}
             try {
                 const u = new URL(location.href);
-                u.searchParams.set('_v', typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v225');
+                u.searchParams.set('_v', typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v226');
                 u.searchParams.set('_t', String(Date.now()));
                 location.replace(u.toString());
             } catch (e) { location.reload(true); }
@@ -15267,6 +15295,111 @@ function sbRenderAdminLists(cfg) {
             keys.forEach(function (k) { try { localStorage.removeItem(k); n++; } catch (e) {} });
             if (out) out.innerHTML = diagBadge(true, n + ' کلید موقت پاک شد · حجم حدودی حالا: ' + diagLsSizeApprox() + ' KB');
             diagRefreshPanel();
+        }
+
+
+        async function diagCheckEveningSales() {
+            const box = document.getElementById('diagEveningSalesBox');
+            const alt = document.getElementById('diagSalesResult');
+            const setHtml = function (html) {
+                if (box) { box.style.display = 'block'; box.innerHTML = html; }
+                if (alt) alt.innerHTML = html;
+            };
+            setHtml('⏳ در حال بررسی فروش فروشنده شب (دیشب و امروز)...');
+            try {
+                // بازه: از دیروز ۰۰:۰۰ تا الان (تهران)
+                const todayISO = getTehranISODate(new Date());
+                const yestISO = previousTehranISO(todayISO);
+                const since = new Date(yestISO + 'T00:00:00+03:30').toISOString();
+                const { data, error } = await withTimeout(
+                    _supabase.from('sales')
+                        .select('id, seller_name, sell_price, quantity, product_code, created_at, sale_type')
+                        .gte('created_at', since)
+                        .order('created_at', { ascending: false })
+                        .limit(500),
+                    12000, 'فروش شب'
+                );
+                if (error) throw error;
+                const all = data || [];
+                const isEvening = function (name) {
+                    const n = String(name || '');
+                    return n.indexOf('فروشنده شب') >= 0 || n.indexOf('شب') >= 0;
+                };
+                const evening = all.filter(function (s) { return isEvening(s.seller_name); });
+                const byDay = { yest: [], today: [] };
+                evening.forEach(function (s) {
+                    const d = getTehranISODate(new Date(s.created_at));
+                    if (d === yestISO) byDay.yest.push(s);
+                    else if (d === todayISO) byDay.today.push(s);
+                });
+                const sum = function (arr) {
+                    return arr.reduce(function (a, s) { return a + (Number(s.sell_price) || 0); }, 0);
+                };
+                const sellersY = {};
+                byDay.yest.forEach(function (s) {
+                    const k = s.seller_name || 'نامشخص';
+                    if (!sellersY[k]) sellersY[k] = { c: 0, sum: 0 };
+                    sellersY[k].c++;
+                    sellersY[k].sum += Number(s.sell_price) || 0;
+                });
+                const sellersT = {};
+                byDay.today.forEach(function (s) {
+                    const k = s.seller_name || 'نامشخص';
+                    if (!sellersT[k]) sellersT[k] = { c: 0, sum: 0 };
+                    sellersT[k].c++;
+                    sellersT[k].sum += Number(s.sell_price) || 0;
+                });
+                // حضور دیشب فروشنده شب
+                let attLine = '';
+                try {
+                    const { data: att } = await _supabase.from('attendance')
+                        .select('seller_name, type, created_at, note')
+                        .gte('created_at', since)
+                        .order('created_at', { ascending: false })
+                        .limit(100);
+                    const attE = (att || []).filter(function (a) { return isEvening(a.seller_name); });
+                    const attY = attE.filter(function (a) {
+                        return attendanceWorkDateISO(a, attE) === yestISO || getTehranISODate(new Date(a.created_at)) === yestISO;
+                    });
+                    attLine = 'حضور دیشب (شب): ' + attY.length + ' ثبت · ' +
+                        attY.slice(0, 6).map(function (a) {
+                            return (a.type || '') + '@' + getTehranTimeString(new Date(a.created_at));
+                        }).join('، ');
+                } catch (e) { attLine = 'حضور: خطا در خواندن'; }
+
+                let html = '<b style="color:#c4b5fd;">🌙 بررسی فروش فروشنده شب</b><br>';
+                html += 'دیروز: <b dir="ltr">' + yestISO + '</b> · امروز: <b dir="ltr">' + todayISO + '</b><br><br>';
+                if (byDay.yest.length === 0) {
+                    html += diagBadge(false, 'دیشب هیچ فروش ثبت‌شده‌ای با نام فروشنده شب نیست') + '<br>';
+                } else {
+                    html += diagBadge(true, 'دیشب: ' + byDay.yest.length + ' فاکتور · جمع ' + sum(byDay.yest).toLocaleString('fa-IR') + ' تومان') + '<br>';
+                    Object.keys(sellersY).forEach(function (k) {
+                        html += '· ' + k + ': ' + sellersY[k].c + ' فاکتور · ' + sellersY[k].sum.toLocaleString('fa-IR') + ' ت<br>';
+                    });
+                }
+                html += '<br>';
+                if (byDay.today.length === 0) {
+                    html += 'امروز تا الان: بدون فروش شب<br>';
+                } else {
+                    html += 'امروز: ' + byDay.today.length + ' فاکتور · ' + sum(byDay.today).toLocaleString('fa-IR') + ' ت<br>';
+                }
+                html += '<br>' + attLine;
+                // آخرین ۱۰ فروش کلی دیروز برای اطمینان از وجود داده
+                const allY = all.filter(function (s) { return getTehranISODate(new Date(s.created_at)) === yestISO; });
+                html += '<br><br>کل فروش غرفه دیروز (همه فروشنده‌ها): <b>' + allY.length + '</b> فاکتور · ' +
+                    allY.reduce(function (a, s) { return a + (Number(s.sell_price) || 0); }, 0).toLocaleString('fa-IR') + ' ت';
+                if (allY.length && byDay.yest.length === 0) {
+                    html += '<br>' + diagBadge(null, 'فروش دیروز هست ولی زیر اسم «فروشنده شب» نیست — شاید با اسم دیگر ثبت شده');
+                    const names = {};
+                    allY.forEach(function (s) { names[s.seller_name || '?'] = (names[s.seller_name || '?'] || 0) + 1; });
+                    html += '<br>نام‌های ثبت‌شده دیروز:<br>' + Object.keys(names).map(function (n) {
+                        return '· ' + n + ' (' + names[n] + ')';
+                    }).join('<br>');
+                }
+                setHtml(html);
+            } catch (e) {
+                setHtml(diagBadge(false, String(e.message || e)));
+            }
         }
 
         async function diagRunFullScan() {
