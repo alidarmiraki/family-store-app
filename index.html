@@ -2,6 +2,10 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta name="app-build" content="v223">
     <!-- جلوگیری از کش‌شدن خود index.html توسط مرورگر/گوشی، تا نسخه‌ی جدید همیشه فوراً لود بشه
          (sw.js شما کش نمی‌کنه، ولی مرورگر یا هاست ممکنه خودش HTML رو کش کنه) -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -177,7 +181,7 @@
         .cat-stat-row span{font-size:10px;opacity:.8}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v222 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v223 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2381,6 +2385,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <button class="tab-btn" id="btnInventory" onclick="switchTab('inventory'); loadInventory();"><span class="tab-ico">📦</span><span class="tab-label">موجودی انبار</span></button>
         <button class="tab-btn" id="btnReport" onclick="switchTab('report'); loadSalesReport();"><span class="tab-ico">📊</span><span class="tab-label">گزارش فروش</span></button>
         <button class="tab-btn" id="btnWorkReport" onclick="openWorkReportTab()"><span class="tab-ico">🗓️</span><span class="tab-label">کارکرد پرسنل</span></button>
+        <button class="tab-btn" id="btnDiagnostics" onclick="openDiagnosticsTab()"><span class="tab-ico">🛠️</span><span class="tab-label">عیب‌یابی</span></button>
         <button class="tab-btn" id="btnDashboard" onclick="switchTab('dashboard');"><span class="tab-ico">🏠</span><span class="tab-label">خلاصه روز</span></button>
         <button class="tab-btn" id="btnShiftSettings" onclick="switchTab('shiftSettings'); loadShiftSettings();"><span class="tab-ico">⚙️</span><span class="tab-label">تنظیمات شیفت‌ها</span></button>
         <button class="tab-btn" id="btnTelegramSettings" onclick="switchTab('telegramSettings'); loadTelegramSettings();"><span class="tab-ico">📲</span><span class="tab-label">اتصال تلگرام</span></button>
@@ -3170,6 +3175,35 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
     <div id="reportTab" class="card">
         <h2>📊 گزارش فروش غرفه</h2>
         <div id="reportContent"><div class="skeleton-block skeleton-card"></div><div class="skeleton-block skeleton-card"></div></div>
+    </div>
+
+
+    <!-- عیب‌یابی و رفع خودکار — فقط مدیر -->
+    <div id="diagnosticsTab" class="card">
+        <h2>🛠️ عیب‌یابی و رفع خودکار</h2>
+        <div class="hint">این بخش فقط برای مدیر است. خطاهای اخیر را می‌بینی و با یک دکمه مشکلات رایج ورود/خروج و کش نسخه را رفع می‌کنی. بازنویسی کامل کد سایت از داخل گوشی ممکن نیست و نیاز به آپلود فایل دارد؛ اما باگ‌های پرتکرار حضور و همگام‌سازی همین‌جا درست می‌شوند.</div>
+        <div class="report-card" style="border-color:#38bdf8;">
+            <h3 style="color:#38bdf8;margin:0 0 8px;">📦 نسخه فعلی</h3>
+            <p id="diagVersionLine">در حال خواندن...</p>
+            <button type="button" class="submit-btn" onclick="diagForceUpdate()">🔄 اجبار به دریافت نسخه جدید + رفرش</button>
+        </div>
+        <div class="report-card" style="border-color:#10b981;">
+            <h3 style="color:#10b981;margin:0 0 8px;">⏰ رفع مشکل ورود / خروج</h3>
+            <p style="font-size:12px;color:#94a3b8;">کش اشتباه گوشی فروشنده‌ها که باعث می‌شود بگوید «ورود نزده‌ای» را پاک می‌کند و وضعیت امروز را از سرور دوباره می‌خواند.</p>
+            <button type="button" class="submit-btn" style="background:linear-gradient(100deg,#059669,#10b981);" onclick="diagRepairAttendance()">✅ درست کن مشکل ورود/خروج</button>
+            <div id="diagAttResult" style="margin-top:10px;font-size:12px;"></div>
+        </div>
+        <div class="report-card" style="border-color:#f59e0b;">
+            <h3 style="color:#f59e0b;margin:0 0 8px;">📋 خطاهای اخیر (خودکار ثبت‌شده)</h3>
+            <button type="button" class="row-btn edit-btn" onclick="diagRefreshErrors()">بازخوانی لیست</button>
+            <button type="button" class="row-btn edit-btn" style="background:#ef4444;" onclick="diagClearErrors()">پاک کردن لیست</button>
+            <div id="diagErrorList" style="margin-top:10px;max-height:280px;overflow:auto;font-size:11px;direction:ltr;text-align:left;"></div>
+        </div>
+        <div class="report-card">
+            <h3 style="margin:0 0 8px;">🧪 تست سریع</h3>
+            <button type="button" class="row-btn edit-btn" onclick="diagPingSupabase()">تست اتصال سوپابیس</button>
+            <div id="diagPingResult" style="margin-top:8px;font-size:12px;"></div>
+        </div>
     </div>
 
     <!-- گزارش کارکرد ماهانه پرسنل مدیر -->
@@ -3967,7 +4001,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v222 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v223 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -4147,11 +4181,13 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             }
         })();
 
+        const APP_BUILD = 'v223';
+        try { const __bt=document.getElementById('buildTag'); if(__bt) __bt.textContent = APP_BUILD + ' - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )'; } catch(e){}
         // ثبت Service Worker برای قابلیت نصب روی صفحه اصلی گوشی (PWA)
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=222', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=' + String(APP_BUILD).replace(/^v/,''), { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -6638,7 +6674,7 @@ notify pgrst, 'reload schema';`;
             } catch (e) {}
 
             if (currentRole === 'admin') {
-                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnSausagePriceCompare', 'btnProductGuide', 'btnAiChat', 'btnQuickNote', 'btnDailyChecklist', 'btnInbox', 'btnStaffMessage', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnShiftSettings', 'btnTelegramSettings', 'btnDebtLedger', 'btnContractAdmin', 'btnGrowthReport', 'btnPurchaseInvoices', 'btnTakeoutAdmin', 'btnGoals', 'btnSalesBoost', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnDeletedSales', 'btnWeeklyReports', 'btnPersonnel', 'btnMyAccount'], 'dashboardTab');
+                setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnSausagePriceCompare', 'btnProductGuide', 'btnAiChat', 'btnQuickNote', 'btnDailyChecklist', 'btnInbox', 'btnStaffMessage', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnDiagnostics', 'btnShiftSettings', 'btnTelegramSettings', 'btnDebtLedger', 'btnContractAdmin', 'btnGrowthReport', 'btnPurchaseInvoices', 'btnTakeoutAdmin', 'btnGoals', 'btnSalesBoost', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnDeletedSales', 'btnWeeklyReports', 'btnPersonnel', 'btnMyAccount'], 'dashboardTab');
                 checkAndGenerateWeeklyReport();
                 document.getElementById('salaryAdminForm').style.display = 'block';
                 checkLowStockAlertNoWeight();
@@ -14586,6 +14622,140 @@ function sbRenderAdminLists(cfg) {
         // زیر یک شیفت کار می‌کردند با هم در یک گزارش/تقویم قاطی می‌شدند. حالا هر پرسنل با
         // اسم دقیق خودش (دقیقاً همان‌طور که در attendance.seller_name ذخیره می‌شود) لیست می‌شود
         // تا گزارش و تقویم رنگی هرکس کاملاً جدا از بقیه دیده شود.
+
+        window.__appErrorLog = window.__appErrorLog || [];
+        function diagPushError(msg, src) {
+            try {
+                const item = { t: new Date().toISOString(), msg: String(msg || '').slice(0, 500), src: String(src || '').slice(0, 120) };
+                window.__appErrorLog.unshift(item);
+                if (window.__appErrorLog.length > 40) window.__appErrorLog.length = 40;
+                localStorage.setItem('app_error_log_v1', JSON.stringify(window.__appErrorLog));
+            } catch (e) {}
+        }
+        try {
+            const saved = JSON.parse(localStorage.getItem('app_error_log_v1') || '[]');
+            if (Array.isArray(saved)) window.__appErrorLog = saved.concat(window.__appErrorLog || []).slice(0, 40);
+        } catch (e) {}
+        window.addEventListener('error', function (ev) {
+            diagPushError((ev && ev.message) || 'error', (ev && ev.filename) || '');
+        });
+        window.addEventListener('unhandledrejection', function (ev) {
+            const r = ev && ev.reason;
+            diagPushError((r && (r.message || r)) || 'unhandledrejection', 'promise');
+        });
+
+        async function openDiagnosticsTab() {
+            if (currentRole !== 'admin') {
+                showToast('⛔ این بخش فقط برای مدیر است.');
+                return;
+            }
+            switchTab('diagnostics');
+            diagRefreshPanel();
+        }
+        function diagRefreshPanel() {
+            const line = document.getElementById('diagVersionLine');
+            if (line) {
+                line.innerHTML = '<b style="color:#38bdf8;">' + APP_BUILD + '</b> · buildTag: ' +
+                    (document.getElementById('buildTag') ? document.getElementById('buildTag').textContent.trim() : '—') +
+                    '<br>آنلاین: ' + (navigator.onLine ? 'بله' : 'خیر') +
+                    ' · SW: ' + ('serviceWorker' in navigator ? 'فعال' : 'ندارد');
+            }
+            diagRefreshErrors();
+        }
+        function diagRefreshErrors() {
+            const box = document.getElementById('diagErrorList');
+            if (!box) return;
+            const list = window.__appErrorLog || [];
+            if (!list.length) {
+                box.innerHTML = '<span style="color:#94a3b8;">خطای ثبت‌شده‌ای نیست.</span>';
+                return;
+            }
+            box.innerHTML = list.map(function (x) {
+                return '<div style="border-bottom:1px solid #334155;padding:6px 0;"><b>' + (x.t || '') + '</b><br>' +
+                    String(x.msg || '').replace(/</g, '&lt;') +
+                    (x.src ? '<br><span style="color:#64748b;">' + String(x.src).replace(/</g, '&lt;') + '</span>' : '') +
+                    '</div>';
+            }).join('');
+        }
+        function diagClearErrors() {
+            window.__appErrorLog = [];
+            try { localStorage.removeItem('app_error_log_v1'); } catch (e) {}
+            diagRefreshErrors();
+            showToast('✅ لیست خطا پاک شد');
+        }
+        async function diagForceUpdate() {
+            showToast('⏳ در حال به‌روزرسانی...');
+            try {
+                if ('serviceWorker' in navigator) {
+                    const regs = await navigator.serviceWorker.getRegistrations();
+                    for (const r of regs) {
+                        try { await r.unregister(); } catch (e) {}
+                    }
+                }
+                if (window.caches && caches.keys) {
+                    const keys = await caches.keys();
+                    await Promise.all(keys.map(function (k) { return caches.delete(k); }));
+                }
+            } catch (e) {}
+            try {
+                const u = new URL(location.href);
+                u.searchParams.set('_v', APP_BUILD);
+                u.searchParams.set('_t', String(Date.now()));
+                location.replace(u.toString());
+            } catch (e) {
+                location.reload(true);
+            }
+        }
+        async function diagRepairAttendance() {
+            const out = document.getElementById('diagAttResult');
+            if (out) out.innerHTML = '⏳ در حال پاک‌سازی کش حضور و همگام‌سازی...';
+            let cleared = 0;
+            try {
+                const keys = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const k = localStorage.key(i);
+                    if (!k) continue;
+                    if (k.indexOf('att_local_') === 0 || k.indexOf('attDayDone_') === 0 || k.indexOf('sstGoalClosed_') === 0 || k.indexOf('sstGoalGraceUntil_') === 0) {
+                        keys.push(k);
+                    }
+                }
+                keys.forEach(function (k) { try { localStorage.removeItem(k); cleared++; } catch (e) {} });
+            } catch (e) {}
+            // از سرور وضعیت امروز را برای چند فروشنده نمونه بخوان
+            let serverLine = '';
+            try {
+                const since = new Date(Date.now() - 36 * 3600 * 1000).toISOString();
+                const { data, error } = await _supabase.from('attendance').select('seller_name, type, created_at, note').gte('created_at', since).order('created_at', { ascending: false }).limit(30);
+                if (error) serverLine = 'خطا سرور: ' + error.message;
+                else serverLine = 'آخرین ثبت‌های سرور (۳۰ مورد اخیر): ' + (data || []).length + ' رکورد خوانده شد.';
+            } catch (e) {
+                serverLine = 'عدم دسترسی به سرور: ' + e;
+            }
+            if (out) {
+                out.innerHTML = '✅ <b>' + cleared + '</b> کلید کش حضور پاک شد.<br>' + serverLine +
+                    '<br><span style="color:#34d399;">فروشنده‌ها یک‌بار سایت را ببندند و دوباره باز کنند، بعد ورود/خروج بزنند.</span>';
+            }
+            showToast('✅ کش ورود/خروج پاک و همگام شد');
+            try { if (typeof syncAttendanceTypeSelector === 'function') syncAttendanceTypeSelector(); } catch (e) {}
+        }
+        async function diagPingSupabase() {
+            const box = document.getElementById('diagPingResult');
+            if (box) box.textContent = '⏳...';
+            try {
+                const t0 = Date.now();
+                const { data, error } = await withTimeout(_supabase.from('products').select('id').limit(1), 8000, 'تست');
+                const ms = Date.now() - t0;
+                if (error) {
+                    if (box) box.innerHTML = '<span style="color:#ef4444;">❌ ' + error.message + '</span>';
+                } else {
+                    if (box) box.innerHTML = '<span style="color:#34d399;">✅ سوپابیس OK · ' + ms + 'ms</span>';
+                }
+            } catch (e) {
+                if (box) box.innerHTML = '<span style="color:#ef4444;">❌ ' + e + '</span>';
+            }
+        }
+
+
         async function openWorkReportTab() {
             switchTab('workReport');
             await populateWorkSellerSelect();
