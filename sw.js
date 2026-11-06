@@ -19,13 +19,16 @@ self.addEventListener('message', (e) => {
 
 self.addEventListener('install', (e) => {
   self.skipWaiting();
+  // precache را timeout کن تا نصب PWA روی «Installing...» گیر نکند
   e.waitUntil((async () => {
     try {
       const c = await caches.open(SHELL);
-      // precache سبک — نسخه در URL تا کش قدیمی قاطی نشود
-      await c.addAll([
-        new Request('./index.html?v=' + V, { cache: 'reload' }),
-        new Request('./?v=' + V, { cache: 'reload' })
+      await Promise.race([
+        Promise.all([
+          c.add(new Request('./index.html?v=' + V, { cache: 'reload' })).catch(function () {}),
+          c.add(new Request('./?v=' + V, { cache: 'reload' })).catch(function () {})
+        ]),
+        new Promise(function (r) { setTimeout(r, 2500); })
       ]);
     } catch (err) {}
   })());

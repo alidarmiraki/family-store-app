@@ -2196,6 +2196,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
       var inner = document.getElementById('catalogPublicInner');
       if (!view || !inner) return;
       view.style.display = 'block';
+      if (!inner) return;
       if (inner.querySelector('.cat-hero') && inner.querySelector('.cat-card')) return; // فقط اگر کالا هم آمده
       list = (list || []).filter(function (p) {
         if (!p || !p.name) return false;
@@ -28466,7 +28467,7 @@ notify pgrst, 'reload schema';`;
                 try { catRender(); } catch (e) {}
                 try { catPickSurveyStar(5); } catch (e) {}
                 try {
-                    document.querySelectorAll('#catBottomNav .cat-nav-btn').forEach(function (btn) {
+                    Array.prototype.forEach.call(document.querySelectorAll('#catBottomNav .cat-nav-btn') || [], function (btn) {
                         btn.onclick = function () { catShowPage(btn.getAttribute('data-page')); };
                     });
                 } catch (e) {}
@@ -29348,7 +29349,10 @@ notify pgrst, 'reload schema';`;
         document.body.appendChild(box);
         var res = await diagnose(), allOk = res.every(function (x) { return x[0] !== '❌'; });
         var list = res.map(function (x) { return '<div>' + x[0] + ' ' + esc(x[1]) + '</div>'; }).join('');
-        box.querySelector('[data-b]').innerHTML = '<div style="font-size:12px;">' + list + '</div>' +
+        if (!box || !box.isConnected) return;
+        var bodyEl = box.querySelector('[data-b]');
+        if (!bodyEl) return;
+        bodyEl.innerHTML = '<div style="font-size:12px;">' + list + '</div>' +
             '<div style="margin-top:10px;padding:10px;border-radius:12px;background:rgba(34,211,238,.1);">' +
             (allOk ? '<b>همه‌چیز درست است.</b> ' : '<b>اول موارد ❌ را درست کن.</b> ') + esc(steps()) + '</div>';
     }
@@ -29356,11 +29360,22 @@ notify pgrst, 'reload schema';`;
         if (dp) {
             try {
                 dp.prompt();
-                var c = await dp.userChoice; dp = null; window.__dp = null;
-                if (c && c.outcome === 'accepted') toast('⏳ در حال نصب... چند ثانیه‌ی دیگر آیکون برنامه روی صفحه‌ی اصلی می‌آید؛ از همان آیکون باز کن.');
+                var c = await Promise.race([
+                    dp.userChoice,
+                    new Promise(function (res) { setTimeout(function () { res({ outcome: 'dismissed', timeout: true }); }, 20000); })
+                ]);
+                dp = null; window.__dp = null;
+                if (c && c.timeout) {
+                    toast('نصب طول کشید. از منوی ⋮ کروم «Install app / نصب برنامه» را بزن. اگر گیر کرد، داده سایت را پاک کن و دوباره امتحان کن.');
+                    return;
+                }
+                if (c && c.outcome === 'accepted') toast('✅ نصب شروع شد. اگر روی اعلان Installing ماند، ۳۰ ثانیه صبر کن یا گوشی را قفل/باز کن؛ آیکون روی صفحه اصلی می‌آید.');
                 else toast('نصب لغو شد؛ هر وقت خواستی دوباره «نصب برنامه» را بزن.');
                 return;
-            } catch (e) {}
+            } catch (e) {
+                dp = null; window.__dp = null;
+                toast('نصب با خطا روبه‌رو شد. از منوی ⋮ کروم گزینه Install را بزن.');
+            }
         }
         openHelp();
     }
