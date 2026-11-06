@@ -177,7 +177,7 @@
         .cat-stat-row span{font-size:10px;opacity:.8}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v221 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v222 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -3967,7 +3967,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v221 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v222 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -4151,7 +4151,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // updateViaCache:none + r.update() تا بعد از آپلود نسخه جدید، گوشی روی نسخه کهنه نماند
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=221', { updateViaCache: 'none' }).then(reg => {
+                navigator.serviceWorker.register('sw.js?v=222', { updateViaCache: 'none' }).then(reg => {
                     try { reg.update(); } catch (e) {}
                     // اگر سرویس‌ورکر جدیدی آماده شد، صفحه را یک‌بار رفرش کن تا HTML جدید بیاید
                     if (reg.waiting) {
@@ -12154,7 +12154,46 @@ function sbRenderAdminLists(cfg) {
         function isMakeupExitNote(note) {
             if (!note) return false;
             const s = String(note);
-            return s.indexOf('خروج جاافتاده') >= 0 || s.indexOf('فراموش‌شده از شیفت قبل') >= 0 || s.indexOf('خروج خودکار جاافتاده') >= 0;
+            return s.indexOf('خروج جاافتاده') >= 0 || s.indexOf('فراموش‌شده از شیفت قبل') >= 0 || s.indexOf('خروج خودکار جاافتاده') >= 0 || s.indexOf('خروج خودکار جاافتاده') >= 0;
+        }
+        // روز کاری واقعی رکورد (خروج جاافتاده → روز ورود همان شیفت، نه روز ثبت)
+        function previousTehranISO(iso) {
+            try {
+                const [y, m, d] = String(iso).split('-').map(Number);
+                const dt = new Date(Date.UTC(y, m - 1, d));
+                dt.setUTCDate(dt.getUTCDate() - 1);
+                const yy = dt.getUTCFullYear();
+                const mm = String(dt.getUTCMonth() + 1).padStart(2, '0');
+                const dd = String(dt.getUTCDate()).padStart(2, '0');
+                return yy + '-' + mm + '-' + dd;
+            } catch (e) {
+                return iso;
+            }
+        }
+        function attendanceWorkDateISO(r, allRecords) {
+            if (!r) return getTehranISODate(new Date());
+            const createdISO = getTehranISODate(new Date(r.created_at));
+            const note = String(r.note || '');
+            const m = note.match(/shift_date:(\d{4}-\d{2}-\d{2})/);
+            if (m) return m[1];
+            if (r.type === 'exit' && isMakeupExitNote(note)) {
+                // پیدا کردن آخرین ورود قبل از این خروج برای همین فروشنده
+                try {
+                    const list = Array.isArray(allRecords) ? allRecords : [];
+                    const tExit = new Date(r.created_at).getTime();
+                    let best = null;
+                    list.forEach(function (x) {
+                        if (!x || x.type !== 'entry') return;
+                        if (String(x.seller_name || '') !== String(r.seller_name || '')) return;
+                        const t = new Date(x.created_at).getTime();
+                        if (t < tExit && (!best || t > best.t)) best = { t: t, iso: getTehranISODate(new Date(x.created_at)) };
+                    });
+                    if (best) return best.iso;
+                } catch (e) {}
+                // اگر ورود پیدا نشد: یک روز قبل از تاریخ ثبت
+                return previousTehranISO(createdISO);
+            }
+            return createdISO;
         }
 
         // وضعیت امروز: سرور + کش محلی همان‌روز (کش تا آخر همان روز معتبر است)
@@ -13495,7 +13534,7 @@ function sbRenderAdminLists(cfg) {
                         await _supabase.from('attendance').insert([{
                             seller_name: currentUserLabel,
                             type: 'exit',
-                            note: '⏮️ خروج خودکار جاافتاده (هم‌زمان با ورود روز بعد) | زمان ورود باز: ' + getTehranFullDateTimeString(closeAt),
+                            note: '⏮️ خروج خودکار جاافتاده (هم‌زمان با ورود روز بعد) | shift_date:' + getTehranISODate(closeAt) + ' | زمان ورود باز: ' + getTehranFullDateTimeString(closeAt),
                             created_at: closeIso
                         }]);
                         showToast('ℹ️ خروج جاافتاده‌ی قبل خودکار بسته شد؛ الان ورود امروز ثبت می‌شود.');
@@ -13796,6 +13835,25 @@ function sbRenderAdminLists(cfg) {
                 sendPushNotificationToRole('⚠️ خروج زودهنگام', `${currentUserLabel} با ${Math.abs(exitDiffMinutes)} دقیقه زودتر از موعد خارج شد (${earlyBy} دقیقه بیش از حد مجاز).`, 'admin');
             }
 
+            // روز شیفت واقعی برای خروج جاافتاده
+            let createdAtForDb = now.toISOString();
+            let shiftDateTag = '';
+            if (isMakeupExit && type === 'exit') {
+                try {
+                    const uncl = await getUnclosedPreviousShift();
+                    if (uncl && uncl.created_at) {
+                        const shiftISO = getTehranISODate(new Date(uncl.created_at));
+                        shiftDateTag = 'shift_date:' + shiftISO + ' | ';
+                        // ساعت پایان شیفت همان روز (تا در گزارش همان روز دیده شود)
+                        let endHm = '22:00';
+                        try {
+                            if (currentRole === 'morning_seller' && settings.mEnd) endHm = settings.mEnd;
+                            if (currentRole === 'evening_seller' && settings.eEnd) endHm = settings.eEnd;
+                        } catch (e) {}
+                        createdAtForDb = new Date(shiftISO + 'T' + endHm + ':00+03:30').toISOString();
+                    }
+                } catch (e) {}
+            }
             const { error } = await withTimeout(_supabase.from('attendance').insert([{
                 seller_name: currentUserLabel,
                 type: type,
@@ -13803,8 +13861,8 @@ function sbRenderAdminLists(cfg) {
                 delay_minutes: delayMinutes,
                 exit_diff_minutes: exitDiffMinutes,
                 photo_url: photoUrl,
-                note: (note ? note + " | " : "") + (leaveReason && type === 'leave' ? `🏖️ دلیل مرخصی: ${leaveReason} | ` : "") + (leaveReason && type === 'leave_hourly' ? `🕐 مرخصی ساعتی ${leaveHourlyRangeText}${leaveHourlyTillEndOfShift ? ' (تا آخر شیفت، دیگه برنگشته)' : ''} | دلیل: ${leaveReason} | ` : "") + (selectedLocationText ? selectedLocationText + " | " : "") + (biometricFallbackReason ? `⚠️ بدون تایید بیومتریک (${biometricFallbackReason}) | ` : "") + (biometricMethodLabel ? biometricMethodLabel + " | " : "") + (lateReasonText ? `📝 دلیل تاخیر: ${lateReasonText} | ` : "") + (isMakeupExit ? `⏮️ خروج جاافتاده (فراموش‌شده از شیفت قبل) | ` : "") + (window.__lateExitNote ? window.__lateExitNote + " | " : "") + `زمان ثبت: ${fullDateTimeStr}`,
-                created_at: now.toISOString()
+                note: (note ? note + " | " : "") + (leaveReason && type === 'leave' ? `🏖️ دلیل مرخصی: ${leaveReason} | ` : "") + (leaveReason && type === 'leave_hourly' ? `🕐 مرخصی ساعتی ${leaveHourlyRangeText}${leaveHourlyTillEndOfShift ? ' (تا آخر شیفت، دیگه برنگشته)' : ''} | دلیل: ${leaveReason} | ` : "") + (selectedLocationText ? selectedLocationText + " | " : "") + (biometricFallbackReason ? `⚠️ بدون تایید بیومتریک (${biometricFallbackReason}) | ` : "") + (biometricMethodLabel ? biometricMethodLabel + " | " : "") + (lateReasonText ? `📝 دلیل تاخیر: ${lateReasonText} | ` : "") + (isMakeupExit ? `⏮️ خروج جاافتاده (فراموش‌شده از شیفت قبل) | ` : "") + shiftDateTag + (window.__lateExitNote ? window.__lateExitNote + " | " : "") + `زمان ثبت واقعی: ${fullDateTimeStr}`,
+                created_at: createdAtForDb
             }]), 15000, 'ذخیره‌ی ثبت حضور');
 
             if (!error && biometricFallbackReason) {
@@ -14073,7 +14131,13 @@ function sbRenderAdminLists(cfg) {
         // --- ساخت یک ردیف جدول حضور و غیاب (استفاده مشترک در گزارش امروز و گزارش بازه‌ای) ---
         function buildAttendanceRow(r, settings) {
             const dateObj = new Date(r.created_at);
-            const fullStr = getTehranFullDateTimeString(dateObj);
+            let fullStr = getTehranFullDateTimeString(dateObj);
+            try {
+                if (r.type === 'exit' && isMakeupExitNote(r.note)) {
+                    const wd = attendanceWorkDateISO(r);
+                    fullStr = getTehranFullDateTimeString(dateObj) + '<br><span style="color:#a855f7;font-size:10px;">📌 روز شیفت: ' + wd + '</span>';
+                }
+            } catch (e) {}
 
             let typeTitle = '🟢 ورود';
             if (r.type === 'exit') typeTitle = '🔴 خروج';
@@ -14154,10 +14218,11 @@ function sbRenderAdminLists(cfg) {
             let totalEarlyExitMinutes = 0;
 
             records.forEach(r => {
-                if (r.type !== 'leave') {
-                    uniqueDays.add(getTehranDateString(new Date(r.created_at)));
-                } else {
+                if (r.type === 'leave' || r.type === 'leave_hourly') {
                     leaveCount++;
+                } else if (r.type === 'entry') {
+                    // فقط ورود روز حضور را می‌شمارد (خروج جاافتاده روز جدا نسازد)
+                    uniqueDays.add(attendanceWorkDateISO(r, records));
                 }
                 totalOvertime += (r.overtime_hours || 0);
                 if (r.type === 'entry' && r.delay_minutes !== null && r.delay_minutes !== undefined) {
@@ -14167,7 +14232,7 @@ function sbRenderAdminLists(cfg) {
                         totalDelayMinutes += d;
                     }
                 }
-                if (r.type === 'exit' && r.exit_diff_minutes !== null && r.exit_diff_minutes !== undefined) {
+                if (r.type === 'exit' && !isMakeupExitNote(r.note) && r.exit_diff_minutes !== null && r.exit_diff_minutes !== undefined) {
                     const d = Number(r.exit_diff_minutes);
                     if (d < -settings.maxDelay) {
                         earlyExitDaysCount++;
@@ -14204,11 +14269,14 @@ function sbRenderAdminLists(cfg) {
 
             const byDate = {};
             (data || []).forEach(r => {
-                const d = getTehranISODate(new Date(r.created_at));
-                if (!byDate[d]) byDate[d] = { entry: null, exit: null, leave: false };
+                const d = attendanceWorkDateISO(r, data);
+                if (!byDate[d]) byDate[d] = { entry: null, exit: null, leave: false, makeup: false };
                 if (r.type === 'entry') byDate[d].entry = r.delay_minutes;
-                if (r.type === 'exit') byDate[d].exit = r.exit_diff_minutes;
-                if (r.type === 'leave') byDate[d].leave = true;
+                if (r.type === 'exit') {
+                    byDate[d].exit = r.exit_diff_minutes;
+                    if (isMakeupExitNote(r.note)) byDate[d].makeup = true;
+                }
+                if (r.type === 'leave' || r.type === 'leave_hourly') byDate[d].leave = true;
             });
 
             const persianDayFormatter = new Intl.DateTimeFormat('fa-IR-u-ca-persian', { timeZone: 'Asia/Tehran', day: '2-digit', numberingSystem: 'latn' });
@@ -14688,7 +14756,7 @@ function sbRenderAdminLists(cfg) {
                 return;
             }
 
-            const todayRecords = (records || []).filter(r => getTehranISODate(new Date(r.created_at)) === todayISO);
+            const todayRecords = (records || []).filter(r => attendanceWorkDateISO(r, records || []) === todayISO || getTehranISODate(new Date(r.created_at)) === todayISO);
 
             if (todayRecords.length === 0) {
                 container.innerHTML = `<p style="color:#fbbf24;">${sellerRole} امروز (${getTehranDateString(new Date())}) هنوز هیچ ثبتی نداشته است.</p>`;
@@ -14755,7 +14823,7 @@ function sbRenderAdminLists(cfg) {
             }
 
             const filtered = (records || []).filter(r => {
-                const iso = getTehranISODate(new Date(r.created_at));
+                const iso = attendanceWorkDateISO(r, records || []);
                 return iso >= startStr && iso <= endStr;
             });
 
