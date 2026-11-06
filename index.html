@@ -5,7 +5,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="app-build" content="v232">
+    <meta name="app-build" content="v233">
     <!-- جلوگیری از کش‌شدن خود index.html توسط مرورگر/گوشی، تا نسخه‌ی جدید همیشه فوراً لود بشه
          (sw.js شما کش نمی‌کنه، ولی مرورگر یا هاست ممکنه خودش HTML رو کش کنه) -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -18,18 +18,23 @@
                 var saved = localStorage.getItem('boothThemeMode');
                 if (saved === 'light') document.documentElement.classList.add('light-theme');
             } catch (e) {}
-            // مشتری: taze-market.ir → فقط کاتالوگ | پرسنل: github.io → ورود
+                        // مشتری: taze-market.ir (بدون panel) → کاتالوگ
+            // پرسنل: github.io/family-store-app یا taze-market.ir/?panel=1
             try {
                 var q = location.search || '';
                 var h = location.hash || '';
                 var host = (location.hostname || '').toLowerCase();
-                var isCustomerDomain = host === 'taze-market.ir' || host === 'www.taze-market.ir'
-                    || host.indexOf('taze-market.ir') >= 0;
+                var path = (location.pathname || '').toLowerCase();
+                var isPanel = /[?&]panel=1\b/.test(q) || /[?&]staff=1\b/.test(q) || /#panel\b/i.test(h)
+                    || path.indexOf('/panel') >= 0 || path.indexOf('family-store-app') >= 0
+                    || host.indexOf('github.io') >= 0;
+                var isCustomerDomain = (host === 'taze-market.ir' || host === 'www.taze-market.ir') && !isPanel;
                 if (/[?&]pay=/.test(q) || /#pay[/=]/.test(h)) {
                     document.documentElement.classList.add('pay-guest-mode');
                     document.documentElement.style.background = '#0b1220';
                 }
-                if (isCustomerDomain || /[?&]catalog=/.test(q) || /#catalog/.test(h)) {
+                // کاتالوگ فقط وقتی panel نیست
+                if (!isPanel && (isCustomerDomain || /[?&]catalog=/.test(q) || /#catalog/.test(h))) {
                     document.documentElement.classList.add('catalog-guest-mode');
                     document.documentElement.style.background = '#0b1220';
                     document.title = 'کاتالوگ تازه مارکت';
@@ -189,7 +194,7 @@
         .cat-stat-row span{font-size:10px;opacity:.8}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v232 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v233 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2160,10 +2165,15 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
 (function () {
   try {
     var q = location.search || '';
+    var h = location.hash || '';
     var host = (location.hostname || '').toLowerCase();
-    var isCustomerDomain = host === 'taze-market.ir' || host === 'www.taze-market.ir'
-      || host.indexOf('taze-market.ir') >= 0;
-    if (!isCustomerDomain && !/[?&]catalog=/.test(q) && !/#catalog/.test(location.hash || '')) return;
+    var path = (location.pathname || '').toLowerCase();
+    var isPanel = /[?&]panel=1\b/.test(q) || /[?&]staff=1\b/.test(q) || /#panel\b/i.test(h)
+      || path.indexOf('/panel') >= 0 || path.indexOf('family-store-app') >= 0
+      || host.indexOf('github.io') >= 0;
+    if (isPanel) return; // پرسنل — کاتالوگ اضطراری اجرا نشود
+    var isCustomerDomain = host === 'taze-market.ir' || host === 'www.taze-market.ir';
+    if (!isCustomerDomain && !/[?&]catalog=/.test(q) && !/#catalog/.test(h)) return;
     document.documentElement.classList.add('catalog-guest-mode');
     var KEY = 'sb_publishable_k3wkzKalFmLFtfx8WZWr1g_fHKT-3Sl';
     var HOSTS = [
@@ -3198,7 +3208,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
     <!-- عیب‌یابی و رفع خودکار — فقط مدیر -->
     <div id="diagnosticsTab" class="card">
         <h2 style="margin-bottom:6px;">🛠️ عیب‌یابی</h2>
-        <div class="hint" style="margin:0 0 10px;">جمع‌وجور · روی هر بخش بزن تا باز شود.<br><b style="color:#7dd3fc;">🛠 مدیر/فروشنده:</b> <code dir="ltr">https://alidarmiraki.github.io/family-store-app/</code><br><b style="color:#34d399;">🛒 مشتری:</b> <code dir="ltr">https://taze-market.ir/</code><br><b style="color:#4ade80;">آپدیت اجباری همه:</b> روی سرور منتشر می‌شود و همه گوشی‌ها مودال به‌روزرسانی می‌بینند.</div>
+        <div class="hint" style="margin:0 0 10px;">جمع‌وجور · روی هر بخش بزن تا باز شود.<br><b style="color:#7dd3fc;">🛠 مدیر/فروشنده:</b> <code dir="ltr">https://taze-market.ir/?panel=1</code><br><b style="color:#34d399;">🛒 مشتری:</b> <code dir="ltr">https://taze-market.ir/</code><br><b style="color:#4ade80;">آپدیت اجباری همه:</b> روی سرور منتشر می‌شود و همه گوشی‌ها مودال به‌روزرسانی می‌بینند.</div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
             <button type="button" class="submit-btn" style="margin:0;padding:12px 8px;font-size:13px;background:linear-gradient(100deg,#2563eb,#7c3aed);" onclick="diagRunFullScan()">🔎 اسکن کامل</button>
@@ -4117,7 +4127,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v232 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v233 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -4297,7 +4307,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             }
         })();
 
-        const APP_BUILD = 'v232';
+        const APP_BUILD = 'v233';
         try { const __bt=document.getElementById('buildTag'); if(__bt) __bt.textContent = APP_BUILD + ' - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )'; } catch(e){}
         // ثبت Service Worker — بدون حلقه رفرش
         if ('serviceWorker' in navigator) {
@@ -4310,7 +4320,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
                 try {
                     const u = new URL(location.href);
                     // فقط پارامتر نسخه را ست کن؛ هر بار timestamp جدید نگذار تا حلقه نشود
-                    u.searchParams.set('_v', String(APP_BUILD || 'v232'));
+                    u.searchParams.set('_v', String(APP_BUILD || 'v233'));
                     location.replace(u.pathname + u.search + u.hash);
                 } catch (e) {
                     try { location.reload(); } catch (e2) {}
@@ -4318,7 +4328,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             }
             window.addEventListener('load', function () {
                 // URL ثابت بر اساس نسخه — نه Date.now() (آن باعث آپدیت ساختگی و رفرش پشت‌سرهم می‌شد)
-                const swUrl = 'sw.js?v=' + String(APP_BUILD || 'v232').replace(/^v/, '');
+                const swUrl = 'sw.js?v=' + String(APP_BUILD || 'v233').replace(/^v/, '');
                 navigator.serviceWorker.register(swUrl, { updateViaCache: 'none' }).then(function (reg) {
                     try { reg.update(); } catch (e) {}
                     if (reg.waiting) {
@@ -14900,7 +14910,7 @@ function sbRenderAdminLists(cfg) {
                 pr.innerHTML = 'محصولات در حافظه: <b>' + mem + '</b> · کش آفلاین: <b>' + cached + '</b>';
                 try {
                     const urls = document.getElementById('diagCatalogUrls');
-                    if (urls) urls.innerHTML = '🛠 پرسنل/مدیر (گیت‌هاب): <code dir="ltr">https://alidarmiraki.github.io/family-store-app/</code><br>🛒 مشتری (کاتالوگ): <code dir="ltr">https://taze-market.ir/</code>';
+                    if (urls) urls.innerHTML = '🛠 پرسنل: <code dir="ltr">https://taze-market.ir/?panel=1</code><br>🛠 گیت‌هاب: <code dir="ltr">https://alidarmiraki.github.io/family-store-app/</code><br>🛒 مشتری: <code dir="ltr">https://taze-market.ir/</code>';
                 } catch (e) {}
             }
 
@@ -15130,7 +15140,7 @@ function sbRenderAdminLists(cfg) {
         }
 
         async function publishGlobalAppVersion(ver) {
-            const version = String(ver || (typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v232'));
+            const version = String(ver || (typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v233'));
             try {
                 const { data } = await _supabase.from('app_shared_config').select('config').eq('id', 1).maybeSingle();
                 const cfg = (data && data.config && typeof data.config === 'object') ? Object.assign({}, data.config) : {};
@@ -15164,7 +15174,7 @@ function sbRenderAdminLists(cfg) {
             } catch (e) {}
             try {
                 const u = new URL(location.href.split('#')[0]);
-                u.searchParams.set('_v', String(APP_BUILD || 'v232'));
+                u.searchParams.set('_v', String(APP_BUILD || 'v233'));
                 u.searchParams.set('_t', String(Date.now()));
                 u.searchParams.set('nocache', '1');
                 location.replace(u.toString());
@@ -15206,7 +15216,7 @@ function sbRenderAdminLists(cfg) {
         }
         async function diagForceUpdate() {
             showToast('⏳ انتشار آپدیت اجباری برای همه گوشی‌ها...');
-            const ver = String(typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v232');
+            const ver = String(typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v233');
             let published = false;
             try {
                 published = await publishGlobalAppVersion(ver);
@@ -15553,7 +15563,7 @@ function sbRenderAdminLists(cfg) {
         async function diagTestCatalog() {
             const out = document.getElementById('diagProductResult');
             const urls = document.getElementById('diagCatalogUrls');
-            const staffUrl = 'https://alidarmiraki.github.io/family-store-app/';
+            const staffUrl = 'https://taze-market.ir/?panel=1'; /* جایگزین: https://alidarmiraki.github.io/family-store-app/ */
             const catUrl = 'https://taze-market.ir/';
             if (urls) {
                 urls.innerHTML = '<b style="color:#7dd3fc;">آدرس‌های جدا:</b><br>' +
@@ -29189,8 +29199,11 @@ notify pgrst, 'reload schema';`;
             }
             const host = (location.hostname || '').toLowerCase();
             const path = (location.pathname || '').toLowerCase();
-            const isCustomerDomain = host === 'taze-market.ir' || host === 'www.taze-market.ir'
-                || host.indexOf('taze-market.ir') >= 0 || /^(catalog|shop)\./.test(host);
+            const isPanel = u.searchParams.get('panel') === '1' || u.searchParams.get('staff') === '1'
+                || /#panel/i.test(location.hash || '') || path.indexOf('/panel') >= 0
+                || path.indexOf('family-store-app') >= 0 || host.indexOf('github.io') >= 0;
+            if (isPanel) return; // سایت مدیریت — کاتالوگ باز نشود
+            const isCustomerDomain = host === 'taze-market.ir' || host === 'www.taze-market.ir';
             const isCatPath = path.indexOf('/catalog') === 0 || path === '/c' || path.indexOf('/c/') === 0;
             if (isCustomerDomain || isCatPath || u.searchParams.get('catalog') === '1' || /catalog/i.test(u.hash || '')) {
                 document.documentElement.classList.add('catalog-guest-mode');
@@ -29214,7 +29227,7 @@ notify pgrst, 'reload schema';`;
             if (token) {
                 document.documentElement.classList.add('pay-guest-mode');
                 openPayPublic(token);
-            } else if (u.searchParams.get('catalog') === '1' || ((location.hostname||'').toLowerCase().indexOf('taze-market.ir') >= 0)) {
+            } else if (u.searchParams.get('panel') === '1' || u.searchParams.get('staff') === '1') { /* پرسنل */ } else if (u.searchParams.get('catalog') === '1' || ((location.hostname||'').toLowerCase() === 'taze-market.ir' || (location.hostname||'').toLowerCase() === 'www.taze-market.ir')) {
                 document.documentElement.classList.add('catalog-guest-mode');
                 openCatalogPublic();
             }
