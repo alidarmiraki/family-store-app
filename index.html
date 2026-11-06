@@ -5,7 +5,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="app-build" content="v228">
+    <meta name="app-build" content="v229">
     <!-- جلوگیری از کش‌شدن خود index.html توسط مرورگر/گوشی، تا نسخه‌ی جدید همیشه فوراً لود بشه
          (sw.js شما کش نمی‌کنه، ولی مرورگر یا هاست ممکنه خودش HTML رو کش کنه) -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -181,7 +181,7 @@
         .cat-stat-row span{font-size:10px;opacity:.8}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v228 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v229 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -3187,12 +3187,12 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
     <!-- عیب‌یابی و رفع خودکار — فقط مدیر -->
     <div id="diagnosticsTab" class="card">
         <h2 style="margin-bottom:6px;">🛠️ عیب‌یابی</h2>
-        <div class="hint" style="margin:0 0 10px;">جمع‌وجور · روی هر بخش بزن تا باز شود.<br><b style="color:#fbbf24;">برای گوشی فروشنده‌ها:</b> یک‌بار سایت را کامل ببندند و دوباره باز کنند، یا لینک را با <code>?nocache=1</code> باز کنند. آپدیت اجباری فقط روی <b>همین گوشی</b> اثر دارد.</div>
+        <div class="hint" style="margin:0 0 10px;">جمع‌وجور · روی هر بخش بزن تا باز شود.<br><b style="color:#4ade80;">آپدیت اجباری همه:</b> نسخه را روی سرور منتشر می‌کند؛ همه گوشی‌ها (مدیر و فروشنده) اعلان می‌گیرند و مودال «الان به‌روزرسانی کن» می‌بینند.</div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
             <button type="button" class="submit-btn" style="margin:0;padding:12px 8px;font-size:13px;background:linear-gradient(100deg,#2563eb,#7c3aed);" onclick="diagRunFullScan()">🔎 اسکن کامل</button>
             <button type="button" class="submit-btn" style="margin:0;padding:12px 8px;font-size:13px;background:linear-gradient(100deg,#059669,#10b981);" onclick="diagRepairAll()">✨ رفع خودکار</button>
-            <button type="button" class="row-btn edit-btn" style="margin:0;padding:10px 8px;" onclick="diagForceUpdate()">🔄 نسخه جدید</button>
+            <button type="button" class="row-btn edit-btn" style="margin:0;padding:10px 8px;" onclick="diagForceUpdate()">🔄 آپدیت اجباری همه</button>
             <button type="button" class="row-btn edit-btn" style="margin:0;padding:10px 8px;" onclick="diagCheckEveningSales()">🌙 فروش دیشب شب</button>
         </div>
         <div id="diagFullScanResult" style="display:none;margin-bottom:10px;padding:10px;border-radius:12px;background:#0f172a;border:1px solid #334155;font-size:12px;line-height:1.7;"></div>
@@ -3214,7 +3214,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             <div class="diag-body">
                 <div id="diagVersionLine">—</div>
                 <div class="diag-actions">
-                    <button type="button" class="row-btn edit-btn" onclick="diagForceUpdate()">آپدیت اجباری</button>
+                    <button type="button" class="row-btn edit-btn" onclick="diagForceUpdate()">آپدیت اجباری همه گوشی‌ها</button>
                     <button type="button" class="row-btn edit-btn" onclick="diagClearAppCaches()">پاک‌سازی کش</button>
                 </div>
                 <div id="diagCacheResult"></div>
@@ -4104,7 +4104,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v228 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v229 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -4284,7 +4284,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             }
         })();
 
-        const APP_BUILD = 'v228';
+        const APP_BUILD = 'v229';
         try { const __bt=document.getElementById('buildTag'); if(__bt) __bt.textContent = APP_BUILD + ' - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )'; } catch(e){}
         // ثبت Service Worker — بدون حلقه رفرش
         if ('serviceWorker' in navigator) {
@@ -4297,7 +4297,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
                 try {
                     const u = new URL(location.href);
                     // فقط پارامتر نسخه را ست کن؛ هر بار timestamp جدید نگذار تا حلقه نشود
-                    u.searchParams.set('_v', String(APP_BUILD || 'v228'));
+                    u.searchParams.set('_v', String(APP_BUILD || 'v229'));
                     location.replace(u.pathname + u.search + u.hash);
                 } catch (e) {
                     try { location.reload(); } catch (e2) {}
@@ -4305,7 +4305,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             }
             window.addEventListener('load', function () {
                 // URL ثابت بر اساس نسخه — نه Date.now() (آن باعث آپدیت ساختگی و رفرش پشت‌سرهم می‌شد)
-                const swUrl = 'sw.js?v=' + String(APP_BUILD || 'v228').replace(/^v/, '');
+                const swUrl = 'sw.js?v=' + String(APP_BUILD || 'v229').replace(/^v/, '');
                 navigator.serviceWorker.register(swUrl, { updateViaCache: 'none' }).then(function (reg) {
                     try { reg.update(); } catch (e) {}
                     if (reg.waiting) {
@@ -4346,6 +4346,25 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             });
             try { localStorage.setItem('app_build_seen', String(APP_BUILD || '')); } catch (e) {}
         }
+
+        // بررسی آپدیت اجباری همگانی (از سرور)
+        (function () {
+            let started = false;
+            function startForcePoll() {
+                if (started) return;
+                started = true;
+                setTimeout(function () { try { checkRemoteForceUpdate(); } catch (e) {} }, 2500);
+                setInterval(function () { try { checkRemoteForceUpdate(); } catch (e) {} }, 45000);
+                document.addEventListener('visibilitychange', function () {
+                    if (document.visibilityState === 'visible') {
+                        try { checkRemoteForceUpdate(); } catch (e) {}
+                    }
+                });
+            }
+            if (document.readyState === 'complete') startForcePoll();
+            else window.addEventListener('load', startForcePoll);
+        })();
+
 
         // اجرای امن Telegram WebApp
         let tg = null;
@@ -15093,16 +15112,28 @@ function sbRenderAdminLists(cfg) {
             showToast('✅ گزارش برای مدیر ارسال شد');
         }
 
-        async function diagForceUpdate() {
-            showToast('⏳ به‌روزرسانی اجباری روی این گوشی...');
+        async function publishGlobalAppVersion(ver) {
+            const version = String(ver || (typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v229'));
+            try {
+                const { data } = await _supabase.from('app_shared_config').select('config').eq('id', 1).maybeSingle();
+                const cfg = (data && data.config && typeof data.config === 'object') ? Object.assign({}, data.config) : {};
+                cfg.force_app_version = version;
+                cfg.force_app_at = new Date().toISOString();
+                cfg.force_app_by = (typeof currentUserLabel !== 'undefined' ? currentUserLabel : 'admin');
+                await _supabase.from('app_shared_config').upsert({ id: 1, config: cfg, updated_at: new Date().toISOString() }, { onConflict: 'id' });
+                return true;
+            } catch (e) {
+                console.warn('publishGlobalAppVersion', e);
+                return false;
+            }
+        }
+        async function applyLocalForceUpdateReload() {
             try {
                 if ('serviceWorker' in navigator) {
                     const regs = await navigator.serviceWorker.getRegistrations();
                     for (const r of regs) {
-                        try {
-                            if (r.active) r.active.postMessage({ type: 'PURGE_CACHES' });
-                            if (r.waiting) r.waiting.postMessage({ type: 'SKIP_WAITING' });
-                        } catch (e) {}
+                        try { if (r.active) r.active.postMessage({ type: 'PURGE_CACHES' }); } catch (e) {}
+                        try { if (r.waiting) r.waiting.postMessage({ type: 'SKIP_WAITING' }); } catch (e) {}
                         try { await r.unregister(); } catch (e) {}
                     }
                 }
@@ -15110,26 +15141,83 @@ function sbRenderAdminLists(cfg) {
                     const keys = await caches.keys();
                     await Promise.all(keys.map(function (k) { return caches.delete(k); }));
                 }
-                try {
-                    const keep = { app_error_log_v1: 1, diag_seller_reports_v1: 1, boothThemeMode: 1 };
-                    const kill = [];
-                    for (let i = 0; i < localStorage.length; i++) {
-                        const k = localStorage.key(i);
-                        if (!k) continue;
-                        if (keep[k]) continue;
-                        if (/^(att_local_|attDayDone_|shell|sw|rc\|offline_products)/.test(k)) kill.push(k);
-                    }
-                    kill.forEach(function (k) { try { localStorage.removeItem(k); } catch (e) {} });
-                } catch (e) {}
+            } catch (e) {}
+            try {
+                sessionStorage.removeItem('sw_reloaded_' + String(APP_BUILD || ''));
             } catch (e) {}
             try {
                 const u = new URL(location.href.split('#')[0]);
-                u.searchParams.set('_v', typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v228');
+                u.searchParams.set('_v', String(APP_BUILD || 'v229'));
                 u.searchParams.set('_t', String(Date.now()));
                 u.searchParams.set('nocache', '1');
                 location.replace(u.toString());
-            } catch (e) { location.reload(true); }
+            } catch (e) {
+                location.reload();
+            }
         }
+        function showForceUpdateModal(remoteVer) {
+            if (document.getElementById('forceUpdateModal')) return;
+            const wrap = document.createElement('div');
+            wrap.id = 'forceUpdateModal';
+            wrap.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(2,6,23,.92);display:flex;align-items:center;justify-content:center;padding:18px;';
+            wrap.innerHTML = '<div style="background:#0f172a;border:1px solid #38bdf8;border-radius:18px;padding:20px 16px;max-width:360px;width:100%;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.5);">' +
+                '<div style="font-size:36px;margin-bottom:8px;">🔄</div>' +
+                '<h3 style="color:#7dd3fc;margin:0 0 8px;">نسخه جدید سایت آماده است</h3>' +
+                '<p style="color:#cbd5e1;font-size:13px;line-height:1.7;margin:0 0 14px;">نسخه شما: <b>' + String(APP_BUILD || '?') + '</b><br>نسخه جدید: <b style="color:#4ade80;">' + String(remoteVer || '') + '</b><br>برای ادامه کار باید به‌روزرسانی کنید.</p>' +
+                '<button type="button" id="forceUpdateNowBtn" class="submit-btn" style="width:100%;margin:0;background:linear-gradient(100deg,#2563eb,#7c3aed);">الان به‌روزرسانی کن</button>' +
+                '</div>';
+            document.body.appendChild(wrap);
+            document.getElementById('forceUpdateNowBtn').onclick = function () {
+                applyLocalForceUpdateReload();
+            };
+        }
+        async function checkRemoteForceUpdate() {
+            try {
+                if (typeof _supabase === 'undefined' || !_supabase) return;
+                const { data, error } = await _supabase.from('app_shared_config').select('config').eq('id', 1).maybeSingle();
+                if (error || !data || !data.config) return;
+                const remote = String(data.config.force_app_version || '').trim();
+                if (!remote) return;
+                const local = String(typeof APP_BUILD !== 'undefined' ? APP_BUILD : '');
+                if (!local) return;
+                // اگر ریموت جدیدتر/متفاوت است
+                if (remote !== local) {
+                    // اگر کاربر همین الان با nocache آمده و هنوز HTML کهنه است، مودال بده
+                    showForceUpdateModal(remote);
+                }
+            } catch (e) {}
+        }
+        async function diagForceUpdate() {
+            showToast('⏳ انتشار آپدیت اجباری برای همه گوشی‌ها...');
+            const ver = String(typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v229');
+            let published = false;
+            try {
+                published = await publishGlobalAppVersion(ver);
+            } catch (e) {}
+            // پیام به همه نقش‌ها
+            try {
+                await _supabase.from('messages').insert([
+                    { sender: 'سیستم', recipient: 'admin', title: '🔄 آپدیت اجباری', body: 'نسخه ' + ver + ' منتشر شد. لطفاً دکمه به‌روزرسانی را بزنید.', created_at: new Date().toISOString() },
+                    { sender: 'سیستم', recipient: 'morning_seller', title: '🔄 آپدیت اجباری سایت', body: 'نسخه جدید سایت (' + ver + ') آماده است. لطفاً یک‌بار سایت را ببندید و دوباره باز کنید یا دکمه به‌روزرسانی را بزنید.', created_at: new Date().toISOString() },
+                    { sender: 'سیستم', recipient: 'evening_seller', title: '🔄 آپدیت اجباری سایت', body: 'نسخه جدید سایت (' + ver + ') آماده است. لطفاً یک‌بار سایت را ببندید و دوباره باز کنید یا دکمه به‌روزرسانی را بزنید.', created_at: new Date().toISOString() }
+                ]);
+            } catch (e) {}
+            try {
+                if (typeof sendPushNotificationToRole === 'function') {
+                    sendPushNotificationToRole('🔄 آپدیت اجباری', 'نسخه ' + ver + ' — سایت را به‌روز کنید', 'admin');
+                    sendPushNotificationToRole('🔄 آپدیت اجباری', 'نسخه ' + ver + ' — سایت را یک‌بار ببندید و باز کنید', 'morning_seller');
+                    sendPushNotificationToRole('🔄 آپدیت اجباری', 'نسخه ' + ver + ' — سایت را یک‌بار ببندید و باز کنید', 'evening_seller');
+                }
+            } catch (e) {}
+            try {
+                if (typeof sendTelegramNotification === 'function') {
+                    await sendTelegramNotification('🔄 آپدیت اجباری نسخه ' + ver + ' برای همه کاربران تازه مارکت منتشر شد.');
+                }
+            } catch (e) {}
+            showToast(published ? '✅ برای همه منتشر شد — الان این گوشی هم به‌روز می‌شود' : '⚠️ انتشار ابری ناموفق؛ فقط این گوشی به‌روز می‌شود');
+            setTimeout(function () { applyLocalForceUpdateReload(); }, 600);
+        }
+
 
         async function diagClearAppCaches() {
             const out = document.getElementById('diagCacheResult');
