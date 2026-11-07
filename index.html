@@ -5,7 +5,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="app-build" content="v238">
+    <meta name="app-build" content="v239">
     <!-- جلوگیری از کش‌شدن خود index.html توسط مرورگر/گوشی، تا نسخه‌ی جدید همیشه فوراً لود بشه
          (sw.js شما کش نمی‌کنه، ولی مرورگر یا هاست ممکنه خودش HTML رو کش کنه) -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -162,13 +162,23 @@
         html.catalog-guest-mode .header-clock,
         html.catalog-guest-mode .build-tag { display: none !important; }
         #invoicePrintFrame { position: fixed !important; right: 0 !important; bottom: 0 !important; width: 0 !important; height: 0 !important; border: 0 !important; opacity: 0 !important; }
-        .cat-hero{text-align:center;padding:16px 14px 14px;background:linear-gradient(165deg,#0b1220 0%,#0f172a 40%,#0f766e 160%);border-radius:0 0 22px 22px;margin-bottom:10px;box-shadow:0 10px 28px rgba(0,0,0,.25)}
-        .cat-hero h1{margin:0;font-size:20px;font-weight:900;background:linear-gradient(90deg,#fbbf24,#34d399,#38bdf8);-webkit-background-clip:text;background-clip:text;color:transparent}
-        .cat-card{background:linear-gradient(180deg,#111827,#0f172a);border:1px solid rgba(148,163,184,.22);border-radius:16px;overflow:hidden;box-shadow:0 6px 16px rgba(0,0,0,.18);transition:transform .15s ease,box-shadow .15s ease}
+        .cat-hero{text-align:center;padding:18px 14px 16px;background:linear-gradient(165deg,#07101f 0%,#0f172a 45%,#0d9488 160%);border-radius:0 0 24px 24px;margin-bottom:12px;box-shadow:0 12px 32px rgba(0,0,0,.28)}
+        .cat-hero h1{margin:0;font-size:22px;font-weight:900;background:linear-gradient(90deg,#fbbf24,#34d399,#38bdf8);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:-.3px}
+        .cat-card{background:linear-gradient(180deg,#111827 0%,#0b1220 100%);border:1px solid rgba(148,163,184,.18);border-radius:18px;overflow:hidden;box-shadow:0 8px 20px rgba(0,0,0,.22);transition:transform .15s ease,box-shadow .15s ease;display:flex;flex-direction:column}
         .cat-card:active{transform:scale(.98)}
+        .cat-card .cn{font-weight:800;font-size:13.5px;line-height:1.45;min-height:2.5em;padding:0 2px}
+        .cat-card .cp{color:#fbbf24;font-weight:900;font-size:15px;letter-spacing:-.2px}
+        .cat-card .cu{font-size:10px;opacity:.65}
+        .cat-card button{border:0;border-radius:12px;padding:10px;font:inherit;font-weight:800;cursor:pointer;background:linear-gradient(100deg,#10b981,#059669);color:#fff;box-shadow:0 4px 12px rgba(16,185,129,.25)}
         .cat-price{color:#fbbf24;font-weight:900;font-size:15px;letter-spacing:-.2px}
-        .cat-trust-bar{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:8px 10px 4px}
-        .cat-trust-bar span{font-size:10px;background:rgba(15,23,42,.9);border:1px solid rgba(148,163,184,.25);border-radius:999px;padding:5px 10px;color:#cbd5e1}
+        .cat-trust-bar{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:10px 10px 6px}
+        .cat-trust-bar span{font-size:10px;background:rgba(15,23,42,.95);border:1px solid rgba(52,211,153,.25);border-radius:999px;padding:6px 11px;color:#cbd5e1}
+        #catGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:4px 10px 100px}
+        #catBottomNav{backdrop-filter:blur(12px);background:rgba(8,12,24,.92)!important;border-top:1px solid rgba(148,163,184,.15)}
+        .cat-tabs{display:flex;gap:8px;overflow-x:auto;padding:4px 10px 10px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+        .cat-tabs::-webkit-scrollbar{display:none}
+        .cat-tabs button{flex:0 0 auto;border:1px solid rgba(148,163,184,.25);background:#0f172a;color:#e2e8f0;border-radius:999px;padding:8px 14px;font:inherit;font-size:12px;font-weight:700}
+        .cat-tabs button.on,.cat-tabs button.active{background:linear-gradient(100deg,#2563eb,#0ea5e9);border-color:transparent;color:#fff}
         .cat-badge{display:inline-block;background:linear-gradient(100deg,#f59e0b,#ef4444);color:#fff;font-size:11px;font-weight:800;padding:5px 12px;border-radius:999px;margin-top:6px;box-shadow:0 4px 14px rgba(245,158,11,.35)}
         .cat-tabs{display:flex;gap:6px;overflow-x:auto;padding:0 10px 8px;-webkit-overflow-scrolling:touch}
         .cat-tab{flex:0 0 auto;border:1px solid rgba(148,163,184,.3);background:rgba(15,23,42,.8);color:#e2e8f0;border-radius:999px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer}
@@ -212,7 +222,7 @@
         .cat-stat-row span{font-size:10px;opacity:.8}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v238 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v239 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json" id="appManifestLink">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -3274,14 +3284,17 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             </div>
         </details>
 
-        <details class="diag-acc">
-            <summary>⏰ حضور و غیاب</summary>
+        <details class="diag-acc" open>
+            <summary>⏰ حضور و غیاب · خروج جاافتاده</summary>
             <div class="diag-body">
                 <div id="diagAttStatus">—</div>
                 <div class="diag-actions">
-                    <button type="button" class="row-btn edit-btn" onclick="diagRepairAttendance()">درست کن ورود/خروج</button>
+                    <button type="button" class="row-btn edit-btn" onclick="diagScanUnclosedExits()">🔎 اسکن خروج‌های جاافتاده</button>
+                    <button type="button" class="row-btn edit-btn" onclick="diagRepairAttendance()">پاک‌سازی کش حضور</button>
+                    <button type="button" class="row-btn edit-btn" onclick="diagNotifyAllUnclosed()">📨 پیام به همه جاافتاده‌ها</button>
                 </div>
                 <div id="diagAttResult"></div>
+                <div id="diagUnclosedList" style="margin-top:10px;"></div>
             </div>
         </details>
 
@@ -4146,7 +4159,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v238 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v239 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -4326,7 +4339,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             }
         })();
 
-        const APP_BUILD = 'v238';
+        const APP_BUILD = 'v239';
         try { const __bt=document.getElementById('buildTag'); if(__bt) __bt.textContent = APP_BUILD + ' - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )'; } catch(e){}
         // ثبت Service Worker پایدار — همیشه /sw.js بدون ?v= تا آپدیت شکست نخورد
         if ('serviceWorker' in navigator) {
@@ -4338,7 +4351,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
                 } catch (e) {}
                 try {
                     const u = new URL(location.href);
-                    u.searchParams.set('_v', String(APP_BUILD || 'v238'));
+                    u.searchParams.set('_v', String(APP_BUILD || 'v239'));
                     location.replace(u.pathname + u.search + u.hash);
                 } catch (e) {
                     try { location.reload(); } catch (e2) {}
@@ -6883,6 +6896,10 @@ notify pgrst, 'reload schema';`;
                 setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnSausagePriceCompare', 'btnProductGuide', 'btnAiChat', 'btnQuickNote', 'btnAttendance', 'btnDailyChecklist', 'btnMessage', 'btnInbox', 'btnReport', 'btnDebtLedger', 'btnPersonalTakeout', 'btnGoals', 'btnSalesBoost', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnMyAccount'], 'dashboardTab');
                 document.getElementById('salaryAdminForm').style.display = 'none';
             }
+            try {
+                const db = document.getElementById('btnDiagnostics');
+                if (db) db.style.display = (currentRole === 'admin') ? '' : 'none';
+            } catch (e) {}
             try { setTimeout(function () { dclMaybeRemindOnLogin(); }, 1800); } catch (e) {}
 
             renderBottomNav();
@@ -14929,7 +14946,8 @@ function sbRenderAdminLists(cfg) {
             const att = document.getElementById('diagAttStatus');
             if (att) {
                 const aKeys = diagLsKeys('att_local_').length + diagLsKeys('attDayDone_').length;
-                att.innerHTML = 'کلیدهای کش حضور روی این گوشی: <b>' + aKeys + '</b><br>با «درست کن ورود/خروج» کش‌های گیرکرده پاک و از سرور همگام می‌شوند.';
+                att.innerHTML = 'کلیدهای کش حضور روی این گوشی: <b>' + aKeys + '</b><br>خروج جاافتاده را با دکمه «اسکن» ببین؛ می‌توانی پیام بفرستی یا از طرف مدیر ثبت کنی.';
+                try { setTimeout(function () { if (currentRole === 'admin') diagScanUnclosedExits(); }, 400); } catch (e) {}
             }
 
             // محصولات
@@ -15172,7 +15190,7 @@ function sbRenderAdminLists(cfg) {
         }
 
         async function publishGlobalAppVersion(ver) {
-            const version = String(ver || (typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v238'));
+            const version = String(ver || (typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v239'));
             try {
                 const { data } = await _supabase.from('app_shared_config').select('config').eq('id', 1).maybeSingle();
                 const cfg = (data && data.config && typeof data.config === 'object') ? Object.assign({}, data.config) : {};
@@ -15206,7 +15224,7 @@ function sbRenderAdminLists(cfg) {
             } catch (e) {}
             try {
                 const u = new URL(location.href.split('#')[0]);
-                u.searchParams.set('_v', String(APP_BUILD || 'v238'));
+                u.searchParams.set('_v', String(APP_BUILD || 'v239'));
                 u.searchParams.set('_t', String(Date.now()));
                 u.searchParams.set('nocache', '1');
                 location.replace(u.toString());
@@ -15268,7 +15286,7 @@ function sbRenderAdminLists(cfg) {
         }
         async function diagForceUpdate() {
             showToast('⏳ انتشار آپدیت اجباری برای همه گوشی‌ها...');
-            const ver = String(typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v238');
+            const ver = String(typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v239');
             let published = false;
             try {
                 published = await publishGlobalAppVersion(ver);
@@ -15386,6 +15404,185 @@ function sbRenderAdminLists(cfg) {
             await diagPingSupabase();
             await diagRefreshPanel();
             showToast('✅ اتصال بازتنظیم شد');
+        }
+
+
+        function diagNormName(s) {
+            return String(s || '').replace(/\s+/g, ' ').trim().toLowerCase();
+        }
+        function diagSellerKey(name) {
+            return diagNormName(name);
+        }
+        async function diagFindUnclosedForAll() {
+            const since = new Date(Date.now() - 5 * 24 * 3600 * 1000).toISOString();
+            const { data, error } = await withTimeout(
+                _supabase.from('attendance')
+                    .select('id, seller_name, type, created_at, note')
+                    .gte('created_at', since)
+                    .order('created_at', { ascending: false })
+                    .limit(300),
+                12000,
+                'اسکن حضور'
+            );
+            if (error) throw error;
+            const rows = data || [];
+            // به ازای هر فروشنده، از جدید به قدیم: اگر اولین رویداد exit (غیر makeup) باشد بسته است؛ اگر entry باشد باز
+            const bySeller = {};
+            rows.forEach(function (r) {
+                const k = diagSellerKey(r.seller_name);
+                if (!k) return;
+                if (!bySeller[k]) bySeller[k] = [];
+                bySeller[k].push(r);
+            });
+            const today = getTehranISODate(new Date());
+            const out = [];
+            Object.keys(bySeller).forEach(function (k) {
+                const list = bySeller[k];
+                let unclosed = null;
+                for (let i = 0; i < list.length; i++) {
+                    const r = list[i];
+                    if (r.type === 'exit') {
+                        if (typeof isMakeupExitNote === 'function' && isMakeupExitNote(r.note)) continue;
+                        break; // آخرین خروج واقعی → بسته
+                    }
+                    if (r.type === 'entry') {
+                        unclosed = r;
+                        break;
+                    }
+                }
+                if (!unclosed) return;
+                const entryDate = getTehranISODate(new Date(unclosed.created_at));
+                const ageH = (Date.now() - new Date(unclosed.created_at).getTime()) / 3600000;
+                // ورود امروز که هنوز باز است هم مهم است اگر شیفت تمام شده باشد (بیش از ۱۰ ساعت) یا ورود روز قبل
+                if (entryDate === today && ageH < 10) return; // هنوز در شیفت امروز
+                if (ageH > 96) return;
+                out.push({
+                    seller: unclosed.seller_name,
+                    entryAt: unclosed.created_at,
+                    entryDate: entryDate,
+                    ageH: Math.round(ageH * 10) / 10,
+                    note: unclosed.note || '',
+                    id: unclosed.id
+                });
+            });
+            out.sort(function (a, b) { return b.ageH - a.ageH; });
+            return out;
+        }
+        async function diagScanUnclosedExits() {
+            if (currentRole !== 'admin') {
+                showToast('⛔ فقط مدیر');
+                return;
+            }
+            const box = document.getElementById('diagUnclosedList');
+            const out = document.getElementById('diagAttResult');
+            if (box) box.innerHTML = '⏳ در حال اسکن...';
+            if (out) out.innerHTML = '⏳...';
+            try {
+                const list = await diagFindUnclosedForAll();
+                window.__diagUnclosed = list;
+                if (out) {
+                    out.innerHTML = list.length
+                        ? diagBadge(false, list.length + ' فروشنده خروج جاافتاده دارند')
+                        : diagBadge(true, 'خروج جاافتاده‌ای در ۵ روز اخیر پیدا نشد');
+                }
+                if (!box) return;
+                if (!list.length) {
+                    box.innerHTML = '<div style="opacity:.8;padding:8px;">همه شیفت‌های اخیر بسته به نظر می‌رسند.</div>';
+                    return;
+                }
+                box.innerHTML = list.map(function (u, idx) {
+                    const when = (typeof getTehranFullDateTimeString === 'function')
+                        ? getTehranFullDateTimeString(new Date(u.entryAt))
+                        : u.entryAt;
+                    return '<div style="border:1px solid rgba(239,68,68,.35);background:rgba(239,68,68,.08);border-radius:12px;padding:10px;margin-bottom:8px;">' +
+                        '<div style="font-weight:800;color:#fca5a5;">⚠️ ' + String(u.seller).replace(/</g, '') + '</div>' +
+                        '<div style="font-size:11px;margin-top:4px;line-height:1.6;">ورود باز از: <b>' + when + '</b><br>حدود <b>' + u.ageH + '</b> ساعت پیش · روز شیفت: ' + u.entryDate + '</div>' +
+                        '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">' +
+                        '<button type="button" class="row-btn edit-btn" style="margin:0;padding:8px 10px;font-size:11px;" onclick="diagNotifyUnclosedOne(' + idx + ')">📨 پیام بفرست (خروج جاافتاده)</button>' +
+                        '<button type="button" class="row-btn edit-btn" style="margin:0;padding:8px 10px;font-size:11px;background:#7c3aed;" onclick="diagAdminMakeupExit(' + idx + ')">✅ ثبت خروج جاافتاده از طرف مدیر</button>' +
+                        '</div></div>';
+                }).join('');
+            } catch (e) {
+                if (out) out.innerHTML = diagBadge(false, String(e.message || e));
+                if (box) box.innerHTML = '';
+            }
+        }
+        async function diagResolveRecipientForSeller(sellerName) {
+            try {
+                const { data } = await _supabase.from('users').select('username, role, full_name').in('role', ['morning_seller', 'evening_seller']);
+                const list = data || [];
+                const n = diagNormName(sellerName);
+                let hit = list.find(function (u) {
+                    return diagNormName(u.full_name) === n || diagNormName(u.username) === n
+                        || (u.full_name && n.indexOf(diagNormName(u.full_name)) >= 0)
+                        || (sellerName && String(sellerName).indexOf(u.full_name || '---') >= 0);
+                });
+                if (hit) return hit.role || hit.username;
+            } catch (e) {}
+            // fallback: if name contains صبح/شب
+            if (/شب/.test(sellerName || '')) return 'evening_seller';
+            if (/صبح/.test(sellerName || '')) return 'morning_seller';
+            return 'morning_seller';
+        }
+        async function diagNotifyUnclosedOne(idx) {
+            if (currentRole !== 'admin') return;
+            const list = window.__diagUnclosed || [];
+            const u = list[idx];
+            if (!u) return;
+            try {
+                const recipient = await diagResolveRecipientForSeller(u.seller);
+                const body = 'سلام ' + u.seller + ' 👋\nخروج شیفت قبلی‌ات جا افتاده (ورود از ' + u.entryDate + ').\n' +
+                    'لطفاً الان در بخش حضور و غیاب، نوع ثبت را روی «خروج» بگذار و خروج جاافتاده را ثبت کن.\n' +
+                    'اگر الان داخل شیفت هستی، اول خروج جاافتاده را بزن بعد ورود امروز را.\nخسته نباشی 🌿';
+                await _supabase.from('messages').insert([{
+                    sender: 'مدیر',
+                    recipient: recipient,
+                    title: '⏰ خروج جاافتاده — لطفاً ثبت کن',
+                    body: body,
+                    created_at: new Date().toISOString()
+                }]);
+                showToast('✅ پیام برای «' + u.seller + '» ارسال شد');
+            } catch (e) {
+                showToast('❌ ارسال پیام: ' + (e.message || e));
+            }
+        }
+        async function diagNotifyAllUnclosed() {
+            if (currentRole !== 'admin') return;
+            let list = window.__diagUnclosed;
+            if (!list) {
+                try { list = await diagFindUnclosedForAll(); window.__diagUnclosed = list; } catch (e) { showToast('❌ اسکن ناموفق'); return; }
+            }
+            if (!list.length) { showToast('موردی نیست'); return; }
+            let n = 0;
+            for (let i = 0; i < list.length; i++) {
+                try { await diagNotifyUnclosedOne(i); n++; } catch (e) {}
+            }
+            showToast('✅ پیام برای ' + n + ' نفر ارسال شد');
+        }
+        async function diagAdminMakeupExit(idx) {
+            if (currentRole !== 'admin') return;
+            const list = window.__diagUnclosed || [];
+            const u = list[idx];
+            if (!u) return;
+            if (!confirm('خروج جاافتاده برای «' + u.seller + '» از طرف مدیر ثبت شود؟\\nروز شیفت: ' + u.entryDate)) return;
+            try {
+                const closeAt = new Date(u.entryAt);
+                // زمان خروج تقریبی: ۸ ساعت بعد از ورود یا انتهای همان روز
+                closeAt.setHours(closeAt.getHours() + 8);
+                const nowIso = new Date().toISOString();
+                const note = '⏮️ خروج جاافتاده (ثبت توسط مدیر از عیب‌یابی) | shift_date:' + u.entryDate + ' | زمان ثبت واقعی: ' + (typeof getTehranFullDateTimeString === 'function' ? getTehranFullDateTimeString(new Date()) : nowIso);
+                const { error } = await _supabase.from('attendance').insert([{
+                    seller_name: u.seller,
+                    type: 'exit',
+                    created_at: closeAt.toISOString(),
+                    note: note
+                }]);
+                if (error) throw error;
+                showToast('✅ خروج جاافتاده برای ' + u.seller + ' ثبت شد');
+                await diagScanUnclosedExits();
+            } catch (e) {
+                showToast('❌ ' + (e.message || e));
+            }
         }
 
         async function diagRepairAttendance() {
