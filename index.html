@@ -5,7 +5,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="app-build" content="v240">
+    <meta name="app-build" content="v243">
     <!-- جلوگیری از کش‌شدن خود index.html توسط مرورگر/گوشی، تا نسخه‌ی جدید همیشه فوراً لود بشه
          (sw.js شما کش نمی‌کنه، ولی مرورگر یا هاست ممکنه خودش HTML رو کش کنه) -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -175,6 +175,82 @@
         .cat-trust-bar span{font-size:10px;background:rgba(15,23,42,.95);border:1px solid rgba(52,211,153,.25);border-radius:999px;padding:6px 11px;color:#cbd5e1}
         #catGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:4px 10px 100px}
         #catBottomNav{backdrop-filter:blur(12px);background:rgba(8,12,24,.92)!important;border-top:1px solid rgba(148,163,184,.15)}
+        /* کاتالوگ حرفه‌ای — استایل فروشگاه آنلاین */
+        html.catalog-guest-mode body {
+            background: #f1f5f9 !important;
+            color: #0f172a;
+        }
+        html.catalog-guest-mode #catalogPublicView {
+            background: #f1f5f9;
+            max-width: 520px;
+            margin: 0 auto;
+            min-height: 100vh;
+            box-shadow: 0 0 40px rgba(15,23,42,.08);
+        }
+        html.catalog-guest-mode .cat-hero {
+            background: linear-gradient(145deg, #0f766e 0%, #0ea5e9 55%, #6366f1 120%) !important;
+            border-radius: 0 0 28px 28px !important;
+            padding: 22px 16px 18px !important;
+            color: #fff !important;
+        }
+        html.catalog-guest-mode .cat-hero h1 {
+            background: none !important;
+            -webkit-text-fill-color: #fff !important;
+            color: #fff !important;
+            font-size: 24px !important;
+        }
+        html.catalog-guest-mode .cat-card {
+            background: #fff !important;
+            border: none !important;
+            border-radius: 20px !important;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08) !important;
+            color: #0f172a !important;
+        }
+        html.catalog-guest-mode .cat-card .cn { color: #0f172a !important; font-size: 14px !important; }
+        html.catalog-guest-mode .cat-card .cp { color: #ea580c !important; font-size: 16px !important; }
+        html.catalog-guest-mode .cat-card .cu { color: #64748b !important; }
+        html.catalog-guest-mode .cat-card button {
+            background: linear-gradient(100deg, #10b981, #059669) !important;
+            border-radius: 14px !important;
+            padding: 11px !important;
+            font-size: 13px !important;
+        }
+        html.catalog-guest-mode .cat-tabs button {
+            background: #fff !important;
+            color: #334155 !important;
+            border: 1px solid #e2e8f0 !important;
+            box-shadow: 0 2px 8px rgba(15,23,42,.04);
+        }
+        html.catalog-guest-mode .cat-tabs button.on,
+        html.catalog-guest-mode .cat-tabs button.active {
+            background: linear-gradient(100deg, #0ea5e9, #6366f1) !important;
+            color: #fff !important;
+            border-color: transparent !important;
+        }
+        html.catalog-guest-mode #catBottomNav {
+            background: rgba(255,255,255,.95) !important;
+            border-top: 1px solid #e2e8f0 !important;
+            color: #64748b !important;
+            box-shadow: 0 -8px 24px rgba(15,23,42,.06);
+        }
+        html.catalog-guest-mode #catBottomNav .cat-nav-btn { color: #64748b !important; }
+        html.catalog-guest-mode #catBottomNav .cat-nav-btn.on { color: #0ea5e9 !important; }
+        html.catalog-guest-mode input[type="search"],
+        html.catalog-guest-mode #catSearch,
+        html.catalog-guest-mode .cat-search {
+            background: #fff !important;
+            border: 1px solid #e2e8f0 !important;
+            color: #0f172a !important;
+            border-radius: 16px !important;
+            box-shadow: 0 2px 10px rgba(15,23,42,.04);
+        }
+        html.catalog-guest-mode #catCartBar {
+            background: linear-gradient(100deg, #0f172a, #134e4a) !important;
+            color: #fff !important;
+            border-radius: 18px !important;
+            box-shadow: 0 12px 32px rgba(15,23,42,.25);
+        }
+
         .cat-tabs{display:flex;gap:8px;overflow-x:auto;padding:4px 10px 10px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
         .cat-tabs::-webkit-scrollbar{display:none}
         .cat-tabs button{flex:0 0 auto;border:1px solid rgba(148,163,184,.25);background:#0f172a;color:#e2e8f0;border-radius:999px;padding:8px 14px;font:inherit;font-size:12px;font-weight:700}
@@ -222,7 +298,7 @@
         .cat-stat-row span{font-size:10px;opacity:.8}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v240 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v243 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json" id="appManifestLink">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -3260,6 +3336,17 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         </style>
 
         <details class="diag-acc" open>
+            <summary>📱 گوشی‌های متصل (اکانت مدیر)</summary>
+            <div class="diag-body">
+                <div class="hint" style="margin:0 0 8px;">هر گوشی که با اکانت مدیر وارد شود اینجا دیده می‌شود (همگام از سرور).</div>
+                <div id="diagSessionsBox">—</div>
+                <div class="diag-actions">
+                    <button type="button" class="row-btn edit-btn" onclick="diagPulseSession().then(diagRenderSessions)">🔄 بروزرسانی لیست</button>
+                </div>
+            </div>
+        </details>
+
+        <details class="diag-acc" open>
             <summary>📦 نسخه و کش</summary>
             <div class="diag-body">
                 <div id="diagVersionLine">—</div>
@@ -4159,7 +4246,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v240 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v243 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -4339,7 +4426,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             }
         })();
 
-        const APP_BUILD = 'v240';
+        const APP_BUILD = 'v243';
         try { const __bt=document.getElementById('buildTag'); if(__bt) __bt.textContent = APP_BUILD + ' - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )'; } catch(e){}
         // ثبت Service Worker پایدار — همیشه /sw.js بدون ?v= تا آپدیت شکست نخورد
         if ('serviceWorker' in navigator) {
@@ -4351,7 +4438,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
                 } catch (e) {}
                 try {
                     const u = new URL(location.href);
-                    u.searchParams.set('_v', String(APP_BUILD || 'v240'));
+                    u.searchParams.set('_v', String(APP_BUILD || 'v243'));
                     location.replace(u.pathname + u.search + u.hash);
                 } catch (e) {
                     try { location.reload(); } catch (e2) {}
@@ -5036,6 +5123,66 @@ ${PROXY_ENDPOINTS.map(u => `<div class="summary-mini" data-sel="${u}" style="gap
         })();
 
         let cachedProductsList = [];
+        function normProductName(s) {
+            return String(s == null ? '' : s)
+                .replace(/ي/g, 'ی').replace(/ك/g, 'ک')
+                .replace(/[\u200c\u200f\u200e]/g, '')
+                .replace(/\s+/g, ' ')
+                .trim()
+                .toLowerCase();
+        }
+        function findProductInList(input, list) {
+            const raw = String(input || '').trim();
+            if (!raw) return null;
+            list = list || cachedProductsList || [];
+            if (!list.length) return null;
+            const n = normProductName(raw);
+            // 1) کد دقیق
+            let hit = list.find(function (p) { return String(p.code || '') === raw; });
+            if (hit) return hit;
+            // 2) نام دقیق نرمال‌شده
+            hit = list.find(function (p) { return normProductName(p.name) === n; });
+            if (hit) return hit;
+            // 3) نام بدون فاصله
+            const n2 = n.replace(/\s/g, '');
+            hit = list.find(function (p) { return normProductName(p.name).replace(/\s/g, '') === n2; });
+            if (hit) return hit;
+            // 4) شامل بودن (اگر یکتا باشد)
+            const partial = list.filter(function (p) {
+                const pn = normProductName(p.name);
+                return pn.indexOf(n) >= 0 || n.indexOf(pn) >= 0;
+            });
+            if (partial.length === 1) return partial[0];
+            // 5) شروع‌شونده
+            const starts = list.filter(function (p) { return normProductName(p.name).indexOf(n) === 0; });
+            if (starts.length === 1) return starts[0];
+            return null;
+        }
+        async function ensureProductsLoaded(force) {
+            try {
+                if (!force && cachedProductsList && cachedProductsList.length) return cachedProductsList;
+                let products = null;
+                try {
+                    const r = await withTimeout(_supabase.from('products').select('*').order('name'), 10000, 'بارگذاری کالا');
+                    products = (r && r.data) || null;
+                    if (products && products.length && typeof offlineSaveProducts === 'function') offlineSaveProducts(products);
+                } catch (e) {}
+                if (!products || !products.length) {
+                    try { products = offlineLoadProducts(); } catch (e) { products = []; }
+                }
+                if (!products || !products.length) {
+                    try {
+                        const raw = localStorage.getItem('offline_products_v1');
+                        if (raw) products = JSON.parse(raw) || [];
+                    } catch (e) {}
+                }
+                cachedProductsList = sortProductsAlpha(products || []);
+                return cachedProductsList;
+            } catch (e) {
+                return cachedProductsList || [];
+            }
+        }
+
 
         /* ========== لایه داده آفلاین ========== */
         const OFFLINE_KEYS = {
@@ -5235,6 +5382,66 @@ ${PROXY_ENDPOINTS.map(u => `<div class="summary-mini" data-sel="${u}" style="gap
         let currentRole = "";
         let currentUserLabel = "";
         let currentSessionUser = null; try { offlineClearSession(); } catch (e) {}
+        function isManagerAccount(user) {
+            try {
+                user = user || currentSessionUser || null;
+                if (typeof currentRole !== 'undefined' && currentRole === 'admin') return true;
+                if (!user) return false;
+                const role = String(user.role || '').toLowerCase().trim();
+                if (role === 'admin' || role === 'modir' || role === 'manager') return true;
+                if (String(user.role || '').indexOf('مدیر') >= 0) return true;
+                const u = String(user.username || '').toLowerCase().trim();
+                if (u === 'modir' || u === 'admin' || u === 'manager' || u === 'مدیر') return true;
+                if (u.indexOf('modir') >= 0 || u.indexOf('admin') >= 0) return true;
+                const fn = String(user.full_name || '');
+                if (/مدیر|admin|modir/i.test(fn)) return true;
+                // برچسب نمایشی
+                try {
+                    if (typeof currentUserLabel === 'string' && /مدیر/.test(currentUserLabel)) return true;
+                } catch (e2) {}
+                return false;
+            } catch (e) { return false; }
+        }
+        function isManagerNow() {
+            try {
+                if (typeof currentRole !== 'undefined' && currentRole === 'admin') return true;
+                if (isManagerAccount(currentSessionUser)) return true;
+                try {
+                    if (typeof currentUserLabel === 'string' && /مدیر/.test(currentUserLabel) && !/فروشنده/.test(currentUserLabel)) return true;
+                } catch (e2) {}
+                return false;
+            } catch (e) { return false; }
+        }
+        function ensureDiagnosticsVisible() {
+            try {
+                const db = document.getElementById('btnDiagnostics');
+                if (!db) return;
+                if (isManagerNow()) {
+                    try { if (currentRole !== 'admin') currentRole = 'admin'; } catch (e) {}
+                    db.style.display = 'flex';
+                    db.style.visibility = 'visible';
+                    db.style.opacity = '1';
+                    db.hidden = false;
+                    // دکمه شناور پشتیبان اگر تب گم شد
+                    let fab = document.getElementById('diagFabBtn');
+                    if (!fab) {
+                        fab = document.createElement('button');
+                        fab.id = 'diagFabBtn';
+                        fab.type = 'button';
+                        fab.textContent = '🛠️ عیب‌یابی';
+                        fab.onclick = function () { try { openDiagnosticsTab(); } catch (e) {} };
+                        fab.style.cssText = 'position:fixed;bottom:18px;left:14px;z-index:99980;padding:12px 14px;border:0;border-radius:16px;background:linear-gradient(100deg,#7c3aed,#2563eb);color:#fff;font:inherit;font-weight:800;font-size:13px;box-shadow:0 10px 28px rgba(37,99,235,.35);cursor:pointer;';
+                        document.body.appendChild(fab);
+                    }
+                    fab.style.display = 'block';
+                } else {
+                    db.style.display = 'none';
+                    const fab = document.getElementById('diagFabBtn');
+                    if (fab) fab.style.display = 'none';
+                }
+            } catch (e) {}
+        }
+
 
         // --- تشخیص حساب آزمایشی (نیروی تازه‌استخدام در دوره‌ی آموزشی) ---
         // برای این حساب‌ها، محدودیت‌های سخت‌گیرانه‌ی ورود/خروج (مثل مسدودشدن ثبت، اجبار به نوشتن
@@ -6854,10 +7061,16 @@ notify pgrst, 'reload schema';`;
 
         function proceedToDashboardAfterLogin(user) {
             currentRole = user.role;
+            try {
+                if (isManagerAccount(user)) currentRole = 'admin';
+            } catch (e) {}
             currentUserLabel = (roleLabels[user.role] || user.role) + ' - ' + (user.full_name || user.username);
-            try { loadFiredStaff(true); } catch (e) {}
-            try { setTimeout(() => { if (window.maybeShowPermWizard) window.maybeShowPermWizard(); }, 4000); } catch (e) {}
-                        currentSessionUser = user;
+            currentSessionUser = user;
+            try {
+                if (isManagerAccount(user)) setTimeout(function () { try { loadFiredStaff(true); } catch (e) {} }, 1500);
+                else setTimeout(function () { try { loadFiredStaff(false); } catch (e) {} }, 4000);
+            } catch (e) {}
+            try { setTimeout(function () { if (window.maybeShowPermWizard) window.maybeShowPermWizard(); }, 6000); } catch (e) {}
             try { offlineSaveSession(user, user.role, (roleLabels[user.role] || user.role) + ' - ' + (user.full_name || user.username), (document.getElementById('accessPin') && document.getElementById('accessPin').value) || undefined); } catch (e) {}
             alertDismissedThisSession = false;
             reminderDismissedThisSession = false;
@@ -6884,7 +7097,9 @@ notify pgrst, 'reload schema';`;
                 updatePricingAdvisor();
             } catch (e) {}
 
-            if (currentRole === 'admin') {
+            try { if (isManagerAccount(user)) currentRole = 'admin'; } catch (e) {}
+            if (currentRole === 'admin' || isManagerAccount(user)) {
+                try { currentRole = 'admin'; } catch (e) {}
                 setupView(['btnDashboard', 'btnDiagnostics', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnSausagePriceCompare', 'btnProductGuide', 'btnAiChat', 'btnQuickNote', 'btnDailyChecklist', 'btnInbox', 'btnStaffMessage', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnShiftSettings', 'btnTelegramSettings', 'btnDebtLedger', 'btnContractAdmin', 'btnGrowthReport', 'btnPurchaseInvoices', 'btnTakeoutAdmin', 'btnGoals', 'btnSalesBoost', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnDeletedSales', 'btnWeeklyReports', 'btnPersonnel', 'btnMyAccount'], 'dashboardTab');
                 checkAndGenerateWeeklyReport();
                 document.getElementById('salaryAdminForm').style.display = 'block';
@@ -6896,15 +7111,27 @@ notify pgrst, 'reload schema';`;
                 setupView(['btnDashboard', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnSausagePriceCompare', 'btnProductGuide', 'btnAiChat', 'btnQuickNote', 'btnAttendance', 'btnDailyChecklist', 'btnMessage', 'btnInbox', 'btnReport', 'btnDebtLedger', 'btnPersonalTakeout', 'btnGoals', 'btnSalesBoost', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnMyAccount'], 'dashboardTab');
                 document.getElementById('salaryAdminForm').style.display = 'none';
             }
+            try { ensureDiagnosticsVisible(); } catch (e) {}
             try {
-                const db = document.getElementById('btnDiagnostics');
-                if (db) db.style.display = (currentRole === 'admin') ? '' : 'none';
+                if (isManagerNow()) {
+                    currentRole = 'admin';
+                    setupView(['btnDashboard', 'btnDiagnostics', 'btnSale', 'btnSaleEkala', 'btnSaleSausage', 'btnSausagePriceCompare', 'btnProductGuide', 'btnAiChat', 'btnQuickNote', 'btnDailyChecklist', 'btnInbox', 'btnStaffMessage', 'btnBooth', 'btnPurchaseOrders', 'btnProduct', 'btnInventory', 'btnReport', 'btnWorkReport', 'btnShiftSettings', 'btnTelegramSettings', 'btnDebtLedger', 'btnContractAdmin', 'btnGrowthReport', 'btnPurchaseInvoices', 'btnTakeoutAdmin', 'btnGoals', 'btnSalesBoost', 'btnSalary', 'btnExpenses', 'btnWaste', 'btnDeletedSales', 'btnWeeklyReports', 'btnPersonnel', 'btnMyAccount'], 'dashboardTab');
+                    ensureDiagnosticsVisible();
+                }
             } catch (e) {}
+            try { setTimeout(ensureDiagnosticsVisible, 800); setTimeout(ensureDiagnosticsVisible, 2500); } catch (e) {}
             try { setTimeout(function () { dclMaybeRemindOnLogin(); }, 1800); } catch (e) {}
+            try {
+                if (isManagerNow()) {
+                    setTimeout(function () { diagPulseSession(); }, 2000);
+                    setInterval(function () { try { if (isManagerNow()) diagPulseSession(); } catch (e) {} }, 300000);
+                }
+            } catch (e) {}
 
             renderBottomNav();
 
             loadProductDatalist();
+            try { setTimeout(function () { ensureProductsLoaded(true).then(function () { try { loadProductDatalist(); } catch (e) {} }); }, 1200); } catch (e) {}
             loadRecentSales('instore');
             loadRecentSales('ekala');
             loadRecentSales('sausage');
@@ -7105,10 +7332,7 @@ notify pgrst, 'reload schema';`;
                 } catch (e) {}
             });
             // تضمین تب عیب‌یابی برای مدیر
-            try {
-                const db = document.getElementById('btnDiagnostics');
-                if (db) db.style.display = (typeof currentRole !== 'undefined' && currentRole === 'admin' && (allowedBtns || []).indexOf('btnDiagnostics') >= 0) ? 'flex' : 'none';
-            } catch (e) {}
+            try { ensureDiagnosticsVisible(); } catch (e) {}
             (async function () {
                 try {
                     const cfg = await ascPullRemote(true);
@@ -7321,6 +7545,7 @@ notify pgrst, 'reload schema';`;
         function switchTab(tab) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.card').forEach(card => card.classList.remove('active'));
+            try { ensureDiagnosticsVisible(); } catch (e) {}
 
             const targetBtn = document.getElementById('btn' + tab.charAt(0).toUpperCase() + tab.slice(1));
             const targetTab = document.getElementById(tab + 'Tab');
@@ -14923,13 +15148,81 @@ function sbRenderAdminLists(cfg) {
             return Math.round(n / 1024);
         }
 
+
+        function diagDeviceId() {
+            try {
+                let id = localStorage.getItem('diag_device_id');
+                if (!id) {
+                    id = 'd_' + Math.random().toString(36).slice(2, 10) + '_' + Date.now().toString(36);
+                    localStorage.setItem('diag_device_id', id);
+                }
+                return id;
+            } catch (e) { return 'd_unknown'; }
+        }
+        async function diagPulseSession() {
+            try {
+                if (!isManagerNow() || !_supabase) return;
+                const { data } = await _supabase.from('app_shared_config').select('config').eq('id', 1).maybeSingle();
+                const cfg = (data && data.config && typeof data.config === 'object') ? Object.assign({}, data.config) : {};
+                const sessions = (cfg.manager_sessions && typeof cfg.manager_sessions === 'object') ? Object.assign({}, cfg.manager_sessions) : {};
+                const id = diagDeviceId();
+                const ua = (navigator.userAgent || '').slice(0, 120);
+                sessions[id] = {
+                    user: (currentSessionUser && (currentSessionUser.username || currentSessionUser.full_name)) || 'modir',
+                    label: currentUserLabel || 'مدیر',
+                    ua: ua,
+                    at: new Date().toISOString(),
+                    build: (typeof APP_BUILD !== 'undefined' ? APP_BUILD : '')
+                };
+                // پاک کردن نشست‌های قدیمی‌تر از ۴۸ ساعت
+                const cutoff = Date.now() - 48 * 3600 * 1000;
+                Object.keys(sessions).forEach(function (k) {
+                    const ts = sessions[k] && sessions[k].at ? Date.parse(sessions[k].at) : 0;
+                    if (!ts || ts < cutoff) delete sessions[k];
+                });
+                cfg.manager_sessions = sessions;
+                await _supabase.from('app_shared_config').upsert({ id: 1, config: cfg, updated_at: new Date().toISOString() }, { onConflict: 'id' });
+            } catch (e) {}
+        }
+        async function diagRenderSessions() {
+            const el = document.getElementById('diagSessionsBox');
+            if (!el) return;
+            el.innerHTML = '⏳...';
+            try {
+                const { data } = await _supabase.from('app_shared_config').select('config').eq('id', 1).maybeSingle();
+                const sessions = (data && data.config && data.config.manager_sessions) || {};
+                const keys = Object.keys(sessions);
+                if (!keys.length) {
+                    el.innerHTML = '<div style="opacity:.8;">هنوز نشستی ثبت نشده. با ورود مدیر از هر گوشی اینجا دیده می‌شود.</div>';
+                    return;
+                }
+                keys.sort(function (a, b) {
+                    return Date.parse(sessions[b].at || 0) - Date.parse(sessions[a].at || 0);
+                });
+                const me = diagDeviceId();
+                el.innerHTML = keys.map(function (k) {
+                    const s = sessions[k] || {};
+                    const when = s.at ? (typeof getTehranFullDateTimeString === 'function' ? getTehranFullDateTimeString(new Date(s.at)) : s.at) : '—';
+                    const isMe = k === me;
+                    return '<div style="border:1px solid ' + (isMe ? 'rgba(52,211,153,.4)' : 'rgba(148,163,184,.25)') + ';border-radius:12px;padding:10px;margin-bottom:8px;background:' + (isMe ? 'rgba(16,185,129,.08)' : '#0b1220') + ';">' +
+                        '<div style="font-weight:800;">' + (isMe ? '📱 این گوشی · ' : '📱 ') + String(s.label || s.user || 'مدیر').replace(/</g, '') + '</div>' +
+                        '<div style="font-size:11px;opacity:.85;margin-top:4px;line-height:1.6;">آخرین فعالیت: ' + when + '<br>نسخه: ' + (s.build || '—') + '<br><span style="opacity:.7;word-break:break-all;">' + String(s.ua || '').replace(/</g, '') + '</span></div></div>';
+                }).join('');
+            } catch (e) {
+                el.innerHTML = diagBadge(false, String(e.message || e));
+            }
+        }
+
         async function openDiagnosticsTab() {
-            if (currentRole !== 'admin') {
-                showToast('⛔ این بخش فقط برای مدیر است.');
+            if (!isManagerNow()) {
+                showToast('⛔ این بخش فقط برای مدیر است. اگر اکانت مدیر هستید یک‌بار خارج و دوباره وارد شوید.');
                 return;
             }
+            try { if (currentRole !== 'admin') currentRole = 'admin'; } catch (e) {}
             switchTab('diagnostics');
+            try { await diagPulseSession(); } catch (e) {}
             await diagRefreshPanel();
+            try { await diagRenderSessions(); } catch (e) {}
         }
 
         async function diagRefreshPanel() {
@@ -15210,7 +15503,7 @@ function sbRenderAdminLists(cfg) {
         }
 
         async function publishGlobalAppVersion(ver) {
-            const version = String(ver || (typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v240'));
+            const version = String(ver || (typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v243'));
             try {
                 const { data } = await _supabase.from('app_shared_config').select('config').eq('id', 1).maybeSingle();
                 const cfg = (data && data.config && typeof data.config === 'object') ? Object.assign({}, data.config) : {};
@@ -15244,7 +15537,7 @@ function sbRenderAdminLists(cfg) {
             } catch (e) {}
             try {
                 const u = new URL(location.href.split('#')[0]);
-                u.searchParams.set('_v', String(APP_BUILD || 'v240'));
+                u.searchParams.set('_v', String(APP_BUILD || 'v243'));
                 u.searchParams.set('_t', String(Date.now()));
                 u.searchParams.set('nocache', '1');
                 location.replace(u.toString());
@@ -15306,7 +15599,7 @@ function sbRenderAdminLists(cfg) {
         }
         async function diagForceUpdate() {
             showToast('⏳ انتشار آپدیت اجباری برای همه گوشی‌ها...');
-            const ver = String(typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v240');
+            const ver = String(typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v243');
             let published = false;
             try {
                 published = await publishGlobalAppVersion(ver);
@@ -17036,23 +17329,40 @@ function sbRenderAdminLists(cfg) {
                 return;
             }
 
-            let { data: product } = await _supabase
-                .from('products')
-                .select('*')
-                .ilike('name', inputVal)
-                .maybeSingle();
+            // اول از لیست محلی (کش فروشنده) — سریع و بدون وابستگی به RLS
+            try { await ensureProductsLoaded(false); } catch (e) {}
+            let product = findProductInList(inputVal, cachedProductsList);
 
             if (!product) {
-                const { data: byCode } = await _supabase
-                    .from('products')
-                    .select('*')
-                    .eq('code', inputVal)
-                    .maybeSingle();
-                product = byCode;
+                try {
+                    // تطبیق دقیق نام
+                    let r1 = await _supabase.from('products').select('*').eq('name', inputVal).limit(3);
+                    if (r1 && r1.data && r1.data.length === 1) product = r1.data[0];
+                    else if (r1 && r1.data && r1.data.length > 1) product = findProductInList(inputVal, r1.data) || r1.data[0];
+                } catch (e) {}
+            }
+            if (!product) {
+                try {
+                    const r2 = await _supabase.from('products').select('*').eq('code', inputVal).maybeSingle();
+                    product = r2 && r2.data;
+                } catch (e) {}
+            }
+            if (!product) {
+                try {
+                    // ilike با وایلدکارد برای فاصله/حروف نزدیک
+                    const r3 = await _supabase.from('products').select('*').ilike('name', '%' + inputVal + '%').limit(8);
+                    if (r3 && r3.data && r3.data.length) {
+                        product = findProductInList(inputVal, r3.data) || (r3.data.length === 1 ? r3.data[0] : null);
+                    }
+                } catch (e) {}
+            }
+            if (!product) {
+                try { await ensureProductsLoaded(true); product = findProductInList(inputVal, cachedProductsList); } catch (e) {}
             }
 
             if (!product) {
-                showToast('❌ کالایی با این اسم در انبار یافت نشد!');
+                showToast('❌ کالایی با این اسم در انبار یافت نشد! از لیست پیشنهادی انتخاب کنید یا یک‌بار صفحه را رفرش کنید.');
+                try { loadProductDatalist(); } catch (e) {}
                 return;
             }
 
@@ -21981,7 +22291,7 @@ function sbRenderAdminLists(cfg) {
                 cachedProductsList = sortProductsAlpha(_pd || []);
             }
 
-            const product = cachedProductsList.find(p => p.name === itemName || p.code === itemName);
+            const product = findProductInList(itemName, cachedProductsList);
             if (product) {
                 const originalPrice = Math.round(weight * (product.sell_price || 0));
                 const discountedPrice = Math.round(originalPrice * TAKEOUT_DISCOUNT);
@@ -22023,7 +22333,11 @@ function sbRenderAdminLists(cfg) {
                 cachedProductsList = sortProductsAlpha(_pd || []);
             }
 
-            const product = cachedProductsList.find(p => p.name === itemName || p.code === itemName);
+            let product = findProductInList(itemName, cachedProductsList);
+            if (!product) {
+                try { await ensureProductsLoaded(true); } catch (e) {}
+                product = findProductInList(itemName, cachedProductsList);
+            }
             if (!product) {
                 return showToast('❌ کالایی با این اسم در انبار یافت نشد! لطفاً از لیست پیشنهادی انتخاب کنید.');
             }

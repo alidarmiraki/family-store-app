@@ -1,5 +1,5 @@
 // Service Worker — آپدیت اجباری نسخه + شبکه اول برای HTML
-const V = 'v240';
+const V = 'v243';
 const SHELL = 'shell-' + V;
 const LIBS = 'libs-v1';
 const CDN = /(^|\.)(cdn\.jsdelivr\.net|unpkg\.com|cdnjs\.cloudflare\.com|fonts\.googleapis\.com|fonts\.gstatic\.com)$/;
