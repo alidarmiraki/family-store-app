@@ -5,7 +5,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="app-build" content="v252">
+    <meta name="app-build" content="v253">
     <!-- جلوگیری از کش‌شدن خود index.html توسط مرورگر/گوشی، تا نسخه‌ی جدید همیشه فوراً لود بشه
          (sw.js شما کش نمی‌کنه، ولی مرورگر یا هاست ممکنه خودش HTML رو کش کنه) -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -217,7 +217,7 @@
         html.catalog-guest-mode #payPublicView { display: block !important; visibility: visible !important; position: relative; z-index: 20; pointer-events: auto !important; }
         html.catalog-guest-mode body { background: #f8fafc !important; margin: 0; color: #0f172a !important; }
 
-        /* === کاتالوگ حرفه‌ای v252 === */
+        /* === کاتالوگ حرفه‌ای v253 === */
         html.catalog-guest-mode body {
             background: #f1f5f9 !important;
             color: #0f172a !important;
@@ -503,7 +503,7 @@
         .cat-stat-row span{font-size:10px;opacity:1;color:#64748b}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v252 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v253 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json" id="appManifestLink">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -4489,7 +4489,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v252 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v253 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -4669,7 +4669,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             }
         })();
 
-        const APP_BUILD = 'v252';
+        const APP_BUILD = 'v253';
         try { const __bt=document.getElementById('buildTag'); if(__bt) __bt.textContent = APP_BUILD + ' - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )'; } catch(e){}
         // ثبت Service Worker پایدار — همیشه /sw.js بدون ?v= تا آپدیت شکست نخورد
         if ('serviceWorker' in navigator) {
@@ -4681,7 +4681,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
                 } catch (e) {}
                 try {
                     const u = new URL(location.href);
-                    u.searchParams.set('_v', String(APP_BUILD || 'v252'));
+                    u.searchParams.set('_v', String(APP_BUILD || 'v253'));
                     location.replace(u.pathname + u.search + u.hash);
                 } catch (e) {
                     try { location.reload(); } catch (e2) {}
@@ -15875,7 +15875,7 @@ function sbRenderAdminLists(cfg) {
         }
 
         async function publishGlobalAppVersion(ver) {
-            const version = String(ver || (typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v252'));
+            const version = String(ver || (typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v253'));
             try {
                 const { data } = await _supabase.from('app_shared_config').select('config').eq('id', 1).maybeSingle();
                 const cfg = (data && data.config && typeof data.config === 'object') ? Object.assign({}, data.config) : {};
@@ -15909,7 +15909,7 @@ function sbRenderAdminLists(cfg) {
             } catch (e) {}
             try {
                 const u = new URL(location.href.split('#')[0]);
-                u.searchParams.set('_v', String(APP_BUILD || 'v252'));
+                u.searchParams.set('_v', String(APP_BUILD || 'v253'));
                 u.searchParams.set('_t', String(Date.now()));
                 u.searchParams.set('nocache', '1');
                 location.replace(u.toString());
@@ -15971,7 +15971,7 @@ function sbRenderAdminLists(cfg) {
         }
         async function diagForceUpdate() {
             showToast('⏳ انتشار آپدیت اجباری برای همه گوشی‌ها...');
-            const ver = String(typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v252');
+            const ver = String(typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v253');
             let published = false;
             try {
                 published = await publishGlobalAppVersion(ver);
@@ -29362,64 +29362,109 @@ notify pgrst, 'reload schema';`;
 
     function catEnsureSupportFab() {
         try {
-            document.documentElement.classList.add('catalog-guest-mode');
-            let fab = document.getElementById('catSupportFab');
-            if (!fab) {
-                fab = document.createElement('button');
-                fab.id = 'catSupportFab';
-                fab.type = 'button';
-                fab.title = 'چت پشتیبانی';
-                fab.setAttribute('aria-label', 'پشتیبانی');
-                fab.textContent = '💬';
-                fab.onclick = function (ev) {
-                    try { if (ev) { ev.preventDefault(); ev.stopPropagation(); }
-                        if (typeof window.catOpenSupportChat === 'function') window.catOpenSupportChat();
-                        else if (typeof catOpenSupportChat === 'function') catOpenSupportChat();
-                        else alert('چت پشتیبانی بارگذاری نشده. صفحه را رفرش کنید.');
-                    } catch (e) { try { alert('خطا: ' + (e && e.message ? e.message : e)); } catch (e2) {} }
-                };
-                (document.body || document.documentElement).appendChild(fab);
-            }
-            fab.style.cssText = 'position:fixed!important;bottom:92px!important;left:12px!important;z-index:2147483000!important;width:58px!important;height:58px!important;border-radius:50%!important;border:0!important;background:linear-gradient(145deg,#25d366,#128c7e)!important;color:#fff!important;font-size:26px!important;line-height:58px!important;text-align:center!important;box-shadow:0 12px 28px rgba(18,140,126,.5)!important;display:block!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;cursor:pointer!important;padding:0!important;margin:0!important;';
+            catSupportWidgetEnsure();
         } catch (e) { console.warn('fab', e); }
     }
-    async function catBumpVisits() {
+
+    function catSupportWidgetEnsure() {
+        if (document.getElementById('catSupFab')) {
+            catSupportFabShow(true);
+            return;
+        }
+        var style = document.getElementById('catSupWidgetCss');
+        if (!style) {
+            style = document.createElement('style');
+            style.id = 'catSupWidgetCss';
+            style.textContent = [
+                '#catSupFab{position:fixed;bottom:92px;left:14px;z-index:2147483000;width:60px;height:60px;border-radius:50%;border:0;cursor:pointer;',
+                'background:linear-gradient(145deg,#22c55e,#0ea5e9);color:#fff;font-size:26px;box-shadow:0 12px 32px rgba(14,165,233,.4);',
+                'display:flex;align-items:center;justify-content:center;padding:0;line-height:1;}',
+                '#catSupFabBadge{position:absolute;top:-2px;right:-2px;min-width:20px;height:20px;border-radius:10px;background:#ef4444;color:#fff;',
+                'font-size:11px;font-weight:900;display:none;align-items:center;justify-content:center;padding:0 5px;border:2px solid #fff;}',
+                '#catSupWin{position:fixed;bottom:18px;left:12px;width:min(380px,calc(100vw - 24px));height:min(520px,72vh);z-index:2147483600;',
+                'background:#fff;color:#0f172a;border-radius:18px;box-shadow:0 20px 50px rgba(15,23,42,.28);display:none;flex-direction:column;',
+                'overflow:hidden;direction:rtl;font:13px/1.7 sans-serif;border:1px solid #e2e8f0;}',
+                '#catSupWin.open{display:flex;}',
+                '#catSupWin.mini{height:52px;width:min(280px,calc(100vw - 24px));}',
+                '#catSupWin.mini #catSupWinBody,#catSupWin.mini #catSupWinFoot{display:none!important;}',
+                '#catSupToast{position:fixed;bottom:170px;left:14px;z-index:2147483601;background:#0f172a;color:#fff;padding:10px 14px;border-radius:14px;',
+                'font-size:12px;font-weight:700;box-shadow:0 10px 28px rgba(0,0,0,.25);display:none;max-width:260px;cursor:pointer;direction:rtl;}',
+                '#catSupWinHead{background:linear-gradient(100deg,#0ea5e9,#10b981);color:#fff;padding:12px 12px;display:flex;align-items:center;gap:8px;}',
+                '#catSupWinHead button{border:0;background:rgba(255,255,255,.2);color:#fff;border-radius:10px;padding:6px 9px;cursor:pointer;font:inherit;font-weight:800;}',
+                '#catSupWinBody{flex:1;overflow:auto;padding:12px;background:#f8fafc;}',
+                '#catSupWinFoot{padding:10px;border-top:1px solid #e2e8f0;background:#fff;}',
+                '.catSupBubble{max-width:88%;margin:0 0 8px;padding:10px 12px;border-radius:14px;border:1px solid #e2e8f0;}',
+                '.catSupBubble.me{margin-right:auto;margin-left:16px;background:linear-gradient(100deg,#d1fae5,#a7f3d0);}',
+                '.catSupBubble.them{margin-left:auto;margin-right:16px;background:#fff;}'
+            ].join('');
+            document.head.appendChild(style);
+        }
+        var fab = document.createElement('button');
+        fab.id = 'catSupFab';
+        fab.type = 'button';
+        fab.innerHTML = '💬<span id="catSupFabBadge">0</span>';
+        fab.title = 'پشتیبانی آنلاین';
+        fab.onclick = function (e) {
+            try { e.preventDefault(); e.stopPropagation(); } catch (err) {}
+            catSupportOpenWindow();
+        };
+        document.body.appendChild(fab);
+
+        var win = document.createElement('div');
+        win.id = 'catSupWin';
+        win.innerHTML =
+            '<div id="catSupWinHead">' +
+            '<div style="flex:1;font-weight:900;font-size:14px;">💬 پشتیبانی تازه مارکت</div>' +
+            '<button type="button" id="catSupMiniBtn" title="کوچک">—</button>' +
+            '<button type="button" id="catSupEndBtn" title="اتمام چت">اتمام</button>' +
+            '<button type="button" id="catSupCloseBtn" title="بستن">✕</button>' +
+            '</div>' +
+            '<div id="catSupWinBody"><div style="text-align:center;color:#64748b;padding:20px;">سلام 👋 پیام خود را بنویسید</div></div>' +
+            '<div id="catSupWinFoot">' +
+            '<div id="catSupAgentBar" style="display:none;margin-bottom:8px;"></div>' +
+            '<div id="catSupCustBar" style="display:flex;gap:6px;margin-bottom:8px;">' +
+            '<input id="catSupName" placeholder="نام" style="flex:1;padding:9px;border-radius:10px;border:1px solid #cbd5e1;color:#0f172a;background:#fff;">' +
+            '<input id="catSupPhone" placeholder="موبایل" style="flex:1;padding:9px;border-radius:10px;border:1px solid #cbd5e1;color:#0f172a;background:#fff;">' +
+            '</div>' +
+            '<div style="display:flex;gap:6px;">' +
+            '<input id="catSupInput" placeholder="پیام شما..." style="flex:1;padding:11px;border-radius:12px;border:1px solid #cbd5e1;color:#0f172a;background:#fff;">' +
+            '<button type="button" id="catSupSend" style="padding:11px 14px;border:0;border-radius:12px;background:linear-gradient(100deg,#10b981,#059669);color:#fff;font:inherit;font-weight:900;cursor:pointer;">ارسال</button>' +
+            '</div>' +
+            '<div style="margin-top:6px;text-align:center;"><button type="button" id="catSupLoginLink" style="border:0;background:none;color:#0284c7;font:inherit;font-size:11px;cursor:pointer;text-decoration:underline;">ورود پشتیبان / فروشنده</button></div>' +
+            '</div>';
+        document.body.appendChild(win);
+
+        var toast = document.createElement('div');
+        toast.id = 'catSupToast';
+        toast.textContent = '💬 پیام جدید از پشتیبانی';
+        toast.onclick = function () { catSupportOpenWindow(); catSupportHideToast(); };
+        document.body.appendChild(toast);
+
+        document.getElementById('catSupCloseBtn').onclick = function (e) { e.stopPropagation(); catSupportCloseWindow(false); };
+        document.getElementById('catSupMiniBtn').onclick = function (e) { e.stopPropagation(); catSupportMinimize(); };
+        document.getElementById('catSupEndBtn').onclick = function (e) { e.stopPropagation(); catSupportEndChat(); };
+        document.getElementById('catSupSend').onclick = function (e) { e.stopPropagation(); catSupportDoSend(); };
+        document.getElementById('catSupLoginLink').onclick = function (e) { e.stopPropagation(); catOpenSupportLogin(); };
+        document.getElementById('catSupInput').onkeydown = function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); catSupportDoSend(); }
+        };
         try {
-            if (!_supabase) return;
-            const day = (typeof getTehranISODate === 'function') ? getTehranISODate(new Date()) : new Date().toISOString().slice(0, 10);
-            const { data } = await _supabase.from('app_shared_config').select('config').eq('id', 1).maybeSingle();
-            const cfg = (data && data.config && typeof data.config === 'object') ? Object.assign({}, data.config) : {};
-            const visits = (cfg.catalog_visits && typeof cfg.catalog_visits === 'object') ? Object.assign({}, cfg.catalog_visits) : {};
-            visits[day] = (Number(visits[day]) || 0) + 1;
-            visits.total = (Number(visits.total) || 0) + 1;
-            cfg.catalog_visits = visits;
-            window.__catVisits = visits;
-            await _supabase.from('app_shared_config').upsert({ id: 1, config: cfg, updated_at: new Date().toISOString() }, { onConflict: 'id' });
+            var pr = JSON.parse(localStorage.getItem('cat_customer_profile_v1') || '{}') || {};
+            if (pr.name) document.getElementById('catSupName').value = pr.name;
+            if (pr.phone) document.getElementById('catSupPhone').value = pr.phone;
         } catch (e) {}
+
+        catSupportFabShow(true);
+        catSupportStartWatch();
     }
-    function catVisitsLabel() {
-        try {
-            const v = window.__catVisits || {};
-            const day = (typeof getTehranISODate === 'function') ? getTehranISODate(new Date()) : '';
-            const today = day ? (Number(v[day]) || 0) : 0;
-            const total = Number(v.total) || 0;
-            if (!total) return '';
-            return '<div style="font-size:11px;color:#64748b;margin-top:6px;">👁 بازدید امروز: ' + today.toLocaleString('fa-IR') + ' · کل: ' + total.toLocaleString('fa-IR') + '</div>';
-        } catch (e) { return ''; }
+
+    function catSupportFabShow(on) {
+        var fab = document.getElementById('catSupFab');
+        if (!fab) return;
+        var guest = document.documentElement.classList.contains('catalog-guest-mode');
+        fab.style.display = (on && guest) ? 'flex' : 'none';
     }
-    function catCustomerKey() {
-        try {
-            let k = localStorage.getItem('cat_customer_key_v1');
-            if (!k) {
-                k = 'C' + Math.random().toString(36).slice(2, 10).toUpperCase() + Date.now().toString(36).toUpperCase();
-                localStorage.setItem('cat_customer_key_v1', k);
-            }
-            return k;
-        } catch (e) { return 'C_GUEST'; }
-    }
-    function catGetCustomerProfile() {
-        try { return JSON.parse(localStorage.getItem('cat_customer_profile_v1') || '{}') || {}; } catch (e) { return {}; }
-    }
+
     function catSupportAgent() {
         try { return JSON.parse(sessionStorage.getItem('cat_support_agent_v1') || 'null'); } catch (e) { return null; }
     }
@@ -29429,20 +29474,189 @@ notify pgrst, 'reload schema';`;
             else sessionStorage.removeItem('cat_support_agent_v1');
         } catch (e) {}
     }
-    function catEscHtml(s) {
-        return String(s || '').replace(/[&<>"']/g, function (c) {
-            return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
-        });
+    function catCustomerKey() {
+        try {
+            var k = localStorage.getItem('cat_customer_key_v1');
+            if (!k) {
+                k = 'C' + Math.random().toString(36).slice(2, 10).toUpperCase() + Date.now().toString(36).toUpperCase();
+                localStorage.setItem('cat_customer_key_v1', k);
+            }
+            return k;
+        } catch (e) { return 'CGUEST'; }
     }
+    function catSupportThreadIdForCustomer() {
+        try {
+            var ended = localStorage.getItem('cat_sup_ended_v1');
+            if (ended === '1') {
+                // چت جدید بعد از اتمام
+                localStorage.removeItem('cat_sup_ended_v1');
+                var nk = 'C' + Math.random().toString(36).slice(2, 10).toUpperCase();
+                localStorage.setItem('cat_customer_key_v1', nk);
+            }
+        } catch (e) {}
+        return 'T-' + catCustomerKey();
+    }
+    function catEscHtml(s) {
+        return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function catOpenSupportChat() { catSupportOpenWindow(); }
+    try { window.catOpenSupportChat = catOpenSupportChat; } catch (e) {}
+
+    function catSupportOpenWindow() {
+        try {
+            catSupportWidgetEnsure();
+            var win = document.getElementById('catSupWin');
+            var fab = document.getElementById('catSupFab');
+            if (!win) return;
+            win.classList.add('open');
+            win.classList.remove('mini');
+            if (fab) fab.style.display = 'none';
+            catSupportHideToast();
+            catSupportSetUnread(0);
+            var agent = catSupportAgent();
+            var isAgent = !!(agent && agent.username);
+            var head = document.querySelector('#catSupWinHead div');
+            if (head) head.textContent = isAgent ? ('💬 پشتیبان · ' + (agent.display || agent.username)) : '💬 پشتیبانی تازه مارکت';
+            document.getElementById('catSupCustBar').style.display = isAgent ? 'none' : 'flex';
+            document.getElementById('catSupAgentBar').style.display = isAgent ? 'block' : 'none';
+            document.getElementById('catSupLoginLink').style.display = isAgent ? 'none' : 'inline';
+            if (isAgent) {
+                document.getElementById('catSupAgentBar').innerHTML =
+                    '<div style="display:flex;gap:6px;"><input id="catSupThreadPick" placeholder="کد گفتگو مشتری" style="flex:1;padding:9px;border-radius:10px;border:1px solid #cbd5e1;"><button type="button" id="catSupLoadThread" style="padding:9px 12px;border:0;border-radius:10px;background:#0ea5e9;color:#fff;font:inherit;font-weight:800;cursor:pointer;">باز</button></div>' +
+                    '<div id="catSupAgentList" style="max-height:90px;overflow:auto;margin-top:6px;"></div>' +
+                    '<button type="button" id="catSupLogout" style="margin-top:6px;border:0;background:#fee2e2;color:#b91c1c;border-radius:10px;padding:6px 10px;font:inherit;cursor:pointer;">خروج از حالت پشتیبان</button>';
+                var lb = document.getElementById('catSupLoadThread');
+                if (lb) lb.onclick = function () {
+                    window.__catSupThread = String((document.getElementById('catSupThreadPick') || {}).value || '').trim();
+                    catSupportRenderMessages();
+                };
+                var lo = document.getElementById('catSupLogout');
+                if (lo) lo.onclick = function () { catSetSupportAgent(null); catSupportOpenWindow(); };
+                catSupportLoadAgentInbox();
+            } else {
+                window.__catSupThread = catSupportThreadIdForCustomer();
+            }
+            catSupportRenderMessages();
+            setTimeout(function () {
+                var inp = document.getElementById('catSupInput');
+                if (inp) inp.focus();
+            }, 200);
+        } catch (err) {
+            try { alert('خطا در باز شدن پشتیبانی: ' + (err && err.message ? err.message : err)); } catch (e) {}
+        }
+    }
+
+    function catSupportCloseWindow(showFab) {
+        var win = document.getElementById('catSupWin');
+        if (win) { win.classList.remove('open'); win.classList.remove('mini'); }
+        if (showFab !== false) catSupportFabShow(true);
+    }
+
+    function catSupportMinimize() {
+        var win = document.getElementById('catSupWin');
+        if (!win) return;
+        if (win.classList.contains('mini')) {
+            win.classList.remove('mini');
+        } else {
+            win.classList.add('mini');
+        }
+    }
+
+    function catSupportEndChat() {
+        if (!confirm('گفتگو تمام شود؟')) return;
+        try {
+            var agent = catSupportAgent();
+            var tid = window.__catSupThread;
+            if (tid && _supabase) {
+                _supabase.from('catalog_support_chat').insert([{
+                    thread_id: tid,
+                    body: agent ? 'پشتیبان گفتگو را به پایان رساند.' : 'مشتری گفتگو را به پایان رساند.',
+                    from_role: 'system',
+                    from_name: 'سیستم',
+                    created_at: new Date().toISOString()
+                }]).then(function () {});
+            }
+            if (!agent) localStorage.setItem('cat_sup_ended_v1', '1');
+        } catch (e) {}
+        window.__catSupThread = '';
+        catSupportCloseWindow(true);
+        try { if (typeof showToast === 'function') showToast('گفتگو پایان یافت'); } catch (e) {}
+    }
+
+    function catSupportSetUnread(n) {
+        window.__catSupUnread = Math.max(0, n || 0);
+        var b = document.getElementById('catSupFabBadge');
+        if (!b) return;
+        if (window.__catSupUnread > 0) {
+            b.style.display = 'flex';
+            b.textContent = String(window.__catSupUnread > 9 ? '9+' : window.__catSupUnread);
+        } else {
+            b.style.display = 'none';
+        }
+    }
+
+    function catSupportShowToast(msg) {
+        var t = document.getElementById('catSupToast');
+        if (!t) return;
+        t.textContent = msg || '💬 پیام جدید از پشتیبانی — برای خواندن ضربه بزن';
+        t.style.display = 'block';
+        clearTimeout(window.__catSupToastTimer);
+        window.__catSupToastTimer = setTimeout(function () { catSupportHideToast(); }, 8000);
+    }
+    function catSupportHideToast() {
+        var t = document.getElementById('catSupToast');
+        if (t) t.style.display = 'none';
+    }
+
+    function catSupportStartWatch() {
+        if (window.__catSupWatch) return;
+        window.__catSupWatch = setInterval(function () {
+            try { catSupportWatchNew(); } catch (e) {}
+        }, 4000);
+    }
+
+    async function catSupportWatchNew() {
+        if (!_supabase) return;
+        var agent = catSupportAgent();
+        var tid = window.__catSupThread || (!agent ? catSupportThreadIdForCustomer() : '');
+        if (!tid) return;
+        var { data } = await _supabase.from('catalog_support_chat').select('id,from_role,body,created_at').eq('thread_id', tid).order('created_at', { ascending: false }).limit(5);
+        if (!data || !data.length) return;
+        var lastId = data[0].id;
+        var prev = window.__catSupLastId;
+        if (prev && lastId !== prev) {
+            var win = document.getElementById('catSupWin');
+            var open = win && win.classList.contains('open') && !win.classList.contains('mini');
+            var incoming = data.filter(function (m) {
+                if (agent) return m.from_role === 'customer';
+                return m.from_role === 'seller' || m.from_role === 'admin';
+            });
+            if (incoming.length && data[0].id === incoming[0].id) {
+                if (!open) {
+                    catSupportSetUnread((window.__catSupUnread || 0) + 1);
+                    catSupportShowToast(agent ? '💬 پیام جدید از مشتری' : '💬 جواب پشتیبانی آمد — ضربه بزن');
+                    catSupportFabShow(true);
+                } else {
+                    catSupportRenderMessages(true);
+                }
+            }
+        }
+        window.__catSupLastId = lastId;
+        var win2 = document.getElementById('catSupWin');
+        if (win2 && win2.classList.contains('open')) catSupportRenderMessages(true);
+    }
+
     async function catSupportFetchThread(threadId) {
         if (!_supabase) return [];
-        const { data, error } = await _supabase.from('catalog_support_chat').select('*').eq('thread_id', threadId).order('created_at', { ascending: true }).limit(200);
+        var { data, error } = await _supabase.from('catalog_support_chat').select('*').eq('thread_id', threadId).order('created_at', { ascending: true }).limit(200);
         if (error) throw error;
         return data || [];
     }
+
     async function catSupportSend(threadId, body, fromRole, fromName, customerKey, customerName) {
         if (!_supabase) throw new Error('اتصال برقرار نیست');
-        const row = {
+        var row = {
             thread_id: threadId,
             body: String(body || '').slice(0, 2000),
             from_role: fromRole,
@@ -29451,133 +29665,43 @@ notify pgrst, 'reload schema';`;
             customer_name: customerName || null,
             created_at: new Date().toISOString()
         };
-        const { error } = await _supabase.from('catalog_support_chat').insert([row]);
+        var { error } = await _supabase.from('catalog_support_chat').insert([row]);
         if (error) throw error;
         return row;
     }
-    function catSupportThreadIdForCustomer() {
-        return 'T-' + catCustomerKey();
-    }
-    function catOpenSupportChat() {
-        try {
-            var agent = null;
-            try { agent = JSON.parse(sessionStorage.getItem('cat_support_agent_v1') || 'null'); } catch (e) { agent = null; }
-            var isAgent = !!(agent && agent.username);
-            var wrap = document.getElementById('catSupportPanel');
-            if (!wrap) {
-                wrap = document.createElement('div');
-                wrap.id = 'catSupportPanel';
-                document.body.appendChild(wrap);
-            }
-            wrap.style.cssText = 'position:fixed;left:0;right:0;top:0;bottom:0;z-index:2147483647;background:rgba(15,23,42,.55);display:flex;align-items:flex-end;justify-content:center;padding:0;margin:0;';
-            var title = isAgent ? ('پشتیبانی · ' + (agent.display || agent.username)) : 'پشتیبانی تازه مارکت';
-            var esc = function (s) {
-                return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-            };
-            var profile = {};
-            try { profile = JSON.parse(localStorage.getItem('cat_customer_profile_v1') || '{}') || {}; } catch (e) {}
-            wrap.innerHTML =
-                '<div id="catSupSheet" style="width:100%;max-width:480px;max-height:90vh;background:#fff;color:#0f172a;border-radius:18px 18px 0 0;display:flex;flex-direction:column;box-shadow:0 -12px 40px rgba(0,0,0,.25);direction:rtl;font:13px/1.7 sans-serif;">' +
-                '<div style="padding:12px 14px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;gap:8px;">' +
-                '<div style="flex:1;font-weight:900;font-size:15px;color:#0f172a;">💬 ' + esc(title) + '</div>' +
-                (isAgent ? '<button type="button" id="catSupLogout" style="border:0;background:#fee2e2;color:#b91c1c;border-radius:10px;padding:6px 10px;font:inherit;cursor:pointer;">خروج</button>' : '') +
-                '<button type="button" id="catSupClose" style="border:0;background:#f1f5f9;color:#0f172a;border-radius:10px;padding:6px 10px;font:inherit;cursor:pointer;">بستن</button></div>' +
-                '<div id="catSupBody" style="flex:1;overflow:auto;padding:12px;background:#f8fafc;min-height:240px;color:#0f172a;">در حال آماده‌سازی...</div>' +
-                '<div style="padding:10px;border-top:1px solid #e2e8f0;background:#fff;">' +
-                (isAgent
-                    ? ('<div style="display:flex;gap:8px;margin-bottom:8px;"><input id="catSupThreadPick" placeholder="کد گفتگو" style="flex:1;padding:10px;border-radius:12px;border:1px solid #cbd5e1;color:#0f172a;background:#fff;"><button type="button" id="catSupLoadThread" style="padding:10px 12px;border:0;border-radius:12px;background:#0ea5e9;color:#fff;font:inherit;font-weight:800;cursor:pointer;">باز</button></div><div id="catSupAgentList" style="max-height:110px;overflow:auto;margin-bottom:8px;"></div>')
-                    : ('<div style="display:flex;gap:8px;margin-bottom:8px;"><input id="catSupName" placeholder="نام شما" value="' + esc(profile.name || '') + '" style="flex:1;padding:10px;border-radius:12px;border:1px solid #cbd5e1;color:#0f172a;background:#fff;"><input id="catSupPhone" placeholder="موبایل" value="' + esc(profile.phone || '') + '" style="flex:1;padding:10px;border-radius:12px;border:1px solid #cbd5e1;color:#0f172a;background:#fff;"></div>')) +
-                '<div style="display:flex;gap:8px;"><input id="catSupInput" placeholder="پیام..." style="flex:1;padding:12px;border-radius:12px;border:1px solid #cbd5e1;color:#0f172a;background:#fff;"><button type="button" id="catSupSend" style="padding:12px 16px;border:0;border-radius:12px;background:linear-gradient(100deg,#10b981,#059669);color:#fff;font:inherit;font-weight:800;cursor:pointer;">ارسال</button></div>' +
-                (!isAgent ? '<div style="margin-top:8px;text-align:center;"><button type="button" id="catSupAgentLoginBtn" style="border:0;background:transparent;color:#0284c7;font:inherit;font-size:12px;cursor:pointer;text-decoration:underline;">ورود پشتیبان / فروشنده</button></div>' : '') +
-                '</div></div>';
-
-            var close = function () { wrap.style.display = 'none'; try { if (window.__catSupPoll) clearInterval(window.__catSupPoll); } catch (e) {} };
-            wrap.onclick = function (e) { if (e.target === wrap) close(); };
-            var btnClose = document.getElementById('catSupClose');
-            if (btnClose) btnClose.onclick = function (e) { e.stopPropagation(); close(); };
-            var btnLogout = document.getElementById('catSupLogout');
-            if (btnLogout) btnLogout.onclick = function (e) {
-                e.stopPropagation();
-                try { sessionStorage.removeItem('cat_support_agent_v1'); } catch (e2) {}
-                catOpenSupportChat();
-            };
-            var btnAgent = document.getElementById('catSupAgentLoginBtn');
-            if (btnAgent) btnAgent.onclick = function (e) { e.stopPropagation(); try { catOpenSupportLogin(); } catch (e2) { alert(e2.message || e2); } };
-
-            if (isAgent) {
-                window.__catSupThread = window.__catSupThread || '';
-                var loadBtn = document.getElementById('catSupLoadThread');
-                if (loadBtn) loadBtn.onclick = function (e) {
-                    e.stopPropagation();
-                    window.__catSupThread = String((document.getElementById('catSupThreadPick') || {}).value || '').trim();
-                    try { catSupportRenderMessages(); } catch (e2) {}
-                };
-                try { catSupportLoadAgentInbox(); } catch (e2) {}
-            } else {
-                try {
-                    var key = localStorage.getItem('cat_customer_key_v1');
-                    if (!key) { key = 'C' + Math.random().toString(36).slice(2, 10).toUpperCase(); localStorage.setItem('cat_customer_key_v1', key); }
-                    window.__catSupThread = 'T-' + key;
-                } catch (e2) { window.__catSupThread = 'T-GUEST'; }
-            }
-
-            var sendBtn = document.getElementById('catSupSend');
-            if (sendBtn) sendBtn.onclick = function (e) { e.stopPropagation(); try { catSupportDoSend(); } catch (e2) { alert(e2.message || e2); } };
-            var inp = document.getElementById('catSupInput');
-            if (inp) inp.onkeydown = function (e) { if (e.key === 'Enter') { e.preventDefault(); try { catSupportDoSend(); } catch (e2) {} } };
-
-            try { catSupportRenderMessages(); } catch (e2) {
-                var body = document.getElementById('catSupBody');
-                if (body) body.innerHTML = '<div style="padding:16px;color:#0f172a;text-align:center;line-height:1.8;">سلام 👋<br>پیامت را بنویس و ارسال کن.<br><span style="font-size:11px;color:#64748b;">کد گفتگو: ' + esc(window.__catSupThread || '') + '</span></div>';
-            }
-            try { if (window.__catSupPoll) clearInterval(window.__catSupPoll); } catch (e) {}
-            window.__catSupPoll = setInterval(function () {
-                if (wrap.style.display === 'none') return;
-                try { catSupportRenderMessages(true); } catch (e) {}
-                if (isAgent) try { catSupportLoadAgentInbox(true); } catch (e) {}
-            }, 3000);
-        } catch (err) {
-            try { alert('خطا در پشتیبانی: ' + (err && err.message ? err.message : err)); } catch (e2) {}
-            console.error(err);
-        }
-    }
-    try { window.catOpenSupportChat = catOpenSupportChat; } catch (e) {}
-
-
 
     async function catSupportDoSend() {
         if (window.__catSupSending) return;
-        const inp = document.getElementById('catSupInput');
-        const sendBtn = document.getElementById('catSupSend');
-        const text = (inp && inp.value || '').trim();
+        var inp = document.getElementById('catSupInput');
+        var sendBtn = document.getElementById('catSupSend');
+        var text = (inp && inp.value || '').trim();
         if (!text) return;
-        const agent = catSupportAgent();
+        var agent = catSupportAgent();
         window.__catSupSending = true;
         if (sendBtn) { sendBtn.disabled = true; sendBtn.textContent = '...'; }
         try {
             if (agent && agent.username) {
-                const tid = window.__catSupThread;
-                if (!tid) { alert('اول یک گفتگو را از لیست انتخاب کنید'); return; }
+                var tid = window.__catSupThread;
+                if (!tid) { alert('اول یک گفتگو را انتخاب کنید'); return; }
                 await catSupportSend(tid, text, 'seller', agent.display || agent.username, null, null);
             } else {
-                const nameEl = document.getElementById('catSupName');
-                const phoneEl = document.getElementById('catSupPhone');
-                const name = (nameEl && nameEl.value || '').trim() || 'مشتری';
-                const phone = (phoneEl && phoneEl.value || '').trim();
+                var nameEl = document.getElementById('catSupName');
+                var phoneEl = document.getElementById('catSupPhone');
+                var name = (nameEl && nameEl.value || '').trim() || 'مشتری';
+                var phone = (phoneEl && phoneEl.value || '').trim();
                 try { localStorage.setItem('cat_customer_profile_v1', JSON.stringify({ name: name, phone: phone })); } catch (e) {}
-                const tid = catSupportThreadIdForCustomer();
-                window.__catSupThread = tid;
-                await catSupportSend(tid, text, 'customer', name, catCustomerKey(), name + (phone ? ' · ' + phone : ''));
-                // اعلان به مدیر (یک‌بار در هر گفتگو)
+                var tid2 = catSupportThreadIdForCustomer();
+                window.__catSupThread = tid2;
+                await catSupportSend(tid2, text, 'customer', name, catCustomerKey(), name + (phone ? ' · ' + phone : ''));
                 try {
-                    const flag = 'cat_sup_ping_' + tid;
+                    var flag = 'cat_sup_ping_' + tid2;
                     if (!sessionStorage.getItem(flag) && _supabase) {
                         sessionStorage.setItem(flag, '1');
                         _supabase.from('messages').insert([{
                             sender: 'پشتیبانی کاتالوگ',
                             recipient: 'admin',
                             title: '💬 پیام جدید مشتری در کاتالوگ',
-                            body: name + (phone ? ' · ' + phone : '') + '\n' + text.slice(0, 200) + '\nکد گفتگو: ' + tid,
+                            body: name + (phone ? ' · ' + phone : '') + '\n' + text.slice(0, 200) + '\nکد گفتگو: ' + tid2,
                             created_at: new Date().toISOString()
                         }]).then(function () {});
                     }
@@ -29586,60 +29710,66 @@ notify pgrst, 'reload schema';`;
             if (inp) inp.value = '';
             await catSupportRenderMessages();
         } catch (e) {
-            alert('ارسال نشد. اگر اولین بار است SQL جدول catalog_support_chat را اجرا کنید.\n' + (e.message || e));
+            alert('ارسال نشد. جدول catalog_support_chat را در Supabase بسازید.\n' + (e.message || e));
         } finally {
             window.__catSupSending = false;
             if (sendBtn) { sendBtn.disabled = false; sendBtn.textContent = 'ارسال'; }
         }
     }
+
     async function catSupportRenderMessages(silent) {
-        const box = document.getElementById('catSupBody');
+        var box = document.getElementById('catSupWinBody');
         if (!box) return;
-        const tid = window.__catSupThread;
+        var tid = window.__catSupThread;
         if (!tid) {
             if (!silent) box.innerHTML = '<div style="text-align:center;color:#64748b;padding:20px;">گفتگویی انتخاب نشده است.</div>';
             return;
         }
         try {
-            const rows = await catSupportFetchThread(tid);
+            var rows = await catSupportFetchThread(tid);
             if (!rows.length) {
                 box.innerHTML = '<div style="text-align:center;color:#64748b;padding:16px;line-height:1.8;">سلام 👋<br>سوالت را بنویس؛ پشتیبان غرفه جواب می‌دهد.<br><span style="font-size:11px;">کد گفتگو: <b dir="ltr">' + catEscHtml(tid) + '</b></span></div>';
                 return;
             }
+            var agent = catSupportAgent();
             box.innerHTML = rows.map(function (m) {
-                const mine = (m.from_role === 'customer' && !catSupportAgent()) || (m.from_role === 'seller' && !!catSupportAgent());
-                const bg = mine ? 'linear-gradient(100deg,#d1fae5,#a7f3d0)' : '#fff';
-                const align = mine ? 'margin-right:auto;margin-left:12px;' : 'margin-left:auto;margin-right:12px;';
-                return '<div style="max-width:85%;' + align + 'margin-bottom:8px;padding:10px 12px;border-radius:14px;background:' + bg + ';border:1px solid #e2e8f0;">' +
+                var mine = (m.from_role === 'customer' && !agent) || (m.from_role === 'seller' && !!agent) || (m.from_role === 'admin' && !!agent);
+                var sys = m.from_role === 'system';
+                if (sys) {
+                    return '<div style="text-align:center;font-size:11px;color:#64748b;margin:10px 0;">— ' + catEscHtml(m.body) + ' —</div>';
+                }
+                return '<div class="catSupBubble ' + (mine ? 'me' : 'them') + '">' +
                     '<div style="font-size:10px;color:#64748b;margin-bottom:4px;">' + catEscHtml(m.from_name || m.from_role) +
                     (m.created_at ? ' · ' + catEscHtml(String(m.created_at).replace('T', ' ').slice(0, 16)) : '') + '</div>' +
-                    '<div style="white-space:pre-wrap;">' + catEscHtml(m.body) + '</div></div>';
+                    '<div style="white-space:pre-wrap;color:#0f172a;">' + catEscHtml(m.body) + '</div></div>';
             }).join('');
             box.scrollTop = box.scrollHeight;
+            if (rows.length) window.__catSupLastId = rows[rows.length - 1].id;
         } catch (e) {
-            if (!silent) box.innerHTML = '<div style="color:#b91c1c;padding:12px;">خطا در دریافت پیام‌ها. SQL پشتیبانی را اجرا کنید.<br><small>' + catEscHtml(e.message || e) + '</small></div>';
+            if (!silent) box.innerHTML = '<div style="color:#b91c1c;padding:12px;">خطا در دریافت پیام‌ها.<br><small>' + catEscHtml(e.message || e) + '</small></div>';
         }
     }
+
     async function catSupportLoadAgentInbox(silent) {
-        const el = document.getElementById('catSupAgentList');
+        var el = document.getElementById('catSupAgentList');
         if (!el || !_supabase) return;
         try {
-            const since = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
-            const { data, error } = await _supabase.from('catalog_support_chat').select('thread_id, customer_name, body, created_at, from_role').gte('created_at', since).order('created_at', { ascending: false }).limit(80);
+            var since = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
+            var { data, error } = await _supabase.from('catalog_support_chat').select('thread_id, customer_name, body, created_at, from_role').gte('created_at', since).order('created_at', { ascending: false }).limit(80);
             if (error) throw error;
-            const map = {};
+            var map = {};
             (data || []).forEach(function (r) { if (!map[r.thread_id]) map[r.thread_id] = r; });
-            const keys = Object.keys(map);
-            if (!keys.length) { el.innerHTML = '<div style="color:#64748b;">گفتگوی اخیری نیست.</div>'; return; }
+            var keys = Object.keys(map);
+            if (!keys.length) { el.innerHTML = '<div style="color:#64748b;font-size:11px;">گفتگوی اخیری نیست.</div>'; return; }
             el.innerHTML = keys.map(function (tid) {
-                const r = map[tid];
-                return '<button type="button" data-tid="' + catEscHtml(tid) + '" style="display:block;width:100%;text-align:right;margin-bottom:6px;padding:8px 10px;border-radius:10px;border:1px solid #e2e8f0;background:#fff;cursor:pointer;font:inherit;">' +
-                    '<b dir="ltr">' + catEscHtml(tid) + '</b><br><span style="font-size:11px;color:#475569;">' + catEscHtml(r.customer_name || r.from_role) + ' · ' + catEscHtml((r.body || '').slice(0, 40)) + '</span></button>';
+                var r = map[tid];
+                return '<button type="button" data-tid="' + catEscHtml(tid) + '" style="display:block;width:100%;text-align:right;margin-bottom:6px;padding:8px 10px;border-radius:10px;border:1px solid #e2e8f0;background:#fff;cursor:pointer;font:inherit;color:#0f172a;">' +
+                    '<b dir="ltr">' + catEscHtml(tid) + '</b><br><span style="font-size:11px;color:#475569;">' + catEscHtml(r.customer_name || r.from_role) + ' · ' + catEscHtml((r.body || '').slice(0, 36)) + '</span></button>';
             }).join('');
             el.querySelectorAll('[data-tid]').forEach(function (btn) {
                 btn.onclick = function () {
                     window.__catSupThread = btn.getAttribute('data-tid');
-                    const pick = document.getElementById('catSupThreadPick');
+                    var pick = document.getElementById('catSupThreadPick');
                     if (pick) pick.value = window.__catSupThread;
                     catSupportRenderMessages();
                 };
@@ -29648,28 +29778,31 @@ notify pgrst, 'reload schema';`;
             if (!silent) el.innerHTML = '<div style="color:#b91c1c;font-size:11px;">' + catEscHtml(e.message || e) + '</div>';
         }
     }
+
     function catOpenSupportLogin() {
-        const u = prompt('نام کاربری پشتیبان / فروشنده:');
+        var u = prompt('نام کاربری پشتیبان / فروشنده:');
         if (!u) return;
-        const pw = prompt('رمز عبور:');
+        var pw = prompt('رمز عبور:');
         if (pw == null) return;
         catSupportLogin(u.trim(), String(pw));
     }
+
     async function catSupportLogin(username, password) {
         try {
             if (!_supabase) throw new Error('آفلاین');
-            let agent = null;
+            var agent = null;
             try {
-                const { data } = await _supabase.from('app_shared_config').select('config').eq('id', 1).maybeSingle();
-                const agents = (data && data.config && data.config.catalog_support_agents) || [];
-                const hit = (agents || []).find(function (a) {
+                var { data } = await _supabase.from('app_shared_config').select('config').eq('id', 1).maybeSingle();
+                var agents = (data && data.config && data.config.catalog_support_agents) || [];
+                var hit = (agents || []).find(function (a) {
                     return String(a.username || '').toLowerCase() === username.toLowerCase() && String(a.password || '') === password;
                 });
                 if (hit) agent = { username: hit.username, display: hit.display || hit.username, role: 'support' };
             } catch (e) {}
             if (!agent) {
-                const { data, error } = await _supabase.from('users').select('username, password, full_name, role').eq('username', username).maybeSingle();
-                if (error) throw error;
+                var res = await _supabase.from('users').select('username, password, full_name, role').eq('username', username).maybeSingle();
+                if (res.error) throw res.error;
+                var data = res.data;
                 if (!data || String(data.password) !== String(password)) throw new Error('نام کاربری یا رمز اشتباه است');
                 if (!(data.role === 'admin' || data.role === 'morning_seller' || data.role === 'evening_seller' || /مدیر|modir/i.test(data.username || ''))) {
                     throw new Error('این کاربر مجاز به پشتیبانی نیست');
@@ -29678,11 +29811,12 @@ notify pgrst, 'reload schema';`;
             }
             catSetSupportAgent(agent);
             alert('✅ ورود پشتیبان: ' + (agent.display || agent.username));
-            catOpenSupportChat();
+            catSupportOpenWindow();
         } catch (e) {
             alert('❌ ' + (e.message || e));
         }
     }
+
 
 async function openCatalogPublic() {
         // قفل کوتاه — اگر قبلاً گیر کرده بود، بعد از ۳ ثانیه آزاد کن
