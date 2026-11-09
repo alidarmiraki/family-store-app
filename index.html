@@ -5,7 +5,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="app-build" content="v250">
+    <meta name="app-build" content="v251">
     <!-- جلوگیری از کش‌شدن خود index.html توسط مرورگر/گوشی، تا نسخه‌ی جدید همیشه فوراً لود بشه
          (sw.js شما کش نمی‌کنه، ولی مرورگر یا هاست ممکنه خودش HTML رو کش کنه) -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -217,7 +217,7 @@
         html.catalog-guest-mode #payPublicView { display: block !important; visibility: visible !important; position: relative; z-index: 20; pointer-events: auto !important; }
         html.catalog-guest-mode body { background: #f8fafc !important; margin: 0; color: #0f172a !important; }
 
-        /* === کاتالوگ حرفه‌ای v250 === */
+        /* === کاتالوگ حرفه‌ای v251 === */
         html.catalog-guest-mode body {
             background: #f1f5f9 !important;
             color: #0f172a !important;
@@ -503,7 +503,7 @@
         .cat-stat-row span{font-size:10px;opacity:.8}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v250 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v251 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json" id="appManifestLink">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -4489,7 +4489,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v250 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v251 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -4669,7 +4669,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             }
         })();
 
-        const APP_BUILD = 'v250';
+        const APP_BUILD = 'v251';
         try { const __bt=document.getElementById('buildTag'); if(__bt) __bt.textContent = APP_BUILD + ' - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )'; } catch(e){}
         // ثبت Service Worker پایدار — همیشه /sw.js بدون ?v= تا آپدیت شکست نخورد
         if ('serviceWorker' in navigator) {
@@ -4681,7 +4681,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
                 } catch (e) {}
                 try {
                     const u = new URL(location.href);
-                    u.searchParams.set('_v', String(APP_BUILD || 'v250'));
+                    u.searchParams.set('_v', String(APP_BUILD || 'v251'));
                     location.replace(u.pathname + u.search + u.hash);
                 } catch (e) {
                     try { location.reload(); } catch (e2) {}
@@ -15875,7 +15875,7 @@ function sbRenderAdminLists(cfg) {
         }
 
         async function publishGlobalAppVersion(ver) {
-            const version = String(ver || (typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v250'));
+            const version = String(ver || (typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v251'));
             try {
                 const { data } = await _supabase.from('app_shared_config').select('config').eq('id', 1).maybeSingle();
                 const cfg = (data && data.config && typeof data.config === 'object') ? Object.assign({}, data.config) : {};
@@ -15909,7 +15909,7 @@ function sbRenderAdminLists(cfg) {
             } catch (e) {}
             try {
                 const u = new URL(location.href.split('#')[0]);
-                u.searchParams.set('_v', String(APP_BUILD || 'v250'));
+                u.searchParams.set('_v', String(APP_BUILD || 'v251'));
                 u.searchParams.set('_t', String(Date.now()));
                 u.searchParams.set('nocache', '1');
                 location.replace(u.toString());
@@ -15971,7 +15971,7 @@ function sbRenderAdminLists(cfg) {
         }
         async function diagForceUpdate() {
             showToast('⏳ انتشار آپدیت اجباری برای همه گوشی‌ها...');
-            const ver = String(typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v250');
+            const ver = String(typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v251');
             let published = false;
             try {
                 published = await publishGlobalAppVersion(ver);
@@ -29253,7 +29253,7 @@ notify pgrst, 'reload schema';`;
                     '<div class="who">👤 ' + catEsc(r.name || 'خریدار') + (r.city ? ' · ' + catEsc(r.city) : '') + (r.when ? ' · ' + catEsc(r.when) : '') + '</div>' +
                     '</div>';
             }).join('')
-            : '<div style="text-align:center;padding:18px 10px;font-size:13px;opacity:.8;line-height:1.8;color:#94a3b8;">هنوز نظری ثبت نشده است.<br><span style="font-size:11px;">اولین نفری باشید که بعد از خرید نظر می‌دهد.</span></div>';
+            : '<div style="text-align:center;padding:18px 10px;font-size:13px;line-height:1.8;color:#475569;background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0;">هنوز نظری ثبت نشده است.<br><span style="font-size:11px;color:#64748b;">اولین نفری باشید که بعد از خرید نظر می‌دهد.</span></div>';
         var scoreLabel = revs.length ? (avg.toFixed(1).replace('.', '٫') + ' از ۵') : '۰';
         var scoreStars = revs.length ? (catStarsHtml(Math.round(avg)) + ' ' + avg.toFixed(1)) : '☆☆☆☆☆ ۰';
         return '' +
@@ -29273,8 +29273,8 @@ notify pgrst, 'reload schema';`;
             '<div class="cat-trust-item"><b>🚚</b><span>تحویل حضوری یا درب منزل با زمان انتخابی شما</span></div>' +
             '<div class="cat-trust-item"><b>⭐</b><span>نظرات فقط از خریداران واقعی نمایش داده می‌شود</span></div>' +
             '</div></div>' +
-            '<div class="cat-rev">' +
-            '<h3><span>💬 نظرات خریداران</span><span style="font-size:11px;font-weight:700;color:#fbbf24;">' + scoreStars + '</span></h3>' +
+            '<div class="cat-rev" style="margin:0 10px 16px;padding:16px;border-radius:18px;background:#ffffff;border:1px solid #e2e8f0;color:#0f172a;box-shadow:0 6px 20px rgba(15,23,42,.06);">' +
+            '<h3 style="margin:0 0 10px;font-size:14px;font-weight:900;color:#0f172a;display:flex;justify-content:space-between;align-items:center;"><span style="color:#0f172a;">💬 نظرات خریداران</span><span style="font-size:11px;font-weight:700;color:#d97706;">' + scoreStars + '</span></h3>' +
             revHtml +
             '</div>' +
             '<div class="cat-survey" id="catSurveyBox">' +
@@ -29291,7 +29291,7 @@ notify pgrst, 'reload schema';`;
             '<div id="catSurveyStatus" style="margin-top:8px;font-size:12px;text-align:center;min-height:18px;"></div>' +
             '</div>' +
             '<div style="margin:12px 10px;"><button type="button" onclick="catOpenSupportChat()" style="width:100%;padding:14px;border:0;border-radius:16px;background:linear-gradient(100deg,#25d366,#0ea5e9);color:#fff;font:inherit;font-weight:900;font-size:14px;box-shadow:0 8px 24px rgba(14,165,233,.25);cursor:pointer;">💬 گفتگو با پشتیبانی</button></div>' +
-            '<div class="cat-footer-pro">' +
+            '<div class="cat-footer-pro" style="margin:0 10px 100px;padding:18px 14px 22px;border-radius:20px;background:#ffffff;border:1px solid #e2e8f0;text-align:center;font-size:11px;line-height:1.8;color:#334155;box-shadow:0 6px 20px rgba(15,23,42,.06);">' +
             '<div style="font-size:14px;font-weight:900;color:#0f172a;margin-bottom:4px;">تازه مارکت</div>' +
             '<div>فروشگاه تخصصی لبنیات، ترشیجات و سوسیس‌وکالباس فله</div>' +
             '<div>غرفه فامیلی · بیرجند · میدان قدس</div>' +
@@ -29372,7 +29372,11 @@ notify pgrst, 'reload schema';`;
                 fab.setAttribute('aria-label', 'پشتیبانی');
                 fab.textContent = '💬';
                 fab.onclick = function (ev) {
-                    try { if (ev) ev.stopPropagation(); catOpenSupportChat(); } catch (e) { console.warn(e); }
+                    try { if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+                        var fn = window.catOpenSupportChat || catOpenSupportChat;
+                        if (typeof fn === 'function') fn();
+                        else alert('چت پشتیبانی بارگذاری نشده. صفحه را رفرش کنید.');
+                    } catch (e) { try { alert('خطا: ' + (e && e.message ? e.message : e)); } catch (e2) {} }
                 };
                 (document.body || document.documentElement).appendChild(fab);
             }
@@ -29455,17 +29459,19 @@ notify pgrst, 'reload schema';`;
         return 'T-' + catCustomerKey();
     }
     function catOpenSupportChat() {
-        const agent = catSupportAgent();
+        try {
+        const agent = (typeof catSupportAgent === 'function') ? catSupportAgent() : null;
         const isAgent = !!(agent && agent.username);
         let wrap = document.getElementById('catSupportPanel');
         if (!wrap) {
             wrap = document.createElement('div');
             wrap.id = 'catSupportPanel';
-            wrap.style.cssText = 'position:fixed;inset:0;z-index:100050;background:rgba(15,23,42,.45);display:flex;align-items:flex-end;justify-content:center;padding:0;';
             document.body.appendChild(wrap);
         }
+        wrap.style.cssText = 'position:fixed;inset:0;z-index:2147483646;background:rgba(15,23,42,.55);display:flex;align-items:flex-end;justify-content:center;padding:0;pointer-events:auto;';
         wrap.style.display = 'flex';
-        const profile = catGetCustomerProfile();
+        let profile = {};
+        try { profile = (typeof catGetCustomerProfile === 'function') ? (catGetCustomerProfile() || {}) : {}; } catch (e) { profile = {}; }
         const title = isAgent ? ('پشتیبانی · ' + (agent.display || agent.username)) : 'پشتیبانی تازه مارکت';
         wrap.innerHTML =
             '<div style="width:100%;max-width:480px;max-height:92vh;background:#fff;color:#0f172a;border-radius:18px 18px 0 0;display:flex;flex-direction:column;box-shadow:0 -12px 40px rgba(0,0,0,.2);direction:rtl;font:13px/1.7 inherit;">' +
@@ -29525,7 +29531,13 @@ notify pgrst, 'reload schema';`;
                     .subscribe();
             }
         } catch (e) {}
+        } catch (err) {
+            console.error(err);
+            try { alert('خطا در باز شدن پشتیبانی: ' + (err && err.message ? err.message : err)); } catch (e2) {}
+        }
     }
+    try { window.catOpenSupportChat = catOpenSupportChat; } catch (e) {}
+
     async function catSupportDoSend() {
         if (window.__catSupSending) return;
         const inp = document.getElementById('catSupInput');
