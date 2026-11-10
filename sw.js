@@ -1,5 +1,5 @@
-// Service Worker — آپدیت اجباری نسخه + شبکه اول برای HTML
-const V = 'v253';
+// Service Worker v255 — شبکه با مهلت کوتاه + برگشت سریع به کش
+const V = 'v255';
 const SHELL = 'shell-' + V;
 const LIBS = 'libs-v1';
 const CDN = /(^|\.)(cdn\.jsdelivr\.net|unpkg\.com|cdnjs\.cloudflare\.com|fonts\.googleapis\.com|fonts\.gstatic\.com)$/;
@@ -19,7 +19,6 @@ self.addEventListener('message', (e) => {
 
 self.addEventListener('install', (e) => {
   self.skipWaiting();
-  // precache را timeout کن تا نصب PWA روی «Installing...» گیر نکند
   e.waitUntil((async () => {
     try {
       const c = await caches.open(SHELL);
@@ -28,7 +27,7 @@ self.addEventListener('install', (e) => {
           c.add(new Request('./index.html?v=' + V, { cache: 'reload' })).catch(function () {}),
           c.add(new Request('./?v=' + V, { cache: 'reload' })).catch(function () {})
         ]),
-        new Promise(function (r) { setTimeout(r, 2500); })
+        new Promise(function (r) { setTimeout(r, 2000); })
       ]);
     } catch (err) {}
   })());
@@ -37,12 +36,7 @@ self.addEventListener('install', (e) => {
 self.addEventListener('activate', (e) => {
   e.waitUntil((async () => {
     const keys = await caches.keys();
-    // همه کش‌های شل قدیمی + هر کش غیرمرتبط را پاک کن
-    await Promise.all(
-      keys
-        .filter((k) => k !== SHELL && k !== LIBS)
-        .map((k) => caches.delete(k))
-    );
+    await Promise.all(keys.filter((k) => k !== SHELL && k !== LIBS).map((k) => caches.delete(k)));
     await self.clients.claim();
     const list = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
     list.forEach((c) => c.postMessage({ type: 'SW_UPDATED', version: V }));
@@ -58,47 +52,55 @@ async function putShell(req, res) {
     if (res && res.ok) {
       const c = await caches.open(SHELL);
       await c.put(req, res.clone());
-      // کلیدهای بدون query هم ذخیره شود
       try {
         const u = new URL(req.url);
-        if (u.search) {
-          const clean = u.origin + u.pathname;
-          await c.put(clean, res.clone());
-          if (u.pathname.endsWith('/') || u.pathname.endsWith('index.html')) {
-            await c.put('./index.html', res.clone());
-          }
+        const clean = u.origin + u.pathname;
+        await c.put(clean, res.clone());
+        if (u.pathname.endsWith('/') || u.pathname.endsWith('index.html') || u.pathname === '') {
+          await c.put('./index.html', res.clone());
+          await c.put('./', res.clone());
         }
       } catch (e) {}
     }
   } catch (e) {}
 }
 
-// HTML/ناوبری: همیشه اول شبکه (بدون کش مرورگر)، فقط اگر آفلاین بود از کش
+function fetchWithTimeout(req, ms) {
+  const ctrl = new AbortController();
+  const t = setTimeout(function () { try { ctrl.abort(); } catch (e) {} }, ms);
+  return fetch(req, { cache: 'no-store', signal: ctrl.signal }).finally(function () { clearTimeout(t); });
+}
+
+// HTML: حداکثر ۳٫۵ ثانیه منتظر شبکه بمان؛ وگرنه کش قبلی را فوری بده
 async function networkFirstHTML(req) {
   try {
-    const res = await fetch(req, { cache: 'no-store', credentials: 'same-origin' });
+    const res = await fetchWithTimeout(req, 3500);
     if (res && res.ok) {
-      await putShell(req, res);
+      putShell(req, res.clone());
       return res;
     }
   } catch (e) {}
   const cached = await fromCache(req);
   if (cached) return cached;
-  const shell =
-    (await caches.match('./index.html')) ||
-    (await caches.match('./')) ||
-    (await caches.match('/index.html')) ||
-    (await caches.match('./index.html?v=' + V));
-  if (shell) return shell;
-  return new Response('آفلاین — صفحه در کش نیست', {
-    status: 503,
-    headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-  });
+  try {
+    const res2 = await fetch(req, { cache: 'no-store' });
+    if (res2) {
+      putShell(req, res2.clone());
+      return res2;
+    }
+  } catch (e2) {}
+  return new Response(
+    '<!DOCTYPE html><html lang="fa" dir="rtl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<title>تازه مارکت</title><body style="font-family:sans-serif;padding:24px;text-align:center;background:#f8fafc;color:#0f172a">' +
+    '<h2>ارتباط ضعیف است</h2><p>صفحه از سرور نرسید. چند ثانیه دیگر دوباره تلاش کنید.</p>' +
+    '<p><a href="./?v=' + V + '">تلاش مجدد</a></p></body></html>',
+    { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+  );
 }
 
 async function networkThenCache(req) {
   try {
-    const res = await fetch(req, { cache: 'no-store' });
+    const res = await fetchWithTimeout(req, 4000);
     if (res && res.ok) await putShell(req, res);
     if (res) return res;
   } catch (e) {}
@@ -111,10 +113,8 @@ async function cacheFirst(req) {
   const cached = await fromCache(req);
   if (cached) {
     fetch(req).then((res) => {
-      if (res && res.ok) {
-        caches.open(LIBS).then((c) => c.put(req, res)).catch(() => {});
-      }
-    }).catch(() => {});
+      if (res && res.ok) caches.open(LIBS).then((c) => c.put(req, res)).catch(function () {});
+    }).catch(function () {});
     return cached;
   }
   try {
@@ -133,7 +133,6 @@ self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
 
-  // خود SW همیشه از شبکه
   if (url.pathname.endsWith('sw.js')) {
     e.respondWith(
       fetch(e.request, { cache: 'no-store' }).catch(async () => (await fromCache(e.request)) || new Response('', { status: 503 }))
@@ -141,7 +140,6 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // APIها را کش نکن
   if (/supabase\.co|openrouter\.ai|generativelanguage\.googleapis|api\.telegram|workers\.dev/i.test(url.hostname)) {
     return;
   }
