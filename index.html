@@ -5,7 +5,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="app-build" content="v261">
+    <meta name="app-build" content="v262">
     <!-- جلوگیری از کش‌شدن خود index.html توسط مرورگر/گوشی، تا نسخه‌ی جدید همیشه فوراً لود بشه
          (sw.js شما کش نمی‌کنه، ولی مرورگر یا هاست ممکنه خودش HTML رو کش کنه) -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -217,7 +217,7 @@
         html.catalog-guest-mode #payPublicView { display: block !important; visibility: visible !important; position: relative; z-index: 20; pointer-events: auto !important; }
         html.catalog-guest-mode body { background: #f8fafc !important; margin: 0; color: #0f172a !important; }
 
-        /* === کاتالوگ حرفه‌ای v261 === */
+        /* === کاتالوگ حرفه‌ای v262 === */
         html.catalog-guest-mode body {
             background: #f1f5f9 !important;
             color: #0f172a !important;
@@ -503,7 +503,7 @@
         .cat-stat-row span{font-size:10px;opacity:1;color:#64748b}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v261 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v262 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json" id="appManifestLink">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -4316,7 +4316,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
                 </label>
                 <div id="sstGrowthBox" class="report-card" style="margin-top:12px;border:1px solid #34d399;padding:12px;border-radius:14px;background:rgba(52,211,153,.08);">
                     <div style="font-weight:900;color:#6ee7b7;margin-bottom:8px;">📈 پاداش عبور از هدف · حداقل فروش · تخفیف پیشنهادی</div>
-                    <label>اگر بیشتر از هدف زد، پاداش اضافه (به‌ازای هر ۱٪ بالاتر از هدف)</label>
+                    <label>اگر بیشتر از هدف زد، پاداش اضافه (به‌ازای هر ۱٪ بالاتر از هدف)</label><div class="sst-words" id="sstOverHint" style="color:#6ee7b7;font-size:12px;"></div>
                     <div class="bc-row" style="display:flex;gap:8px;">
                         <select id="sstOverType" style="flex:1"><option value="fixed">تومان ثابت</option><option value="percent">درصد از حقوق پایه</option></select>
                         <input type="text" inputmode="decimal" id="sstOverValue" placeholder="مثلا ۵۰۰۰۰ یا ۲" style="flex:1">
@@ -4517,7 +4517,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v261 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v262 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -4697,7 +4697,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             }
         })();
 
-        const APP_BUILD = 'v261';
+        const APP_BUILD = 'v262';
         try { const __bt=document.getElementById('buildTag'); if(__bt) __bt.textContent = APP_BUILD + ' - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )'; } catch(e){}
         // ثبت Service Worker پایدار — همیشه /sw.js بدون ?v= تا آپدیت شکست نخورد
         if ('serviceWorker' in navigator) {
@@ -4709,7 +4709,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
                 } catch (e) {}
                 try {
                     const u = new URL(location.href);
-                    u.searchParams.set('_v', String(APP_BUILD || 'v261'));
+                    u.searchParams.set('_v', String(APP_BUILD || 'v262'));
                     location.replace(u.pathname + u.search + u.hash);
                 } catch (e) {
                     try { location.reload(); } catch (e2) {}
@@ -12355,7 +12355,7 @@ function sbRenderAdminLists(cfg) {
                 showToast('❌ خطا در ذخیره هدف پاداش: ' + error.message + '\n\nمطمئن شوید جدول bonus_targets در Supabase ساخته شده است.');
                 return;
             }
-            showToast('✅ هدف پاداش ذخیره شد و برای همه فروشنده‌ها نمایش داده می‌شود.');
+            showToast('✅ هدف و قوانین رشد پاداش ذخیره شد و برای همه فروشنده‌ها نمایش داده می‌شود.');
         }
         async function loadBonusTargetIntoForm() {
             const { data } = await _supabase.from('bonus_targets').select('*').eq('id', 1).maybeSingle();
@@ -15918,7 +15918,7 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
         }
 
         async function publishGlobalAppVersion(ver) {
-            const version = String(ver || (typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v261'));
+            const version = String(ver || (typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v262'));
             try {
                 const { data } = await _supabase.from('app_shared_config').select('config').eq('id', 1).maybeSingle();
                 const cfg = (data && data.config && typeof data.config === 'object') ? Object.assign({}, data.config) : {};
@@ -15952,7 +15952,7 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
             } catch (e) {}
             try {
                 const u = new URL(location.href.split('#')[0]);
-                u.searchParams.set('_v', String(APP_BUILD || 'v261'));
+                u.searchParams.set('_v', String(APP_BUILD || 'v262'));
                 u.searchParams.set('_t', String(Date.now()));
                 u.searchParams.set('nocache', '1');
                 location.replace(u.toString());
@@ -16014,7 +16014,7 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
         }
         async function diagForceUpdate() {
             showToast('⏳ انتشار آپدیت اجباری برای همه گوشی‌ها...');
-            const ver = String(typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v261');
+            const ver = String(typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v262');
             let published = false;
             try {
                 published = await publishGlobalAppVersion(ver);
@@ -24045,6 +24045,48 @@ notify pgrst, 'reload schema';`;
             document.getElementById('sstPenaltyType').value = t ? t.penalty_type : 'amount';
             document.getElementById('sstPenaltyValue').value = t && Number(t.penalty_value) ? String(t.penalty_value) : '';
             document.getElementById('sstActive').checked = t ? !!t.active : true;
+            // بارگذاری قوانین رشد ذخیره‌شده برای این فروشنده
+            try {
+                const sellerKey = sel.value;
+                let rules = window.__growthRules || null;
+                if (!rules) {
+                    try { rules = JSON.parse(localStorage.getItem('sales_growth_rules_v1') || '{}'); } catch (e) { rules = {}; }
+                }
+                const g = (rules && rules[sellerKey]) || {};
+                const setv = function (id, v) { const el = document.getElementById(id); if (el) el.value = (v != null && v !== '') ? String(v) : ''; };
+                if (document.getElementById('sstOverType')) document.getElementById('sstOverType').value = g.over_type || 'fixed';
+                setv('sstOverValue', g.over_value || '');
+                setv('sstMinInvoice', g.min_invoice || '');
+                setv('sstMinDay', g.min_day || '');
+                setv('sstDiscProducts', g.disc_products || '');
+                setv('sstDiscPct', g.disc_pct || '');
+                // پیش‌نمایش مبلغ
+                const base = v77Num((document.getElementById('sstBase') || {}).value);
+                const ov = v77Num(g.over_value);
+                const overTxt = document.getElementById('sstOverHint');
+                if (overTxt) {
+                    if (ov > 0) {
+                        const money = (g.over_type === 'percent') ? Math.round(base * ov / 100) : ov;
+                        overTxt.textContent = '≈ ' + money.toLocaleString('fa-IR') + ' تومان به‌ازای هر ۱٪ بالاتر از هدف';
+                    } else overTxt.textContent = '';
+                }
+                // async refresh from server
+                if (_supabase) {
+                    _supabase.from('app_shared_config').select('config').eq('id', 1).maybeSingle().then(function (res) {
+                        const rr = (res.data && res.data.config && res.data.config.sales_growth_rules) || {};
+                        window.__growthRules = rr;
+                        try { localStorage.setItem('sales_growth_rules_v1', JSON.stringify(rr)); } catch (e) {}
+                        const g2 = rr[sellerKey] || {};
+                        if (document.getElementById('sstOverType') && g2.over_type) document.getElementById('sstOverType').value = g2.over_type;
+                        setv('sstOverValue', g2.over_value || '');
+                        setv('sstMinInvoice', g2.min_invoice || '');
+                        setv('sstMinDay', g2.min_day || '');
+                        setv('sstDiscProducts', g2.disc_products || '');
+                        setv('sstDiscPct', g2.disc_pct || '');
+                        sstGrowthPreview();
+                    }).catch(function () {});
+                }
+            } catch (eG) {}
             const et = document.getElementById('sstEditTitle'); if (et) et.textContent = t ? '✏️ در حال ویرایش: ' + sstRangeText(t) : '🆕 ساخت هدف جدید';
             sstRangeFill(t);
             sstGoalListRender(goals);
@@ -24230,32 +24272,76 @@ notify pgrst, 'reload schema';`;
             } catch (e) {}
         }
 
+        function sstGrowthPreview() {
+            try {
+                const base = v77Num((document.getElementById('sstBase') || {}).value);
+                const ov = v77Num((document.getElementById('sstOverValue') || {}).value);
+                const ot = (document.getElementById('sstOverType') || {}).value || 'fixed';
+                const el = document.getElementById('sstOverHint');
+                if (!el) return;
+                if (!(ov > 0)) { el.textContent = ''; return; }
+                const money = ot === 'percent' ? Math.round(base * ov / 100) : ov;
+                el.textContent = '≈ ' + money.toLocaleString('fa-IR') + ' تومان به‌ازای هر ۱٪ بالاتر از هدف' +
+                    (ot === 'percent' ? ' (از روی حقوق پایه)' : '');
+                const minInv = v77Num((document.getElementById('sstMinInvoice') || {}).value);
+                const minDay = v77Num((document.getElementById('sstMinDay') || {}).value);
+                const disc = v77Num((document.getElementById('sstDiscPct') || {}).value);
+                let extra = '';
+                if (minInv > 0) extra += ' · حداقل فاکتور: ' + minInv.toLocaleString('fa-IR') + ' ت';
+                if (minDay > 0) extra += ' · حداقل روز: ' + minDay.toLocaleString('fa-IR') + ' ت';
+                if (disc > 0) extra += ' · تخفیف پیشنهادی: ' + disc + '٪';
+                if (extra) el.textContent += extra;
+            } catch (e) {}
+        }
+        try {
+            ['sstOverValue','sstOverType','sstMinInvoice','sstMinDay','sstDiscPct','sstBase'].forEach(function (id) {
+                document.addEventListener('input', function (ev) {
+                    if (ev.target && ev.target.id === id) sstGrowthPreview();
+                });
+                document.addEventListener('change', function (ev) {
+                    if (ev.target && ev.target.id === id) sstGrowthPreview();
+                });
+            });
+        } catch (e) {}
+
         async function renderCustomAvgRange() {
             const out = document.getElementById('avgRangeResult');
             if (!out || !_supabase) return;
             const fromEl = document.getElementById('avgFromDate');
             const toEl = document.getElementById('avgToDate');
-            // مقدار واقعی میلادی (حتی اگر ظاهر شمسی باشد)
-            let from = (fromEl && (fromEl.value || fromEl.getAttribute('data-iso') || '')) || '';
-            let to = (toEl && (toEl.value || toEl.getAttribute('data-iso') || '')) || '';
-            // اگر value شمسی متنی بود
-            if (from && !/^\d{4}-\d{2}-\d{2}$/.test(from)) from = fromEl.value;
-            if (to && !/^\d{4}-\d{2}-\d{2}$/.test(to)) to = toEl.value;
-            // از date input استاندارد
-            if (fromEl && /^\d{4}-\d{2}-\d{2}$/.test(String(fromEl.value || ''))) from = fromEl.value;
-            if (toEl && /^\d{4}-\d{2}-\d{2}$/.test(String(toEl.value || ''))) to = toEl.value;
-            // بعضی پوسته‌ها value را شمسی نشان می‌دهند ولی property جدا دارند
+            let from = '', to = '';
             try {
-                if (fromEl && fromEl._iso) from = fromEl._iso;
-                if (toEl && toEl._iso) to = toEl._iso;
+                if (fromEl) from = fromEl._iso || fromEl.value || '';
+                if (toEl) to = toEl._iso || toEl.value || '';
             } catch (e) {}
-            if (!from || !to || !/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
-                return showToast('تاریخ را از تقویم شمسی درست انتخاب کن');
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
+                return showToast('تاریخ را از تقویم درست انتخاب کن');
             }
-            out.innerHTML = '<div class="hint">در حال دریافت فروش‌ها از سرور...</div>';
+            out.innerHTML = '<div class="hint">در حال دریافت فروش بازه فعلی و ماه قبل از سرور...</div>';
+            function tehranDay(iso) {
+                try {
+                    const d = new Date(iso);
+                    // تهران UTC+3:30
+                    const t = new Date(d.getTime() + (3.5 * 3600 * 1000));
+                    return t.toISOString().slice(0, 10);
+                } catch (e) { return String(iso || '').slice(0, 10); }
+            }
+            function pack(rows, dayCount) {
+                let sum = 0, qty = 0, n = 0;
+                const bySeller = {};
+                (rows || []).forEach(function (r) {
+                    const amt = Number(r.sell_price) || 0;
+                    const q = Number(r.quantity) || 0;
+                    sum += amt; qty += q; n++;
+                    const lab = r.seller_name || 'نامشخص';
+                    if (!bySeller[lab]) bySeller[lab] = { sum: 0, qty: 0, n: 0 };
+                    bySeller[lab].sum += amt; bySeller[lab].qty += q; bySeller[lab].n++;
+                });
+                return { sum: sum, qty: qty, n: n, avg: sum / Math.max(1, dayCount), avgQty: qty / Math.max(1, dayCount), bySeller: bySeller };
+            }
             try {
-                const fromD = new Date(from + 'T00:00:00');
-                const toD = new Date(to + 'T23:59:59');
+                const fromD = new Date(from + 'T00:00:00+03:30');
+                const toD = new Date(to + 'T23:59:59+03:30');
                 const days = Math.max(1, Math.round((toD - fromD) / 86400000) + 1);
                 let prevFrom = new Date(fromD); prevFrom.setMonth(prevFrom.getMonth() - 1);
                 let prevTo = new Date(toD); prevTo.setMonth(prevTo.getMonth() - 1);
@@ -24266,38 +24352,31 @@ notify pgrst, 'reload schema';`;
                         let py = a.y, pm = a.m - 1; if (pm < 1) { pm = 12; py--; }
                         let pye = b.y, pme = b.m - 1; if (pme < 1) { pme = 12; pye--; }
                         const maxDay = function (y, m) { return m <= 6 ? 31 : (m <= 11 ? 30 : 29); };
-                        prevFrom = new Date(sstJToISO(py, pm, Math.min(a.d, maxDay(py, pm))) + 'T12:00:00');
-                        prevTo = new Date(sstJToISO(pye, pme, Math.min(b.d, maxDay(pye, pme))) + 'T12:00:00');
+                        prevFrom = new Date(sstJToISO(py, pm, Math.min(a.d, maxDay(py, pm))) + 'T00:00:00+03:30');
+                        prevTo = new Date(sstJToISO(pye, pme, Math.min(b.d, maxDay(pye, pme))) + 'T23:59:59+03:30');
                     }
                 } catch (eS) {}
-                const pf = prevFrom.toISOString().slice(0, 10);
-                const pt = prevTo.toISOString().slice(0, 10);
-                const fetchFrom = new Date(Math.min(prevFrom.getTime(), fromD.getTime()) - 86400000);
-                const { data, error } = await _supabase.from('sales')
-                    .select('sell_price, quantity, created_at, seller_name, sale_type, product_code, shift_label')
-                    .gte('created_at', fetchFrom.toISOString())
+                const pf = tehranDay(prevFrom.toISOString());
+                const pt = tehranDay(prevTo.toISOString());
+
+                // دو کوئری جدا — تا سقف ۱۰۰۰ فقط ماه قبل را نگیرد
+                const q1 = await _supabase.from('sales')
+                    .select('sell_price, quantity, created_at, seller_name')
+                    .gte('created_at', fromD.toISOString())
                     .lte('created_at', toD.toISOString())
-                    .limit(10000);
-                if (error) throw error;
-                const rows = data || [];
-                function pack(a, b) {
-                    let sum = 0, qty = 0, n = 0;
-                    const bySeller = {};
-                    rows.forEach(function (r) {
-                        const day = String(r.created_at || '').slice(0, 10);
-                        if (day >= a && day <= b) {
-                            const amt = Number(r.sell_price) || 0;
-                            const q = Number(r.quantity) || 0;
-                            sum += amt; qty += q; n++;
-                            const lab = r.seller_name || 'نامشخص';
-                            if (!bySeller[lab]) bySeller[lab] = { sum: 0, qty: 0, n: 0 };
-                            bySeller[lab].sum += amt; bySeller[lab].qty += q; bySeller[lab].n++;
-                        }
-                    });
-                    return { sum: sum, qty: qty, n: n, avg: sum / days, avgQty: qty / days, bySeller: bySeller };
-                }
-                const cur = pack(from, to);
-                const prev = pack(pf, pt);
+                    .order('created_at', { ascending: false })
+                    .limit(5000);
+                if (q1.error) throw q1.error;
+                const q2 = await _supabase.from('sales')
+                    .select('sell_price, quantity, created_at, seller_name')
+                    .gte('created_at', prevFrom.toISOString())
+                    .lte('created_at', prevTo.toISOString())
+                    .order('created_at', { ascending: false })
+                    .limit(5000);
+                if (q2.error) throw q2.error;
+
+                const cur = pack(q1.data || [], days);
+                const prev = pack(q2.data || [], days);
                 const g = prev.avg ? ((cur.avg - prev.avg) / prev.avg * 100) : 0;
                 const gq = prev.avgQty ? ((cur.avgQty - prev.avgQty) / prev.avgQty * 100) : 0;
                 function fa(n) { return Math.round(n || 0).toLocaleString('fa-IR'); }
@@ -24315,12 +24394,12 @@ notify pgrst, 'reload schema';`;
                 });
                 out.innerHTML =
                     '<div style="font-size:13px;line-height:1.9;color:#0f172a;background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:12px;">' +
-                    '<div><b>بازه انتخابی:</b> ' + from + ' تا ' + to + ' (' + days + ' روز) · رکورد خوانده‌شده: ' + fa(rows.length) + '</div>' +
-                    '<div>جمع ریالی: <b>' + fa(cur.sum) + '</b> ت · میانگین روز: <b>' + fa(cur.avg) + '</b> ت · تعداد فاکتور: ' + fa(cur.n) + ' · مقدار/وزن: ' + fa1(cur.qty) + '</div>' +
-                    '<div style="margin-top:8px;"><b>مقایسه خودکار ماه قبل:</b> ' + pf + ' تا ' + pt + '</div>' +
+                    '<div><b>بازه انتخابی:</b> ' + from + ' تا ' + to + ' (' + days + ' روز) · رکورد: ' + fa((q1.data || []).length) + '</div>' +
+                    '<div>جمع ریالی: <b>' + fa(cur.sum) + '</b> ت · میانگین روز: <b>' + fa(cur.avg) + '</b> ت · فاکتور: ' + fa(cur.n) + ' · مقدار: ' + fa1(cur.qty) + '</div>' +
+                    '<div style="margin-top:8px;"><b>ماه قبل:</b> ' + pf + ' تا ' + pt + ' · رکورد: ' + fa((q2.data || []).length) + '</div>' +
                     '<div>جمع ماه قبل: <b>' + fa(prev.sum) + '</b> ت · میانگین روز: <b>' + fa(prev.avg) + '</b> ت · فاکتور: ' + fa(prev.n) + '</div>' +
                     '<div>رشد میانگین ریالی: <b style="color:' + (g >= 0 ? '#059669' : '#dc2626') + '">' + (g >= 0 ? '+' : '') + fa1(g) + '٪</b> · مقداری: <b>' + (gq >= 0 ? '+' : '') + fa1(gq) + '٪</b></div>' +
-                    (sellers ? ('<div style="margin-top:10px;"><b>جزئیات هر فروشنده</b>' + sellers + '</div>') : '<div class="hint">در این بازه فروشی پیدا نشد. اگر فروش ثبت شده، ستون تاریخ/ساعت سرور را چک کن.</div>') +
+                    (sellers ? ('<div style="margin-top:10px;"><b>جزئیات هر فروشنده</b>' + sellers + '</div>') : '') +
                     '</div>';
             } catch (e) {
                 out.innerHTML = '<div class="hint" style="color:#b91c1c;">خطا: ' + (e.message || e) + '</div>';
