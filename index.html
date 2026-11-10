@@ -5,7 +5,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="app-build" content="v259">
+    <meta name="app-build" content="v261">
     <!-- جلوگیری از کش‌شدن خود index.html توسط مرورگر/گوشی، تا نسخه‌ی جدید همیشه فوراً لود بشه
          (sw.js شما کش نمی‌کنه، ولی مرورگر یا هاست ممکنه خودش HTML رو کش کنه) -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -217,7 +217,7 @@
         html.catalog-guest-mode #payPublicView { display: block !important; visibility: visible !important; position: relative; z-index: 20; pointer-events: auto !important; }
         html.catalog-guest-mode body { background: #f8fafc !important; margin: 0; color: #0f172a !important; }
 
-        /* === کاتالوگ حرفه‌ای v259 === */
+        /* === کاتالوگ حرفه‌ای v261 === */
         html.catalog-guest-mode body {
             background: #f1f5f9 !important;
             color: #0f172a !important;
@@ -503,7 +503,7 @@
         .cat-stat-row span{font-size:10px;opacity:1;color:#64748b}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v259 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v261 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json" id="appManifestLink">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -4314,6 +4314,22 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
                 <label style="display:flex; align-items:center; gap:8px; margin-top:10px; cursor:pointer;">
                     <input type="checkbox" id="sstActive" style="width:auto;" checked> فعال باشد
                 </label>
+                <div id="sstGrowthBox" class="report-card" style="margin-top:12px;border:1px solid #34d399;padding:12px;border-radius:14px;background:rgba(52,211,153,.08);">
+                    <div style="font-weight:900;color:#6ee7b7;margin-bottom:8px;">📈 پاداش عبور از هدف · حداقل فروش · تخفیف پیشنهادی</div>
+                    <label>اگر بیشتر از هدف زد، پاداش اضافه (به‌ازای هر ۱٪ بالاتر از هدف)</label>
+                    <div class="bc-row" style="display:flex;gap:8px;">
+                        <select id="sstOverType" style="flex:1"><option value="fixed">تومان ثابت</option><option value="percent">درصد از حقوق پایه</option></select>
+                        <input type="text" inputmode="decimal" id="sstOverValue" placeholder="مثلا ۵۰۰۰۰ یا ۲" style="flex:1">
+                    </div>
+                    <label style="margin-top:8px;display:block;">حداقل مبلغ هر فاکتور (تومان)</label>
+                    <input type="text" inputmode="decimal" id="sstMinInvoice" placeholder="مثلا ۱۵۰۰۰۰">
+                    <label style="margin-top:8px;display:block;">حداقل فروش کل روز این فروشنده (تومان)</label>
+                    <input type="text" inputmode="decimal" id="sstMinDay" placeholder="مثلا ۸۰۰۰۰۰۰">
+                    <label style="margin-top:8px;display:block;">کالاهای پیشنهادی تخفیف (با ویرگول)</label>
+                    <input type="text" id="sstDiscProducts" placeholder="پنیر لیقوان، ماست موسیر">
+                    <label style="margin-top:8px;display:block;">درصد تخفیف پیشنهادی</label>
+                    <input type="text" inputmode="decimal" id="sstDiscPct" placeholder="مثلا ۱۰">
+                </div>
                 <button class="submit-btn" onclick="sstSave()">💾 ذخیره‌ی این هدف</button>
                 <button class="row-btn delete-btn" style="width:100%; margin-top:8px;" onclick="sstDelete()">🗑️ حذف این هدف</button>
             </div>
@@ -4501,7 +4517,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v259 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v261 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -4681,7 +4697,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             }
         })();
 
-        const APP_BUILD = 'v259';
+        const APP_BUILD = 'v261';
         try { const __bt=document.getElementById('buildTag'); if(__bt) __bt.textContent = APP_BUILD + ' - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )'; } catch(e){}
         // ثبت Service Worker پایدار — همیشه /sw.js بدون ?v= تا آپدیت شکست نخورد
         if ('serviceWorker' in navigator) {
@@ -4693,7 +4709,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
                 } catch (e) {}
                 try {
                     const u = new URL(location.href);
-                    u.searchParams.set('_v', String(APP_BUILD || 'v259'));
+                    u.searchParams.set('_v', String(APP_BUILD || 'v261'));
                     location.replace(u.pathname + u.search + u.hash);
                 } catch (e) {
                     try { location.reload(); } catch (e2) {}
@@ -4815,22 +4831,36 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // زیر اضافه کن (آدرس اصلی خودش را دست نزن، همیشه باید اول لیست بماند).
         // =========================================================================
         const SUPABASE_REAL_URL = "https://kinjpmvoyioaslpdzujg.supabase.co";
+        // ترتیب مهم: در ایران supabase.co اغلب فیلتر است — اول پروکسی‌های قابل‌دسترس
         const PROXY_ENDPOINTS = [
-            SUPABASE_REAL_URL, // همیشه اول همین آدرس مستقیم امتحان می‌شود
-            "https://proxy.ali8001.ir/supabase", // پروکسی روی دامنه‌ی خودمان (ali8001.ir) — معمولاً از workers.dev قابل‌اعتمادتره چون فیلترکردنش هزینه‌ی بیشتری داره
+            "https://proxy.ali8001.ir/supabase",
             "https://shop-proxy-1.adarmiraki.workers.dev",
-            // بعد از ساخت ورکر جدید (فایل worker-proxy.js) آدرس را اینجا بگذار:
-            // "https://shop-proxy-fast.YOUR_SUBDOMAIN.workers.dev",
-            // اگه یه پروکسی دیگه هم ساختی، آدرسش رو همینجا اضافه کن:
-            // "https://shop-proxy-2.adarmiraki.workers.dev",
+            "https://telegram-proxy.adarmiraki.workers.dev",
+            SUPABASE_REAL_URL // مستقیم فقط به‌عنوان آخرین گزینه
         ];
 
         // پروکسی‌هایی که خودت داخل برنامه اضافه کرده‌ای (روی همین گوشی ذخیره می‌شود)
-try { JSON.parse(localStorage.getItem('extraProxies') || '[]').forEach(u => { if (/^https:\/\/\S+$/.test(u) && PROXY_ENDPOINTS.indexOf(u) === -1) PROXY_ENDPOINTS.push(u); }); } catch (e) {}
-let activeBaseUrl = PROXY_ENDPOINTS[0];
-        // آخرین پروکسیِ سالم یادش می‌ماند تا فروشنده‌ی بدون فیلترشکن هر بار منتظر آدرس مستقیم (فیلتر) نماند
-        try { const savedEp = localStorage.getItem('lastGoodEndpoint'); if (savedEp && PROXY_ENDPOINTS.indexOf(savedEp) !== -1) activeBaseUrl = savedEp; } catch (e) {}
-        try { if (localStorage.getItem('autoSwitch') === '0') { const pe = localStorage.getItem('pinnedEp'); if (pe && PROXY_ENDPOINTS.indexOf(pe) !== -1) activeBaseUrl = pe; } } catch (e) {}
+        try { JSON.parse(localStorage.getItem('extraProxies') || '[]').forEach(u => { if (/^https:\/\/\S+$/.test(u) && PROXY_ENDPOINTS.indexOf(u) === -1) PROXY_ENDPOINTS.push(u); }); } catch (e) {}
+        let activeBaseUrl = PROXY_ENDPOINTS[0];
+        // آخرین مسیر سالم را اول بگذار (بدون فیلترشکن خیلی مهم است)
+        try {
+            const savedEp = localStorage.getItem('lastGoodEndpoint');
+            if (savedEp && PROXY_ENDPOINTS.indexOf(savedEp) !== -1) activeBaseUrl = savedEp;
+            else if (savedEp && /^https:\/\/\S+$/.test(savedEp)) {
+                PROXY_ENDPOINTS.unshift(savedEp);
+                activeBaseUrl = savedEp;
+            }
+        } catch (e) {}
+        try {
+            // اگر کاربر دستی پین کرده
+            if (localStorage.getItem('autoSwitch') === '0') {
+                const pe = localStorage.getItem('pinnedEp');
+                if (pe && PROXY_ENDPOINTS.indexOf(pe) !== -1) activeBaseUrl = pe;
+            } else {
+                // پیش‌فرض: تعویض خودکار روشن
+                if (localStorage.getItem('autoSwitch') == null) localStorage.setItem('autoSwitch', '1');
+            }
+        } catch (e) {}
 
         // این تابع جایگزین fetch پیش‌فرض می‌شود و به Supabase client داده می‌شود.
         // اول آدرس فعال فعلی را امتحان می‌کند؛ اگر آن آدرس (مثلاً به‌خاطر فیلترینگ)
@@ -4844,7 +4874,7 @@ let activeBaseUrl = PROXY_ENDPOINTS[0];
         function fetchWithTimeout(url, init, timeoutMs) {
             const controller = new AbortController();
             const combinedInit = Object.assign({}, init, { signal: controller.signal });
-            const timeoutId = setTimeout(() => controller.abort(), timeoutMs || 5000);
+            const timeoutId = setTimeout(() => controller.abort(), timeoutMs || 3500);
             return fetch(url, combinedInit).finally(() => clearTimeout(timeoutId));
         }
         // نشون‌دادن وضعیت اتصال با یه دایره‌ی رنگی کنار نام کاربر:
@@ -9712,7 +9742,7 @@ notify pgrst, 'reload schema';`;
                 const res = await telegramFetch(`/bot${token}/sendDocument`, {
                     method: 'POST',
                     body: form
-                }, timeoutMs || 50000);
+                }, timeoutMs || 35000);
                 const json = await res.json().catch(() => null);
                 if (json && json.ok) return { ok: true, method: 'upload' };
                 return _tgParseResult(res, json);
@@ -15888,7 +15918,7 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
         }
 
         async function publishGlobalAppVersion(ver) {
-            const version = String(ver || (typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v259'));
+            const version = String(ver || (typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v261'));
             try {
                 const { data } = await _supabase.from('app_shared_config').select('config').eq('id', 1).maybeSingle();
                 const cfg = (data && data.config && typeof data.config === 'object') ? Object.assign({}, data.config) : {};
@@ -15922,7 +15952,7 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
             } catch (e) {}
             try {
                 const u = new URL(location.href.split('#')[0]);
-                u.searchParams.set('_v', String(APP_BUILD || 'v259'));
+                u.searchParams.set('_v', String(APP_BUILD || 'v261'));
                 u.searchParams.set('_t', String(Date.now()));
                 u.searchParams.set('nocache', '1');
                 location.replace(u.toString());
@@ -15984,7 +16014,7 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
         }
         async function diagForceUpdate() {
             showToast('⏳ انتشار آپدیت اجباری برای همه گوشی‌ها...');
-            const ver = String(typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v259');
+            const ver = String(typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v261');
             let published = false;
             try {
                 published = await publishGlobalAppVersion(ver);
@@ -24203,88 +24233,94 @@ notify pgrst, 'reload schema';`;
         async function renderCustomAvgRange() {
             const out = document.getElementById('avgRangeResult');
             if (!out || !_supabase) return;
-            const from = (document.getElementById('avgFromDate') || {}).value;
-            const to = (document.getElementById('avgToDate') || {}).value;
-            if (!from || !to) return showToast('از و تا تاریخ را مشخص کن');
-            out.innerHTML = '<div class="hint">در حال دریافت از سرور و مقایسه با ماه قبل...</div>';
+            const fromEl = document.getElementById('avgFromDate');
+            const toEl = document.getElementById('avgToDate');
+            // مقدار واقعی میلادی (حتی اگر ظاهر شمسی باشد)
+            let from = (fromEl && (fromEl.value || fromEl.getAttribute('data-iso') || '')) || '';
+            let to = (toEl && (toEl.value || toEl.getAttribute('data-iso') || '')) || '';
+            // اگر value شمسی متنی بود
+            if (from && !/^\d{4}-\d{2}-\d{2}$/.test(from)) from = fromEl.value;
+            if (to && !/^\d{4}-\d{2}-\d{2}$/.test(to)) to = toEl.value;
+            // از date input استاندارد
+            if (fromEl && /^\d{4}-\d{2}-\d{2}$/.test(String(fromEl.value || ''))) from = fromEl.value;
+            if (toEl && /^\d{4}-\d{2}-\d{2}$/.test(String(toEl.value || ''))) to = toEl.value;
+            // بعضی پوسته‌ها value را شمسی نشان می‌دهند ولی property جدا دارند
             try {
-                // تبدیل میلادی → تقریبی ماه قبل شمسی: همان فاصله روز، یک ماه عقب
-                const fromD = new Date(from + 'T12:00:00');
-                const toD = new Date(to + 'T12:00:00');
+                if (fromEl && fromEl._iso) from = fromEl._iso;
+                if (toEl && toEl._iso) to = toEl._iso;
+            } catch (e) {}
+            if (!from || !to || !/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
+                return showToast('تاریخ را از تقویم شمسی درست انتخاب کن');
+            }
+            out.innerHTML = '<div class="hint">در حال دریافت فروش‌ها از سرور...</div>';
+            try {
+                const fromD = new Date(from + 'T00:00:00');
+                const toD = new Date(to + 'T23:59:59');
                 const days = Math.max(1, Math.round((toD - fromD) / 86400000) + 1);
-                // ماه قبل شمسی: از روی برچسب شمسی اگر موجود بود
                 let prevFrom = new Date(fromD); prevFrom.setMonth(prevFrom.getMonth() - 1);
                 let prevTo = new Date(toD); prevTo.setMonth(prevTo.getMonth() - 1);
-                // اگر تابع شمسی داریم دقیق‌تر
                 try {
                     if (typeof sstJParts === 'function' && typeof sstJToISO === 'function') {
-                        const a = sstJParts(fromD);
-                        const b = sstJParts(toD);
-                        let py = a.y, pm = a.m - 1;
-                        if (pm < 1) { pm = 12; py--; }
-                        let pye = b.y, pme = b.m - 1;
-                        if (pme < 1) { pme = 12; pye--; }
-                        // سقف روز ماه قبل
+                        const a = sstJParts(new Date(from + 'T12:00:00'));
+                        const b = sstJParts(new Date(to + 'T12:00:00'));
+                        let py = a.y, pm = a.m - 1; if (pm < 1) { pm = 12; py--; }
+                        let pye = b.y, pme = b.m - 1; if (pme < 1) { pme = 12; pye--; }
                         const maxDay = function (y, m) { return m <= 6 ? 31 : (m <= 11 ? 30 : 29); };
-                        const pd = Math.min(a.d, maxDay(py, pm));
-                        const pde = Math.min(b.d, maxDay(pye, pme));
-                        prevFrom = new Date(sstJToISO(py, pm, pd) + 'T12:00:00');
-                        prevTo = new Date(sstJToISO(pye, pme, pde) + 'T12:00:00');
+                        prevFrom = new Date(sstJToISO(py, pm, Math.min(a.d, maxDay(py, pm))) + 'T12:00:00');
+                        prevTo = new Date(sstJToISO(pye, pme, Math.min(b.d, maxDay(pye, pme))) + 'T12:00:00');
                     }
                 } catch (eS) {}
                 const pf = prevFrom.toISOString().slice(0, 10);
                 const pt = prevTo.toISOString().slice(0, 10);
-                const fetchFrom = new Date(Math.min(prevFrom.getTime(), fromD.getTime()));
-                fetchFrom.setDate(fetchFrom.getDate() - 1);
+                const fetchFrom = new Date(Math.min(prevFrom.getTime(), fromD.getTime()) - 86400000);
                 const { data, error } = await _supabase.from('sales')
-                    .select('amount, weight_kg, created_at, seller_label, seller_name, role, shift')
+                    .select('sell_price, quantity, created_at, seller_name, sale_type, product_code, shift_label')
                     .gte('created_at', fetchFrom.toISOString())
-                    .lte('created_at', new Date(to + 'T23:59:59').toISOString())
-                    .limit(8000);
+                    .lte('created_at', toD.toISOString())
+                    .limit(10000);
                 if (error) throw error;
                 const rows = data || [];
                 function pack(a, b) {
-                    let sum = 0, w = 0, n = 0;
+                    let sum = 0, qty = 0, n = 0;
                     const bySeller = {};
                     rows.forEach(function (r) {
                         const day = String(r.created_at || '').slice(0, 10);
                         if (day >= a && day <= b) {
-                            const amt = Number(r.amount) || 0;
-                            const ww = Number(r.weight_kg) || 0;
-                            sum += amt; w += ww; n++;
-                            const lab = r.seller_label || r.seller_name || 'نامشخص';
-                            if (!bySeller[lab]) bySeller[lab] = { sum: 0, w: 0, n: 0 };
-                            bySeller[lab].sum += amt; bySeller[lab].w += ww; bySeller[lab].n++;
+                            const amt = Number(r.sell_price) || 0;
+                            const q = Number(r.quantity) || 0;
+                            sum += amt; qty += q; n++;
+                            const lab = r.seller_name || 'نامشخص';
+                            if (!bySeller[lab]) bySeller[lab] = { sum: 0, qty: 0, n: 0 };
+                            bySeller[lab].sum += amt; bySeller[lab].qty += q; bySeller[lab].n++;
                         }
                     });
-                    return { sum: sum, w: w, n: n, avg: sum / days, avgW: w / days, bySeller: bySeller };
+                    return { sum: sum, qty: qty, n: n, avg: sum / days, avgQty: qty / days, bySeller: bySeller };
                 }
                 const cur = pack(from, to);
                 const prev = pack(pf, pt);
                 const g = prev.avg ? ((cur.avg - prev.avg) / prev.avg * 100) : 0;
-                const gw = prev.avgW ? ((cur.avgW - prev.avgW) / prev.avgW * 100) : 0;
+                const gq = prev.avgQty ? ((cur.avgQty - prev.avgQty) / prev.avgQty * 100) : 0;
                 function fa(n) { return Math.round(n || 0).toLocaleString('fa-IR'); }
                 function fa1(n) { return (Math.round((n || 0) * 10) / 10).toLocaleString('fa-IR'); }
                 let sellers = '';
-                const names = Object.keys(cur.bySeller);
-                names.forEach(function (lab) {
+                Object.keys(cur.bySeller).sort().forEach(function (lab) {
                     const c = cur.bySeller[lab];
-                    const p = prev.bySeller[lab] || { sum: 0, avg: 0 };
+                    const p = prev.bySeller[lab] || { sum: 0 };
                     const cAvg = c.sum / days;
                     const pAvg = (p.sum || 0) / days;
                     const gg = pAvg ? ((cAvg - pAvg) / pAvg * 100) : 0;
                     sellers += '<div style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:12px;line-height:1.7;">' +
-                        '<b>' + lab + '</b><br>الان: ' + fa(c.sum) + ' ت (میانگین روز ' + fa(cAvg) + ') · ماه قبل: ' + fa(p.sum || 0) + ' ت' +
+                        '<b>' + lab + '</b><br>الان: ' + fa(c.sum) + ' ت (روزانه ~ ' + fa(cAvg) + ') · ماه قبل: ' + fa(p.sum || 0) +
                         ' · رشد: <b style="color:' + (gg >= 0 ? '#059669' : '#dc2626') + '">' + (gg >= 0 ? '+' : '') + fa1(gg) + '٪</b></div>';
                 });
                 out.innerHTML =
-                    '<div style="font-size:13px;line-height:1.9;color:#0f172a;background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:12px;">' +
-                    '<div><b>بازه انتخابی:</b> ' + from + ' تا ' + to + ' (' + days + ' روز)</div>' +
-                    '<div>جمع ریالی: <b>' + fa(cur.sum) + '</b> ت · میانگین روز: <b>' + fa(cur.avg) + '</b> ت · وزن: ' + fa1(cur.avgW) + ' کیلو · تعداد فاکتور: ' + fa(cur.n) + '</div>' +
+                    '<div style="font-size:13px;line-height:1.9;color:#0f172a;background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:12px;">' +
+                    '<div><b>بازه انتخابی:</b> ' + from + ' تا ' + to + ' (' + days + ' روز) · رکورد خوانده‌شده: ' + fa(rows.length) + '</div>' +
+                    '<div>جمع ریالی: <b>' + fa(cur.sum) + '</b> ت · میانگین روز: <b>' + fa(cur.avg) + '</b> ت · تعداد فاکتور: ' + fa(cur.n) + ' · مقدار/وزن: ' + fa1(cur.qty) + '</div>' +
                     '<div style="margin-top:8px;"><b>مقایسه خودکار ماه قبل:</b> ' + pf + ' تا ' + pt + '</div>' +
-                    '<div>جمع ماه قبل: <b>' + fa(prev.sum) + '</b> ت · میانگین روز: <b>' + fa(prev.avg) + '</b> ت</div>' +
-                    '<div>رشد میانگین ریالی: <b style="color:' + (g >= 0 ? '#059669' : '#dc2626') + '">' + (g >= 0 ? '+' : '') + fa1(g) + '٪</b> · وزنی: <b>' + (gw >= 0 ? '+' : '') + fa1(gw) + '٪</b></div>' +
-                    (sellers ? ('<div style="margin-top:10px;"><b>جزئیات هر فروشنده</b>' + sellers + '</div>') : '') +
+                    '<div>جمع ماه قبل: <b>' + fa(prev.sum) + '</b> ت · میانگین روز: <b>' + fa(prev.avg) + '</b> ت · فاکتور: ' + fa(prev.n) + '</div>' +
+                    '<div>رشد میانگین ریالی: <b style="color:' + (g >= 0 ? '#059669' : '#dc2626') + '">' + (g >= 0 ? '+' : '') + fa1(g) + '٪</b> · مقداری: <b>' + (gq >= 0 ? '+' : '') + fa1(gq) + '٪</b></div>' +
+                    (sellers ? ('<div style="margin-top:10px;"><b>جزئیات هر فروشنده</b>' + sellers + '</div>') : '<div class="hint">در این بازه فروشی پیدا نشد. اگر فروش ثبت شده، ستون تاریخ/ساعت سرور را چک کن.</div>') +
                     '</div>';
             } catch (e) {
                 out.innerHTML = '<div class="hint" style="color:#b91c1c;">خطا: ' + (e.message || e) + '</div>';
@@ -24296,106 +24332,61 @@ notify pgrst, 'reload schema';`;
             if (!box || !_supabase) return;
             try {
                 const today = getTehranISODate(new Date());
-                // ۱۴ روز اخیر
-                const days = [];
-                for (let i = 13; i >= 0; i--) {
-                    const d = new Date();
-                    d.setDate(d.getDate() - i);
-                    days.push(getTehranISODate(d));
-                }
-                const fromISO = days[0] + 'T00:00:00.000Z';
-                const { data: sales, error } = await _supabase.from('sales').select('amount, weight_kg, seller_name, seller_label, role, created_at, shift')
-                    .gte('created_at', fromISO).limit(5000);
+                const fromD = new Date(); fromD.setDate(fromD.getDate() - 14);
+                const { data: sales, error } = await _supabase.from('sales')
+                    .select('sell_price, quantity, created_at, seller_name, sale_type, shift_label')
+                    .gte('created_at', fromD.toISOString())
+                    .limit(10000);
                 if (error) throw error;
                 const rows = sales || [];
                 const byDay = {};
                 const bySeller = {};
-                let mornSum = 0, nightSum = 0, mornW = 0, nightW = 0, mornN = 0, nightN = 0;
+                let mornSum = 0, nightSum = 0;
                 rows.forEach(function (r) {
                     const day = String(r.created_at || '').slice(0, 10);
-                    if (!day) return;
-                    const amt = Number(r.amount) || 0;
-                    const w = Number(r.weight_kg) || 0;
-                    if (!byDay[day]) byDay[day] = { amt: 0, w: 0, n: 0 };
-                    byDay[day].amt += amt; byDay[day].w += w; byDay[day].n += 1;
-                    const lab = r.seller_label || r.seller_name || 'نامشخص';
-                    if (!bySeller[lab]) bySeller[lab] = { amt: 0, w: 0, days: {} };
-                    bySeller[lab].amt += amt; bySeller[lab].w += w;
+                    const amt = Number(r.sell_price) || 0;
+                    if (!byDay[day]) byDay[day] = { amt: 0, n: 0 };
+                    byDay[day].amt += amt; byDay[day].n++;
+                    const lab = r.seller_name || 'نامشخص';
+                    if (!bySeller[lab]) bySeller[lab] = { amt: 0, days: {} };
+                    bySeller[lab].amt += amt;
                     bySeller[lab].days[day] = (bySeller[lab].days[day] || 0) + amt;
-                    const role = String(r.role || r.shift || '').toLowerCase();
-                    if (/morning|صبح/.test(role)) { mornSum += amt; mornW += w; mornN++; }
-                    else if (/evening|night|شب/.test(role)) { nightSum += amt; nightW += w; nightN++; }
+                    const st = String(r.shift_label || r.sale_type || '').toLowerCase();
+                    if (/صبح|morning|am/.test(st)) mornSum += amt;
+                    else if (/شب|evening|night|pm/.test(st)) nightSum += amt;
                 });
-                // ۷ روز اخیر vs ۷ روز قبل
-                const last7 = days.slice(7);
-                const prev7 = days.slice(0, 7);
-                function sumDays(list) {
-                    let a = 0, w = 0, n = 0;
-                    list.forEach(function (d) {
-                        if (byDay[d]) { a += byDay[d].amt; w += byDay[d].w; n += byDay[d].n; }
-                    });
-                    return { a: a, w: w, n: n, avgA: list.length ? a / list.length : 0, avgW: list.length ? w / list.length : 0 };
+                const days = [];
+                for (let i = 13; i >= 0; i--) {
+                    const d = new Date(); d.setDate(d.getDate() - i);
+                    days.push(getTehranISODate(d));
                 }
-                const s7 = sumDays(last7);
-                const sP = sumDays(prev7);
-                const todayS = byDay[today] || { amt: 0, w: 0, n: 0 };
+                const last7 = days.slice(7), prev7 = days.slice(0, 7);
+                function sumDays(list) {
+                    let a = 0;
+                    list.forEach(function (d) { if (byDay[d]) a += byDay[d].amt; });
+                    return { a: a, avgA: list.length ? a / list.length : 0 };
+                }
+                const s7 = sumDays(last7), sP = sumDays(prev7);
                 const growthA = sP.avgA ? ((s7.avgA - sP.avgA) / sP.avgA * 100) : 0;
-                const growthW = sP.avgW ? ((s7.avgW - sP.avgW) / sP.avgW * 100) : 0;
-                function fa(n) { return Math.round(n).toLocaleString('fa-IR'); }
-                function fa1(n) { return (Math.round(n * 10) / 10).toLocaleString('fa-IR'); }
+                function fa(n) { return Math.round(n || 0).toLocaleString('fa-IR'); }
+                function fa1(n) { return (Math.round((n || 0) * 10) / 10).toLocaleString('fa-IR'); }
                 let sellerHtml = '';
-                const labels = Object.keys(bySeller);
-                labels.forEach(function (lab) {
+                Object.keys(bySeller).forEach(function (lab) {
                     const s = bySeller[lab];
                     const dayCount = Object.keys(s.days).length || 1;
-                    const avg = s.amt / dayCount;
-                    sellerHtml += '<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid rgba(148,163,184,.15);font-size:12px;">' +
-                        '<span>' + lab + '</span><b>' + fa(avg) + ' ت / روز</b></div>';
+                    sellerHtml += '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(148,163,184,.15);font-size:12px;"><span>' + lab + '</span><b>' + fa(s.amt / dayCount) + ' ت/روز</b></div>';
                 });
-                // مقایسه دو فروشنده هم‌شیفت (امروز)
-                let cmpHtml = '';
-                if (currentRole === 'admin' && labels.length >= 2) {
-                    const sorted = labels.slice().sort(function (a, b) {
-                        return (bySeller[b].days[today] || 0) - (bySeller[a].days[today] || 0);
-                    });
-                    const a = sorted[0], b = sorted[1];
-                    const av = bySeller[a].days[today] || 0, bv = bySeller[b].days[today] || 0;
-                    cmpHtml = '<div class="hint" style="margin-top:10px;">⚔️ مقایسه امروز: <b>' + a + '</b> ' + fa(av) + ' ت vs <b>' + b + '</b> ' + fa(bv) + ' ت</div>';
-                }
-                // پیشنهاد برای افت
-                let tip = '';
-                if (currentRole !== 'admin' && currentUserLabel && bySeller[currentUserLabel]) {
-                    const me = bySeller[currentUserLabel];
-                    const myAvg = me.amt / (Object.keys(me.days).length || 1);
-                    const todayMe = me.days[today] || 0;
-                    if (myAvg > 0 && todayMe < myAvg * 0.7) {
-                        tip = '<div style="margin-top:10px;padding:10px;border-radius:12px;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.35);font-size:12px;line-height:1.7;">📉 امروز از میانگین خودت پایین‌تری. پیشنهاد: روی کالاهای پرفروش تمرکز کن، فاکتورهای کامل‌تر بزن، و از مدیر بپرس کدام کالا الان تخفیف دارد.</div>';
-                    }
-                }
-                // قوانین رشد از کانفیگ
-                let rulesHtml = '';
-                try {
-                    const { data: cfgRow } = await _supabase.from('app_shared_config').select('config').eq('id', 1).maybeSingle();
-                    const rules = (cfgRow && cfgRow.config && cfgRow.config.sales_growth_rules) || {};
-                    const meRule = currentUserLabel ? rules[currentUserLabel] : null;
-                    if (meRule && (meRule.min_day || meRule.min_invoice || meRule.disc_products)) {
-                        rulesHtml = '<div style="margin-top:10px;padding:10px;border-radius:12px;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);font-size:12px;line-height:1.7;">🎯 حداقل روز: <b>' + fa(meRule.min_day || 0) + '</b> ت · حداقل فاکتور: <b>' + fa(meRule.min_invoice || 0) + '</b> ت' +
-                            (meRule.disc_products ? ('<br>🎁 تخفیف پیشنهادی روی: <b>' + meRule.disc_products + '</b> (' + (meRule.disc_pct || 0) + '٪)') : '') + '</div>';
-                    }
-                } catch (e) {}
-
                 box.innerHTML =
                     '<h3 style="margin:0 0 8px;">📊 میانگین فروش (۱۴ روز)</h3>' +
+                    '<div class="hint" style="margin:0 0 8px;">رکورد خوانده‌شده: ' + fa(rows.length) + '</div>' +
                     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;">' +
-                    '<div style="padding:10px;border-radius:12px;background:rgba(56,189,248,.1);"><b>میانگین ۷ روز اخیر</b><br>' + fa(s7.avgA) + ' ت<br><span style="opacity:.8;">' + fa1(s7.avgW) + ' کیلو</span></div>' +
-                    '<div style="padding:10px;border-radius:12px;background:rgba(148,163,184,.1);"><b>۷ روز قبل‌تر</b><br>' + fa(sP.avgA) + ' ت<br><span style="opacity:.8;">' + fa1(sP.avgW) + ' کیلو</span></div>' +
-                    '</div>' +
-                    '<div class="hint" style="margin-top:8px;">رشد ریالی میانگین: <b style="color:' + (growthA >= 0 ? '#34d399' : '#f87171') + ';">' + (growthA >= 0 ? '+' : '') + fa1(growthA) + '٪</b> · وزنی: <b style="color:' + (growthW >= 0 ? '#34d399' : '#f87171') + ';">' + (growthW >= 0 ? '+' : '') + fa1(growthW) + '٪</b></div>' +
-                    '<div style="margin-top:10px;font-size:12px;line-height:1.8;">☀️ میانگین شیفت صبح (ریالی/فاکتور): <b>' + fa(mornN ? mornSum / Math.max(1, last7.length) : 0) + '</b> ت<br>🌙 میانگین شیفت شب: <b>' + fa(nightN ? nightSum / Math.max(1, last7.length) : 0) + '</b> ت</div>' +
-                    (currentRole === 'admin' ? ('<div style="margin-top:10px;"><b>میانگین روزانه هر فروشنده</b>' + sellerHtml + '</div>') : '') +
-                    cmpHtml + tip + rulesHtml;
+                    '<div style="padding:10px;border-radius:12px;background:rgba(56,189,248,.12);"><b>میانگین ۷ روز اخیر</b><br>' + fa(s7.avgA) + ' ت</div>' +
+                    '<div style="padding:10px;border-radius:12px;background:rgba(148,163,184,.12);"><b>۷ روز قبل‌تر</b><br>' + fa(sP.avgA) + ' ت</div></div>' +
+                    '<div class="hint" style="margin-top:8px;">رشد میانگین: <b style="color:' + (growthA >= 0 ? '#34d399' : '#f87171') + ';">' + (growthA >= 0 ? '+' : '') + fa1(growthA) + '٪</b></div>' +
+                    '<div style="margin-top:8px;font-size:12px;">☀️ جمع صبح (۱۴روز): <b>' + fa(mornSum) + '</b> · 🌙 جمع شب: <b>' + fa(nightSum) + '</b></div>' +
+                    (currentRole === 'admin' ? ('<div style="margin-top:10px;"><b>میانگین هر فروشنده</b>' + (sellerHtml || '<div class="hint">داده‌ای نیست</div>') + '</div>') : '');
             } catch (e) {
-                box.innerHTML = '<div class="hint">میانگین فروش در دسترس نیست: ' + (e.message || e) + '</div>';
+                box.innerHTML = '<div class="hint">میانگین در دسترس نیست: ' + (e.message || e) + '</div>';
             }
         }
 
