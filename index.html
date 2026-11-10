@@ -5,7 +5,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="app-build" content="v255">
+    <meta name="app-build" content="v257">
     <!-- جلوگیری از کش‌شدن خود index.html توسط مرورگر/گوشی، تا نسخه‌ی جدید همیشه فوراً لود بشه
          (sw.js شما کش نمی‌کنه، ولی مرورگر یا هاست ممکنه خودش HTML رو کش کنه) -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -217,7 +217,7 @@
         html.catalog-guest-mode #payPublicView { display: block !important; visibility: visible !important; position: relative; z-index: 20; pointer-events: auto !important; }
         html.catalog-guest-mode body { background: #f8fafc !important; margin: 0; color: #0f172a !important; }
 
-        /* === کاتالوگ حرفه‌ای v255 === */
+        /* === کاتالوگ حرفه‌ای v257 === */
         html.catalog-guest-mode body {
             background: #f1f5f9 !important;
             color: #0f172a !important;
@@ -503,7 +503,7 @@
         .cat-stat-row span{font-size:10px;opacity:1;color:#64748b}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v255 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v257 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json" id="appManifestLink">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -4479,6 +4479,18 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         </div>
 
         <button class="submit-btn" id="manualWeeklyReportBtn" onclick="manualGenerateWeeklyReport()">📊 ساخت و ارسال گزارش‌های این بازه</button>
+        
+        <div class="report-card" style="margin-top:12px;border-color:#38bdf8;">
+            <h3 style="margin:0 0 8px;">📊 میانگین و مقایسه بازه</h3>
+            <div class="hint" style="margin-top:0;">بازه را انتخاب کن تا میانگین ریالی/وزنی همان بازه با همان تعداد روز قبلش مقایسه شود.</div>
+            <label>از تاریخ</label>
+            <input type="date" id="avgFromDate">
+            <label>تا تاریخ</label>
+            <input type="date" id="avgToDate">
+            <button type="button" class="row-btn edit-btn" style="width:100%;margin-top:8px;" onclick="renderCustomAvgRange()">📈 محاسبه میانگین بازه</button>
+            <div id="avgRangeResult" style="margin-top:10px;"></div>
+        </div>
+
         <div id="weeklyReportsList" style="margin-top:14px;"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
@@ -4489,7 +4501,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v255 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v257 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -4669,7 +4681,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             }
         })();
 
-        const APP_BUILD = 'v255';
+        const APP_BUILD = 'v257';
         try { const __bt=document.getElementById('buildTag'); if(__bt) __bt.textContent = APP_BUILD + ' - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )'; } catch(e){}
         // ثبت Service Worker پایدار — همیشه /sw.js بدون ?v= تا آپدیت شکست نخورد
         if ('serviceWorker' in navigator) {
@@ -4681,7 +4693,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
                 } catch (e) {}
                 try {
                     const u = new URL(location.href);
-                    u.searchParams.set('_v', String(APP_BUILD || 'v255'));
+                    u.searchParams.set('_v', String(APP_BUILD || 'v257'));
                     location.replace(u.pathname + u.search + u.hash);
                 } catch (e) {
                     try { location.reload(); } catch (e2) {}
@@ -14304,7 +14316,8 @@ function sbRenderAdminLists(cfg) {
             if ((type === 'entry' || type === 'exit') && !isMakeupExit) {
                 const status = await getTodayAttendanceStatus();
                 if (type === 'entry' && status.hasEntry && !status.hasExit) {
-                    showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج» را بزن.');
+                    try{maybeShowSellerCoachTip();}catch(e){}
+showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج» را بزن.');
                     document.getElementById('attType').value = 'exit';
                     toggleAttendanceFields();
                     attResetSubmitBtn();
@@ -15875,7 +15888,7 @@ function sbRenderAdminLists(cfg) {
         }
 
         async function publishGlobalAppVersion(ver) {
-            const version = String(ver || (typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v255'));
+            const version = String(ver || (typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v257'));
             try {
                 const { data } = await _supabase.from('app_shared_config').select('config').eq('id', 1).maybeSingle();
                 const cfg = (data && data.config && typeof data.config === 'object') ? Object.assign({}, data.config) : {};
@@ -15909,7 +15922,7 @@ function sbRenderAdminLists(cfg) {
             } catch (e) {}
             try {
                 const u = new URL(location.href.split('#')[0]);
-                u.searchParams.set('_v', String(APP_BUILD || 'v255'));
+                u.searchParams.set('_v', String(APP_BUILD || 'v257'));
                 u.searchParams.set('_t', String(Date.now()));
                 u.searchParams.set('nocache', '1');
                 location.replace(u.toString());
@@ -15971,7 +15984,7 @@ function sbRenderAdminLists(cfg) {
         }
         async function diagForceUpdate() {
             showToast('⏳ انتشار آپدیت اجباری برای همه گوشی‌ها...');
-            const ver = String(typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v255');
+            const ver = String(typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v257');
             let published = false;
             try {
                 published = await publishGlobalAppVersion(ver);
@@ -24154,6 +24167,186 @@ notify pgrst, 'reload schema';`;
             el.innerHTML = t;
         }
 
+
+
+
+        async function maybeShowSellerCoachTip() {
+            try {
+                if (!(currentRole === 'morning_seller' || currentRole === 'evening_seller')) return;
+                const day = getTehranISODate(new Date());
+                const key = 'coach_tip_shown_' + day + '_' + (currentUserLabel || '');
+                if (sessionStorage.getItem(key)) return;
+                sessionStorage.setItem(key, '1');
+                // ساخت پیام کوتاه
+                let msg = '💚 خسته نباشی. امروز با تمرکز روی فاکتورهای کامل‌تر و پیشنهاد کالاهای مکمل بفروش.';
+                try {
+                    if (_supabase) {
+                        const { data: cfgRow } = await _supabase.from('app_shared_config').select('config').eq('id', 1).maybeSingle();
+                        const rules = (cfgRow && cfgRow.config && cfgRow.config.sales_growth_rules) || {};
+                        const me = rules[currentUserLabel];
+                        if (me && me.disc_products) msg = '🎯 امروز روی این کالاها با تخفیف ' + (me.disc_pct || 0) + '٪ تمرکز کن: ' + me.disc_products + '\\nحداقل فروش روز: ' + (me.min_day || '—') + ' تومان';
+                    }
+                } catch (e) {}
+                // نوتیف داخل صفحه
+                const wrap = document.createElement('div');
+                wrap.id = 'sellerCoachModal';
+                wrap.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;padding:16px;';
+                wrap.innerHTML = '<div style="background:#fff;color:#0f172a;border-radius:18px;padding:18px;max-width:360px;width:100%;direction:rtl;box-shadow:0 20px 50px rgba(0,0,0,.25);">' +
+                    '<div style="font-weight:900;font-size:16px;margin-bottom:8px;">📌 پیشنهاد روزانه فروش</div>' +
+                    '<div style="font-size:13px;line-height:1.8;margin-bottom:14px;white-space:pre-wrap;">' + msg + '</div>' +
+                    '<button type="button" id="coachOkBtn" style="width:100%;padding:12px;border:0;border-radius:12px;background:linear-gradient(100deg,#10b981,#0ea5e9);color:#fff;font:inherit;font-weight:900;cursor:pointer;">متوجه شدم</button></div>';
+                document.body.appendChild(wrap);
+                document.getElementById('coachOkBtn').onclick = function () { try { wrap.remove(); } catch (e) {} };
+            } catch (e) {}
+        }
+
+        async function renderCustomAvgRange() {
+            const out = document.getElementById('avgRangeResult');
+            if (!out || !_supabase) return;
+            const from = (document.getElementById('avgFromDate') || {}).value;
+            const to = (document.getElementById('avgToDate') || {}).value;
+            if (!from || !to) return showToast('از و تا تاریخ را مشخص کن');
+            out.innerHTML = '<div class="hint">در حال محاسبه...</div>';
+            try {
+                const fromD = new Date(from + 'T00:00:00');
+                const toD = new Date(to + 'T23:59:59');
+                const days = Math.max(1, Math.round((toD - fromD) / 86400000) + 1);
+                const prevTo = new Date(fromD); prevTo.setDate(prevTo.getDate() - 1);
+                const prevFrom = new Date(prevTo); prevFrom.setDate(prevFrom.getDate() - (days - 1));
+                const { data } = await _supabase.from('sales').select('amount, weight_kg, created_at, sale_date, seller_label, seller_name, role, shift')
+                    .gte('created_at', prevFrom.toISOString()).lte('created_at', toD.toISOString()).limit(8000);
+                const rows = data || [];
+                function pack(a, b) {
+                    let sum = 0, w = 0, n = 0;
+                    rows.forEach(function (r) {
+                        const day = r.sale_date || String(r.created_at || '').slice(0, 10);
+                        if (day >= a && day <= b) { sum += Number(r.amount) || 0; w += Number(r.weight_kg) || 0; n++; }
+                    });
+                    return { sum: sum, w: w, n: n, avg: sum / days, avgW: w / days };
+                }
+                const cur = pack(from, to);
+                const pf = prevFrom.toISOString().slice(0, 10), pt = prevTo.toISOString().slice(0, 10);
+                const prev = pack(pf, pt);
+                const g = prev.avg ? ((cur.avg - prev.avg) / prev.avg * 100) : 0;
+                const gw = prev.avgW ? ((cur.avgW - prev.avgW) / prev.avgW * 100) : 0;
+                function fa(n) { return Math.round(n).toLocaleString('fa-IR'); }
+                out.innerHTML = '<div style="font-size:13px;line-height:1.85;">' +
+                    '<b>بازه انتخابی (' + days + ' روز)</b><br>جمع: ' + fa(cur.sum) + ' ت · میانگین روز: <b>' + fa(cur.avg) + '</b> ت · میانگین وزن: ' + fa(cur.avgW) + ' کیلو<br>' +
+                    '<b>همان تعداد روز قبل</b><br>جمع: ' + fa(prev.sum) + ' ت · میانگین روز: <b>' + fa(prev.avg) + '</b> ت<br>' +
+                    'رشد ریالی میانگین: <b style="color:' + (g>=0?'#34d399':'#f87171') + ';">' + (g>=0?'+':'') + (Math.round(g*10)/10) + '٪</b> · وزنی: <b>' + (gw>=0?'+':'') + (Math.round(gw*10)/10) + '٪</b></div>';
+            } catch (e) {
+                out.innerHTML = '<div class="hint">خطا: ' + (e.message || e) + '</div>';
+            }
+        }
+
+        async function renderSalesAvgPanel() {
+            const box = document.getElementById('dashAvgPanel');
+            if (!box || !_supabase) return;
+            try {
+                const today = getTehranISODate(new Date());
+                // ۱۴ روز اخیر
+                const days = [];
+                for (let i = 13; i >= 0; i--) {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    days.push(getTehranISODate(d));
+                }
+                const fromISO = days[0] + 'T00:00:00.000Z';
+                const { data: sales, error } = await _supabase.from('sales').select('amount, weight_kg, seller_name, seller_label, role, created_at, sale_date, shift')
+                    .gte('created_at', fromISO).limit(5000);
+                if (error) throw error;
+                const rows = sales || [];
+                const byDay = {};
+                const bySeller = {};
+                let mornSum = 0, nightSum = 0, mornW = 0, nightW = 0, mornN = 0, nightN = 0;
+                rows.forEach(function (r) {
+                    const day = (r.sale_date || String(r.created_at || '').slice(0, 10));
+                    if (!day) return;
+                    const amt = Number(r.amount) || 0;
+                    const w = Number(r.weight_kg) || 0;
+                    if (!byDay[day]) byDay[day] = { amt: 0, w: 0, n: 0 };
+                    byDay[day].amt += amt; byDay[day].w += w; byDay[day].n += 1;
+                    const lab = r.seller_label || r.seller_name || 'نامشخص';
+                    if (!bySeller[lab]) bySeller[lab] = { amt: 0, w: 0, days: {} };
+                    bySeller[lab].amt += amt; bySeller[lab].w += w;
+                    bySeller[lab].days[day] = (bySeller[lab].days[day] || 0) + amt;
+                    const role = String(r.role || r.shift || '').toLowerCase();
+                    if (/morning|صبح/.test(role)) { mornSum += amt; mornW += w; mornN++; }
+                    else if (/evening|night|شب/.test(role)) { nightSum += amt; nightW += w; nightN++; }
+                });
+                // ۷ روز اخیر vs ۷ روز قبل
+                const last7 = days.slice(7);
+                const prev7 = days.slice(0, 7);
+                function sumDays(list) {
+                    let a = 0, w = 0, n = 0;
+                    list.forEach(function (d) {
+                        if (byDay[d]) { a += byDay[d].amt; w += byDay[d].w; n += byDay[d].n; }
+                    });
+                    return { a: a, w: w, n: n, avgA: list.length ? a / list.length : 0, avgW: list.length ? w / list.length : 0 };
+                }
+                const s7 = sumDays(last7);
+                const sP = sumDays(prev7);
+                const todayS = byDay[today] || { amt: 0, w: 0, n: 0 };
+                const growthA = sP.avgA ? ((s7.avgA - sP.avgA) / sP.avgA * 100) : 0;
+                const growthW = sP.avgW ? ((s7.avgW - sP.avgW) / sP.avgW * 100) : 0;
+                function fa(n) { return Math.round(n).toLocaleString('fa-IR'); }
+                function fa1(n) { return (Math.round(n * 10) / 10).toLocaleString('fa-IR'); }
+                let sellerHtml = '';
+                const labels = Object.keys(bySeller);
+                labels.forEach(function (lab) {
+                    const s = bySeller[lab];
+                    const dayCount = Object.keys(s.days).length || 1;
+                    const avg = s.amt / dayCount;
+                    sellerHtml += '<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid rgba(148,163,184,.15);font-size:12px;">' +
+                        '<span>' + lab + '</span><b>' + fa(avg) + ' ت / روز</b></div>';
+                });
+                // مقایسه دو فروشنده هم‌شیفت (امروز)
+                let cmpHtml = '';
+                if (currentRole === 'admin' && labels.length >= 2) {
+                    const sorted = labels.slice().sort(function (a, b) {
+                        return (bySeller[b].days[today] || 0) - (bySeller[a].days[today] || 0);
+                    });
+                    const a = sorted[0], b = sorted[1];
+                    const av = bySeller[a].days[today] || 0, bv = bySeller[b].days[today] || 0;
+                    cmpHtml = '<div class="hint" style="margin-top:10px;">⚔️ مقایسه امروز: <b>' + a + '</b> ' + fa(av) + ' ت vs <b>' + b + '</b> ' + fa(bv) + ' ت</div>';
+                }
+                // پیشنهاد برای افت
+                let tip = '';
+                if (currentRole !== 'admin' && currentUserLabel && bySeller[currentUserLabel]) {
+                    const me = bySeller[currentUserLabel];
+                    const myAvg = me.amt / (Object.keys(me.days).length || 1);
+                    const todayMe = me.days[today] || 0;
+                    if (myAvg > 0 && todayMe < myAvg * 0.7) {
+                        tip = '<div style="margin-top:10px;padding:10px;border-radius:12px;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.35);font-size:12px;line-height:1.7;">📉 امروز از میانگین خودت پایین‌تری. پیشنهاد: روی کالاهای پرفروش تمرکز کن، فاکتورهای کامل‌تر بزن، و از مدیر بپرس کدام کالا الان تخفیف دارد.</div>';
+                    }
+                }
+                // قوانین رشد از کانفیگ
+                let rulesHtml = '';
+                try {
+                    const { data: cfgRow } = await _supabase.from('app_shared_config').select('config').eq('id', 1).maybeSingle();
+                    const rules = (cfgRow && cfgRow.config && cfgRow.config.sales_growth_rules) || {};
+                    const meRule = currentUserLabel ? rules[currentUserLabel] : null;
+                    if (meRule && (meRule.min_day || meRule.min_invoice || meRule.disc_products)) {
+                        rulesHtml = '<div style="margin-top:10px;padding:10px;border-radius:12px;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);font-size:12px;line-height:1.7;">🎯 حداقل روز: <b>' + fa(meRule.min_day || 0) + '</b> ت · حداقل فاکتور: <b>' + fa(meRule.min_invoice || 0) + '</b> ت' +
+                            (meRule.disc_products ? ('<br>🎁 تخفیف پیشنهادی روی: <b>' + meRule.disc_products + '</b> (' + (meRule.disc_pct || 0) + '٪)') : '') + '</div>';
+                    }
+                } catch (e) {}
+
+                box.innerHTML =
+                    '<h3 style="margin:0 0 8px;">📊 میانگین فروش (۱۴ روز)</h3>' +
+                    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;">' +
+                    '<div style="padding:10px;border-radius:12px;background:rgba(56,189,248,.1);"><b>میانگین ۷ روز اخیر</b><br>' + fa(s7.avgA) + ' ت<br><span style="opacity:.8;">' + fa1(s7.avgW) + ' کیلو</span></div>' +
+                    '<div style="padding:10px;border-radius:12px;background:rgba(148,163,184,.1);"><b>۷ روز قبل‌تر</b><br>' + fa(sP.avgA) + ' ت<br><span style="opacity:.8;">' + fa1(sP.avgW) + ' کیلو</span></div>' +
+                    '</div>' +
+                    '<div class="hint" style="margin-top:8px;">رشد ریالی میانگین: <b style="color:' + (growthA >= 0 ? '#34d399' : '#f87171') + ';">' + (growthA >= 0 ? '+' : '') + fa1(growthA) + '٪</b> · وزنی: <b style="color:' + (growthW >= 0 ? '#34d399' : '#f87171') + ';">' + (growthW >= 0 ? '+' : '') + fa1(growthW) + '٪</b></div>' +
+                    '<div style="margin-top:10px;font-size:12px;line-height:1.8;">☀️ میانگین شیفت صبح (ریالی/فاکتور): <b>' + fa(mornN ? mornSum / Math.max(1, last7.length) : 0) + '</b> ت<br>🌙 میانگین شیفت شب: <b>' + fa(nightN ? nightSum / Math.max(1, last7.length) : 0) + '</b> ت</div>' +
+                    (currentRole === 'admin' ? ('<div style="margin-top:10px;"><b>میانگین روزانه هر فروشنده</b>' + sellerHtml + '</div>') : '') +
+                    cmpHtml + tip + rulesHtml;
+            } catch (e) {
+                box.innerHTML = '<div class="hint">میانگین فروش در دسترس نیست: ' + (e.message || e) + '</div>';
+            }
+        }
+
         async function sstSave() {
             const sel = document.getElementById('sstSeller');
             const seller_label = sel ? sel.value : '';
@@ -24165,6 +24358,12 @@ notify pgrst, 'reload schema';`;
             const penalty_type = document.getElementById('sstPenaltyType').value;
             const penalty_value = v77Num(document.getElementById('sstPenaltyValue').value);
             const active = document.getElementById('sstActive').checked;
+            const over_type = (document.getElementById('sstOverType') || {}).value || 'fixed';
+            const over_value = v77Num((document.getElementById('sstOverValue') || {}).value);
+            const min_invoice = v77Num((document.getElementById('sstMinInvoice') || {}).value);
+            const min_day = v77Num((document.getElementById('sstMinDay') || {}).value);
+            const disc_products = String((document.getElementById('sstDiscProducts') || {}).value || '').trim();
+            const disc_pct = v77Num((document.getElementById('sstDiscPct') || {}).value);
             if (target_amount <= 0) return showToast('⛔ مبلغ هدف فروش را وارد کن.');
             if (bonus_value <= 0 && penalty_value <= 0) return showToast('⛔ حداقل یکی از «پاداش» یا «جریمه» را وارد کن.');
             if ((bonus_type === 'percent' && bonus_value > 100) || (penalty_type === 'percent' && penalty_value > 100)) return showToast('⛔ درصد نمی‌تواند بیشتر از ۱۰۰ باشد.');
@@ -24172,6 +24371,19 @@ notify pgrst, 'reload schema';`;
             const rg = sstRangeFromForm();
             if (rg.error) return showToast('⛔ ' + rg.error);
             const row = { seller_label, base_salary, target_amount, bonus_type, bonus_value, penalty_type, penalty_value, active, updated_at: new Date().toISOString() };
+            // قوانین رشد / پاداش اضافه — در app_shared_config همگام می‌شود
+            try {
+                if (_supabase) {
+                    const { data: cfgRow } = await _supabase.from('app_shared_config').select('config').eq('id', 1).maybeSingle();
+                    const cfg = (cfgRow && cfgRow.config) || {};
+                    cfg.sales_growth_rules = cfg.sales_growth_rules || {};
+                    cfg.sales_growth_rules[seller_label] = {
+                        over_type, over_value, min_invoice, min_day, disc_products, disc_pct,
+                        updated_at: new Date().toISOString()
+                    };
+                    await _supabase.from('app_shared_config').upsert({ id: 1, config: cfg });
+                }
+            } catch (eGrow) { console.warn(eGrow); }
             let error = null;
             if (_sstMulti) {
                 const payload = { ...row, start_date: rg.start, end_date: rg.end };
@@ -29301,7 +29513,7 @@ window.catOpenSupportChat = window.catOpenSupportChat || function () {
             '<button type="button" onclick="catSubmitSurvey()" style="width:100%;margin-top:10px;padding:12px;border:0;border-radius:12px;background:linear-gradient(100deg,#6366f1,#0ea5e9);color:#fff;font:inherit;font-weight:800;cursor:pointer;">ارسال نظر</button>' +
             '<div id="catSurveyStatus" style="margin-top:8px;font-size:12px;text-align:center;min-height:18px;"></div>' +
             '</div>' +
-            '<div style="margin:12px 10px;"><button type="button" onclick="(window.catOpenSupportChat||window.catSupportOpenWindow||function(){alert('پشتیبانی در حال بارگذاری است')})()" style="width:100%;padding:14px;border:0;border-radius:16px;background:linear-gradient(100deg,#25d366,#0ea5e9);color:#fff;font:inherit;font-weight:900;font-size:14px;box-shadow:0 8px 24px rgba(14,165,233,.25);cursor:pointer;">💬 گفتگو با پشتیبانی</button></div>' +
+            '<div style="margin:12px 10px;"><button type="button" onclick="window.catOpenSupportChat&&window.catOpenSupportChat()" style="width:100%;padding:14px;border:0;border-radius:16px;background:linear-gradient(100deg,#25d366,#0ea5e9);color:#fff;font:inherit;font-weight:900;font-size:14px;box-shadow:0 8px 24px rgba(14,165,233,.25);cursor:pointer;">💬 گفتگو با پشتیبانی</button></div>' +
             '<div class="cat-footer-pro" style="margin:0 10px 100px;padding:18px 14px 22px;border-radius:20px;background:#ffffff;border:1px solid #e2e8f0;text-align:center;font-size:11px;line-height:1.8;color:#334155;box-shadow:0 6px 20px rgba(15,23,42,.06);">' +
             '<div style="font-size:14px;font-weight:900;color:#0f172a;margin-bottom:4px;">تازه مارکت</div>' +
             '<div>فروشگاه تخصصی لبنیات، ترشیجات و سوسیس‌وکالباس فله</div>' +
@@ -29928,7 +30140,7 @@ async function openCatalogPublic() {
                     '</div>' +
                     '<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:8px;">' +
                     (cfg.phone ? '<a href="tel:' + catEsc(cfg.phone) + '" style="padding:6px 12px;border-radius:999px;background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.3);color:#7dd3fc;font-size:11px;font-weight:800;text-decoration:none;">📞 تماس</a>' : '') +
-                    ('<button type="button" onclick="(window.catOpenSupportChat||window.catSupportOpenWindow||function(){alert('پشتیبانی در حال بارگذاری است')})()" style="padding:6px 12px;border-radius:999px;border:0;background:linear-gradient(100deg,#25d366,#128c7e);color:#fff;font-size:11px;font-weight:800;cursor:pointer;">💬 پشتیبانی</button>') +
+                    ('<button type="button" onclick="window.catOpenSupportChat&&window.catOpenSupportChat()" style="padding:6px 12px;border-radius:999px;border:0;background:linear-gradient(100deg,#25d366,#128c7e);color:#fff;font-size:11px;font-weight:800;cursor:pointer;">💬 پشتیبانی</button>') +
                     '<a href="https://instagram.com/taze.market.ali" target="_blank" rel="noopener" style="padding:6px 12px;border-radius:999px;background:linear-gradient(100deg,#f59e0b,#ec4899);color:#fff;font-size:11px;font-weight:800;text-decoration:none;">📷 اینستا</a>' +
                     '</div></div>' +
                     '<div style="padding:0 10px 8px;"><input type="search" id="catSearchInput" dir="auto" placeholder="🔍 جستجوی محصول (مثلاً پنیر، خیارشور...)" value="' + catEsc(catSearchQ || '') + '" oninput="catSearch(this.value)" style="width:100%;padding:12px 14px;border-radius:14px;border:1px solid rgba(148,163,184,.3);background:rgba(15,23,42,.9);color:#e2e8f0;font:inherit;"></div>' +

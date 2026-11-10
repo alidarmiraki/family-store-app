@@ -1,5 +1,5 @@
 // Service Worker v255 — شبکه با مهلت کوتاه + برگشت سریع به کش
-const V = 'v255';
+const V = 'v257';
 const SHELL = 'shell-' + V;
 const LIBS = 'libs-v1';
 const CDN = /(^|\.)(cdn\.jsdelivr\.net|unpkg\.com|cdnjs\.cloudflare\.com|fonts\.googleapis\.com|fonts\.gstatic\.com)$/;
