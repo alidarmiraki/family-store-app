@@ -1,5 +1,5 @@
-// Service Worker v255 — شبکه با مهلت کوتاه + برگشت سریع به کش
-const V = 'v258';
+// Service Worker v259 — دسترسی پایدار در اینترنت ضعیف (ایران)
+const V = 'v259';
 const SHELL = 'shell-' + V;
 const LIBS = 'libs-v1';
 const CDN = /(^|\.)(cdn\.jsdelivr\.net|unpkg\.com|cdnjs\.cloudflare\.com|fonts\.googleapis\.com|fonts\.gstatic\.com)$/;
@@ -23,11 +23,8 @@ self.addEventListener('install', (e) => {
     try {
       const c = await caches.open(SHELL);
       await Promise.race([
-        Promise.all([
-          c.add(new Request('./index.html?v=' + V, { cache: 'reload' })).catch(function () {}),
-          c.add(new Request('./?v=' + V, { cache: 'reload' })).catch(function () {})
-        ]),
-        new Promise(function (r) { setTimeout(r, 2000); })
+        c.add(new Request('./index.html', { cache: 'reload' })).catch(function () {}),
+        new Promise(function (r) { setTimeout(r, 8000); })
       ]);
     } catch (err) {}
   })());
@@ -35,16 +32,43 @@ self.addEventListener('install', (e) => {
 
 self.addEventListener('activate', (e) => {
   e.waitUntil((async () => {
-    const keys = await caches.keys();
-    await Promise.all(keys.filter((k) => k !== SHELL && k !== LIBS).map((k) => caches.delete(k)));
+    // کش‌های shell قدیمی را نگه دار (حداکثر ۳ نسخه) تا اگر شبکه قطع بود سایت باز شود
+    try {
+      const keys = await caches.keys();
+      const shells = keys.filter((k) => k.startsWith('shell-')).sort();
+      const keep = new Set([SHELL, LIBS].concat(shells.slice(-3)));
+      await Promise.all(keys.filter((k) => !keep.has(k) && !k.startsWith('shell-')).map((k) => caches.delete(k)));
+      // فقط shellهای خیلی قدیمی را پاک کن
+      const oldShells = shells.filter((k) => k !== SHELL);
+      if (oldShells.length > 2) {
+        await Promise.all(oldShells.slice(0, oldShells.length - 2).map((k) => caches.delete(k)));
+      }
+    } catch (err) {}
     await self.clients.claim();
-    const list = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    list.forEach((c) => c.postMessage({ type: 'SW_UPDATED', version: V }));
+    try {
+      const list = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      list.forEach((c) => c.postMessage({ type: 'SW_UPDATED', version: V }));
+    } catch (e) {}
   })());
 });
 
 async function fromCache(req) {
-  return (await caches.match(req)) || (await caches.match(req, { ignoreSearch: true }));
+  const direct = await caches.match(req);
+  if (direct) return direct;
+  const ignore = await caches.match(req, { ignoreSearch: true });
+  if (ignore) return ignore;
+  // جستجو در همه کش‌های shell
+  try {
+    const keys = await caches.keys();
+    for (const k of keys) {
+      if (!k.startsWith('shell-') && k !== LIBS) continue;
+      const c = await caches.open(k);
+      const hit = (await c.match(req)) || (await c.match(req, { ignoreSearch: true })) ||
+        (await c.match('./index.html')) || (await c.match('./'));
+      if (hit) return hit;
+    }
+  } catch (e) {}
+  return null;
 }
 
 async function putShell(req, res) {
@@ -54,12 +78,9 @@ async function putShell(req, res) {
       await c.put(req, res.clone());
       try {
         const u = new URL(req.url);
-        const clean = u.origin + u.pathname;
-        await c.put(clean, res.clone());
-        if (u.pathname.endsWith('/') || u.pathname.endsWith('index.html') || u.pathname === '') {
-          await c.put('./index.html', res.clone());
-          await c.put('./', res.clone());
-        }
+        await c.put(u.origin + u.pathname, res.clone());
+        await c.put('./index.html', res.clone());
+        await c.put('./', res.clone());
       } catch (e) {}
     }
   } catch (e) {}
@@ -71,36 +92,41 @@ function fetchWithTimeout(req, ms) {
   return fetch(req, { cache: 'no-store', signal: ctrl.signal }).finally(function () { clearTimeout(t); });
 }
 
-// HTML: حداکثر ۳٫۵ ثانیه منتظر شبکه بمان؛ وگرنه کش قبلی را فوری بده
-async function networkFirstHTML(req) {
+// HTML: اول کش فوری (اگر بود)، همزمان شبکه تا ۱۵ ثانیه؛ اگر شبکه رسید جایگزین کن
+async function htmlStrategy(req) {
+  const cached = await fromCache(req);
   try {
-    const res = await fetchWithTimeout(req, 3500);
+    const res = await fetchWithTimeout(req, 15000);
     if (res && res.ok) {
       putShell(req, res.clone());
       return res;
     }
   } catch (e) {}
-  const cached = await fromCache(req);
   if (cached) return cached;
+  // آخرین تلاش بدون timeout کوتاه
   try {
     const res2 = await fetch(req, { cache: 'no-store' });
-    if (res2) {
+    if (res2 && res2.ok) {
       putShell(req, res2.clone());
       return res2;
     }
+    if (res2) return res2;
   } catch (e2) {}
+  if (cached) return cached;
+  // فقط اگر هیچ کش و شبکه‌ای نبود
   return new Response(
     '<!DOCTYPE html><html lang="fa" dir="rtl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
-    '<title>تازه مارکت</title><body style="font-family:sans-serif;padding:24px;text-align:center;background:#f8fafc;color:#0f172a">' +
-    '<h2>ارتباط ضعیف است</h2><p>صفحه از سرور نرسید. چند ثانیه دیگر دوباره تلاش کنید.</p>' +
-    '<p><a href="./?v=' + V + '">تلاش مجدد</a></p></body></html>',
-    { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+    '<title>تازه مارکت</title><body style="font-family:Tahoma,sans-serif;padding:28px;text-align:center;background:#f8fafc;color:#0f172a;line-height:1.9">' +
+    '<h2>ارتباط با سرور برقرار نشد</h2><p>یک‌بار اینترنت را چک کنید یا چند ثانیه بعد دوباره تلاش کنید.</p>' +
+    '<p style="font-size:13px;color:#64748b">اگر با فیلترشکن باز می‌شود، مشکل از مسیر شبکه است نه از خود سایت.</p>' +
+    '<p><a href="./?nocache=1&v=' + V + '">تلاش مجدد</a></p></body></html>',
+    { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } }
   );
 }
 
 async function networkThenCache(req) {
   try {
-    const res = await fetchWithTimeout(req, 4000);
+    const res = await fetchWithTimeout(req, 12000);
     if (res && res.ok) await putShell(req, res);
     if (res) return res;
   } catch (e) {}
@@ -134,9 +160,7 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
 
   if (url.pathname.endsWith('sw.js')) {
-    e.respondWith(
-      fetch(e.request, { cache: 'no-store' }).catch(async () => (await fromCache(e.request)) || new Response('', { status: 503 }))
-    );
+    e.respondWith(fetch(e.request, { cache: 'no-store' }).catch(async () => (await fromCache(e.request)) || new Response('', { status: 503 })));
     return;
   }
 
@@ -151,9 +175,8 @@ self.addEventListener('fetch', (e) => {
       url.pathname.endsWith('index.html') ||
       url.pathname.endsWith('.html') ||
       url.pathname === '';
-
     if (isNav) {
-      e.respondWith(networkFirstHTML(e.request));
+      e.respondWith(htmlStrategy(e.request));
       return;
     }
     e.respondWith(networkThenCache(e.request));
@@ -163,25 +186,4 @@ self.addEventListener('fetch', (e) => {
   if (CDN.test(url.hostname)) {
     e.respondWith(cacheFirst(e.request));
   }
-});
-
-self.addEventListener('push', (e) => {
-  let data = { title: 'غرفه فامیلی', body: 'پیام جدید' };
-  try {
-    if (e.data) data = Object.assign(data, e.data.json());
-  } catch (err) {}
-  e.waitUntil(
-    self.registration.showNotification(data.title || 'غرفه فامیلی', {
-      body: data.body || '',
-      icon: data.icon || './icon-192.png',
-      data: data.data || {}
-    })
-  );
-});
-
-self.addEventListener('notificationclick', (e) => {
-  e.notification.close();
-  e.waitUntil(
-    clients.openWindow((e.notification.data && e.notification.data.url) || './')
-  );
 });
