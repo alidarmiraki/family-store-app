@@ -5,7 +5,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="app-build" content="v280">
+    <meta name="app-build" content="v281">
     <!-- جلوگیری از کش‌شدن خود index.html توسط مرورگر/گوشی، تا نسخه‌ی جدید همیشه فوراً لود بشه
          (sw.js شما کش نمی‌کنه، ولی مرورگر یا هاست ممکنه خودش HTML رو کش کنه) -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -5159,7 +5159,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v280 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v281 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -17969,16 +17969,217 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
         // همین گوشی (localStorage) نگه داشته می‌شه و به‌محض وصل شدن اینترنت خودکار
         // (بدون نیاز به هیچ کاری از طرف فروشنده) ارسال می‌شه.
         // =========================================================================
+        const OFFLINE_SALES_KEY = 'offline_sales_queue_v1';
+        function loadOfflineSalesQueue() {
+            try {
+                const raw = localStorage.getItem(OFFLINE_SALES_KEY);
+                const arr = raw ? JSON.parse(raw) : [];
+                return Array.isArray(arr) ? arr : [];
+            } catch (e) { return []; }
+        }
+        function saveOfflineSalesQueue(arr) {
+            try { localStorage.setItem(OFFLINE_SALES_KEY, JSON.stringify(arr || [])); } catch (e) {}
+        }
         function queueOfflineSale(type) {
-            const ids = SALE_FORM_IDS[type];
-            const name = document.getElementById(ids.name).value.trim();
-            const qtyRaw = document.getElementById(ids.qty).value;
-            const unit = document.querySelector(`input[name="${ids.qtyUnitName}"]:checked`)?.value || 'kg';
-            if (!name || !qtyRaw) {
- ProductsList.filter(p => p.category === 'sausage'));
-            setupProductAutocomplete('seName', () => cachedProductsList);
-            setupProductAutocomplete('poProductName', () => cachedProductsList);
-            setupProductAutocomplete('ptItemName', () => cachedProductsList);
+            try {
+                const ids = SALE_FORM_IDS[type];
+                const name = document.getElementById(ids.name).value.trim();
+                const qtyRaw = document.getElementById(ids.qty).value;
+                const unit = document.querySelector(`input[name="${ids.qtyUnitName}"]:checked`)?.value || 'kg';
+                if (!name || !qtyRaw) {
+                    showToast('⛔ نام کالا و مقدار را وارد کن');
+                    return;
+                }
+                const qty = (typeof getSaleQtyInKg === 'function') ? getSaleQtyInKg(type) : (parseFloat(String(qtyRaw).replace(/,/g, '')) || 0);
+                if (!qty || qty <= 0) {
+                    showToast('⛔ مقدار معتبر نیست');
+                    return;
+                }
+                let unitPrice = 0;
+                try {
+                    unitPrice = (selectedProductUnitPrice && selectedProductUnitPrice[type]) || 0;
+                } catch (e) {}
+                if (!unitPrice) {
+                    try {
+                        const p = findProductInList(name, cachedProductsList || []);
+                        if (p) unitPrice = Number(p.sell_price) || 0;
+                    } catch (e2) {}
+                }
+                const customerNameVal = document.getElementById(ids.customerName) ? document.getElementById(ids.customerName).value.trim() : '';
+                const isLateEntry = !!(document.getElementById(ids.lateToggle) && document.getElementById(ids.lateToggle).checked);
+                let lateDateVal = null, lateShiftVal = null;
+                if (isLateEntry) {
+                    lateDateVal = document.getElementById(ids.lateDate) ? document.getElementById(ids.lateDate).value : null;
+                    lateShiftVal = document.getElementById(ids.lateShift) ? document.getElementById(ids.lateShift).value : null;
+                }
+                const item = {
+                    id: 'off_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+                    type: type,
+                    product_name: name,
+                    quantity: qty,
+                    unit: unit,
+                    unit_price: unitPrice,
+                    sell_price: Math.round(unitPrice * qty),
+                    seller_name: currentUserLabel || '',
+                    customer_name: customerNameVal || null,
+                    shift_label: isLateEntry ? lateShiftVal : null,
+                    late_date: lateDateVal,
+                    created_at: new Date().toISOString()
+                };
+                const q = loadOfflineSalesQueue();
+                q.push(item);
+                saveOfflineSalesQueue(q);
+                try {
+                    document.getElementById(ids.name).value = '';
+                    document.getElementById(ids.qty).value = '';
+                    if (document.getElementById(ids.customerName)) document.getElementById(ids.customerName).value = '';
+                } catch (e3) {}
+                showToast('📴 اینترنت قطع است — فاکتور روی گوشی ذخیره شد و بعد از وصل شدن خودکار ارسال می‌شود.');
+            } catch (e) {
+                console.warn('queueOfflineSale', e);
+                showToast('❌ ذخیره آفلاین فروش ناموفق بود');
+            }
+        }
+        async function flushOfflineSales() {
+            const q = loadOfflineSalesQueue();
+            if (!q.length) return 0;
+            if (!navigator.onLine || !_supabase) return 0;
+            let ok = 0;
+            const remain = [];
+            for (const item of q) {
+                try {
+                    let product = null;
+                    try { product = findProductInList(item.product_name, cachedProductsList || []); } catch (e) {}
+                    if (!product) {
+                        try { await ensureProductsLoaded(true); product = findProductInList(item.product_name, cachedProductsList || []); } catch (e) {}
+                    }
+                    if (!product) {
+                        remain.push(item);
+                        continue;
+                    }
+                    const qty = Number(item.quantity) || 0;
+                    const unitPrice = Number(item.unit_price) || Number(product.sell_price) || 0;
+                    const sellPrice = Number(item.sell_price) || Math.round(unitPrice * qty);
+                    const createdAt = item.late_date
+                        ? (item.late_date + 'T12:00:00+03:30')
+                        : (item.created_at || new Date().toISOString());
+                    const { error } = await _supabase.from('sales').insert([{
+                        product_code: product.code,
+                        quantity: qty,
+                        sell_price: sellPrice,
+                        seller_name: item.seller_name || currentUserLabel || '',
+                        sale_type: item.type || 'instore',
+                        shift_label: item.shift_label || null,
+                        customer_name: item.customer_name || null,
+                        created_at: createdAt
+                    }]);
+                    if (error) { remain.push(item); continue; }
+                    ok++;
+                } catch (e) {
+                    remain.push(item);
+                }
+            }
+            saveOfflineSalesQueue(remain);
+            if (ok) {
+                try { showToast('✅ ' + ok + ' فاکتور آفلاین ارسال شد' + (remain.length ? (' — ' + remain.length + ' مورد مانده') : '')); } catch (e) {}
+            }
+            return ok;
+        }
+        function flushOfflineSaleQueue() {
+            try { flushOfflineSales(); } catch (e) {}
+        }
+        try {
+            window.addEventListener('online', function () {
+                try { flushOfflineSales(); } catch (e) {}
+            });
+        } catch (e) {}
+
+        async function loadProductDatalist() {
+            try {
+                await ensureProductsLoaded(false);
+            } catch (e) {}
+            const list = cachedProductsList || [];
+            const fill = function (id) {
+                const el = document.getElementById(id);
+                if (!el) return;
+                try {
+                    // datalist مرتبط
+                    let listId = el.getAttribute('list');
+                    if (!listId) {
+                        listId = id + 'List';
+                        el.setAttribute('list', listId);
+                    }
+                    let dl = document.getElementById(listId);
+                    if (!dl) {
+                        dl = document.createElement('datalist');
+                        dl.id = listId;
+                        document.body.appendChild(dl);
+                    }
+                    dl.innerHTML = list.map(function (p) {
+                        const n = String(p.name || '').replace(/"/g, '&quot;');
+                        const c = String(p.code || '');
+                        return '<option value="' + n + '">' + (c ? c + ' — ' : '') + n + '</option>';
+                    }).join('');
+                } catch (e) {}
+            };
+            ['sName', 'seName', 'ssName', 'poProductName', 'ptItemName', 'qnName'].forEach(fill);
+            try {
+                setupProductAutocomplete('sName', function () { return cachedProductsList || []; });
+                setupProductAutocomplete('seName', function () { return cachedProductsList || []; });
+                setupProductAutocomplete('ssName', function () {
+                    return (cachedProductsList || []).filter(function (p) { return p.category === 'sausage'; });
+                });
+                setupProductAutocomplete('poProductName', function () { return cachedProductsList || []; });
+                setupProductAutocomplete('ptItemName', function () { return cachedProductsList || []; });
+            } catch (e) {}
+            return list;
+        }
+
+        function setupProductAutocomplete(inputId, getListFn) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            if (input.dataset.acBound === '1') return;
+            input.dataset.acBound = '1';
+            let box = document.getElementById(inputId + '_acBox');
+            if (!box) {
+                box = document.createElement('div');
+                box.id = inputId + '_acBox';
+                box.style.cssText = 'display:none;position:absolute;z-index:9000;max-height:220px;overflow:auto;background:#0f172a;border:1px solid rgba(148,163,184,.35);border-radius:12px;width:min(92vw,360px);box-shadow:0 12px 30px rgba(0,0,0,.35);';
+                input.parentElement ? input.parentElement.appendChild(box) : document.body.appendChild(box);
+            }
+            const hide = function () { box.style.display = 'none'; box.innerHTML = ''; };
+            const show = function () {
+                const q = String(input.value || '').trim().toLowerCase();
+                let list = [];
+                try { list = (typeof getListFn === 'function' ? getListFn() : []) || []; } catch (e) { list = []; }
+                if (!q) { hide(); return; }
+                const hits = list.filter(function (p) {
+                    const n = String(p.name || '').toLowerCase();
+                    const c = String(p.code || '').toLowerCase();
+                    return n.indexOf(q) >= 0 || c.indexOf(q) >= 0;
+                }).slice(0, 12);
+                if (!hits.length) { hide(); return; }
+                box.innerHTML = hits.map(function (p) {
+                    const label = (p.code ? (p.code + ' — ') : '') + (p.name || '');
+                    return '<div data-name="' + String(p.name || '').replace(/"/g, '&quot;') + '" style="padding:10px 12px;cursor:pointer;border-bottom:1px solid rgba(148,163,184,.15);font-size:13px;">' + label + '</div>';
+                }).join('');
+                box.style.display = 'block';
+                Array.prototype.forEach.call(box.querySelectorAll('[data-name]'), function (row) {
+                    row.onclick = function () {
+                        input.value = row.getAttribute('data-name') || '';
+                        hide();
+                        try {
+                            // تشخیص نوع فروش از روی id
+                            if (inputId === 'sName') calculateSalePriceAuto('instore');
+                            else if (inputId === 'seName') calculateSalePriceAuto('ekala');
+                            else if (inputId === 'ssName') calculateSalePriceAuto('sausage');
+                        } catch (e) {}
+                    };
+                });
+            };
+            input.addEventListener('input', show);
+            input.addEventListener('focus', show);
+            input.addEventListener('blur', function () { setTimeout(hide, 200); });
         }
 
         function toggleEntryMode() {
