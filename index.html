@@ -5,7 +5,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="app-build" content="v278">
+    <meta name="app-build" content="v279">
     <!-- جلوگیری از کش‌شدن خود index.html توسط مرورگر/گوشی، تا نسخه‌ی جدید همیشه فوراً لود بشه
          (sw.js شما کش نمی‌کنه، ولی مرورگر یا هاست ممکنه خودش HTML رو کش کنه) -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -1076,7 +1076,7 @@
 
 </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v278 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v279 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json" id="appManifestLink">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -4438,6 +4438,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div class="hint" style="margin-bottom:8px;">برای فروشنده‌هایی که یک روز در میان می‌آیند: سیستم روزهای استراحت را غیبت حساب نمی‌کند و در کارکرد می‌نویسد «امروز شیفتش نیست».</div>
         <label>فروشنده:</label>
         <select id="swpSeller"><option value="">انتخاب فروشنده...</option></select>
+        <button type="button" class="row-btn" style="margin:6px 0;" onclick="fillSellerWorkPatternSelect()">🔄 بارگذاری لیست فروشنده‌ها</button>
         <label>نوع شیفت کاری:</label>
         <select id="swpMode">
             <option value="all">هر روز (پیش‌فرض)</option>
@@ -5158,7 +5159,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v278 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v279 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -5338,7 +5339,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             }
         })();
 
-        const APP_BUILD = 'v278';
+        const APP_BUILD = 'v279';
         try { const __bt=document.getElementById('buildTag'); if(__bt) __bt.textContent = APP_BUILD + ' - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )'; } catch(e){}
         // ثبت Service Worker پایدار — همیشه /sw.js بدون ?v= تا آپدیت شکست نخورد
         if ('serviceWorker' in navigator) {
@@ -6979,8 +6980,14 @@ notify pgrst, 'reload schema';`;
         // برای داشبوردها: اخراج‌شده، یا فروشنده‌ای که در لیست پرسنل فعال فعلی نیست
         function isInactiveStaff(name) {
             if (!name) return false; name = String(name).trim();
+            // فقط اگر صریحاً اخراج/غیرفعال ثبت شده — نه صرفاً چون در لیست active لحظه‌ای نبود
             if (firedInfo(name)) return true;
-            return !!(FIRED.active && FIRED.active.size > 0 && /^فروشنده (صبح|شب)/.test(name) && !FIRED.active.has(name));
+            try {
+                if (FIRED.map && FIRED.map[name]) return true;
+                const tail = name.split(' - ').slice(1).join(' - ').trim();
+                if (tail && FIRED.tails && FIRED.tails[tail]) return true;
+            } catch (e) {}
+            return false;
         }
         function firedDateText(info) {
             if (!info || !info.at) return '';
@@ -14960,15 +14967,58 @@ function sbRenderAdminLists(cfg) {
             const sel = document.getElementById('swpSeller');
             if (!sel) return;
             try {
+                const a = document.getElementById('swpAnchor');
+                if (a && !a.value && typeof getTehranISODate === 'function') a.value = getTehranISODate(new Date());
+            } catch (e) {}
+            // اول از لیست‌های آماده کپی کن
+            try {
                 const src = document.getElementById('workSellerSelect') || document.getElementById('sstSeller');
-                if (src && src.options.length) {
+                if (src && src.options && src.options.length > 1) {
                     sel.innerHTML = src.innerHTML;
+                    try { await renderSellerWorkPatternStatus(); } catch (e) {}
+                    return;
+                }
+            } catch (e) {}
+            // مستقیم از سرور
+            sel.innerHTML = '<option value="">⏳ در حال دریافت فروشنده‌ها...</option>';
+            try {
+                if (typeof populateWorkSellerSelect === 'function') {
+                    await populateWorkSellerSelect();
+                    const src2 = document.getElementById('workSellerSelect');
+                    if (src2 && src2.options && src2.options.length) {
+                        sel.innerHTML = src2.innerHTML;
+                        try { await renderSellerWorkPatternStatus(); } catch (e) {}
+                        return;
+                    }
                 }
             } catch (e) {}
             try {
-                const a = document.getElementById('swpAnchor');
-                if (a && !a.value) a.value = getTehranISODate(new Date());
-            } catch (e) {}
+                let rows = [];
+                try {
+                    const r = await _supabase.rpc('admin_list_sellers');
+                    if (!r.error && r.data) rows = r.data;
+                } catch (e) {}
+                if (!rows.length) {
+                    const u = await _supabase.from('users').select('username,full_name,role,is_terminated').in('role', ['morning_seller', 'evening_seller']);
+                    if (!u.error && u.data) rows = u.data;
+                }
+                const active = (rows || []).filter(function (s) { return !s.is_terminated; });
+                if (!active.length) {
+                    sel.innerHTML = '<option value="">❌ فروشنده‌ای پیدا نشد</option>';
+                    return;
+                }
+                sel.innerHTML = '<option value="">انتخاب فروشنده...</option>';
+                active.forEach(function (s) {
+                    const roleLabel = (s.role === 'evening_seller') ? 'فروشنده شب' : 'فروشنده صبح';
+                    const name = s.full_name || s.username || '';
+                    const opt = document.createElement('option');
+                    opt.value = roleLabel + ' - ' + name;
+                    opt.textContent = '👤 ' + name + ' (' + roleLabel + ')';
+                    sel.appendChild(opt);
+                });
+            } catch (e) {
+                sel.innerHTML = '<option value="">❌ خطا در دریافت لیست</option>';
+            }
             try { await renderSellerWorkPatternStatus(); } catch (e) {}
         }
         window.saveSellerWorkPatternFromUI = saveSellerWorkPatternFromUI;
@@ -24868,7 +24918,7 @@ notify pgrst, 'reload schema';`;
             box.style.display = 'block';
             const form = document.getElementById('sstAdminForm');
             if (form) form.style.display = isAdmin ? 'block' : 'none';
-            if (isAdmin) { sstRangeInit(); await sstLoadSellers(); }
+            if (isAdmin) { sstRangeInit(); await sstLoadSellers(); try { await fillSellerWorkPatternSelect(); } catch (e) {} }
             await sstRefresh();
         }
 
@@ -25779,9 +25829,17 @@ notify pgrst, 'reload schema';`;
             const sinceISO = new Date(new Date(pb.startISO + 'T00:00:00+03:30').getTime() - 86400000).toISOString();
             const bySeller = {};
             if (isAdmin) { try { await loadFiredStaff(); } catch (e) {} }
-            _sstTargets.forEach(t => { if (isAdmin && isInactiveStaff(t.seller_label)) return; (bySeller[t.seller_label] = bySeller[t.seller_label] || []).push(t); });
+            let skippedFired = 0;
+            _sstTargets.forEach(t => {
+                if (isAdmin && isInactiveStaff(t.seller_label)) { skippedFired++; return; }
+                (bySeller[t.seller_label] = bySeller[t.seller_label] || []).push(t);
+            });
+            // اگر همه به‌اشتباه فیلتر شدند، بدون فیلتر نشان بده تا هدف‌ها گم نشوند
+            if (!Object.keys(bySeller).length && _sstTargets.length) {
+                _sstTargets.forEach(t => { (bySeller[t.seller_label] = bySeller[t.seller_label] || []).push(t); });
+            }
             const labels = Object.keys(bySeller);
-            if (!labels.length) { panel.innerHTML = '<p style="font-size:12px; color:#94a3b8; margin-top:10px;">هنوز برای هیچ فروشنده‌ی فعالی هدفی تعیین نشده.</p>'; return; }
+            if (!labels.length) { panel.innerHTML = '<p style="font-size:12px; color:#94a3b8; margin-top:10px;">هنوز برای هیچ فروشنده‌ای هدفی تعیین نشده. از فرم بالا هدف بساز.</p>'; return; }
             const dataBySeller = {};
             await Promise.all(labels.filter(l => bySeller[l].some(t => t.active)).map(async l => {
                 const [sRes, aRes] = await Promise.all([
