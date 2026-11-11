@@ -5,7 +5,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="app-build" content="v269">
+    <meta name="app-build" content="v270">
     <!-- جلوگیری از کش‌شدن خود index.html توسط مرورگر/گوشی، تا نسخه‌ی جدید همیشه فوراً لود بشه
          (sw.js شما کش نمی‌کنه، ولی مرورگر یا هاست ممکنه خودش HTML رو کش کنه) -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -217,7 +217,7 @@
         html.catalog-guest-mode #payPublicView { display: block !important; visibility: visible !important; position: relative; z-index: 20; pointer-events: auto !important; }
         html.catalog-guest-mode body { background: #f8fafc !important; margin: 0; color: #0f172a !important; }
 
-        /* === کاتالوگ حرفه‌ای v269 === */
+        /* === کاتالوگ حرفه‌ای v270 === */
         html.catalog-guest-mode body {
             background: #f1f5f9 !important;
             color: #0f172a !important;
@@ -436,7 +436,7 @@
         .cat-tab{flex:0 0 auto;border:1px solid rgba(148,163,184,.3);background:rgba(15,23,42,.8);color:#e2e8f0;border-radius:999px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer}
         .cat-tab.on{background:linear-gradient(100deg,#0ea5e9,#6366f1);border-color:transparent;color:#fff}
 
-        /* ===== کاتالوگ حرفه‌ای ۳بعدی تازه مارکت v269 ===== */
+        /* ===== کاتالوگ حرفه‌ای ۳بعدی تازه مارکت v270 ===== */
         html.catalog-guest-mode {
             --cat-bg: #f4f7fb;
             --cat-card: #ffffff;
@@ -892,7 +892,7 @@
         .cat-stat-row b{display:block;font-size:16px;color:#059669;font-weight:900}
         .cat-stat-row span{font-size:10px;opacity:1;color:#64748b}
     
-        /* v269 کاتالوگ مثل طرح فروشگاهی */
+        /* v270 کاتالوگ مثل طرح فروشگاهی */
         html.catalog-guest-mode #catPageHome {
             display: block !important;
             visibility: visible !important;
@@ -1000,9 +1000,50 @@
             opacity: 0 !important; pointer-events: none !important; transform: translateY(120%) !important;
         }
 
+
+        html.catalog-guest-mode #catBottomNav {
+            align-items: flex-end !important;
+            padding: 10px 8px 12px !important;
+        }
+        html.catalog-guest-mode #catBottomNav .cat-nav-btn {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 2px !important;
+            transition: transform .22s cubic-bezier(.2,.8,.2,1), box-shadow .22s ease, background .22s ease !important;
+        }
+        html.catalog-guest-mode #catBottomNav .cat-nav-ico {
+            font-size: 18px !important;
+            line-height: 1 !important;
+            display: inline-block !important;
+            transition: transform .25s cubic-bezier(.2,.8,.2,1) !important;
+        }
+        html.catalog-guest-mode #catBottomNav .cat-nav-txt {
+            font-size: 10px !important;
+            line-height: 1.2 !important;
+        }
+        html.catalog-guest-mode #catBottomNav .cat-nav-btn.on {
+            transform: translateY(-4px) !important;
+        }
+        html.catalog-guest-mode #catBottomNav .cat-nav-btn.on .cat-nav-ico {
+            transform: translateY(-3px) scale(1.12) !important;
+            filter: drop-shadow(0 4px 6px rgba(15,23,42,.25));
+        }
+        html.catalog-guest-mode #catBottomNav .cat-nav-home {
+            transform: translateY(-8px) !important;
+            box-shadow: 0 12px 24px rgba(14,165,233,.4) !important;
+        }
+        html.catalog-guest-mode #catBottomNav .cat-nav-home.on {
+            transform: translateY(-10px) scale(1.04) !important;
+        }
+        html.catalog-guest-mode #catBottomNav .cat-nav-btn:active .cat-nav-ico {
+            transform: translateY(1px) scale(.95) !important;
+        }
+
 </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v269 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v270 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json" id="appManifestLink">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -5050,7 +5091,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v269 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v270 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -5230,7 +5271,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             }
         })();
 
-        const APP_BUILD = 'v269';
+        const APP_BUILD = 'v270';
         try { const __bt=document.getElementById('buildTag'); if(__bt) __bt.textContent = APP_BUILD + ' - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )'; } catch(e){}
         // ثبت Service Worker پایدار — همیشه /sw.js بدون ?v= تا آپدیت شکست نخورد
         if ('serviceWorker' in navigator) {
@@ -5242,7 +5283,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
                 } catch (e) {}
                 try {
                     const u = new URL(location.href);
-                    u.searchParams.set('_v', String(APP_BUILD || 'v269'));
+                    u.searchParams.set('_v', String(APP_BUILD || 'v270'));
                     location.replace(u.pathname + u.search + u.hash);
                 } catch (e) {
                     try { location.reload(); } catch (e2) {}
@@ -16451,7 +16492,7 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
         }
 
         async function publishGlobalAppVersion(ver) {
-            const version = String(ver || (typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v269'));
+            const version = String(ver || (typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v270'));
             try {
                 const { data } = await _supabase.from('app_shared_config').select('config').eq('id', 1).maybeSingle();
                 const cfg = (data && data.config && typeof data.config === 'object') ? Object.assign({}, data.config) : {};
@@ -16485,7 +16526,7 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
             } catch (e) {}
             try {
                 const u = new URL(location.href.split('#')[0]);
-                u.searchParams.set('_v', String(APP_BUILD || 'v269'));
+                u.searchParams.set('_v', String(APP_BUILD || 'v270'));
                 u.searchParams.set('_t', String(Date.now()));
                 u.searchParams.set('nocache', '1');
                 location.replace(u.toString());
@@ -16547,7 +16588,7 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
         }
         async function diagForceUpdate() {
             showToast('⏳ انتشار آپدیت اجباری برای همه گوشی‌ها...');
-            const ver = String(typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v269');
+            const ver = String(typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v270');
             let published = false;
             try {
                 published = await publishGlobalAppVersion(ver);
@@ -16764,8 +16805,7 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
                 for (let i = 0; i < list.length; i++) {
                     const r = list[i];
                     if (r.type === 'exit') {
-                        if (typeof isMakeupExitNote === 'function' && isMakeupExitNote(r.note)) continue;
-                        break; // آخرین خروج واقعی → بسته
+                        break; // هر خروجی شیفت را می‌بندد (حتی ثبت مدیر)
                     }
                     if (r.type === 'entry') {
                         unclosed = r;
@@ -16901,6 +16941,7 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
                 }]);
                 if (error) throw error;
                 showToast('✅ خروج جاافتاده برای ' + u.seller + ' ثبت شد');
+                try { window.__diagUnclosed = (window.__diagUnclosed || []).filter(function (x, i) { return i !== idx; }); } catch (e) {}
                 await diagScanUnclosedExits();
             } catch (e) {
                 showToast('❌ ' + (e.message || e));
@@ -30778,7 +30819,17 @@ async function openCatalogPublic() {
                 if (!Number.isFinite(disc)) disc = (typeof catDiscPct === 'function') ? (catDiscPct() || 0) : 0;
             } catch (e) { disc = 0; }
 
-            function buildShell() {
+            function buildShell(force) {
+                try {
+                    if (!force && document.getElementById('catPageHome') && document.getElementById('catBottomNav')) {
+                        try { if (typeof catRenderGrid === 'function') catRenderGrid(); } catch (e) {}
+                        try {
+                            var cur = window.__catCurrentPage || 'home';
+                            if (typeof window.catShowPage === 'function') window.catShowPage(cur);
+                        } catch (e) {}
+                        return;
+                    }
+                } catch (e0) {}
                 const allTabs = ['dairy', 'pickle', 'olive', 'lavashak', 'sausage', 'halva'];
                 const tabsList = allTabs.filter(function (k) {
                     return catProducts.some(function (p) { return catCat(p) === k; });
@@ -30854,11 +30905,11 @@ async function openCatalogPublic() {
                     '<button type="button" onclick="catCloseCart()" style="border:0;background:rgba(148,163,184,.15);color:#e2e8f0;font-size:18px;width:36px;height:36px;border-radius:10px;cursor:pointer;">✕</button>' +
                     '</div><div id="catSheetBody"></div></div></div>' +
                     '<nav id="catBottomNav" style="position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:80;display:flex;gap:4px;background:rgba(255,255,255,.92);border:1px solid rgba(148,163,184,.25);border-radius:22px;padding:8px 6px;backdrop-filter:blur(16px);box-shadow:0 16px 40px rgba(15,23,42,.22),0 2px 0 rgba(255,255,255,.8) inset;transform:translateZ(0);">' +
-                    '<button type="button" class="cat-nav-btn" data-page="home" style="flex:1;border:0;background:linear-gradient(145deg,#059669,#0ea5e9);color:#fff;font:inherit;font-size:11px;padding:10px 4px;cursor:pointer;border-radius:16px;font-weight:800;box-shadow:0 8px 18px rgba(14,165,233,.35);">🏠<br>خانه</button>' +
-                    '<button type="button" class="cat-nav-btn" data-page="club" style="flex:1;border:0;background:transparent;color:#64748b;font:inherit;font-size:11px;padding:10px 4px;cursor:pointer;border-radius:16px;font-weight:700;">🎁<br>باشگاه</button>' +
-                    '<button type="button" class="cat-nav-btn" data-page="orders" style="flex:1;border:0;background:transparent;color:#64748b;font:inherit;font-size:11px;padding:10px 4px;cursor:pointer;border-radius:16px;font-weight:700;">📦<br>سفارش‌ها</button>' +
-                    '<button type="button" class="cat-nav-btn" data-page="track" style="flex:1;border:0;background:transparent;color:#64748b;font:inherit;font-size:11px;padding:10px 4px;cursor:pointer;border-radius:16px;font-weight:700;">🔍<br>پیگیری</button>' +
-                    '<button type="button" class="cat-nav-btn" data-page="account" style="flex:1;border:0;background:transparent;color:#64748b;font:inherit;font-size:11px;padding:10px 4px;cursor:pointer;border-radius:16px;font-weight:700;">👤<br>حساب</button>' +
+                    '<button type="button" class="cat-nav-btn" data-page="account" style="flex:1;border:0;background:transparent;color:#64748b;font:inherit;font-size:11px;padding:8px 2px;cursor:pointer;border-radius:16px;font-weight:700;"><span class="cat-nav-ico">👤</span><span class="cat-nav-txt">حساب</span></button>' +
+                    '<button type="button" class="cat-nav-btn" data-page="orders" style="flex:1;border:0;background:transparent;color:#64748b;font:inherit;font-size:11px;padding:8px 2px;cursor:pointer;border-radius:16px;font-weight:700;"><span class="cat-nav-ico">📦</span><span class="cat-nav-txt">سفارش‌ها</span></button>' +
+                    '<button type="button" class="cat-nav-btn cat-nav-home" data-page="home" style="flex:1.15;border:0;background:linear-gradient(145deg,#059669,#0ea5e9);color:#fff;font:inherit;font-size:11px;padding:8px 2px;cursor:pointer;border-radius:18px;font-weight:900;box-shadow:0 10px 22px rgba(14,165,233,.35);transform:translateY(-6px);"><span class="cat-nav-ico">🏠</span><span class="cat-nav-txt">خانه</span></button>' +
+                    '<button type="button" class="cat-nav-btn" data-page="club" style="flex:1;border:0;background:transparent;color:#64748b;font:inherit;font-size:11px;padding:8px 2px;cursor:pointer;border-radius:16px;font-weight:700;"><span class="cat-nav-ico">🎁</span><span class="cat-nav-txt">باشگاه</span></button>' +
+                    '<button type="button" class="cat-nav-btn" data-page="track" style="flex:1;border:0;background:transparent;color:#64748b;font:inherit;font-size:11px;padding:8px 2px;cursor:pointer;border-radius:16px;font-weight:700;"><span class="cat-nav-ico">🔎</span><span class="cat-nav-txt">پیگیری</span></button>' +
                     '</nav>';
 
                 try { catRender(); } catch (e) {}
@@ -30871,7 +30922,7 @@ async function openCatalogPublic() {
             }
 
             // فوری UI را نشان بده (دیگر صفحه لود بی‌پایان نیست)
-            buildShell();
+            buildShell(true);
             try { document.documentElement.classList.add('cat-on-home'); (window.catShowPage||catShowPage)('home'); } catch (e) {}
 
             // سپس در پس‌زمینه محصولات و تنظیمات را تازه کن
@@ -30904,7 +30955,10 @@ async function openCatalogPublic() {
                         const before = (catProducts && catProducts.length) || 0;
                         await catLoadProducts();
                         if ((catProducts && catProducts.length) !== before) {
-                            try { openCatalogPublic(); } catch (e) {}
+                            try {
+                                if (typeof catRenderGrid === 'function') catRenderGrid();
+                                else if (typeof catRender === 'function') catRender();
+                            } catch (e) {}
                         } else if (typeof catRender === 'function') {
                             try { catRender(); } catch (e) {}
                         }
@@ -30929,7 +30983,7 @@ async function openCatalogPublic() {
     }
 
     window.
-        // ===== باشگاه مشتریان / گردونه / امتیاز v269 =====
+        // ===== باشگاه مشتریان / گردونه / امتیاز v270 =====
         window.__loyaltyCfg = window.__loyaltyCfg || {
             per_toman: 50000, welcome_points: 50, spin_per_day: 1, spin_cost: 0,
             wheel: [
