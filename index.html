@@ -5,7 +5,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="app-build" content="v279">
+    <meta name="app-build" content="v277">
     <!-- جلوگیری از کش‌شدن خود index.html توسط مرورگر/گوشی، تا نسخه‌ی جدید همیشه فوراً لود بشه
          (sw.js شما کش نمی‌کنه، ولی مرورگر یا هاست ممکنه خودش HTML رو کش کنه) -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -1076,7 +1076,7 @@
 
 </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v279 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v277 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json" id="appManifestLink">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -4434,26 +4434,6 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             <label>چند روز اخیر؟</label>
             <input type="text" inputmode="decimal" id="bonusPeriodDays" value="7" placeholder="مثلاً 7">
         </div>
-        <h3 style="color:#a78bfa; margin-top:18px;">📅 الگوی کاری فروشنده (یک‌روزدرمیان)</h3>
-        <div class="hint" style="margin-bottom:8px;">برای فروشنده‌هایی که یک روز در میان می‌آیند: سیستم روزهای استراحت را غیبت حساب نمی‌کند و در کارکرد می‌نویسد «امروز شیفتش نیست».</div>
-        <label>فروشنده:</label>
-        <select id="swpSeller"><option value="">انتخاب فروشنده...</option></select>
-        <button type="button" class="row-btn" style="margin:6px 0;" onclick="fillSellerWorkPatternSelect()">🔄 بارگذاری لیست فروشنده‌ها</button>
-        <label>نوع شیفت کاری:</label>
-        <select id="swpMode">
-            <option value="all">هر روز (پیش‌فرض)</option>
-            <option value="alternate">یک‌روزدرمیان</option>
-        </select>
-        <label>تاریخ مبنای الگوی یک‌روزدرمیان:</label>
-        <input type="date" id="swpAnchor">
-        <label>وضعیت همان روز مبنا:</label>
-        <select id="swpWorkOnAnchor">
-            <option value="1">آن روز شیفت دارد</option>
-            <option value="0">آن روز استراحت است</option>
-        </select>
-        <button type="button" class="submit-btn" style="margin-top:10px;" onclick="saveSellerWorkPatternFromUI()">💾 ذخیره الگوی کاری</button>
-        <div id="swpStatus" style="margin-top:10px;"></div>
-
         <label>مبلغ هدف (تومان):</label>
         <input type="text" inputmode="decimal" id="bonusTargetAmount" placeholder="مثلاً 5000000">
         <label>درصد افزایش حقوق در صورت رسیدن به هدف:</label>
@@ -4906,9 +4886,8 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
                 </div>
                 <div class="sst-range" id="sstRangeTxt"></div>
                 <div class="hint" style="margin-top:0;">اگر دو هدف یک روز را پوشش بدهند، هدفِ بازه‌ی کوتاه‌تر اعمال می‌شود (مثلاً «هدف عید ۳ روزه» روی «هدف همیشگی» برتری دارد).</div>
-                <label>🎯 هدف فروش هر شیفت / هر روز (تومان):</label>
+                <label>🎯 هدف فروش هر شیفت (تومان):</label>
                 <input type="text" inputmode="decimal" id="sstTarget" placeholder="مثلاً 5000000" oninput="sstPreview()"><div class="sst-words" id="sstWTarget"></div>
-                <div class="hint" style="margin:4px 0 10px;color:#34d399;">✅ این مبلغ برای <b>هر روز کاری جداگانه</b> است — نه مجموع کل بازه. اگر بازه ۵ روزه بگذاری و ۵ میلیون بنویسی، هر روز باید حدود ۵ میلیون بفروشد.</div>
                 <label>🎁 پاداش اگه به هدف برسد:</label>
                 <div class="bc-row">
                     <select id="sstBonusType" onchange="sstPreview()"><option value="amount">تومان</option><option value="percent">درصد حقوق</option></select>
@@ -5159,7 +5138,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v279 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v277 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -5339,7 +5318,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             }
         })();
 
-        const APP_BUILD = 'v279';
+        const APP_BUILD = 'v277';
         try { const __bt=document.getElementById('buildTag'); if(__bt) __bt.textContent = APP_BUILD + ' - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )'; } catch(e){}
         // ثبت Service Worker پایدار — همیشه /sw.js بدون ?v= تا آپدیت شکست نخورد
         if ('serviceWorker' in navigator) {
@@ -6980,14 +6959,8 @@ notify pgrst, 'reload schema';`;
         // برای داشبوردها: اخراج‌شده، یا فروشنده‌ای که در لیست پرسنل فعال فعلی نیست
         function isInactiveStaff(name) {
             if (!name) return false; name = String(name).trim();
-            // فقط اگر صریحاً اخراج/غیرفعال ثبت شده — نه صرفاً چون در لیست active لحظه‌ای نبود
             if (firedInfo(name)) return true;
-            try {
-                if (FIRED.map && FIRED.map[name]) return true;
-                const tail = name.split(' - ').slice(1).join(' - ').trim();
-                if (tail && FIRED.tails && FIRED.tails[tail]) return true;
-            } catch (e) {}
-            return false;
+            return !!(FIRED.active && FIRED.active.size > 0 && /^فروشنده (صبح|شب)/.test(name) && !FIRED.active.has(name));
         }
         function firedDateText(info) {
             if (!info || !info.at) return '';
@@ -8914,10 +8887,10 @@ notify pgrst, 'reload schema';`;
                 const myPrefix = currentRole === 'morning_seller' ? 'فروشنده صبح' : 'فروشنده شب';
                 let myProgressAmount = 0;
                 let periodLabel = '';
-                // همیشه پیشرفت نسبت به هدف همان شیفت/روز — نه مجموع چند روز
-                myProgressAmount = todaySales.filter(s => s.seller_name && s.seller_name.indexOf(myPrefix) === 0).reduce((a, s) => a + (Number(s.sell_price) || 0), 0);
-                periodLabel = 'امروز (هدف روزانه هر شیفت)';
-                if (false && bonusTarget.scope !== 'daily') {
+                if (bonusTarget.scope === 'daily') {
+                    myProgressAmount = todaySales.filter(s => s.seller_name && s.seller_name.indexOf(myPrefix) === 0).reduce((a, s) => a + (Number(s.sell_price) || 0), 0);
+                    periodLabel = 'امروز';
+                } else {
                     const days = bonusTarget.period_days || 7;
                     const periodStartISO = new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString();
                     const { data: periodSales } = await _supabase.from('sales').select('sell_price, seller_name, created_at').eq('seller_name', currentUserLabel).gte('created_at', periodStartISO).limit(2000);
@@ -14854,194 +14827,8 @@ function sbRenderAdminLists(cfg) {
             } catch (e) {}
         }
 
-        async 
-        // ========== الگوی کاری فروشنده (هر روز / یک‌روزدرمیان / سفارشی) ==========
-        const SELLER_WORK_KEY = 'seller_work_patterns_v1';
-        function loadSellerWorkPatterns() {
-            try {
-                const raw = localStorage.getItem(SELLER_WORK_KEY);
-                if (raw) return JSON.parse(raw) || {};
-            } catch (e) {}
-            return {};
-        }
-        async function pullSellerWorkPatterns() {
-            let map = loadSellerWorkPatterns();
-            try {
-                if (_supabase) {
-                    const { data } = await _supabase.from('app_shared_config').select('config').eq('id', 1).maybeSingle();
-                    const cfg = (data && data.config) || {};
-                    if (cfg.seller_work_patterns && typeof cfg.seller_work_patterns === 'object') {
-                        map = Object.assign({}, map, cfg.seller_work_patterns);
-                        try { localStorage.setItem(SELLER_WORK_KEY, JSON.stringify(map)); } catch (e) {}
-                    }
-                }
-            } catch (e) {}
-            return map;
-        }
-        async function saveSellerWorkPatterns(map) {
-            try { localStorage.setItem(SELLER_WORK_KEY, JSON.stringify(map || {})); } catch (e) {}
-            try {
-                if (_supabase) {
-                    const { data } = await _supabase.from('app_shared_config').select('config').eq('id', 1).maybeSingle();
-                    const cfg = (data && data.config) || {};
-                    cfg.seller_work_patterns = map || {};
-                    await _supabase.from('app_shared_config').upsert({ id: 1, config: cfg, updated_at: new Date().toISOString() });
-                }
-            } catch (e) { console.warn(e); }
-        }
-        function sellerWorkKey(name) {
-            return String(name || '').replace(/\s+/g, ' ').trim();
-        }
-        /** آیا این فروشنده در این تاریخ شیفت دارد؟ */
-        function isSellerScheduledDay(sellerLabel, dayISO, patterns) {
-            patterns = patterns || loadSellerWorkPatterns();
-            const key = sellerWorkKey(sellerLabel);
-            let p = patterns[key];
-            if (!p) {
-                // تطبیق تقریبی نام
-                const keys = Object.keys(patterns);
-                for (let i = 0; i < keys.length; i++) {
-                    if (key.indexOf(keys[i]) >= 0 || keys[i].indexOf(key) >= 0) { p = patterns[keys[i]]; break; }
-                }
-            }
-            if (!p || !p.mode || p.mode === 'all') return true;
-            const iso = dayISO || getTehranISODate(new Date());
-            if (p.mode === 'custom' && Array.isArray(p.weekdays)) {
-                // 0=شنبه ... در تقویم جلالی سخت است؛ از getDay تهران استفاده می‌کنیم: 0=یکشنبه JS
-                try {
-                    const d = new Date(iso + 'T12:00:00+03:30');
-                    const jsDay = d.getDay(); // 0 Sun .. 6 Sat
-                    // نگاشت به weekdays ذخیره شده به صورت 0=شنبه ... 6=جمعه
-                    const map = { 6: 0, 0: 1, 1: 2, 2: 3, 3: 4, 4: 5, 5: 6 }; // JS->شنبه‌مبنا
-                    const wd = map[jsDay];
-                    return p.weekdays.indexOf(wd) >= 0;
-                } catch (e) { return true; }
-            }
-            if (p.mode === 'alternate') {
-                const anchor = p.anchor_date || iso;
-                try {
-                    const a = new Date(anchor + 'T12:00:00+03:30').getTime();
-                    const b = new Date(iso + 'T12:00:00+03:30').getTime();
-                    const diff = Math.round((b - a) / 86400000);
-                    const even = (diff % 2 === 0);
-                    return p.work_on_anchor === false ? !even : even;
-                } catch (e) { return true; }
-            }
-            return true;
-        }
-        async function saveSellerWorkPatternFromUI() {
-            const sel = document.getElementById('swpSeller');
-            const mode = (document.getElementById('swpMode') || {}).value || 'all';
-            const anchor = (document.getElementById('swpAnchor') || {}).value || getTehranISODate();
-            const workOn = (document.getElementById('swpWorkOnAnchor') || {}).value !== '0';
-            if (!sel || !sel.value) return showToast('⛔ فروشنده را انتخاب کن');
-            const map = await pullSellerWorkPatterns();
-            const key = sellerWorkKey(sel.value);
-            if (mode === 'all') {
-                delete map[key];
-            } else {
-                map[key] = { mode: mode, anchor_date: anchor, work_on_anchor: workOn, updated_at: new Date().toISOString() };
-            }
-            await saveSellerWorkPatterns(map);
-            try { renderSellerWorkPatternStatus(); } catch (e) {}
-            showToast('✅ الگوی کاری ذخیره و همگام شد');
-        }
-        async function renderSellerWorkPatternStatus() {
-            const box = document.getElementById('swpStatus');
-            if (!box) return;
-            const map = await pullSellerWorkPatterns();
-            const keys = Object.keys(map);
-            if (!keys.length) { box.innerHTML = '<div class="hint">همه فروشنده‌ها پیش‌فرض: هر روز شیفت.</div>'; return; }
-            const today = getTehranISODate();
-            box.innerHTML = keys.map(function (k) {
-                const p = map[k];
-                const on = isSellerScheduledDay(k, today, map);
-                const modeFa = p.mode === 'alternate' ? 'یک‌روزدرمیان' : (p.mode === 'custom' ? 'سفارشی' : 'هر روز');
-                return '<div style="padding:8px;border-radius:10px;border:1px solid rgba(148,163,184,.25);margin:4px 0;font-size:12px;">' +
-                    '<b>' + k + '</b> — ' + modeFa +
-                    (p.mode === 'alternate' ? (' · مبنا: ' + (p.anchor_date || '—') + (p.work_on_anchor !== false ? ' (همان روز شیفت)' : ' (همان روز استراحت)')) : '') +
-                    '<br><span style="color:' + (on ? '#34d399' : '#fbbf24') + ';">امروز: ' + (on ? '✅ شیفت دارد' : '⏸ شیفت ندارد') + '</span></div>';
-            }).join('');
-        }
-        async function fillSellerWorkPatternSelect() {
-            const sel = document.getElementById('swpSeller');
-            if (!sel) return;
-            try {
-                const a = document.getElementById('swpAnchor');
-                if (a && !a.value && typeof getTehranISODate === 'function') a.value = getTehranISODate(new Date());
-            } catch (e) {}
-            // اول از لیست‌های آماده کپی کن
-            try {
-                const src = document.getElementById('workSellerSelect') || document.getElementById('sstSeller');
-                if (src && src.options && src.options.length > 1) {
-                    sel.innerHTML = src.innerHTML;
-                    try { await renderSellerWorkPatternStatus(); } catch (e) {}
-                    return;
-                }
-            } catch (e) {}
-            // مستقیم از سرور
-            sel.innerHTML = '<option value="">⏳ در حال دریافت فروشنده‌ها...</option>';
-            try {
-                if (typeof populateWorkSellerSelect === 'function') {
-                    await populateWorkSellerSelect();
-                    const src2 = document.getElementById('workSellerSelect');
-                    if (src2 && src2.options && src2.options.length) {
-                        sel.innerHTML = src2.innerHTML;
-                        try { await renderSellerWorkPatternStatus(); } catch (e) {}
-                        return;
-                    }
-                }
-            } catch (e) {}
-            try {
-                let rows = [];
-                try {
-                    const r = await _supabase.rpc('admin_list_sellers');
-                    if (!r.error && r.data) rows = r.data;
-                } catch (e) {}
-                if (!rows.length) {
-                    const u = await _supabase.from('users').select('username,full_name,role,is_terminated').in('role', ['morning_seller', 'evening_seller']);
-                    if (!u.error && u.data) rows = u.data;
-                }
-                const active = (rows || []).filter(function (s) { return !s.is_terminated; });
-                if (!active.length) {
-                    sel.innerHTML = '<option value="">❌ فروشنده‌ای پیدا نشد</option>';
-                    return;
-                }
-                sel.innerHTML = '<option value="">انتخاب فروشنده...</option>';
-                active.forEach(function (s) {
-                    const roleLabel = (s.role === 'evening_seller') ? 'فروشنده شب' : 'فروشنده صبح';
-                    const name = s.full_name || s.username || '';
-                    const opt = document.createElement('option');
-                    opt.value = roleLabel + ' - ' + name;
-                    opt.textContent = '👤 ' + name + ' (' + roleLabel + ')';
-                    sel.appendChild(opt);
-                });
-            } catch (e) {
-                sel.innerHTML = '<option value="">❌ خطا در دریافت لیست</option>';
-            }
-            try { await renderSellerWorkPatternStatus(); } catch (e) {}
-        }
-        window.saveSellerWorkPatternFromUI = saveSellerWorkPatternFromUI;
-        window.renderSellerWorkPatternStatus = renderSellerWorkPatternStatus;
-        window.isSellerScheduledDay = isSellerScheduledDay;
-        window.pullSellerWorkPatterns = pullSellerWorkPatterns;
-        setTimeout(function () { try { if (typeof fillSellerWorkPatternSelect === 'function') fillSellerWorkPatternSelect(); } catch (e) {} }, 2500);
-
-
         async function submitAttendance() {
             const type = document.getElementById('attType').value;
-            try {
-                if (typeof isSellerScheduledDay === 'function' && currentUserLabel) {
-                    const today = getTehranISODate(new Date());
-                    if (!isSellerScheduledDay(currentUserLabel, today)) {
-                        if (type === 'entry' || type === 'exit') {
-                            showToast('⏸ امروز طبق برنامه شیفت شما نیست — غیبت ثبت نمی‌شود.');
-                            // اجازه ثبت نده مگر مدیر باشد
-                            if (currentRole !== 'admin') return;
-                        }
-                    }
-                }
-            } catch (eSch) {}
             const val = parseFloat(document.getElementById('attOvertimeVal').value) || 0;
             const unit = document.getElementById('attOvertimeUnit').value;
             const note = document.getElementById('attNote').value.trim();
@@ -15894,13 +15681,11 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
                 .order('created_at', { ascending: true })
                 .limit(2000);
             const data = (allData || []).filter(r => sellerNameMatchesSelection(r.seller_name, seller));
-            let workPatterns = {};
-            try { workPatterns = (typeof pullSellerWorkPatterns === 'function') ? await pullSellerWorkPatterns() : {}; } catch (e) { workPatterns = {}; }
 
             const byDate = {};
             (data || []).forEach(r => {
                 const d = attendanceWorkDateISO(r, data);
-                if (!byDate[d]) byDate[d] = { entry: null, exit: null, leave: false, makeup: false, off: false };
+                if (!byDate[d]) byDate[d] = { entry: null, exit: null, leave: false, makeup: false };
                 if (r.type === 'entry') byDate[d].entry = r.delay_minutes;
                 if (r.type === 'exit') {
                     byDate[d].exit = r.exit_diff_minutes;
@@ -15927,21 +15712,9 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
                     else if (info.entry !== null) { color = '#10b981'; detail = 'به‌موقع حاضر شده'; }
                     else if (info.exit !== null) { color = '#38bdf8'; detail = 'فقط خروج ثبت شده (بدون ورود)'; }
                 } else if (iso < todayISO) {
-                    let scheduled = true;
-                    try { scheduled = (typeof isSellerScheduledDay === 'function') ? isSellerScheduledDay(seller, iso, workPatterns) : true; } catch (e) { scheduled = true; }
-                    if (!scheduled) {
-                        color = '#64748b'; detail = 'امروز شیفتش نیست';
-                    } else {
-                        color = '#7f1d1d'; detail = 'هیچ ثبتی نداشت (احتمال غیبت)';
-                    }
+                    color = '#7f1d1d'; detail = 'هیچ ثبتی نداشت (احتمال غیبت)';
                 } else if (iso === todayISO) {
-                    let scheduledT = true;
-                    try { scheduledT = (typeof isSellerScheduledDay === 'function') ? isSellerScheduledDay(seller, iso, workPatterns) : true; } catch (e) { scheduledT = true; }
-                    if (!scheduledT) {
-                        color = '#64748b'; detail = 'امروز شیفتش نیست';
-                    } else {
-                        color = '#1e293b'; detail = 'امروز';
-                    }
+                    color = '#1e293b'; detail = 'امروز';
                 }
                 const fullDateFa = getTehranFullDateTimeString(d).split(',')[0];
                 html += `<div onclick="showToast('👤 ${escapeHtmlForToast(seller)}\\n📅 ${fullDateFa}\\n${detail}')" style="min-width:36px; text-align:center; flex-shrink:0; cursor:pointer;">
@@ -24918,7 +24691,7 @@ notify pgrst, 'reload schema';`;
             box.style.display = 'block';
             const form = document.getElementById('sstAdminForm');
             if (form) form.style.display = isAdmin ? 'block' : 'none';
-            if (isAdmin) { sstRangeInit(); await sstLoadSellers(); try { await fillSellerWorkPatternSelect(); } catch (e) {} }
+            if (isAdmin) { sstRangeInit(); await sstLoadSellers(); }
             await sstRefresh();
         }
 
@@ -25168,7 +24941,7 @@ notify pgrst, 'reload schema';`;
             const pt = document.getElementById('sstPenaltyType').value, pv = v77Num(document.getElementById('sstPenaltyValue').value);
             if (!target) { el.innerHTML = 'مبلغ هدف را وارد کن تا خلاصه‌ی قانون اینجا نشان داده شود.'; return; }
             const rg = sstRangeFromForm();
-            let t = (rg.error ? '' : sstRangeText({ start_date: rg.start, end_date: rg.end }) + '<br>') + `🎯 فروش <b>هر شیفت/هر روز</b> ≥ <b>${v77Toman(target)}</b><br><span style="opacity:.85;font-size:11px;">(نه مجموع کل بازه)</span><br>✅ پاداش: <b>+${sstAmtText(bt, bv, base)}</b>`;
+            let t = (rg.error ? '' : sstRangeText({ start_date: rg.start, end_date: rg.end }) + '<br>') + `🎯 فروش شیفت ≥ <b>${v77Toman(target)}</b><br>✅ پاداش: <b>+${sstAmtText(bt, bv, base)}</b>`;
             t += pv > 0 ? `<br>❌ جریمه: <b>−${sstAmtText(pt, pv, base)}</b>` : '<br>❌ بدون جریمه';
             if ((bt === 'percent' || pt === 'percent') && !(base > 0)) t += '<br><span style="color:#fbbf24;">⚠️ برای تبدیل درصد به تومان، حقوق پایه را هم وارد کن.</span>';
             el.innerHTML = t;
@@ -25829,17 +25602,9 @@ notify pgrst, 'reload schema';`;
             const sinceISO = new Date(new Date(pb.startISO + 'T00:00:00+03:30').getTime() - 86400000).toISOString();
             const bySeller = {};
             if (isAdmin) { try { await loadFiredStaff(); } catch (e) {} }
-            let skippedFired = 0;
-            _sstTargets.forEach(t => {
-                if (isAdmin && isInactiveStaff(t.seller_label)) { skippedFired++; return; }
-                (bySeller[t.seller_label] = bySeller[t.seller_label] || []).push(t);
-            });
-            // اگر همه به‌اشتباه فیلتر شدند، بدون فیلتر نشان بده تا هدف‌ها گم نشوند
-            if (!Object.keys(bySeller).length && _sstTargets.length) {
-                _sstTargets.forEach(t => { (bySeller[t.seller_label] = bySeller[t.seller_label] || []).push(t); });
-            }
+            _sstTargets.forEach(t => { if (isAdmin && isInactiveStaff(t.seller_label)) return; (bySeller[t.seller_label] = bySeller[t.seller_label] || []).push(t); });
             const labels = Object.keys(bySeller);
-            if (!labels.length) { panel.innerHTML = '<p style="font-size:12px; color:#94a3b8; margin-top:10px;">هنوز برای هیچ فروشنده‌ای هدفی تعیین نشده. از فرم بالا هدف بساز.</p>'; return; }
+            if (!labels.length) { panel.innerHTML = '<p style="font-size:12px; color:#94a3b8; margin-top:10px;">هنوز برای هیچ فروشنده‌ی فعالی هدفی تعیین نشده.</p>'; return; }
             const dataBySeller = {};
             await Promise.all(labels.filter(l => bySeller[l].some(t => t.active)).map(async l => {
                 const [sRes, aRes] = await Promise.all([
