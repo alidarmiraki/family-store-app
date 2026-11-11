@@ -5,7 +5,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="app-build" content="v267">
+    <meta name="app-build" content="v268">
     <!-- جلوگیری از کش‌شدن خود index.html توسط مرورگر/گوشی، تا نسخه‌ی جدید همیشه فوراً لود بشه
          (sw.js شما کش نمی‌کنه، ولی مرورگر یا هاست ممکنه خودش HTML رو کش کنه) -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -217,7 +217,7 @@
         html.catalog-guest-mode #payPublicView { display: block !important; visibility: visible !important; position: relative; z-index: 20; pointer-events: auto !important; }
         html.catalog-guest-mode body { background: #f8fafc !important; margin: 0; color: #0f172a !important; }
 
-        /* === کاتالوگ حرفه‌ای v267 === */
+        /* === کاتالوگ حرفه‌ای v268 === */
         html.catalog-guest-mode body {
             background: #f1f5f9 !important;
             color: #0f172a !important;
@@ -436,7 +436,7 @@
         .cat-tab{flex:0 0 auto;border:1px solid rgba(148,163,184,.3);background:rgba(15,23,42,.8);color:#e2e8f0;border-radius:999px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer}
         .cat-tab.on{background:linear-gradient(100deg,#0ea5e9,#6366f1);border-color:transparent;color:#fff}
 
-        /* ===== کاتالوگ حرفه‌ای ۳بعدی تازه مارکت v267 ===== */
+        /* ===== کاتالوگ حرفه‌ای ۳بعدی تازه مارکت v268 ===== */
         html.catalog-guest-mode {
             --cat-bg: #f4f7fb;
             --cat-card: #ffffff;
@@ -717,7 +717,6 @@
         }
 
         /* صفحات کاتالوگ: فقط یکی دیده شود */
-        html.catalog-guest-mode #catPageHome,
         html.catalog-guest-mode #catPageOrders,
         html.catalog-guest-mode #catPageTrack,
         html.catalog-guest-mode #catPageAccount,
@@ -725,13 +724,22 @@
             display: none !important;
             min-height: 60vh;
         }
-        html.catalog-guest-mode #catPageHome.cat-page-on,
+        html.catalog-guest-mode #catPageHome {
+            display: block !important;
+            min-height: 60vh;
+        }
         html.catalog-guest-mode #catPageOrders.cat-page-on,
         html.catalog-guest-mode #catPageTrack.cat-page-on,
         html.catalog-guest-mode #catPageAccount.cat-page-on,
         html.catalog-guest-mode #catPageClub.cat-page-on {
             display: block !important;
             visibility: visible !important;
+        }
+        html.catalog-guest-mode.cat-on-orders #catPageHome,
+        html.catalog-guest-mode.cat-on-track #catPageHome,
+        html.catalog-guest-mode.cat-on-account #catPageHome,
+        html.catalog-guest-mode.cat-on-club #catPageHome {
+            display: none !important;
         }
 
         /* نوار پایین شناور سه‌بعدی */
@@ -819,7 +827,7 @@
 
         .cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:8px 10px 100px}
         .cat-card{background:rgba(15,23,42,.92);border:1px solid rgba(148,163,184,.22);border-radius:16px;padding:10px;display:flex;flex-direction:column;gap:6px;overflow:hidden}
-        .cat-img-wrap{width:100%;aspect-ratio:1/1;border-radius:12px;overflow:hidden;background:linear-gradient(145deg,#1e293b,#0f172a);position:relative}
+        .cat-img-wrap{width:100%;aspect-ratio:1/1;border-radius:16px;overflow:hidden;background:linear-gradient(160deg,#f0fdf4,#ecfeff);position:relative}
         .cat-img-wrap img{width:100%;height:100%;object-fit:cover;display:block}
         .cat-emoji{position:absolute;inset:0;align-items:center;justify-content:center;font-size:42px;background:linear-gradient(145deg,rgba(30,41,59,.9),rgba(15,23,42,.95))}
         .cat-card .cn{font-weight:800;font-size:13px;line-height:1.5;min-height:2.6em}
@@ -883,9 +891,106 @@
         .cat-stat-row div{text-align:center;flex:1}
         .cat-stat-row b{display:block;font-size:16px;color:#059669;font-weight:900}
         .cat-stat-row span{font-size:10px;opacity:1;color:#64748b}
-    </style>
+    
+        /* v268 کاتالوگ مثل طرح فروشگاهی */
+        html.catalog-guest-mode #catPageHome {
+            display: block !important;
+            visibility: visible !important;
+        }
+        html.catalog-guest-mode #catPageHome:not(.cat-page-on) {
+            /* اگر هنوز کلاس نخورده، باز هم خانه دیده شود تا رفرش خالی نماند */
+            display: block !important;
+        }
+        html.catalog-guest-mode.cat-on-orders #catPageHome,
+        html.catalog-guest-mode.cat-on-track #catPageHome,
+        html.catalog-guest-mode.cat-on-account #catPageHome,
+        html.catalog-guest-mode.cat-on-club #catPageHome {
+            display: none !important;
+            visibility: hidden !important;
+        }
+        html.catalog-guest-mode .cat-img-wrap {
+            background: linear-gradient(160deg, #f0fdf4 0%, #ecfeff 100%) !important;
+            border-radius: 16px !important;
+        }
+        html.catalog-guest-mode .cat-card button {
+            width: 40px !important;
+            height: 40px !important;
+            min-width: 40px !important;
+            padding: 0 !important;
+            border-radius: 50% !important;
+            font-size: 22px !important;
+            line-height: 40px !important;
+            font-weight: 900 !important;
+            align-self: flex-start !important;
+            box-shadow: 0 8px 18px rgba(16,185,129,.3) !important;
+        }
+        html.catalog-guest-mode .cat-card .cat-qty button {
+            width: 36px !important;
+            height: 36px !important;
+            flex: 0 0 36px !important;
+            border-radius: 12px !important;
+            font-size: 18px !important;
+        }
+        html.catalog-guest-mode .cat-quick-row {
+            display: flex !important;
+            gap: 10px !important;
+            padding: 0 12px !important;
+            margin: 10px 0 4px !important;
+        }
+        html.catalog-guest-mode .cat-quick-row a,
+        html.catalog-guest-mode .cat-quick-row button {
+            flex: 1 !important;
+            border: 0 !important;
+            border-radius: 16px !important;
+            padding: 14px 8px !important;
+            font: inherit !important;
+            font-weight: 900 !important;
+            font-size: 12px !important;
+            color: #fff !important;
+            text-decoration: none !important;
+            text-align: center !important;
+            box-shadow: 0 10px 22px rgba(15,23,42,.12) !important;
+            cursor: pointer !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            gap: 4px !important;
+        }
+        html.catalog-guest-mode .cat-quick-ig { background: linear-gradient(135deg,#f9a8d4,#fb923c,#a855f7) !important; }
+        html.catalog-guest-mode .cat-quick-sup { background: linear-gradient(135deg,#10b981,#059669) !important; }
+        html.catalog-guest-mode .cat-quick-tel { background: linear-gradient(135deg,#7dd3fc,#38bdf8) !important; color:#0c4a6e !important; }
+        html.catalog-guest-mode .cat-meta-pills {
+            display: flex !important;
+            gap: 8px !important;
+            justify-content: center !important;
+            flex-wrap: wrap !important;
+            padding: 8px 12px 0 !important;
+        }
+        html.catalog-guest-mode .cat-meta-pills span {
+            background: #fff !important;
+            color: #334155 !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 999px !important;
+            padding: 8px 12px !important;
+            font-size: 11px !important;
+            font-weight: 800 !important;
+            box-shadow: 0 4px 12px rgba(15,23,42,.05) !important;
+        }
+        html.catalog-guest-mode .cat-promo-banner {
+            margin: 12px !important;
+            border-radius: 22px !important;
+            background: linear-gradient(120deg, #ecfdf5, #e0f2fe 55%, #f0fdf4) !important;
+            border: 1px solid rgba(16,185,129,.2) !important;
+            box-shadow: 0 14px 32px rgba(15,23,42,.08) !important;
+            display: flex !important;
+            align-items: center !important;
+            overflow: hidden !important;
+            min-height: 120px !important;
+        }
+
+</style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v267 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v268 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json" id="appManifestLink">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -4933,7 +5038,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v267 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v268 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -5113,7 +5218,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             }
         })();
 
-        const APP_BUILD = 'v267';
+        const APP_BUILD = 'v268';
         try { const __bt=document.getElementById('buildTag'); if(__bt) __bt.textContent = APP_BUILD + ' - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )'; } catch(e){}
         // ثبت Service Worker پایدار — همیشه /sw.js بدون ?v= تا آپدیت شکست نخورد
         if ('serviceWorker' in navigator) {
@@ -5125,7 +5230,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
                 } catch (e) {}
                 try {
                     const u = new URL(location.href);
-                    u.searchParams.set('_v', String(APP_BUILD || 'v267'));
+                    u.searchParams.set('_v', String(APP_BUILD || 'v268'));
                     location.replace(u.pathname + u.search + u.hash);
                 } catch (e) {
                     try { location.reload(); } catch (e2) {}
@@ -16334,7 +16439,7 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
         }
 
         async function publishGlobalAppVersion(ver) {
-            const version = String(ver || (typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v267'));
+            const version = String(ver || (typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v268'));
             try {
                 const { data } = await _supabase.from('app_shared_config').select('config').eq('id', 1).maybeSingle();
                 const cfg = (data && data.config && typeof data.config === 'object') ? Object.assign({}, data.config) : {};
@@ -16368,7 +16473,7 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
             } catch (e) {}
             try {
                 const u = new URL(location.href.split('#')[0]);
-                u.searchParams.set('_v', String(APP_BUILD || 'v267'));
+                u.searchParams.set('_v', String(APP_BUILD || 'v268'));
                 u.searchParams.set('_t', String(Date.now()));
                 u.searchParams.set('nocache', '1');
                 location.replace(u.toString());
@@ -16430,7 +16535,7 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
         }
         async function diagForceUpdate() {
             showToast('⏳ انتشار آپدیت اجباری برای همه گوشی‌ها...');
-            const ver = String(typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v267');
+            const ver = String(typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v268');
             let published = false;
             try {
                 published = await publishGlobalAppVersion(ver);
@@ -29156,7 +29261,7 @@ window.catOpenSupportChat = window.catOpenSupportChat || function () {
                     '</div>' +
                     '<div style="font-size:10px;opacity:.7;text-align:center;">کیلو · هر مقدار دلخواه</div>' +
                     '<button type="button" onclick="catRemove(\'' + catEsc(id) + '\')" style="margin-top:6px;background:linear-gradient(100deg,#ef4444,#b91c1c);">🗑️ حذف از سبد</button>')
-                : ('<button type="button" onclick="catAdd(\'' + catEsc(id) + '\')">➕ افزودن</button>');
+                : ('<button type="button" onclick="catAdd(\'' + catEsc(id) + '\')" title="افزودن">+</button>');
             return '<div class="cat-card">' +
                 catImgHtml(p) +
                 '<div class="cn">' + catEsc(p.name) + '</div>' +
@@ -30660,35 +30765,37 @@ async function openCatalogPublic() {
                 const successOrders = window.__catSuccessOrders || 0;
 
                 inner.innerHTML =
-                    '<div id="catPageHome">' +
-                    '<div class="cat-hero cat-hero-pro">' +
+                    '<div id="catPageHome" class="cat-page-on">' +
+                    '<div class="cat-hero cat-hero-pro" style="border-radius:0 0 28px 28px;padding:20px 16px 16px;">' +
                     '<div class="cat-hero-inner">' +
-                    '<div style="font-size:12px;font-weight:800;opacity:.9;margin-bottom:6px;letter-spacing:.3px;">ONLINE STORE</div>' +
-                    '<h1>تازه مارکت</h1>' +
-                    '<div class="cat-sub">غرفه فامیلی · بیرجند · لبنیات، ترشیجات و سوسیس‌وکالباس تازه</div>' +
-                    '<div class="cat-hero-float">' +
+                    '<div style="font-size:11px;font-weight:800;opacity:.92;letter-spacing:.4px;">ONLINE STORE</div>' +
+                    '<h1 style="margin:6px 0 4px;font-size:30px;">تازه مارکت</h1>' +
+                    '<div class="cat-sub" style="font-size:12px;">غرفه فامیلی · بیرجند · لبنیات، ترشیجات و سوسیس‌وکالباس تازه</div>' +
+                    '<div class="cat-hero-float" style="margin-top:12px;">' +
                     (disc > 0 ? ('<span class="cat-hero-chip">🎁 ' + disc + '٪ تخفیف آنلاین</span>') : '<span class="cat-hero-chip">🛒 سفارش آنلاین</span>') +
                     '<span class="cat-hero-chip">🚚 ارسال بیرجند</span>' +
                     '<span class="cat-hero-chip">🔒 پرداخت امن</span>' +
                     '</div>' +
-                    '<div class="cat-marquee"><div class="cat-marquee-track">✨ تازه از غرفه فامیلی &nbsp;·&nbsp; سفارش آنلاین با تخفیف &nbsp;·&nbsp; لبنیات و ترشیجات منتخب &nbsp;·&nbsp; پشتیبانی آنلاین &nbsp;·&nbsp; تحویل حضوری یا درب منزل &nbsp;·&nbsp; ✨ تازه از غرفه فامیلی &nbsp;·&nbsp; سفارش آنلاین با تخفیف &nbsp;·&nbsp; لبنیات و ترشیجات منتخب &nbsp;·&nbsp; پشتیبانی آنلاین &nbsp;·&nbsp; تحویل حضوری یا درب منزل &nbsp;·&nbsp; </div></div>' +
+                    '<div class="cat-marquee" style="margin-top:12px;"><div class="cat-marquee-track">✨ لبنیات و ترشیجات منتخب &nbsp;·&nbsp; پشتیبانی آنلاین &nbsp;·&nbsp; تحویل حضوری یا درب منزل &nbsp;·&nbsp; سفارش آنلاین امن &nbsp;·&nbsp; ✨ لبنیات و ترشیجات منتخب &nbsp;·&nbsp; پشتیبانی آنلاین &nbsp;·&nbsp; تحویل حضوری یا درب منزل &nbsp;·&nbsp; </div></div>' +
                     '</div></div>' +
-                    (catIsInAppBrowser() ? '<div style="margin-top:8px;padding:8px 10px;border-radius:10px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.35);font-size:11px;line-height:1.6;">اگر کالاها نیامد، <b onclick="catOpenInChrome()" style="color:#fbbf24;text-decoration:underline;cursor:pointer;">در Chrome باز کن</b></div>' : '') +
-                    '<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:8px;font-size:10px;opacity:.9;">' +
-                    (minOrder > 0 ? '<span style="padding:4px 8px;border-radius:999px;background:rgba(15,23,42,.5);border:1px solid rgba(148,163,184,.2);">حداقل ' + minOrder.toLocaleString('fa-IR') + ' ت</span>' : '') +
-                    (cfg.shopHours ? '<span style="padding:4px 8px;border-radius:999px;background:rgba(15,23,42,.5);border:1px solid rgba(148,163,184,.2);">🕐 ' + catEsc(cfg.shopHours) + '</span>' : '') +
+                    (catIsInAppBrowser() ? '<div style="margin:8px 12px;padding:8px 10px;border-radius:12px;background:#fff7ed;border:1px solid #fdba74;font-size:11px;line-height:1.6;color:#9a3412;">اگر کالاها نیامد، <b onclick="catOpenInChrome()" style="text-decoration:underline;cursor:pointer;">در Chrome باز کن</b></div>' : '') +
+                    '<div class="cat-meta-pills">' +
+                    (minOrder > 0 ? '<span>📍 حداقل ' + minOrder.toLocaleString('fa-IR') + ' ت</span>' : '') +
+                    (cfg.shopHours ? '<span>🕐 ' + catEsc(cfg.shopHours) + '</span>' : '<span>🕐 هر روز ۸ صبح تا ۱۱ شب</span>') +
                     '</div>' +
-                    '<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:8px;">' +
-                    (cfg.phone ? '<a href="tel:' + catEsc(cfg.phone) + '" style="padding:6px 12px;border-radius:999px;background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.3);color:#7dd3fc;font-size:11px;font-weight:800;text-decoration:none;">📞 تماس</a>' : '') +
-                    ('<button type="button" onclick="window.catOpenSupportChat&&window.catOpenSupportChat()" style="padding:6px 12px;border-radius:999px;border:0;background:linear-gradient(100deg,#25d366,#128c7e);color:#fff;font-size:11px;font-weight:800;cursor:pointer;">💬 پشتیبانی</button>') +
-                    '<a href="https://instagram.com/taze.market.ali" target="_blank" rel="noopener" style="padding:6px 12px;border-radius:999px;background:linear-gradient(100deg,#f59e0b,#ec4899);color:#fff;font-size:11px;font-weight:800;text-decoration:none;">📷 اینستا</a>' +
+                    '<div class="cat-quick-row">' +
+                    '<a class="cat-quick-ig" href="https://instagram.com/taze.market.ali" target="_blank" rel="noopener"><span style="font-size:18px;">📷</span>اینستاگرام</a>' +
+                    '<button type="button" class="cat-quick-sup" onclick="window.catOpenSupportChat&&window.catOpenSupportChat()"><span style="font-size:18px;">💬</span>پشتیبانی</button>' +
+                    (cfg.phone
+                        ? ('<a class="cat-quick-tel" href="tel:' + catEsc(cfg.phone) + '"><span style="font-size:18px;">📞</span>تماس</a>')
+                        : '<a class="cat-quick-tel" href="tel:09361749843"><span style="font-size:18px;">📞</span>تماس</a>') +
                     '</div>' +
-                    '<div class="cat-promo-banner" style="margin:12px 12px 8px;border-radius:20px;overflow:hidden;background:linear-gradient(100deg,#ecfdf5,#e0f2fe);border:1px solid rgba(16,185,129,.25);box-shadow:0 12px 28px rgba(15,23,42,.08);display:flex;min-height:112px;">' +
-                    '<div style="flex:1;padding:16px 14px;display:flex;flex-direction:column;justify-content:center;">' +
-                    '<div style="font-size:16px;font-weight:900;color:#065f46;">پیشنهاد ویژه امروز</div>' +
-                    '<div style="font-size:12px;color:#047857;margin-top:6px;line-height:1.7;">' + (disc > 0 ? (disc + '٪ تخفیف روی سفارش آنلاین') : 'لبنیات، ترشی و سوسیس‌وکالباس تازه') + '</div>' +
+                    '<div class="cat-promo-banner">' +
+                    '<div style="flex:1;padding:18px 16px;">' +
+                    '<div style="font-size:17px;font-weight:900;color:#065f46;">پیشنهاد ویژه امروز</div>' +
+                    '<div style="font-size:13px;color:#047857;margin-top:8px;line-height:1.7;font-weight:700;">' + (disc > 0 ? (disc + '٪ تخفیف روی سفارش آنلاین') : 'لبنیات، ترشی و سوسیس‌وکالباس تازه') + '</div>' +
                     '</div>' +
-                    '<div style="width:42%;display:flex;align-items:center;justify-content:center;font-size:40px;background:linear-gradient(145deg,#d1fae5,#a7f3d0);">🧀🥒🌭</div>' +
+                    '<div style="width:38%;align-self:stretch;display:flex;align-items:center;justify-content:center;gap:2px;font-size:34px;background:linear-gradient(145deg,#d1fae5,#a7f3d0);">🧀🥒🌭</div>' +
                     '</div>' +
                     '<div style="padding:0 12px 8px;"><input type="search" id="catSearchInput" dir="auto" placeholder="🔍 جستجوی محصول (مثلاً پنیر، خیارشور...)" value="' + catEsc(catSearchQ || '') + '" oninput="catSearch(this.value)" style="width:100%;padding:12px 14px;border-radius:14px;border:1px solid rgba(148,163,184,.3);background:#ffffff;color:#0f172a;font:inherit;box-shadow:0 8px 24px rgba(15,23,42,.06);"></div>' +
                     '<div class="cat-tabs">' +
@@ -30731,7 +30838,7 @@ async function openCatalogPublic() {
 
             // فوری UI را نشان بده (دیگر صفحه لود بی‌پایان نیست)
             buildShell();
-            try { (window.catShowPage||catShowPage)('home'); } catch (e) {}
+            try { document.documentElement.classList.add('cat-on-home'); (window.catShowPage||catShowPage)('home'); } catch (e) {}
 
             // سپس در پس‌زمینه محصولات و تنظیمات را تازه کن
             (async function refreshLater() {
@@ -30788,7 +30895,7 @@ async function openCatalogPublic() {
     }
 
     window.
-        // ===== باشگاه مشتریان / گردونه / امتیاز v267 =====
+        // ===== باشگاه مشتریان / گردونه / امتیاز v268 =====
         window.__loyaltyCfg = window.__loyaltyCfg || {
             per_toman: 50000, welcome_points: 50, spin_per_day: 1, spin_cost: 0,
             wheel: [
@@ -31058,6 +31165,10 @@ async function openCatalogPublic() {
         window.catShowPage = function (page) {
         page = page || 'home';
         try { window.__catCurrentPage = page; } catch (e) {}
+        try {
+            document.documentElement.classList.remove('cat-on-home','cat-on-orders','cat-on-track','cat-on-account','cat-on-club');
+            document.documentElement.classList.add('cat-on-' + page);
+        } catch (e) {}
         var pages = ['home', 'orders', 'track', 'account', 'club'];
         var idMap = {
             home: 'catPageHome',
