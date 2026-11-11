@@ -5,7 +5,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="app-build" content="v265">
+    <meta name="app-build" content="v266">
     <!-- جلوگیری از کش‌شدن خود index.html توسط مرورگر/گوشی، تا نسخه‌ی جدید همیشه فوراً لود بشه
          (sw.js شما کش نمی‌کنه، ولی مرورگر یا هاست ممکنه خودش HTML رو کش کنه) -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -217,7 +217,7 @@
         html.catalog-guest-mode #payPublicView { display: block !important; visibility: visible !important; position: relative; z-index: 20; pointer-events: auto !important; }
         html.catalog-guest-mode body { background: #f8fafc !important; margin: 0; color: #0f172a !important; }
 
-        /* === کاتالوگ حرفه‌ای v265 === */
+        /* === کاتالوگ حرفه‌ای v266 === */
         html.catalog-guest-mode body {
             background: #f1f5f9 !important;
             color: #0f172a !important;
@@ -436,7 +436,7 @@
         .cat-tab{flex:0 0 auto;border:1px solid rgba(148,163,184,.3);background:rgba(15,23,42,.8);color:#e2e8f0;border-radius:999px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer}
         .cat-tab.on{background:linear-gradient(100deg,#0ea5e9,#6366f1);border-color:transparent;color:#fff}
 
-        /* ===== کاتالوگ حرفه‌ای ۳بعدی تازه مارکت v265 ===== */
+        /* ===== کاتالوگ حرفه‌ای ۳بعدی تازه مارکت v266 ===== */
         html.catalog-guest-mode {
             --cat-bg: #f4f7fb;
             --cat-card: #ffffff;
@@ -678,6 +678,25 @@
         }
 
                 
+        
+        /* صفحات کاتالوگ: فقط یکی دیده شود */
+        html.catalog-guest-mode #catPageHome,
+        html.catalog-guest-mode #catPageOrders,
+        html.catalog-guest-mode #catPageTrack,
+        html.catalog-guest-mode #catPageAccount,
+        html.catalog-guest-mode #catPageClub {
+            display: none !important;
+            min-height: 60vh;
+        }
+        html.catalog-guest-mode #catPageHome.cat-page-on,
+        html.catalog-guest-mode #catPageOrders.cat-page-on,
+        html.catalog-guest-mode #catPageTrack.cat-page-on,
+        html.catalog-guest-mode #catPageAccount.cat-page-on,
+        html.catalog-guest-mode #catPageClub.cat-page-on {
+            display: block !important;
+            visibility: visible !important;
+        }
+
         /* نوار پایین شناور سه‌بعدی */
         html.catalog-guest-mode #catBottomNav {
             position: fixed !important;
@@ -829,7 +848,7 @@
         .cat-stat-row span{font-size:10px;opacity:1;color:#64748b}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v265 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v266 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json" id="appManifestLink">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -4877,7 +4896,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v265 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v266 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -5057,7 +5076,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             }
         })();
 
-        const APP_BUILD = 'v265';
+        const APP_BUILD = 'v266';
         try { const __bt=document.getElementById('buildTag'); if(__bt) __bt.textContent = APP_BUILD + ' - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )'; } catch(e){}
         // ثبت Service Worker پایدار — همیشه /sw.js بدون ?v= تا آپدیت شکست نخورد
         if ('serviceWorker' in navigator) {
@@ -5069,7 +5088,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
                 } catch (e) {}
                 try {
                     const u = new URL(location.href);
-                    u.searchParams.set('_v', String(APP_BUILD || 'v265'));
+                    u.searchParams.set('_v', String(APP_BUILD || 'v266'));
                     location.replace(u.pathname + u.search + u.hash);
                 } catch (e) {
                     try { location.reload(); } catch (e2) {}
@@ -16278,7 +16297,7 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
         }
 
         async function publishGlobalAppVersion(ver) {
-            const version = String(ver || (typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v265'));
+            const version = String(ver || (typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v266'));
             try {
                 const { data } = await _supabase.from('app_shared_config').select('config').eq('id', 1).maybeSingle();
                 const cfg = (data && data.config && typeof data.config === 'object') ? Object.assign({}, data.config) : {};
@@ -16312,7 +16331,7 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
             } catch (e) {}
             try {
                 const u = new URL(location.href.split('#')[0]);
-                u.searchParams.set('_v', String(APP_BUILD || 'v265'));
+                u.searchParams.set('_v', String(APP_BUILD || 'v266'));
                 u.searchParams.set('_t', String(Date.now()));
                 u.searchParams.set('nocache', '1');
                 location.replace(u.toString());
@@ -16374,7 +16393,7 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
         }
         async function diagForceUpdate() {
             showToast('⏳ انتشار آپدیت اجباری برای همه گوشی‌ها...');
-            const ver = String(typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v265');
+            const ver = String(typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v266');
             let published = false;
             try {
                 published = await publishGlobalAppVersion(ver);
@@ -30637,9 +30656,10 @@ async function openCatalogPublic() {
                     '<div class="cat-grid" id="catGrid" style="padding-bottom:140px;"></div>' +
                     (typeof catBuildTrustFooterHtml === 'function' ? catBuildTrustFooterHtml(disc, cfg, successOrders) : '') +
                     '</div>' +
-                    '<div id="catPageOrders" style="display:none;padding:16px 12px 100px;direction:rtl;"></div>' +
-                    '<div id="catPageTrack" style="display:none;padding:16px 12px 100px;direction:rtl;"></div>' +
-                    '<div id="catPageAccount" style="display:none;padding:16px 12px 100px;direction:rtl;"></div>' +
+                    '<div id="catPageOrders" style="display:none !important;padding:16px 12px 100px;direction:rtl;"></div>' +
+                    '<div id="catPageTrack" style="display:none !important;padding:16px 12px 100px;direction:rtl;"></div>' +
+                    '<div id="catPageAccount" style="display:none !important;padding:16px 12px 100px;direction:rtl;"></div>' +
+                    '<div id="catPageClub" style="display:none !important;padding:0;direction:rtl;"></div>' +
                     // نوار سبد خرید شناور
                     '<div id="catCartBar" class="cat-cartbar" style="display:none;bottom:68px;z-index:55;"></div>' +
                     // شیت سبد و ثبت سفارش
@@ -30661,13 +30681,14 @@ async function openCatalogPublic() {
                 try { catPickSurveyStar(5); } catch (e) {}
                 try {
                     Array.prototype.forEach.call(document.querySelectorAll('#catBottomNav .cat-nav-btn') || [], function (btn) {
-                        btn.onclick = function () { catShowPage(btn.getAttribute('data-page')); };
+                        btn.onclick = function () { (window.catShowPage || catShowPage)(btn.getAttribute('data-page')); };
                     });
                 } catch (e) {}
             }
 
             // فوری UI را نشان بده (دیگر صفحه لود بی‌پایان نیست)
             buildShell();
+            try { (window.catShowPage||catShowPage)('home'); } catch (e) {}
 
             // سپس در پس‌زمینه محصولات و تنظیمات را تازه کن
             (async function refreshLater() {
@@ -30724,7 +30745,7 @@ async function openCatalogPublic() {
     }
 
     window.
-        // ===== باشگاه مشتریان / گردونه / امتیاز v265 =====
+        // ===== باشگاه مشتریان / گردونه / امتیاز v266 =====
         window.__loyaltyCfg = window.__loyaltyCfg || {
             per_toman: 50000, welcome_points: 50, spin_per_day: 1, spin_cost: 0,
             wheel: [
@@ -30900,10 +30921,12 @@ async function openCatalogPublic() {
             } catch (e) { box.innerHTML = '<div class="hint">SQL جداول باشگاه را اجرا کن: '+(e.message||e)+'</div>'; }
         }
         window.catRenderClubPage = async function () {
+            try { if (window.catShowPage && window.__catCurrentPage !== 'club') { /* only render content */ } } catch (e) {}
             try {
-                const home = document.getElementById('catPageHome');
-                if (home) home.style.setProperty('display','none','important');
-                ['catPageOrders','catPageTrack','catPageAccount'].forEach(function(id){ const el=document.getElementById(id); if(el) el.style.setProperty('display','none','important'); });
+                ['catPageHome','catPageOrders','catPageTrack','catPageAccount'].forEach(function(id){
+                    var el=document.getElementById(id);
+                    if(el){ el.style.setProperty('display','none','important'); el.classList.remove('cat-page-on'); }
+                });
             } catch (e) {}
             let page = document.getElementById('catPageClub');
             if (!page) {
@@ -30916,6 +30939,9 @@ async function openCatalogPublic() {
             if (!phone) try { phone=(window.catFormDraft&&catFormDraft.phone)||''; name=(window.catFormDraft&&catFormDraft.name)||name; } catch(e){}
             const row = phone ? await loyaltyGetCustomer(phone) : null;
             const pts = row ? (Number(row.points)||0) : 0;
+            page.classList.add('cat-page-on');
+            page.style.setProperty('display','block','important');
+            page.style.setProperty('visibility','visible','important');
             page.innerHTML = '<div style="padding:14px 14px 110px;">'+
                 '<div class="cat-hero-pro" style="border-radius:24px;margin-bottom:14px;"><div class="cat-hero-inner">'+
                 '<div style="font-size:12px;opacity:.9;">باشگاه مشتریان تازه مارکت</div><h1 style="font-size:24px;margin:6px 0;">🎁 امتیاز و شانس</h1>'+
@@ -30986,55 +31012,101 @@ async function openCatalogPublic() {
             }
         } catch (e) {}
 
-        catShowPage = function (page) {
+        window.catShowPage = function (page) {
         page = page || 'home';
-        const map = { home: 'catPageHome', orders: 'catPageOrders', track: 'catPageTrack', account: 'catPageAccount', club: 'catPageClub' };
-        // صفحه باشگاه را جدا و فقط همان را نشان بده
+        try { window.__catCurrentPage = page; } catch (e) {}
+        var pages = ['home', 'orders', 'track', 'account', 'club'];
+        var idMap = {
+            home: 'catPageHome',
+            orders: 'catPageOrders',
+            track: 'catPageTrack',
+            account: 'catPageAccount',
+            club: 'catPageClub'
+        };
+        // مطمئن شو همه کانتینرها هست
         try {
-            if (!document.getElementById('catPageClub')) {
-                const d = document.createElement('div');
-                d.id = 'catPageClub';
-                d.style.display = 'none';
-                const inn = document.getElementById('catalogPublicInner');
-                if (inn) inn.appendChild(d);
-            }
-        } catch (e) {}
-        // همه صفحات را مخفی کن (حتی اگر id اضافه شده باشد)
-        try {
-            const inner = document.getElementById('catalogPublicInner');
-            if (inner) {
-                Array.prototype.forEach.call(inner.children || [], function (ch) {
-                    if (!ch || !ch.id) return;
-                    if (String(ch.id).indexOf('catPage') === 0) {
-                        ch.style.setProperty('display', 'none', 'important');
+            var inn = document.getElementById('catalogPublicInner');
+            if (inn) {
+                pages.forEach(function (k) {
+                    var id = idMap[k];
+                    var el = document.getElementById(id);
+                    if (!el) {
+                        el = document.createElement('div');
+                        el.id = id;
+                        el.style.display = 'none';
+                        inn.appendChild(el);
                     }
                 });
             }
+        } catch (e) {}
+        // فقط یک صفحه روشن
+        pages.forEach(function (k) {
+            var el = document.getElementById(idMap[k]);
+            if (!el) return;
+            if (k === page) {
+                el.style.setProperty('display', 'block', 'important');
+                el.style.setProperty('visibility', 'visible', 'important');
+                el.classList.add('cat-page-on');
+            } else {
+                el.style.setProperty('display', 'none', 'important');
+                el.style.setProperty('visibility', 'hidden', 'important');
+                el.classList.remove('cat-page-on');
+            }
+        });
+        // اگر DOM خراب باشد و محصولات بیرون از home باشند هم مخفی کن
+        try {
+            if (page !== 'home') {
+                document.querySelectorAll('#catGrid, .cat-tabs, .cat-hero, .cat-hero-pro, .cat-stat-row, .cat-trust, .cat-rev, .cat-survey, .cat-footer-pro, .cat-marquee').forEach(function (el) {
+                    if (el.closest('#catPageClub') || el.closest('#catPageOrders') || el.closest('#catPageTrack') || el.closest('#catPageAccount')) return;
+                    el.style.setProperty('display', 'none', 'important');
+                    el.setAttribute('data-cat-hidden-by-nav', '1');
+                });
+            } else {
+                document.querySelectorAll('[data-cat-hidden-by-nav="1"]').forEach(function (el) {
+                    el.style.removeProperty('display');
+                    el.removeAttribute('data-cat-hidden-by-nav');
+                });
+                var home = document.getElementById('catPageHome');
+                if (home) {
+                    home.querySelectorAll('.cat-grid, .cat-tabs, .cat-hero, .cat-hero-pro, .cat-stat-row, .cat-trust, .cat-rev, .cat-survey, .cat-footer-pro').forEach(function (el) {
+                        el.style.removeProperty('display');
+                    });
+                }
+            }
         } catch (e2) {}
-        Object.keys(map).forEach(function (k) {
-            const el = document.getElementById(map[k]);
-            if (el) el.style.setProperty('display', (k === page) ? 'block' : 'none', 'important');
-        });
-        if (page === 'club') {
-            try { catRenderClubPage(); } catch (e) {}
-            const club = document.getElementById('catPageClub');
-            if (club) club.style.setProperty('display', 'block', 'important');
-        }
+        // نوار پایین
         document.querySelectorAll('#catBottomNav .cat-nav-btn').forEach(function (b) {
-            const on = b.getAttribute('data-page') === page;
+            var on = b.getAttribute('data-page') === page;
             b.classList.toggle('on', on);
-            b.style.color = on ? '#ffffff' : '#64748b';
-            b.style.background = on ? 'linear-gradient(145deg,#059669,#0ea5e9)' : 'transparent';
-            b.style.boxShadow = on ? '0 8px 18px rgba(14,165,233,.35)' : 'none';
-            b.style.transform = on ? 'translateY(-2px)' : 'none';
+            if (on) {
+                b.style.color = '#ffffff';
+                b.style.background = 'linear-gradient(145deg,#059669,#0ea5e9)';
+                b.style.boxShadow = '0 8px 18px rgba(14,165,233,.35)';
+                b.style.transform = 'translateY(-2px)';
+            } else {
+                b.style.color = '#64748b';
+                b.style.background = 'transparent';
+                b.style.boxShadow = 'none';
+                b.style.transform = 'none';
+            }
         });
-        const bar = document.getElementById('catCartBar');
-        if (bar) bar.style.display = (page === 'home' && Object.keys(catCart || {}).length) ? 'flex' : 'none';
-        if (page === 'orders') try { catRenderMyOrdersPage(); } catch (e) {}
-        if (page === 'track') try { catRenderTrackPage(); } catch (e) {}
-        if (page === 'account') try { catRenderAccountPage(); } catch (e) {}
-        try { window.scrollTo(0, 0); const inn = document.getElementById('catalogPublicInner'); if (inn) inn.scrollTop = 0; } catch (e) {}
+        var bar = document.getElementById('catCartBar');
+        if (bar) bar.style.display = (page === 'home' && window.catCart && Object.keys(catCart).length) ? 'flex' : 'none';
+        try {
+            if (page === 'club' && typeof catRenderClubPage === 'function') catRenderClubPage();
+            if (page === 'orders' && typeof catRenderMyOrdersPage === 'function') catRenderMyOrdersPage();
+            if (page === 'track' && typeof catRenderTrackPage === 'function') catRenderTrackPage();
+            if (page === 'account' && typeof catRenderAccountPage === 'function') catRenderAccountPage();
+        } catch (e3) {}
+        try {
+            window.scrollTo(0, 0);
+            var sc = document.getElementById('catalogPublicView') || document.scrollingElement;
+            if (sc) sc.scrollTop = 0;
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
+        } catch (e4) {}
     };
+    var catShowPage = window.catShowPage;
     function catOrderStatusFa(st) {
         const map = {
             open: { t: '⏳ در انتظار پرداخت', c: '#fbbf24' },
