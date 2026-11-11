@@ -5,7 +5,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="app-build" content="v270">
+    <meta name="app-build" content="v271">
     <!-- جلوگیری از کش‌شدن خود index.html توسط مرورگر/گوشی، تا نسخه‌ی جدید همیشه فوراً لود بشه
          (sw.js شما کش نمی‌کنه، ولی مرورگر یا هاست ممکنه خودش HTML رو کش کنه) -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -217,7 +217,7 @@
         html.catalog-guest-mode #payPublicView { display: block !important; visibility: visible !important; position: relative; z-index: 20; pointer-events: auto !important; }
         html.catalog-guest-mode body { background: #f8fafc !important; margin: 0; color: #0f172a !important; }
 
-        /* === کاتالوگ حرفه‌ای v270 === */
+        /* === کاتالوگ حرفه‌ای v271 === */
         html.catalog-guest-mode body {
             background: #f1f5f9 !important;
             color: #0f172a !important;
@@ -436,7 +436,7 @@
         .cat-tab{flex:0 0 auto;border:1px solid rgba(148,163,184,.3);background:rgba(15,23,42,.8);color:#e2e8f0;border-radius:999px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer}
         .cat-tab.on{background:linear-gradient(100deg,#0ea5e9,#6366f1);border-color:transparent;color:#fff}
 
-        /* ===== کاتالوگ حرفه‌ای ۳بعدی تازه مارکت v270 ===== */
+        /* ===== کاتالوگ حرفه‌ای ۳بعدی تازه مارکت v271 ===== */
         html.catalog-guest-mode {
             --cat-bg: #f4f7fb;
             --cat-card: #ffffff;
@@ -892,7 +892,7 @@
         .cat-stat-row b{display:block;font-size:16px;color:#059669;font-weight:900}
         .cat-stat-row span{font-size:10px;opacity:1;color:#64748b}
     
-        /* v270 کاتالوگ مثل طرح فروشگاهی */
+        /* v271 کاتالوگ مثل طرح فروشگاهی */
         html.catalog-guest-mode #catPageHome {
             display: block !important;
             visibility: visible !important;
@@ -1041,9 +1041,31 @@
             transform: translateY(1px) scale(.95) !important;
         }
 
+
+        /* v271 polish */
+        html.catalog-guest-mode .cat-hero-pro { padding: 18px 14px 14px !important; }
+        html.catalog-guest-mode #catPageHome { padding-bottom: 110px !important; }
+        html.catalog-guest-mode .cat-reveal { opacity: 0; transform: translateY(18px); transition: opacity .55s ease, transform .55s cubic-bezier(.2,.8,.2,1); }
+        html.catalog-guest-mode .cat-reveal.in { opacity: 1; transform: none; }
+        html.catalog-guest-mode .cat-visit-bar {
+            margin: 8px 12px 0; padding: 10px 12px; border-radius: 14px;
+            background: linear-gradient(100deg,#ecfeff,#f0fdf4); border: 1px solid #a5f3fc;
+            display: flex; justify-content: space-between; align-items: center; gap: 8px;
+            font-size: 12px; font-weight: 800; color: #0f766e;
+            box-shadow: 0 8px 20px rgba(15,23,42,.06);
+        }
+        html.catalog-guest-mode .cat-footer-fill {
+            margin: 12px 12px 24px; padding: 16px; border-radius: 20px;
+            background: linear-gradient(160deg,#0f172a,#134e4a); color: #ecfdf5;
+            box-shadow: 0 16px 36px rgba(15,23,42,.2);
+        }
+        html.catalog-guest-mode .cat-footer-fill b { color: #6ee7b7; }
+        html.catalog-guest-mode #accLiveBox, html.catalog-guest-mode #accLiveBox * { color: #0f172a !important; }
+        html.catalog-guest-mode #accLiveBox b[dir="ltr"] { color: #b45309 !important; }
+
 </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v270 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v271 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json" id="appManifestLink">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -4169,6 +4191,20 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             </div>
         </details>
 
+        <details class="diag-acc" open>
+            <summary>🎁 باشگاه مشتریان · جوایز گردونه</summary>
+            <div class="diag-body">
+                <div class="hint" style="margin-bottom:8px;">جایزه و درصد شانس هر خانه گردونه را تنظیم کنید. جمع درصدها بهتر است حدود ۱۰۰ باشد.</div>
+                <div id="diagWheelEditor"></div>
+                <div class="diag-actions" style="margin-top:8px;">
+                    <button type="button" class="row-btn edit-btn" onclick="diagWheelAddRow()">➕ جایزه جدید</button>
+                    <button type="button" class="row-btn edit-btn" onclick="diagWheelSave()">💾 ذخیره و همگام‌سازی</button>
+                    <button type="button" class="row-btn edit-btn" onclick="diagWheelLoad()">🔄 بارگذاری</button>
+                </div>
+                <div id="diagWheelResult"></div>
+            </div>
+        </details>
+
         <details class="diag-acc">
             <summary>💰 فروش و صف آفلاین</summary>
             <div class="diag-body">
@@ -5091,7 +5127,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v270 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v271 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -5271,7 +5307,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             }
         })();
 
-        const APP_BUILD = 'v270';
+        const APP_BUILD = 'v271';
         try { const __bt=document.getElementById('buildTag'); if(__bt) __bt.textContent = APP_BUILD + ' - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )'; } catch(e){}
         // ثبت Service Worker پایدار — همیشه /sw.js بدون ?v= تا آپدیت شکست نخورد
         if ('serviceWorker' in navigator) {
@@ -5283,7 +5319,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
                 } catch (e) {}
                 try {
                     const u = new URL(location.href);
-                    u.searchParams.set('_v', String(APP_BUILD || 'v270'));
+                    u.searchParams.set('_v', String(APP_BUILD || 'v271'));
                     location.replace(u.pathname + u.search + u.hash);
                 } catch (e) {
                     try { location.reload(); } catch (e2) {}
@@ -16492,7 +16528,7 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
         }
 
         async function publishGlobalAppVersion(ver) {
-            const version = String(ver || (typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v270'));
+            const version = String(ver || (typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v271'));
             try {
                 const { data } = await _supabase.from('app_shared_config').select('config').eq('id', 1).maybeSingle();
                 const cfg = (data && data.config && typeof data.config === 'object') ? Object.assign({}, data.config) : {};
@@ -16526,7 +16562,7 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
             } catch (e) {}
             try {
                 const u = new URL(location.href.split('#')[0]);
-                u.searchParams.set('_v', String(APP_BUILD || 'v270'));
+                u.searchParams.set('_v', String(APP_BUILD || 'v271'));
                 u.searchParams.set('_t', String(Date.now()));
                 u.searchParams.set('nocache', '1');
                 location.replace(u.toString());
@@ -16588,7 +16624,7 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
         }
         async function diagForceUpdate() {
             showToast('⏳ انتشار آپدیت اجباری برای همه گوشی‌ها...');
-            const ver = String(typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v270');
+            const ver = String(typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v271');
             let published = false;
             try {
                 published = await publishGlobalAppVersion(ver);
@@ -16830,6 +16866,93 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
             out.sort(function (a, b) { return b.ageH - a.ageH; });
             return out;
         }
+        
+        async function diagWheelLoad() {
+            try { if (typeof loyaltyPullCfg === 'function') await loyaltyPullCfg(); } catch (e) {}
+            const cfg = window.__loyaltyCfg || {};
+            const wheel = (cfg.wheel && cfg.wheel.length) ? cfg.wheel : [
+                { label: '۲۰ امتیاز', type: 'points', value: 20, chance: 18 },
+                { label: '۵۰ امتیاز', type: 'points', value: 50, chance: 12 },
+                { label: '۵٪ تخفیف', type: 'discount', value: 5, chance: 10 },
+                { label: '۱۰ امتیاز', type: 'points', value: 10, chance: 20 },
+                { label: 'پوچ', type: 'none', value: 0, chance: 25 },
+                { label: '۱۰۰ امتیاز', type: 'points', value: 100, chance: 5 },
+                { label: '۱۰٪ تخفیف', type: 'discount', value: 10, chance: 5 },
+                { label: '۳۰ امتیاز', type: 'points', value: 30, chance: 5 }
+            ];
+            window.__diagWheelDraft = wheel.map(function (w) { return Object.assign({}, w); });
+            diagWheelRender();
+            const out = document.getElementById('diagWheelResult');
+            if (out) out.innerHTML = '<span style="color:#10b981;">بارگذاری شد · ' + wheel.length + ' جایزه</span>';
+        }
+        function diagWheelRender() {
+            const box = document.getElementById('diagWheelEditor');
+            if (!box) return;
+            const rows = window.__diagWheelDraft || [];
+            const sum = rows.reduce(function (s, r) { return s + (Number(r.chance) || 0); }, 0);
+            box.innerHTML = rows.map(function (r, i) {
+                return '<div style="display:grid;grid-template-columns:1.4fr .9fr .7fr .7fr auto;gap:6px;margin-bottom:6px;align-items:center;">' +
+                    '<input data-w="label" data-i="' + i + '" value="' + String(r.label || '').replace(/"/g, '&quot;') + '" placeholder="عنوان جایزه" style="padding:8px;border-radius:10px;border:1px solid #334155;background:#0f172a;color:#e2e8f0;">' +
+                    '<select data-w="type" data-i="' + i + '" style="padding:8px;border-radius:10px;border:1px solid #334155;background:#0f172a;color:#e2e8f0;">' +
+                    '<option value="points"' + (r.type === 'points' ? ' selected' : '') + '>امتیاز</option>' +
+                    '<option value="discount"' + (r.type === 'discount' ? ' selected' : '') + '>تخفیف٪</option>' +
+                    '<option value="none"' + (r.type === 'none' ? ' selected' : '') + '>پوچ</option>' +
+                    '</select>' +
+                    '<input data-w="value" data-i="' + i + '" type="number" value="' + (r.value || 0) + '" placeholder="مقدار" style="padding:8px;border-radius:10px;border:1px solid #334155;background:#0f172a;color:#e2e8f0;">' +
+                    '<input data-w="chance" data-i="' + i + '" type="number" value="' + (r.chance || 0) + '" placeholder="شانس٪" style="padding:8px;border-radius:10px;border:1px solid #334155;background:#0f172a;color:#e2e8f0;">' +
+                    '<button type="button" onclick="diagWheelDel(' + i + ')" style="border:0;background:#7f1d1d;color:#fecaca;border-radius:10px;padding:8px 10px;cursor:pointer;">حذف</button></div>';
+            }).join('') + '<div style="font-size:12px;opacity:.85;margin-top:4px;">جمع درصد شانس: <b>' + sum + '</b> ٪ ' + (sum === 100 ? '✅' : (sum < 100 ? '⚠️ کمتر از ۱۰۰' : '⚠️ بیشتر از ۱۰۰')) + '</div>';
+            box.querySelectorAll('input,select').forEach(function (el) {
+                el.onchange = el.oninput = function () {
+                    const i = Number(el.getAttribute('data-i'));
+                    const w = el.getAttribute('data-w');
+                    if (!window.__diagWheelDraft[i]) return;
+                    let v = el.value;
+                    if (w === 'value' || w === 'chance') v = Number(v) || 0;
+                    window.__diagWheelDraft[i][w] = v;
+                    if (w === 'chance') {
+                        const sum2 = window.__diagWheelDraft.reduce(function (s, r) { return s + (Number(r.chance) || 0); }, 0);
+                        const foot = box.querySelector('div:last-child');
+                        if (foot) foot.innerHTML = 'جمع درصد شانس: <b>' + sum2 + '</b> ٪ ' + (sum2 === 100 ? '✅' : (sum2 < 100 ? '⚠️ کمتر از ۱۰۰' : '⚠️ بیشتر از ۱۰۰'));
+                    }
+                };
+            });
+        }
+        function diagWheelAddRow() {
+            window.__diagWheelDraft = window.__diagWheelDraft || [];
+            window.__diagWheelDraft.push({ label: 'جایزه جدید', type: 'points', value: 10, chance: 5 });
+            diagWheelRender();
+        }
+        function diagWheelDel(i) {
+            window.__diagWheelDraft.splice(i, 1);
+            diagWheelRender();
+        }
+        async function diagWheelSave() {
+            const out = document.getElementById('diagWheelResult');
+            try {
+                const wheel = (window.__diagWheelDraft || []).map(function (r) {
+                    return { label: String(r.label || '').trim() || 'جایزه', type: r.type || 'points', value: Number(r.value) || 0, chance: Math.max(0, Number(r.chance) || 0) };
+                }).filter(function (r) { return r.label; });
+                if (!wheel.length) throw new Error('حداقل یک جایزه لازم است');
+                window.__loyaltyCfg = window.__loyaltyCfg || {};
+                window.__loyaltyCfg.wheel = wheel;
+                try { localStorage.setItem('loyalty_cfg_v1', JSON.stringify(window.__loyaltyCfg)); } catch (e) {}
+                if (typeof _supabase !== 'undefined' && _supabase) {
+                    const { data } = await _supabase.from('app_shared_config').select('config').eq('id', 1).maybeSingle();
+                    const cfg = (data && data.config) || {};
+                    cfg.loyalty = Object.assign({}, cfg.loyalty || {}, window.__loyaltyCfg, { wheel: wheel });
+                    const { error } = await _supabase.from('app_shared_config').upsert({ id: 1, config: cfg }, { onConflict: 'id' });
+                    if (error) throw error;
+                }
+                if (out) out.innerHTML = '<span style="color:#10b981;">✅ جوایز گردونه ذخیره و همگام شد (' + wheel.length + ' مورد)</span>';
+                showToast('✅ جوایز گردونه ذخیره شد');
+            } catch (e) {
+                if (out) out.innerHTML = '<span style="color:#f87171;">❌ ' + (e.message || e) + '</span>';
+            }
+        }
+        try { setTimeout(function () { if (document.getElementById('diagWheelEditor')) diagWheelLoad(); }, 800); } catch (e) {}
+
+
         async function diagScanUnclosedExits() {
             if (currentRole !== 'admin') {
                 showToast('⛔ فقط مدیر');
@@ -27142,7 +27265,10 @@ window.catOpenSupportChat = window.catOpenSupportChat || function () {
     if (typeof window.catSupportOpenWindow === 'function') return window.catSupportOpenWindow();
     var w = document.getElementById('catSupWin');
     if (w) { w.classList.add('open'); return; }
-    alert('پشتیبانی هنوز آماده نشده. یک لحظه صبر کنید و دوباره بزنید.');
+    try { if (typeof catSupportWidgetEnsure === 'function') catSupportWidgetEnsure(); } catch (e3) {}
+    w = document.getElementById('catSupWin');
+    if (w) { w.classList.add('open'); w.classList.remove('mini'); return; }
+    alert('پشتیبانی هنوز آماده نشده. صفحه را یک‌بار رفرش کنید.');
   } catch (e) { try { alert(e.message || e); } catch (e2) {} }
 };
 </script>
@@ -30213,7 +30339,12 @@ window.catOpenSupportChat = window.catOpenSupportChat || function () {
             '<div class="cat-trust-item"><b>🚚</b><span>تحویل حضوری یا درب منزل با زمان انتخابی شما</span></div>' +
             '<div class="cat-trust-item"><b>⭐</b><span>نظرات فقط از خریداران واقعی نمایش داده می‌شود</span></div>' +
             '</div></div>' +
-            '<div class="cat-rev" style="margin:0 10px 16px;padding:16px;border-radius:18px;background:#ffffff;border:1px solid #e2e8f0;color:#0f172a;box-shadow:0 6px 20px rgba(15,23,42,.06);">' +
+            '<div class="cat-footer-fill cat-reveal">' +
+            '<div style="font-size:15px;font-weight:900;margin-bottom:8px;">✨ چرا تازه مارکت؟</div>' +
+            '<div style="font-size:12px;line-height:1.9;">🧀 لبنیات تازه روزانه &nbsp;·&nbsp; 🥒 ترشیجات خانگی<br>🌭 سوسیس و کالباس فله با کیفیت &nbsp;·&nbsp; 🚚 ارسال بیرجند</div>' +
+            '<div style="margin-top:10px;font-size:12px;opacity:.9;">👀 بازدید این کاتالوگ: <b id="catVisitNum2">' + Number(window.__catVisitGlobal || window.__catVisitLocal || 0).toLocaleString('fa-IR') + '</b> نفر</div>' +
+            '</div>' +
+            '<div class="cat-rev cat-reveal" style="margin:0 10px 16px;padding:16px;border-radius:18px;background:#ffffff;border:1px solid #e2e8f0;color:#0f172a;box-shadow:0 6px 20px rgba(15,23,42,.06);">' +
             '<h3 style="margin:0 0 10px;font-size:14px;font-weight:900;color:#0f172a;display:flex;justify-content:space-between;align-items:center;"><span style="color:#0f172a;">💬 نظرات خریداران</span><span style="font-size:11px;font-weight:700;color:#d97706;">' + scoreStars + '</span></h3>' +
             revHtml +
             '</div>' +
@@ -30823,6 +30954,9 @@ async function openCatalogPublic() {
                 try {
                     if (!force && document.getElementById('catPageHome') && document.getElementById('catBottomNav')) {
                         try { if (typeof catRenderGrid === 'function') catRenderGrid(); } catch (e) {}
+                        try { if (typeof catBumpVisit === 'function') catBumpVisit(); } catch (e) {}
+                        try { setTimeout(function(){ if (typeof catInitReveal === 'function') catInitReveal(); }, 250); } catch (e) {}
+                        try { if (typeof catSupportWidgetEnsure === 'function') catSupportWidgetEnsure(); } catch (e) {}
                         try {
                             var cur = window.__catCurrentPage || 'home';
                             if (typeof window.catShowPage === 'function') window.catShowPage(cur);
@@ -30875,7 +31009,7 @@ async function openCatalogPublic() {
                         ? ('<a class="cat-quick-tel" href="tel:' + catEsc(cfg.phone) + '"><span style="font-size:18px;">📞</span>تماس</a>')
                         : '<a class="cat-quick-tel" href="tel:09361749843"><span style="font-size:18px;">📞</span>تماس</a>') +
                     '</div>' +
-                    '<div class="cat-promo-banner">' +
+                    '<div class="cat-promo-banner cat-reveal">' +
                     '<div style="flex:1;padding:18px 16px;">' +
                     '<div style="font-size:17px;font-weight:900;color:#065f46;">پیشنهاد ویژه امروز</div>' +
                     '<div style="font-size:13px;color:#047857;margin-top:8px;line-height:1.7;font-weight:700;">' + (disc > 0 ? (disc + '٪ تخفیف روی سفارش آنلاین') : 'لبنیات، ترشی و سوسیس‌وکالباس تازه') + '</div>' +
@@ -30983,7 +31117,7 @@ async function openCatalogPublic() {
     }
 
     window.
-        // ===== باشگاه مشتریان / گردونه / امتیاز v270 =====
+        // ===== باشگاه مشتریان / گردونه / امتیاز v271 =====
         window.__loyaltyCfg = window.__loyaltyCfg || {
             per_toman: 50000, welcome_points: 50, spin_per_day: 1, spin_cost: 0,
             wheel: [
@@ -31159,6 +31293,44 @@ async function openCatalogPublic() {
             } catch (e) { box.innerHTML = '<div class="hint">SQL جداول باشگاه را اجرا کن: '+(e.message||e)+'</div>'; }
         }
         
+    
+    window.catBumpVisit = async function () {
+        try {
+            var key = 'cat_visit_count_v1';
+            var n = parseInt(localStorage.getItem(key) || '0', 10) || 0;
+            n += 1;
+            localStorage.setItem(key, String(n));
+            window.__catVisitLocal = n;
+            try {
+                if (typeof _supabase !== 'undefined' && _supabase) {
+                    var res = await _supabase.from('app_shared_config').select('config').eq('id', 1).maybeSingle();
+                    var cfg = (res.data && res.data.config) || {};
+                    var v = Number(cfg.catalog_visits || 0) + 1;
+                    cfg.catalog_visits = v;
+                    window.__catVisitGlobal = v;
+                    await _supabase.from('app_shared_config').upsert({ id: 1, config: cfg }, { onConflict: 'id' });
+                }
+            } catch (e) {}
+            var el = document.getElementById('catVisitNum');
+            if (el) el.textContent = (window.__catVisitGlobal || n).toLocaleString('fa-IR');
+            var el2 = document.getElementById('catVisitNum2');
+            if (el2) el2.textContent = (window.__catVisitGlobal || n).toLocaleString('fa-IR');
+        } catch (e) {}
+    };
+    window.catInitReveal = function () {
+        try {
+            var nodes = document.querySelectorAll('.cat-reveal');
+            if (!nodes.length) return;
+            if (!('IntersectionObserver' in window)) { nodes.forEach(function (n) { n.classList.add('in'); }); return; }
+            var io = new IntersectionObserver(function (entries) {
+                entries.forEach(function (en) {
+                    if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
+                });
+            }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+            nodes.forEach(function (n) { io.observe(n); });
+        } catch (e) {}
+    };
+
     window.catGetCustomerPhone = function () {
         try { catLoadProfile(); } catch (e) {}
         var phone = '';
@@ -31528,7 +31700,7 @@ async function openCatalogPublic() {
             '<input type="text" id="accEditName" dir="auto" value="' + catEsc(p.name || '') + '" placeholder="نام کامل" oninput="window.catAccountLive && catAccountLive()">' +
             '<label>شماره تماس</label>' +
             '<input type="tel" id="accEditPhone" dir="ltr" inputmode="tel" value="' + catEsc(p.phone || '') + '" placeholder="09xxxxxxxxx" style="text-align:left;" oninput="window.catAccountLive && catAccountLive()">' +
-            '<div id="accLiveBox" style="margin:10px 0 6px;padding:12px;border-radius:14px;background:linear-gradient(135deg,rgba(16,185,129,.15),rgba(14,165,233,.12));border:1px solid rgba(52,211,153,.35);font-size:12px;line-height:1.8;color:#e2e8f0;">' +
+            '<div id="accLiveBox" style="margin:10px 0 6px;padding:12px;border-radius:14px;background:linear-gradient(135deg,#ecfdf5,#e0f2fe);border:1px solid #86efac;font-size:12px;line-height:1.8;color:#0f172a;font-weight:700;">' +
             (p.phone ? ('✅ شماره ثبت‌شده: <b dir="ltr">' + catEsc(p.phone) + '</b><br>کد مشتری: <b dir="ltr" style="color:#fbbf24;">' + catEsc(myCode || catCustomerCode(p.phone)) + '</b>') : 'شماره و نام را وارد کنید تا کد مشتری همین‌جا ساخته شود.') +
             '</div>' +
             '<div class="hint" style="margin:8px 0;">آدرس‌های ذخیره‌شده: <b>' + (p.addresses || []).length + '</b></div>' +
