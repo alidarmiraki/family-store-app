@@ -5,7 +5,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="app-build" content="v262">
+    <meta name="app-build" content="v264">
     <!-- جلوگیری از کش‌شدن خود index.html توسط مرورگر/گوشی، تا نسخه‌ی جدید همیشه فوراً لود بشه
          (sw.js شما کش نمی‌کنه، ولی مرورگر یا هاست ممکنه خودش HTML رو کش کنه) -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -217,7 +217,7 @@
         html.catalog-guest-mode #payPublicView { display: block !important; visibility: visible !important; position: relative; z-index: 20; pointer-events: auto !important; }
         html.catalog-guest-mode body { background: #f8fafc !important; margin: 0; color: #0f172a !important; }
 
-        /* === کاتالوگ حرفه‌ای v262 === */
+        /* === کاتالوگ حرفه‌ای v264 === */
         html.catalog-guest-mode body {
             background: #f1f5f9 !important;
             color: #0f172a !important;
@@ -435,7 +435,249 @@
         .cat-tabs{display:flex;gap:6px;overflow-x:auto;padding:0 10px 8px;-webkit-overflow-scrolling:touch}
         .cat-tab{flex:0 0 auto;border:1px solid rgba(148,163,184,.3);background:rgba(15,23,42,.8);color:#e2e8f0;border-radius:999px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer}
         .cat-tab.on{background:linear-gradient(100deg,#0ea5e9,#6366f1);border-color:transparent;color:#fff}
-        .cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:8px 10px 100px}
+
+        /* ===== کاتالوگ حرفه‌ای ۳بعدی تازه مارکت v264 ===== */
+        html.catalog-guest-mode {
+            --cat-bg: #f4f7fb;
+            --cat-card: #ffffff;
+            --cat-ink: #0f172a;
+            --cat-muted: #64748b;
+            --cat-accent: #059669;
+            --cat-accent2: #0ea5e9;
+            --cat-shadow: 0 18px 40px rgba(15, 23, 42, .12);
+        }
+        html[data-cat-theme="night"].catalog-guest-mode {
+            --cat-bg: #0b1220;
+            --cat-card: #111827;
+            --cat-ink: #e2e8f0;
+            --cat-muted: #94a3b8;
+            --cat-shadow: 0 18px 40px rgba(0,0,0,.45);
+        }
+        html[data-cat-theme="mint"].catalog-guest-mode {
+            --cat-bg: #ecfdf5;
+            --cat-card: #ffffff;
+            --cat-ink: #064e3b;
+            --cat-accent: #10b981;
+        }
+        html.catalog-guest-mode body {
+            background: var(--cat-bg) !important;
+            color: var(--cat-ink) !important;
+            font-family: Vazirmatn, Tahoma, system-ui, sans-serif;
+        }
+        html.catalog-guest-mode #catalogPublicView {
+            background: radial-gradient(1200px 600px at 10% -10%, rgba(16,185,129,.18), transparent 55%),
+                        radial-gradient(900px 500px at 100% 0%, rgba(14,165,233,.14), transparent 50%),
+                        var(--cat-bg) !important;
+            min-height: 100vh;
+        }
+        .cat-hero-pro {
+            position: relative;
+            margin: 0 0 8px;
+            padding: 22px 16px 18px;
+            border-radius: 0 0 28px 28px;
+            overflow: hidden;
+            background: linear-gradient(135deg, #064e3b 0%, #0f766e 40%, #0ea5e9 100%);
+            color: #fff;
+            box-shadow: 0 20px 50px rgba(15, 118, 110, .35);
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
+        .cat-hero-pro::before {
+            content: "";
+            position: absolute; inset: -40%;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.18), transparent 45%),
+                        radial-gradient(circle at 80% 20%, rgba(52,211,153,.25), transparent 40%);
+            animation: catFloatBg 10s ease-in-out infinite alternate;
+            pointer-events: none;
+        }
+        @keyframes catFloatBg {
+            from { transform: translate3d(-2%, -1%, 0) scale(1); }
+            to { transform: translate3d(3%, 2%, 0) scale(1.05); }
+        }
+        .cat-hero-pro .cat-hero-inner { position: relative; z-index: 1; text-align: center; }
+        .cat-hero-pro h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 900;
+            letter-spacing: -.5px;
+            text-shadow: 0 8px 24px rgba(0,0,0,.25);
+        }
+        .cat-hero-pro .cat-sub {
+            margin-top: 6px;
+            font-size: 13px;
+            opacity: .92;
+            line-height: 1.7;
+        }
+        .cat-hero-float {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 14px;
+            flex-wrap: wrap;
+        }
+        .cat-hero-chip {
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(255,255,255,.16);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,.22);
+            font-size: 11px;
+            font-weight: 700;
+            box-shadow: 0 8px 20px rgba(0,0,0,.12);
+            animation: catChipFloat 4s ease-in-out infinite;
+        }
+        .cat-hero-chip:nth-child(2) { animation-delay: .4s; }
+        .cat-hero-chip:nth-child(3) { animation-delay: .8s; }
+        @keyframes catChipFloat {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        .cat-marquee {
+            margin-top: 12px;
+            border-radius: 14px;
+            overflow: hidden;
+            background: rgba(255,255,255,.12);
+            border: 1px solid rgba(255,255,255,.18);
+            mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+        }
+        .cat-marquee-track {
+            display: inline-block;
+            white-space: nowrap;
+            padding: 8px 0;
+            font-size: 12px;
+            font-weight: 700;
+            animation: catMarquee 22s linear infinite;
+        }
+        @keyframes catMarquee {
+            from { transform: translateX(0); }
+            to { transform: translateX(-50%); }
+        }
+        .cat-grid {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 14px !important;
+            padding: 12px 12px 120px !important;
+            perspective: 1200px;
+        }
+        .cat-card {
+            background: var(--cat-card) !important;
+            color: var(--cat-ink) !important;
+            border: 1px solid rgba(148,163,184,.18) !important;
+            border-radius: 22px !important;
+            padding: 12px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 8px !important;
+            overflow: hidden !important;
+            box-shadow: var(--cat-shadow) !important;
+            transform: translateZ(0);
+            transition: transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s ease;
+            will-change: transform;
+        }
+        .cat-card:active, .cat-card:hover {
+            transform: translateY(-6px) rotateX(4deg) scale(1.02);
+            box-shadow: 0 28px 50px rgba(15,23,42,.18) !important;
+        }
+        .cat-img-wrap {
+            width: 100% !important;
+            aspect-ratio: 1/1 !important;
+            border-radius: 16px !important;
+            overflow: hidden !important;
+            background: linear-gradient(145deg, #e2e8f0, #f8fafc) !important;
+            position: relative !important;
+            box-shadow: inset 0 0 0 1px rgba(15,23,42,.04);
+        }
+        html[data-cat-theme="night"].catalog-guest-mode .cat-img-wrap {
+            background: linear-gradient(145deg, #1e293b, #0f172a) !important;
+        }
+        .cat-img-wrap img {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover !important;
+            display: block !important;
+            transition: transform .5s ease;
+        }
+        .cat-card:hover .cat-img-wrap img {
+            transform: scale(1.08);
+        }
+        .cat-card .cn {
+            font-size: 13px !important;
+            font-weight: 900 !important;
+            line-height: 1.45 !important;
+            color: var(--cat-ink) !important;
+            min-height: 2.6em;
+        }
+        .cat-card .cp {
+            font-size: 15px !important;
+            font-weight: 900 !important;
+            color: var(--cat-accent) !important;
+            letter-spacing: -.2px;
+        }
+        .cat-card .cu {
+            font-size: 11px !important;
+            color: var(--cat-muted) !important;
+        }
+        .cat-card button {
+            border: 0 !important;
+            border-radius: 14px !important;
+            padding: 10px 8px !important;
+            font: inherit !important;
+            font-weight: 800 !important;
+            font-size: 12px !important;
+            cursor: pointer !important;
+            background: linear-gradient(100deg, #10b981, #0ea5e9) !important;
+            color: #fff !important;
+            box-shadow: 0 10px 22px rgba(16,185,129,.28);
+            transition: transform .2s ease, filter .2s ease;
+        }
+        .cat-card button:active { transform: scale(.97); filter: brightness(.95); }
+        .cat-tabs {
+            display: flex !important;
+            gap: 8px !important;
+            overflow-x: auto !important;
+            padding: 8px 12px !important;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .cat-tabs::-webkit-scrollbar { display: none; }
+        .cat-tab {
+            flex: 0 0 auto !important;
+            padding: 10px 14px !important;
+            border-radius: 999px !important;
+            border: 1px solid rgba(148,163,184,.25) !important;
+            background: var(--cat-card) !important;
+            color: var(--cat-ink) !important;
+            font-weight: 800 !important;
+            font-size: 12px !important;
+            box-shadow: 0 6px 16px rgba(15,23,42,.06);
+        }
+        .cat-tab.active {
+            background: linear-gradient(100deg, #059669, #0ea5e9) !important;
+            color: #fff !important;
+            border-color: transparent !important;
+        }
+        .cat-search input, .cat-search {
+            border-radius: 16px !important;
+        }
+        .cat-cartbar {
+            backdrop-filter: blur(14px) !important;
+            background: rgba(15,23,42,.88) !important;
+            border-radius: 20px 20px 0 0 !important;
+            box-shadow: 0 -12px 40px rgba(0,0,0,.25) !important;
+        }
+        .cat-stat-row, .cat-trust-wrap, .cat-footer-pro, .cat-rev, .cat-reviews, .cat-survey {
+            background: var(--cat-card) !important;
+            color: var(--cat-ink) !important;
+            border: 1px solid rgba(148,163,184,.2) !important;
+            border-radius: 20px !important;
+            box-shadow: var(--cat-shadow) !important;
+        }
+        .cat-stat-row * { color: inherit !important; }
+        @media (min-width: 720px) {
+            .cat-grid { grid-template-columns: repeat(3, 1fr) !important; max-width: 980px; margin: 0 auto; }
+        }
+
+                .cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:8px 10px 100px}
         .cat-card{background:rgba(15,23,42,.92);border:1px solid rgba(148,163,184,.22);border-radius:16px;padding:10px;display:flex;flex-direction:column;gap:6px;overflow:hidden}
         .cat-img-wrap{width:100%;aspect-ratio:1/1;border-radius:12px;overflow:hidden;background:linear-gradient(145deg,#1e293b,#0f172a);position:relative}
         .cat-img-wrap img{width:100%;height:100%;object-fit:cover;display:block}
@@ -503,7 +745,7 @@
         .cat-stat-row span{font-size:10px;opacity:1;color:#64748b}
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v262 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v264 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json" id="appManifestLink">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -2732,6 +2974,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <button class="tab-btn" id="btnWaste" onclick="switchTab('waste'); loadWasteTab();"><span class="tab-ico">🗑️</span><span class="tab-label">ضایعات</span></button>
         <button class="tab-btn" id="btnDeletedSales" onclick="switchTab('deletedSales'); loadDeletedSalesBackup();"><span class="tab-ico">🗑️</span><span class="tab-label">فاکتورهای حذف‌شده</span></button>
         <button class="tab-btn" id="btnWeeklyReports" onclick="switchTab('weeklyReports'); loadWeeklyReportsList();"><span class="tab-ico">📅</span><span class="tab-label">گزارش‌های هفتگی</span></button>
+        <button class="tab-btn" id="btnLoyalty" onclick="switchTab('loyalty'); loyaltyAdminLoad();"><span class="tab-ico">🎁</span><span class="tab-label">باشگاه مشتریان</span></button>
         <button class="tab-btn" id="btnPersonnel" onclick="switchTab('personnel'); loadPersonnelTab();"><span class="tab-ico">🪪</span><span class="tab-label">اطلاعات پرسنل</span></button>
         <button class="tab-btn" id="btnPersonalTakeout" onclick="switchTab('personalTakeout'); loadMyTakeouts();"><span class="tab-ico">🛒</span><span class="tab-label">برداشت شخصی</span></button>
         <button class="tab-btn" id="btnMyAccount" onclick="switchTab('myAccount'); prefillMyAccountTab();"><span class="tab-ico">⚙️</span><span class="tab-label">حساب کاربری من</span></button>
@@ -4342,6 +4585,39 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
 
     </div>
 
+
+    <div id="loyaltyTab" class="card" style="display:none;">
+        <h2>🎁 باشگاه مشتریان · گردونه شانس · امتیاز</h2>
+        <div class="hint">تنظیمات برای همه مشتری‌های کاتالوگ همگام می‌شود.</div>
+        <div class="report-card" style="border-color:#34d399;">
+            <h3 style="margin:0 0 8px;">⚙️ قوانین امتیاز</h3>
+            <label>به ازای هر چند تومان خرید = ۱ امتیاز</label>
+            <input type="text" inputmode="numeric" id="loyPerToman" placeholder="مثلا 50000">
+            <label>امتیاز خوش‌آمدگویی اولین سفارش</label>
+            <input type="text" inputmode="numeric" id="loyWelcome" placeholder="مثلا 50">
+            <label>سقف چرخش گردونه در روز</label>
+            <input type="text" inputmode="numeric" id="loySpinDay" placeholder="1">
+            <label>هزینه هر چرخش از امتیاز (۰=رایگان)</label>
+            <input type="text" inputmode="numeric" id="loySpinCost" placeholder="0">
+            <button type="button" class="submit-btn" onclick="loyaltyAdminSaveRules()">💾 ذخیره قوانین</button>
+        </div>
+        <div class="report-card" style="border-color:#a78bfa;margin-top:12px;">
+            <h3 style="margin:0 0 8px;">🎡 جوایز گردونه (۸ خانه)</h3>
+            <div id="loyWheelSlots"></div>
+            <button type="button" class="row-btn edit-btn" style="width:100%;margin-top:8px;" onclick="loyaltyAdminSaveWheel()">💾 ذخیره گردونه</button>
+        </div>
+        <div class="report-card" style="margin-top:12px;">
+            <h3 style="margin:0 0 8px;">👥 امتیاز مشتری</h3>
+            <input type="text" id="loySearchPhone" placeholder="شماره موبایل" inputmode="tel">
+            <button type="button" class="row-btn fill-btn" style="width:100%;margin-top:8px;" onclick="loyaltyAdminFindCustomer()">🔎 پیدا کردن</button>
+            <div id="loyCustomerBox" style="margin-top:10px;"></div>
+        </div>
+        <div class="report-card" style="margin-top:12px;">
+            <h3 style="margin:0 0 8px;">📊 آخرین چرخش‌ها</h3>
+            <div id="loySpinsList" class="hint">—</div>
+        </div>
+    </div>
+
     <!-- تب دفترچه هزینه‌ها -->
     <div id="expensesTab" class="card">
         <h2>📒 دفترچه هزینه‌های جانبی</h2>
@@ -4517,7 +4793,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v262 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v264 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -4697,7 +4973,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             }
         })();
 
-        const APP_BUILD = 'v262';
+        const APP_BUILD = 'v264';
         try { const __bt=document.getElementById('buildTag'); if(__bt) __bt.textContent = APP_BUILD + ' - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )'; } catch(e){}
         // ثبت Service Worker پایدار — همیشه /sw.js بدون ?v= تا آپدیت شکست نخورد
         if ('serviceWorker' in navigator) {
@@ -4709,7 +4985,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
                 } catch (e) {}
                 try {
                     const u = new URL(location.href);
-                    u.searchParams.set('_v', String(APP_BUILD || 'v262'));
+                    u.searchParams.set('_v', String(APP_BUILD || 'v264'));
                     location.replace(u.pathname + u.search + u.hash);
                 } catch (e) {
                     try { location.reload(); } catch (e2) {}
@@ -15918,7 +16194,7 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
         }
 
         async function publishGlobalAppVersion(ver) {
-            const version = String(ver || (typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v262'));
+            const version = String(ver || (typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v264'));
             try {
                 const { data } = await _supabase.from('app_shared_config').select('config').eq('id', 1).maybeSingle();
                 const cfg = (data && data.config && typeof data.config === 'object') ? Object.assign({}, data.config) : {};
@@ -15952,7 +16228,7 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
             } catch (e) {}
             try {
                 const u = new URL(location.href.split('#')[0]);
-                u.searchParams.set('_v', String(APP_BUILD || 'v262'));
+                u.searchParams.set('_v', String(APP_BUILD || 'v264'));
                 u.searchParams.set('_t', String(Date.now()));
                 u.searchParams.set('nocache', '1');
                 location.replace(u.toString());
@@ -16014,7 +16290,7 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
         }
         async function diagForceUpdate() {
             showToast('⏳ انتشار آپدیت اجباری برای همه گوشی‌ها...');
-            const ver = String(typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v262');
+            const ver = String(typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v264');
             let published = false;
             try {
                 published = await publishGlobalAppVersion(ver);
@@ -28745,8 +29021,8 @@ window.catOpenSupportChat = window.catOpenSupportChat || function () {
             return '<div class="cat-card">' +
                 catImgHtml(p) +
                 '<div class="cn">' + catEsc(p.name) + '</div>' +
-                '<div class="cp">' + price.toLocaleString('fa-IR') + ' <span style="font-size:11px;">تومان</span></div>' +
-                '<div class="cu">قیمت هر کیلو · ' + catLabel(catCat(p)).replace(/^[^\s]+\s/, '') + '</div>' +
+                '<div class="cp">' + price.toLocaleString('fa-IR') + ' <span style="font-size:11px;font-weight:700;opacity:.8;">تومان</span></div>' +
+                '<div class="cu">' + catLabel(catCat(p)).replace(/^[^\s]+\s/, '') + ' · هر کیلو</div>' +
                 qtyBtns +
                 '</div>';
         }).join('');
@@ -30246,15 +30522,18 @@ async function openCatalogPublic() {
 
                 inner.innerHTML =
                     '<div id="catPageHome">' +
-                    '<div class="cat-hero" style="padding:12px 12px 10px;">' +
-                    '<div style="display:flex;align-items:center;justify-content:center;gap:10px;">' +
-                    '<div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#10b981,#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🛒</div>' +
-                    '<div style="text-align:right;min-width:0;">' +
-                    '<h1 style="margin:0;font-size:18px;letter-spacing:-.2px;line-height:1.3;">تازه مارکت</h1>' +
-                    '<div style="font-size:11px;opacity:.85;margin-top:2px;">غرفه فامیلی · بیرجند · سفارش آنلاین</div>' +
+                    '<div class="cat-hero cat-hero-pro">' +
+                    '<div class="cat-hero-inner">' +
+                    '<div style="font-size:12px;font-weight:800;opacity:.9;margin-bottom:6px;letter-spacing:.3px;">ONLINE STORE</div>' +
+                    '<h1>تازه مارکت</h1>' +
+                    '<div class="cat-sub">غرفه فامیلی · بیرجند · لبنیات، ترشیجات و سوسیس‌وکالباس تازه</div>' +
+                    '<div class="cat-hero-float">' +
+                    (disc > 0 ? ('<span class="cat-hero-chip">🎁 ' + disc + '٪ تخفیف آنلاین</span>') : '<span class="cat-hero-chip">🛒 سفارش آنلاین</span>') +
+                    '<span class="cat-hero-chip">🚚 ارسال بیرجند</span>' +
+                    '<span class="cat-hero-chip">🔒 پرداخت امن</span>' +
+                    '</div>' +
+                    '<div class="cat-marquee"><div class="cat-marquee-track">✨ تازه از غرفه فامیلی &nbsp;·&nbsp; سفارش آنلاین با تخفیف &nbsp;·&nbsp; لبنیات و ترشیجات منتخب &nbsp;·&nbsp; پشتیبانی آنلاین &nbsp;·&nbsp; تحویل حضوری یا درب منزل &nbsp;·&nbsp; ✨ تازه از غرفه فامیلی &nbsp;·&nbsp; سفارش آنلاین با تخفیف &nbsp;·&nbsp; لبنیات و ترشیجات منتخب &nbsp;·&nbsp; پشتیبانی آنلاین &nbsp;·&nbsp; تحویل حضوری یا درب منزل &nbsp;·&nbsp; </div></div>' +
                     '</div></div>' +
-                    (disc > 0 ? '<div class="cat-badge" style="margin-top:8px;">🎁 ' + disc + '٪ تخفیف سفارش آنلاین</div>' : '') +
-                    '<div class="cat-marquee"><div class="cat-marquee-track">✨ سفارش آنلاین با تخفیف ویژه &nbsp;·&nbsp; ارسال و تحویل در بیرجند &nbsp;·&nbsp; لبنیات و ترشیجات تازه &nbsp;·&nbsp; پشتیبانی آنلاین &nbsp;·&nbsp; پرداخت امن کارت‌به‌کارت &nbsp;·&nbsp; </div></div>' +
                     (catIsInAppBrowser() ? '<div style="margin-top:8px;padding:8px 10px;border-radius:10px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.35);font-size:11px;line-height:1.6;">اگر کالاها نیامد، <b onclick="catOpenInChrome()" style="color:#fbbf24;text-decoration:underline;cursor:pointer;">در Chrome باز کن</b></div>' : '') +
                     '<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:8px;font-size:10px;opacity:.9;">' +
                     (minOrder > 0 ? '<span style="padding:4px 8px;border-radius:999px;background:rgba(15,23,42,.5);border:1px solid rgba(148,163,184,.2);">حداقل ' + minOrder.toLocaleString('fa-IR') + ' ت</span>' : '') +
@@ -30288,6 +30567,7 @@ async function openCatalogPublic() {
                     '</div><div id="catSheetBody"></div></div></div>' +
                     '<nav id="catBottomNav" style="position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;background:rgba(11,18,32,.96);border-top:1px solid rgba(148,163,184,.25);padding:6px 4px calc(6px + env(safe-area-inset-bottom));backdrop-filter:blur(10px);">' +
                     '<button type="button" class="cat-nav-btn" data-page="home" style="flex:1;border:0;background:transparent;color:#e2e8f0;font:inherit;font-size:11px;padding:8px 4px;cursor:pointer;">🏠<br>خانه</button>' +
+                    '<button type="button" class="cat-nav-btn" data-page="club" style="flex:1;border:0;background:transparent;color:#94a3b8;font:inherit;font-size:11px;padding:8px 4px;cursor:pointer;">🎁<br>باشگاه</button>' +
                     '<button type="button" class="cat-nav-btn" data-page="orders" style="flex:1;border:0;background:transparent;color:#94a3b8;font:inherit;font-size:11px;padding:8px 4px;cursor:pointer;">📦<br>سفارش‌ها</button>' +
                     '<button type="button" class="cat-nav-btn" data-page="track" style="flex:1;border:0;background:transparent;color:#94a3b8;font:inherit;font-size:11px;padding:8px 4px;cursor:pointer;">🔍<br>پیگیری</button>' +
                     '<button type="button" class="cat-nav-btn" data-page="account" style="flex:1;border:0;background:transparent;color:#94a3b8;font:inherit;font-size:11px;padding:8px 4px;cursor:pointer;">👤<br>حساب</button>' +
@@ -30359,9 +30639,268 @@ async function openCatalogPublic() {
         }
     }
 
-    window.catShowPage = function (page) {
+    window.
+        // ===== باشگاه مشتریان / گردونه / امتیاز v264 =====
+        window.__loyaltyCfg = window.__loyaltyCfg || {
+            per_toman: 50000, welcome_points: 50, spin_per_day: 1, spin_cost: 0,
+            wheel: [
+                { label: '۲۰ امتیاز', type: 'points', value: 20, chance: 18 },
+                { label: '۵۰ امتیاز', type: 'points', value: 50, chance: 12 },
+                { label: '۵٪ تخفیف', type: 'discount', value: 5, chance: 10 },
+                { label: '۱۰ امتیاز', type: 'points', value: 10, chance: 20 },
+                { label: 'پوچ', type: 'none', value: 0, chance: 15 },
+                { label: '۱۰۰ امتیاز', type: 'points', value: 100, chance: 5 },
+                { label: '۱۰٪ تخفیف', type: 'discount', value: 10, chance: 5 },
+                { label: '۳۰ امتیاز', type: 'points', value: 30, chance: 15 }
+            ]
+        };
+        async function loyaltyPullCfg() {
+            try {
+                if (typeof _supabase !== 'undefined' && _supabase) {
+                    const { data } = await _supabase.from('app_shared_config').select('config').eq('id', 1).maybeSingle();
+                    const cfg = (data && data.config) || {};
+                    if (cfg.loyalty) {
+                        window.__loyaltyCfg = Object.assign({}, window.__loyaltyCfg, cfg.loyalty);
+                        if (Array.isArray(cfg.loyalty.wheel) && cfg.loyalty.wheel.length) window.__loyaltyCfg.wheel = cfg.loyalty.wheel;
+                    }
+                }
+            } catch (e) {
+                try { const raw = localStorage.getItem('loyalty_cfg_v1'); if (raw) window.__loyaltyCfg = Object.assign(window.__loyaltyCfg, JSON.parse(raw)); } catch (e2) {}
+            }
+            try { localStorage.setItem('loyalty_cfg_v1', JSON.stringify(window.__loyaltyCfg)); } catch (e) {}
+            return window.__loyaltyCfg;
+        }
+        async function loyaltyPushCfg(partial) {
+            const cur = await loyaltyPullCfg();
+            const next = Object.assign({}, cur, partial || {});
+            if (partial && partial.wheel) next.wheel = partial.wheel;
+            window.__loyaltyCfg = next;
+            try { localStorage.setItem('loyalty_cfg_v1', JSON.stringify(next)); } catch (e) {}
+            if (typeof _supabase === 'undefined' || !_supabase) return false;
+            try {
+                const { data: row } = await _supabase.from('app_shared_config').select('config').eq('id', 1).maybeSingle();
+                const config = Object.assign({}, (row && row.config) || {});
+                config.loyalty = next;
+                const { error } = await _supabase.from('app_shared_config').upsert({ id: 1, config: config, updated_at: new Date().toISOString() }, { onConflict: 'id' });
+                return !error;
+            } catch (e) { return false; }
+        }
+        function loyaltyPhoneKey(phone) {
+            return String(phone || '').replace(/[۰-۹]/g, function (d) { return '۰۱۲۳۴۵۶۷۸۹'.indexOf(d); }).replace(/\D/g, '').slice(-10);
+        }
+        async function loyaltyGetCustomer(phone) {
+            const key = loyaltyPhoneKey(phone);
+            if (!key) return null;
+            try {
+                if (_supabase) {
+                    const { data } = await _supabase.from('loyalty_customers').select('*').eq('phone', key).maybeSingle();
+                    if (data) return data;
+                }
+            } catch (e) {}
+            try {
+                const map = JSON.parse(localStorage.getItem('loyalty_customers_v1') || '{}');
+                return map[key] || { phone: key, points: 0, name: '', orders_count: 0 };
+            } catch (e) { return { phone: key, points: 0, name: '', orders_count: 0 }; }
+        }
+        async function loyaltySaveCustomer(row) {
+            if (!row || !row.phone) return;
+            row.updated_at = new Date().toISOString();
+            try {
+                const map = JSON.parse(localStorage.getItem('loyalty_customers_v1') || '{}');
+                map[row.phone] = row;
+                localStorage.setItem('loyalty_customers_v1', JSON.stringify(map));
+            } catch (e) {}
+            try { if (_supabase) await _supabase.from('loyalty_customers').upsert(row, { onConflict: 'phone' }); } catch (e) {}
+        }
+        async function loyaltyAddPoints(phone, delta, reason) {
+            const key = loyaltyPhoneKey(phone);
+            if (!key || !delta) return null;
+            let row = await loyaltyGetCustomer(key);
+            if (!row) row = { phone: key, points: 0, name: '', orders_count: 0 };
+            row.points = Math.max(0, (Number(row.points) || 0) + Number(delta));
+            await loyaltySaveCustomer(row);
+            try {
+                if (_supabase) await _supabase.from('loyalty_ledger').insert([{ phone: key, delta: Number(delta), reason: reason || '', created_at: new Date().toISOString() }]);
+            } catch (e) {}
+            return row;
+        }
+        window.loyaltyOnOrderPaid = async function (order) {
+            try {
+                if (!order) return;
+                const phone = loyaltyPhoneKey(order.phone || order.customer_phone || '');
+                if (!phone) return;
+                const cfg = await loyaltyPullCfg();
+                const total = Number(order.total || order.amount || order.pay_amount || 0);
+                const per = Math.max(1000, Number(cfg.per_toman) || 50000);
+                let pts = Math.floor(total / per);
+                const row = await loyaltyGetCustomer(phone);
+                if (row && !(Number(row.orders_count) > 0) && Number(cfg.welcome_points) > 0) pts += Number(cfg.welcome_points) || 0;
+                if (pts > 0) {
+                    const updated = await loyaltyAddPoints(phone, pts, 'order:' + (order.id || order.track_code || ''));
+                    if (updated) {
+                        updated.orders_count = (Number(updated.orders_count) || 0) + 1;
+                        updated.name = order.customer_name || order.name || updated.name || '';
+                        await loyaltySaveCustomer(updated);
+                    }
+                }
+            } catch (e) { console.warn(e); }
+        };
+        function loyaltyAdminLoad() {
+            try { const tab = document.getElementById('loyaltyTab'); if (tab) tab.style.display = ''; } catch (e) {}
+            loyaltyPullCfg().then(function (cfg) {
+                const set = function (id, v) { const el = document.getElementById(id); if (el) el.value = v != null ? String(v) : ''; };
+                set('loyPerToman', cfg.per_toman || 50000);
+                set('loyWelcome', cfg.welcome_points || 0);
+                set('loySpinDay', cfg.spin_per_day || 1);
+                set('loySpinCost', cfg.spin_cost || 0);
+                const box = document.getElementById('loyWheelSlots');
+                if (box) {
+                    const wheel = (cfg.wheel && cfg.wheel.length) ? cfg.wheel : window.__loyaltyCfg.wheel;
+                    box.innerHTML = wheel.map(function (w, i) {
+                        return '<div class="report-card" style="margin:8px 0;padding:10px;"><b>خانه ' + (i + 1) + '</b>' +
+                            '<input type="text" data-w="label" data-i="' + i + '" value="' + String(w.label || '').replace(/"/g, '&quot;') + '">' +
+                            '<div style="display:flex;gap:6px;margin-top:6px;">' +
+                            '<select data-w="type" data-i="' + i + '"><option value="points"' + (w.type==='points'?' selected':'') + '>امتیاز</option><option value="discount"' + (w.type==='discount'?' selected':'') + '>تخفیف٪</option><option value="none"' + (w.type==='none'?' selected':'') + '>پوچ</option></select>' +
+                            '<input type="text" inputmode="numeric" data-w="value" data-i="' + i + '" value="' + (w.value||0) + '" placeholder="مقدار">' +
+                            '<input type="text" inputmode="numeric" data-w="chance" data-i="' + i + '" value="' + (w.chance||10) + '" placeholder="شانس"></div></div>';
+                    }).join('');
+                }
+                loyaltyAdminLoadSpins();
+            });
+        }
+        async function loyaltyAdminSaveRules() {
+            const per = Number(String((document.getElementById('loyPerToman')||{}).value||'').replace(/,/g,'')) || 50000;
+            const welcome = Number((document.getElementById('loyWelcome')||{}).value||0) || 0;
+            const spinDay = Number((document.getElementById('loySpinDay')||{}).value||1) || 1;
+            const spinCost = Number((document.getElementById('loySpinCost')||{}).value||0) || 0;
+            const ok = await loyaltyPushCfg({ per_toman: per, welcome_points: welcome, spin_per_day: spinDay, spin_cost: spinCost, wheel: (window.__loyaltyCfg&&window.__loyaltyCfg.wheel)||[] });
+            if (typeof showToast==='function') showToast(ok ? '✅ قوانین باشگاه همگام شد' : '⚠️ ذخیره محلی شد');
+        }
+        async function loyaltyAdminSaveWheel() {
+            const box = document.getElementById('loyWheelSlots'); if (!box) return;
+            const slots = [];
+            for (let i=0;i<8;i++) {
+                slots.push({
+                    label: (box.querySelector('[data-w="label"][data-i="'+i+'"]')||{}).value || ('خانه '+(i+1)),
+                    type: (box.querySelector('[data-w="type"][data-i="'+i+'"]')||{}).value || 'points',
+                    value: Number((box.querySelector('[data-w="value"][data-i="'+i+'"]')||{}).value||0)||0,
+                    chance: Number((box.querySelector('[data-w="chance"][data-i="'+i+'"]')||{}).value||10)||10
+                });
+            }
+            const ok = await loyaltyPushCfg({ wheel: slots });
+            if (typeof showToast==='function') showToast(ok ? '✅ گردونه ذخیره شد' : '⚠️ ذخیره محلی شد');
+        }
+        async function loyaltyAdminFindCustomer() {
+            const phone = loyaltyPhoneKey((document.getElementById('loySearchPhone')||{}).value);
+            const box = document.getElementById('loyCustomerBox'); if (!box) return;
+            if (!phone) { box.innerHTML = '<div class="hint">شماره را وارد کن</div>'; return; }
+            const row = await loyaltyGetCustomer(phone);
+            box.innerHTML = '<div style="line-height:1.9;font-size:13px;">مشتری: <b>'+(row.name||'—')+'</b><br>موبایل: <b dir="ltr">'+phone+'</b><br>امتیاز: <b style="color:#10b981;">'+(Number(row.points)||0).toLocaleString('fa-IR')+'</b></div>'+
+                '<div style="display:flex;gap:8px;margin-top:8px;"><input type="text" id="loyAdjPts" inputmode="numeric" placeholder="+50 یا -20" style="flex:1;"><button type="button" class="row-btn edit-btn" onclick="loyaltyAdminAdjust(\''+phone+'\')">اعمال</button></div>';
+        }
+        async function loyaltyAdminAdjust(phone) {
+            const delta = Number(String((document.getElementById('loyAdjPts')||{}).value||'').replace(/,/g,''));
+            if (!delta) return showToast('مقدار معتبر نیست');
+            await loyaltyAddPoints(phone, delta, 'admin_adjust');
+            showToast('✅ امتیاز به‌روز شد');
+            loyaltyAdminFindCustomer();
+        }
+        async function loyaltyAdminLoadSpins() {
+            const box = document.getElementById('loySpinsList'); if (!box) return;
+            try {
+                if (!_supabase) { box.innerHTML = '<div class="hint">برای تاریخچه اینترنت لازم است</div>'; return; }
+                const { data, error } = await _supabase.from('loyalty_spins').select('*').order('created_at',{ascending:false}).limit(30);
+                if (error) throw error;
+                if (!data||!data.length) { box.innerHTML = '<div class="hint">هنوز چرخشی نیست</div>'; return; }
+                box.innerHTML = data.map(function(s){ return '<div style="padding:8px 0;border-bottom:1px solid rgba(148,163,184,.2);font-size:12px;"><b dir="ltr">'+(s.phone||'')+'</b> → '+(s.prize_label||'')+'<br><span style="opacity:.7;">'+String(s.created_at||'').replace('T',' ').slice(0,16)+'</span></div>'; }).join('');
+            } catch (e) { box.innerHTML = '<div class="hint">SQL جداول باشگاه را اجرا کن: '+(e.message||e)+'</div>'; }
+        }
+        window.catRenderClubPage = async function () {
+            let page = document.getElementById('catPageClub');
+            if (!page) {
+                page = document.createElement('div'); page.id = 'catPageClub'; page.style.display = 'none';
+                const inner = document.getElementById('catalogPublicInner'); if (inner) inner.appendChild(page);
+            }
+            const cfg = await loyaltyPullCfg();
+            let phone = '', name = '';
+            try { const c = JSON.parse(localStorage.getItem('cat_customer_v1')||'{}'); phone=c.phone||''; name=c.name||''; } catch(e){}
+            if (!phone) try { phone=(window.catFormDraft&&catFormDraft.phone)||''; name=(window.catFormDraft&&catFormDraft.name)||name; } catch(e){}
+            const row = phone ? await loyaltyGetCustomer(phone) : null;
+            const pts = row ? (Number(row.points)||0) : 0;
+            page.innerHTML = '<div style="padding:14px 14px 110px;">'+
+                '<div class="cat-hero-pro" style="border-radius:24px;margin-bottom:14px;"><div class="cat-hero-inner">'+
+                '<div style="font-size:12px;opacity:.9;">باشگاه مشتریان تازه مارکت</div><h1 style="font-size:24px;margin:6px 0;">🎁 امتیاز و شانس</h1>'+
+                '<div class="cat-sub">با خرید واقعی امتیاز بگیر و گردونه را بچرخان</div></div></div>'+
+                '<div style="background:#fff;color:#0f172a;border-radius:20px;padding:16px;box-shadow:0 12px 30px rgba(15,23,42,.1);margin-bottom:12px;">'+
+                '<div style="font-size:13px;opacity:.8;">امتیاز شما</div><div style="font-size:34px;font-weight:900;color:#059669;">'+pts.toLocaleString('fa-IR')+'</div>'+
+                (phone ? ('<div style="font-size:12px;margin-top:6px;opacity:.75;" dir="ltr">'+phone+(name?' · '+name:'')+'</div>') : '<div style="font-size:12px;color:#b45309;margin-top:8px;">برای امتیاز، در سفارش شماره موبایل را ثبت کنید.</div>')+
+                '<div style="font-size:12px;line-height:1.8;margin-top:10px;opacity:.85;">هر '+(Number(cfg.per_toman)||50000).toLocaleString('fa-IR')+' تومان ≈ ۱ امتیاز'+(cfg.welcome_points?(' · خوش‌آمد: '+cfg.welcome_points+' امتیاز'):'')+'</div></div>'+
+                '<div style="background:#fff;color:#0f172a;border-radius:20px;padding:16px;box-shadow:0 12px 30px rgba(15,23,42,.1);text-align:center;">'+
+                '<div style="font-weight:900;font-size:16px;margin-bottom:8px;">🎡 گردونه شانس</div>'+
+                '<div id="catWheelVisual" style="width:min(280px,80vw);height:min(280px,80vw);margin:0 auto 12px;border-radius:50%;border:8px solid #0f766e;background:conic-gradient(#10b981 0 12.5%,#0ea5e9 0 25%,#f59e0b 0 37.5%,#ef4444 0 50%,#8b5cf6 0 62.5%,#14b8a6 0 75%,#f97316 0 87.5%,#22c55e 0 100%);box-shadow:0 16px 40px rgba(15,118,110,.35);transition:transform 4s cubic-bezier(.12,.75,.12,1);position:relative;">'+
+                '<div style="position:absolute;inset:18%;border-radius:50%;background:#0b1220;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;padding:8px;text-align:center;" id="catWheelCenter">بچرخان!</div></div>'+
+                '<div style="font-size:22px;margin-top:-8px;">▼</div>'+
+                '<button type="button" id="catSpinBtn" onclick="catSpinWheel()" style="margin-top:10px;width:100%;padding:14px;border:0;border-radius:16px;background:linear-gradient(100deg,#10b981,#0ea5e9);color:#fff;font:inherit;font-weight:900;cursor:pointer;">چرخش گردونه</button>'+
+                '<div id="catSpinResult" style="margin-top:12px;font-size:13px;line-height:1.8;min-height:24px;"></div>'+
+                '<div style="margin-top:12px;font-size:11px;opacity:.75;line-height:1.7;">جوایز: '+((cfg.wheel||[]).map(function(w){return w.label;}).join(' · ')||'—')+'</div></div></div>';
+        };
+        window.catSpinWheel = async function () {
+            const btn = document.getElementById('catSpinBtn');
+            const res = document.getElementById('catSpinResult');
+            const visual = document.getElementById('catWheelVisual');
+            const center = document.getElementById('catWheelCenter');
+            let phone = '';
+            try { phone = (JSON.parse(localStorage.getItem('cat_customer_v1')||'{}').phone)||''; } catch(e){}
+            if (!phone) try { phone = (window.catFormDraft&&catFormDraft.phone)||''; } catch(e){}
+            phone = loyaltyPhoneKey(phone);
+            if (!phone) { if (res) res.innerHTML = '❌ اول شماره موبایل را در سفارش/حساب ثبت کنید.'; return; }
+            const cfg = await loyaltyPullCfg();
+            const cost = Number(cfg.spin_cost)||0;
+            let cust = await loyaltyGetCustomer(phone);
+            if (cost > 0 && (Number(cust.points)||0) < cost) { if (res) res.innerHTML = '❌ امتیاز کافی نیست'; return; }
+            const day = (typeof getTehranISODate==='function') ? getTehranISODate(new Date()) : new Date().toISOString().slice(0,10);
+            const spinKey = 'spin_'+phone+'_'+day;
+            const used = Number(localStorage.getItem(spinKey)||0);
+            if (used >= (Number(cfg.spin_per_day)||1)) { if (res) res.innerHTML = '⏳ سهمیه امروز تمام شده.'; return; }
+            const wheel = (cfg.wheel&&cfg.wheel.length)?cfg.wheel:window.__loyaltyCfg.wheel;
+            let total = 0; wheel.forEach(function(w){ total += Math.max(0, Number(w.chance)||0); });
+            if (total <= 0) total = wheel.length;
+            let r = Math.random()*total, pick = wheel[0], pickIndex = 0;
+            for (let i=0;i<wheel.length;i++){ r -= Math.max(0, Number(wheel[i].chance)|| (total/wheel.length)); if (r<=0){ pick=wheel[i]; pickIndex=i; break; } }
+            if (btn) btn.disabled = true;
+            if (visual) visual.style.transform = 'rotate('+(360*5 + (360 - pickIndex*45 - 22))+ 'deg)';
+            if (center) center.textContent = '...';
+            setTimeout(async function(){
+                if (cost>0) cust = await loyaltyAddPoints(phone, -cost, 'spin_cost') || cust;
+                if (pick.type==='points' && pick.value>0) cust = await loyaltyAddPoints(phone, pick.value, 'spin_win') || cust;
+                if (pick.type==='discount' && pick.value>0) {
+                    try { localStorage.setItem('loyalty_discount_'+phone, String(pick.value)); localStorage.setItem('loyalty_discount_'+phone+'_exp', String(Date.now()+7*86400000)); } catch(e){}
+                }
+                localStorage.setItem(spinKey, String(used+1));
+                try { if (_supabase) await _supabase.from('loyalty_spins').insert([{ phone: phone, prize_label: pick.label, prize_type: pick.type, prize_value: pick.value, created_at: new Date().toISOString() }]); } catch(e){}
+                if (center) center.textContent = pick.label;
+                if (res) res.innerHTML = '🎉 <b>'+pick.label+'</b>'+(pick.type==='points'?(' · امتیاز: '+(cust&&cust.points)):'')+(pick.type==='discount'?' · تخفیف سفارش بعد ذخیره شد':'')+(pick.type==='none'?' · دوباره تلاش کن!':'');
+                if (btn) btn.disabled = false;
+                try { catRenderClubPage(); } catch(e){}
+            }, 4200);
+        };
+        // award points when payment confirmed - hook common confirm functions if exist
+        try {
+            if (typeof window.payConfirmReceipt === 'function' && !window.payConfirmReceipt.__loyWrapped) {
+                const _pc = window.payConfirmReceipt;
+                window.payConfirmReceipt = async function () {
+                    const r = await _pc.apply(this, arguments);
+                    try { if (arguments[0]) loyaltyOnOrderPaid(arguments[0]); } catch (e) {}
+                    return r;
+                };
+                window.payConfirmReceipt.__loyWrapped = true;
+            }
+        } catch (e) {}
+
+        catShowPage = function (page) {
         page = page || 'home';
-        const map = { home: 'catPageHome', orders: 'catPageOrders', track: 'catPageTrack', account: 'catPageAccount' };
+        const map = { home: 'catPageHome', orders: 'catPageOrders', track: 'catPageTrack', account: 'catPageAccount', club: 'catPageClub' };
+        if (page === 'club') { try { if (!document.getElementById('catPageClub')) { const d=document.createElement('div'); d.id='catPageClub'; const inn=document.getElementById('catalogPublicInner'); if(inn) inn.appendChild(d);} catRenderClubPage(); } catch(e){} }
         Object.keys(map).forEach(function (k) {
             const el = document.getElementById(map[k]);
             if (el) el.style.display = (k === page) ? 'block' : 'none';
