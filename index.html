@@ -5,7 +5,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="app-build" content="v281">
+    <meta name="app-build" content="v282">
     <!-- جلوگیری از کش‌شدن خود index.html توسط مرورگر/گوشی، تا نسخه‌ی جدید همیشه فوراً لود بشه
          (sw.js شما کش نمی‌کنه، ولی مرورگر یا هاست ممکنه خودش HTML رو کش کنه) -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -6058,6 +6058,14 @@ ${PROXY_ENDPOINTS.map(u => `<div class="summary-mini" data-sel="${u}" style="gap
                 .trim()
                 .toLowerCase();
         }
+        // تشخیص سوسیس/کالباس/هات‌داگ/بیکن — هم از category و هم از نام کالا
+        function isSausageProduct(p) {
+            if (!p) return false;
+            const c = String(p.category || '').toLowerCase();
+            if (c === 'sausage' || c === 'سوسیس' || c.indexOf('سوسیس') >= 0 || c.indexOf('کالباس') >= 0) return true;
+            const n = String(p.name || '');
+            return /سوسیس|کالباس|هات\s*داگ|هاتداگ|بیکن|ژامبون|همبرگر|مورتادلا/i.test(n);
+        }
         function findProductInList(input, list) {
             const raw = String(input || '').trim();
             if (!raw) return null;
@@ -6653,8 +6661,14 @@ ${PROXY_ENDPOINTS.map(u => `<div class="summary-mini" data-sel="${u}" style="gap
             if (!type) { barcodeScanProcessing = false; return; }
             const ids = SALE_FORM_IDS[type];
 
-            if (type === 'sausage' && product.category !== 'sausage') {
-                showToast('⚠️ این کالا به‌عنوان سوسیس و کالباس تعریف نشده؛ از تب مناسب فروش استفاده کنید.');
+            if (type === 'sausage' && !isSausageProduct(product)) {
+                showToast('⚠️ این کالا سوسیس/کالباس نیست؛ از تب فروش لبنیات استفاده کنید.');
+                closeBarcodeScanner();
+                barcodeScanProcessing = false;
+                return;
+            }
+            if ((type === 'instore' || type === 'ekala') && isSausageProduct(product)) {
+                showToast('⚠️ سوسیس و کالباس فقط از تب مخصوص خودش ثبت می‌شود.');
                 closeBarcodeScanner();
                 barcodeScanProcessing = false;
                 return;
@@ -9767,8 +9781,8 @@ notify pgrst, 'reload schema';`;
             const normalize = (s) => (s || '').replace(/ي/g, 'ی').replace(/ك/g, 'ک').replace(/[\u200c\s]+/g, ' ').trim().toLowerCase();
             const spoken = normalize(spokenText);
             let candidates = cachedProductsList || [];
-            if (categoryFilter === 'sausage') candidates = candidates.filter(p => p.category === 'sausage');
-            else if (categoryFilter === 'dairy') candidates = candidates.filter(p => p.category !== 'sausage');
+            if (categoryFilter === 'sausage') candidates = candidates.filter(p => isSausageProduct(p));
+            else if (categoryFilter === 'dairy') candidates = candidates.filter(p => !isSausageProduct(p));
 
             let best = null, bestScore = 0;
             for (const p of candidates) {
@@ -11948,10 +11962,8 @@ function sbRenderAdminLists(cfg) {
                 else if (typeof offlineLoadProducts === 'function') products = offlineLoadProducts() || [];
             } catch (e) {}
 
-            const sausages = (products || []).filter(p => p && (
-                p.category === 'sausage' || p.category === 'سوسیس' ||
-                /سوسیس|کالباس|هات\s*داگ|ژامبون/i.test(String(p.name || ''))
-            )).sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'fa'));
+            const sausages = (products || []).filter(p => p && isSausageProduct(p))
+                .sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'fa'));
 
             const cache = pgLoadCache();
             if (!sausages.length) {
@@ -12321,7 +12333,7 @@ function sbRenderAdminLists(cfg) {
 
             const list = (typeof cachedProductsList !== 'undefined' && Array.isArray(cachedProductsList))
                 ? cachedProductsList : (typeof offlineLoadProducts === 'function' ? offlineLoadProducts() : []);
-            const sausages = list.filter(p => p && (p.category === 'sausage' || p.category === 'سوسیس'));
+            const sausages = list.filter(p => p && isSausageProduct(p));
 
             const coded = sausages.filter(p => spcIsCode22(p.code))
                 .sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'fa'));
@@ -17999,11 +18011,20 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
                 try {
                     unitPrice = (selectedProductUnitPrice && selectedProductUnitPrice[type]) || 0;
                 } catch (e) {}
-                if (!unitPrice) {
-                    try {
-                        const p = findProductInList(name, cachedProductsList || []);
-                        if (p) unitPrice = Number(p.sell_price) || 0;
-                    } catch (e2) {}
+                let matchedProduct = null;
+                try {
+                    matchedProduct = findProductInList(name, cachedProductsList || []);
+                    if (matchedProduct && !unitPrice) unitPrice = Number(matchedProduct.sell_price) || 0;
+                } catch (e2) {}
+                if (matchedProduct) {
+                    if (type === 'sausage' && !isSausageProduct(matchedProduct)) {
+                        showToast('⚠️ این کالا سوسیس/کالباس نیست؛ از تب لبنیات ثبت کنید.');
+                        return;
+                    }
+                    if ((type === 'instore' || type === 'ekala') && isSausageProduct(matchedProduct)) {
+                        showToast('⚠️ سوسیس و کالباس فقط از تب مخصوص خودش ثبت می‌شود.');
+                        return;
+                    }
                 }
                 const customerNameVal = document.getElementById(ids.customerName) ? document.getElementById(ids.customerName).value.trim() : '';
                 const isLateEntry = !!(document.getElementById(ids.lateToggle) && document.getElementById(ids.lateToggle).checked);
@@ -18099,7 +18120,9 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
                 await ensureProductsLoaded(false);
             } catch (e) {}
             const list = cachedProductsList || [];
-            const fill = function (id) {
+            const dairyList = list.filter(function (p) { return !isSausageProduct(p); });
+            const sausageList = list.filter(function (p) { return isSausageProduct(p); });
+            const fill = function (id, src) {
                 const el = document.getElementById(id);
                 if (!el) return;
                 try {
@@ -18115,19 +18138,32 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
                         dl.id = listId;
                         document.body.appendChild(dl);
                     }
-                    dl.innerHTML = list.map(function (p) {
+                    const use = src || list;
+                    dl.innerHTML = use.map(function (p) {
                         const n = String(p.name || '').replace(/"/g, '&quot;');
                         const c = String(p.code || '');
                         return '<option value="' + n + '">' + (c ? c + ' — ' : '') + n + '</option>';
                     }).join('');
                 } catch (e) {}
             };
-            ['sName', 'seName', 'ssName', 'poProductName', 'ptItemName', 'qnName'].forEach(fill);
+            // تب لبنیات و اکالا: بدون سوسیس/کالباس/هات‌داگ/بیکن
+            fill('sName', dairyList);
+            fill('seName', dairyList);
+            // تب سوسیس و کالباس: فقط همین دسته
+            fill('ssName', sausageList);
+            // بقیه فرم‌ها: همه کالاها
+            fill('poProductName', list);
+            fill('ptItemName', list);
+            fill('qnName', list);
             try {
-                setupProductAutocomplete('sName', function () { return cachedProductsList || []; });
-                setupProductAutocomplete('seName', function () { return cachedProductsList || []; });
+                setupProductAutocomplete('sName', function () {
+                    return (cachedProductsList || []).filter(function (p) { return !isSausageProduct(p); });
+                });
+                setupProductAutocomplete('seName', function () {
+                    return (cachedProductsList || []).filter(function (p) { return !isSausageProduct(p); });
+                });
                 setupProductAutocomplete('ssName', function () {
-                    return (cachedProductsList || []).filter(function (p) { return p.category === 'sausage'; });
+                    return (cachedProductsList || []).filter(function (p) { return isSausageProduct(p); });
                 });
                 setupProductAutocomplete('poProductName', function () { return cachedProductsList || []; });
                 setupProductAutocomplete('ptItemName', function () { return cachedProductsList || []; });
@@ -18138,6 +18174,8 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
         function setupProductAutocomplete(inputId, getListFn) {
             const input = document.getElementById(inputId);
             if (!input) return;
+            // همیشه تابع لیست را به‌روز نگه دار تا فیلتر لبنیات/سوسیس بعد از بارگذاری مجدد کار کند
+            input._acGetList = getListFn;
             if (input.dataset.acBound === '1') return;
             input.dataset.acBound = '1';
             let box = document.getElementById(inputId + '_acBox');
@@ -18151,7 +18189,10 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
             const show = function () {
                 const q = String(input.value || '').trim().toLowerCase();
                 let list = [];
-                try { list = (typeof getListFn === 'function' ? getListFn() : []) || []; } catch (e) { list = []; }
+                try {
+                    const fn = input._acGetList || getListFn;
+                    list = (typeof fn === 'function' ? fn() : []) || [];
+                } catch (e) { list = []; }
                 if (!q) { hide(); return; }
                 const hits = list.filter(function (p) {
                     const n = String(p.name || '').toLowerCase();
@@ -18777,8 +18818,12 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
                 return;
             }
 
-            if (type === 'sausage' && product.category !== 'sausage') {
-                showToast('⚠️ این کالا در «تعریف کالا» به‌عنوان سوسیس و کالباس ثبت نشده است. لطفاً از تب فروش مناسب استفاده کنید یا نوع کالا را در بخش «تعریف کالا» اصلاح کنید.');
+            if (type === 'sausage' && !isSausageProduct(product)) {
+                showToast('⚠️ این کالا سوسیس/کالباس نیست. لطفاً از تب فروش لبنیات استفاده کنید یا نوع کالا را در «تعریف کالا» اصلاح کنید.');
+                return;
+            }
+            if ((type === 'instore' || type === 'ekala') && isSausageProduct(product)) {
+                showToast('⚠️ سوسیس و کالباس فقط از تب «ثبت فروش سوسیس و کالباس» ثبت می‌شود. این کالا را آنجا وارد کنید.');
                 return;
             }
 
@@ -26212,7 +26257,8 @@ notify pgrst, 'reload schema';`;
         const p = findProduct(d.name), qty = toKg(d.qty, d.unit), problems = []; let fatal = false;
         if (!d.name) { problems.push('نام کالا نوشته نشده'); fatal = true; }
         else if (!p) { problems.push('کالایی با این اسم در انبار پیدا نشد (✏️ ویرایش بزن)'); fatal = true; }
-        else if (d.type === 'sausage' && p.category !== 'sausage') { problems.push('این کالا سوسیس/کالباس نیست؛ نوع فروش رو اصلاح کن'); fatal = true; }
+        else if (d.type === 'sausage' && !isSausageProduct(p)) { problems.push('این کالا سوسیس/کالباس نیست؛ نوع فروش رو اصلاح کن'); fatal = true; }
+        else if ((d.type === 'instore' || d.type === 'ekala') && isSausageProduct(p)) { problems.push('سوسیس/کالباس را فقط از تب خودش ثبت کن'); fatal = true; }
         if (!(qty > 0)) { problems.push('مقدار نوشته نشده'); fatal = true; }
         else if (p && (p.booth_stock || 0) < qty) { problems.push('موجودی غرفه (' + FA(p.booth_stock || 0) + ' کیلو) کمتر از این مقداره'); fatal = true; }
         return { p, qty, fatal, problems, price: p && qty > 0 ? Math.round(qty * (p.sell_price || 0)) : 0 };
@@ -27309,7 +27355,7 @@ notify pgrst, 'reload schema';`;
         if (!navigator.onLine) { showToast('📴 اینترنت قطعه؛ برای تایید باید آنلاین باشی. یادداشت‌ها سر جاشون می‌مونن.'); return false; }
         const d = load().find(x => x.id === id); if (!d) return false;
         let ev = evalDraft(d);
-        if (!ev.p || !(ev.qty > 0) || (d.type === 'sausage' && ev.p.category !== 'sausage')) { showToast('⛔ «' + (d.name || 'بدون نام') + '»: ' + ev.problems.join('، ')); return false; }
+        if (!ev.p || !(ev.qty > 0) || (d.type === 'sausage' && !isSausageProduct(ev.p)) || ((d.type === 'instore' || d.type === 'ekala') && isSausageProduct(ev.p))) { showToast('⛔ «' + (d.name || 'بدون نام') + '»: ' + (ev.problems && ev.problems.length ? ev.problems.join('، ') : 'نوع فروش با کالا جور نیست')); return false; }
         // موجودی تازه از دیتابیس
         const { data: fresh } = await _supabase.from('products').select('*').eq('id', ev.p.id).maybeSingle();
         const prod = fresh || ev.p, qty = ev.qty;
@@ -29055,8 +29101,8 @@ window.catOpenSupportChat = window.catOpenSupportChat || function () {
         if (c === 'halva' || c.indexOf('حلوا') >= 0 || c.indexOf('شیرینی') >= 0) return 'halva';
         if (c === 'dairy' || c.indexOf('لبنی') >= 0) return 'dairy';
 
-        // سوسیس و کالباس
-        if (/سوسیس|کالباس|هات\s*داگ|هاتداگ|همبرگر|ژامبون|مورتادلا/.test(n)) return 'sausage';
+        // سوسیس و کالباس و هات‌داگ و بیکن
+        if (/سوسیس|کالباس|هات\s*داگ|هاتداگ|بیکن|همبرگر|ژامبون|مورتادلا/.test(n)) return 'sausage';
 
         // زیتون‌ها (جدا از ترشیجات)
         if (/زیتون/.test(n)) return 'olive';
