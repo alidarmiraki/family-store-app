@@ -5,7 +5,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="app-build" content="v282">
+    <meta name="app-build" content="v284">
     <!-- جلوگیری از کش‌شدن خود index.html توسط مرورگر/گوشی، تا نسخه‌ی جدید همیشه فوراً لود بشه
          (sw.js شما کش نمی‌کنه، ولی مرورگر یا هاست ممکنه خودش HTML رو کش کنه) -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -5291,8 +5291,8 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // به‌ترتیب عوض می‌شوند تا حس کنی واقعاً داره چیزی آماده میشه.
         (function () {
             const splashShownAt = Date.now();
-            const MIN_SPLASH_MS = 2200;
-            const MAX_SPLASH_MS = 6000; // اگه نت خیلی کند بود، حداکثر همین‌قدر صبر کن و بعد به‌هرحال نشون بده
+            const MIN_SPLASH_MS = 900;
+            const MAX_SPLASH_MS = 3500; // اگه نت خیلی کند بود، حداکثر همین‌قدر صبر کن و بعد به‌هرحال نشون بده
             const subTexts = [
                 'در حال آماده‌سازی سیستم...',
                 'اتصال به سرور فروشگاه...',
@@ -5339,7 +5339,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             }
         })();
 
-        const APP_BUILD = 'v279';
+        const APP_BUILD = 'v284';
         try { const __bt=document.getElementById('buildTag'); if(__bt) __bt.textContent = APP_BUILD + ' - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )'; } catch(e){}
         // ثبت Service Worker پایدار — همیشه /sw.js بدون ?v= تا آپدیت شکست نخورد
         if ('serviceWorker' in navigator) {
@@ -5372,6 +5372,17 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
                     } catch (e) {}
                     try {
                         const reg = await navigator.serviceWorker.register('sw.js', { updateViaCache: 'none', scope: './' });
+                        try {
+                            // یک‌بار کش خراب کتابخانه‌ها (Chart.js فیلترشده و ...) را پاک کن
+                            if (localStorage.getItem('purge_libs_v284') !== '1') {
+                                localStorage.setItem('purge_libs_v284', '1');
+                                const keys = await caches.keys();
+                                await Promise.all(keys.filter(function (k) { return k === 'libs-v1' || k.indexOf('libs-') === 0; }).map(function (k) { return caches.delete(k); }));
+                                if (navigator.serviceWorker.controller) {
+                                    navigator.serviceWorker.controller.postMessage({ type: 'PURGE_CACHES' });
+                                }
+                            }
+                        } catch (e) {}
                         try { reg.update(); } catch (e) {}
                         if (reg.waiting) {
                             try { reg.waiting.postMessage({ type: 'SKIP_WAITING' }); } catch (e) {}
@@ -5907,14 +5918,22 @@ ${PROXY_ENDPOINTS.map(u => `<div class="summary-mini" data-sel="${u}" style="gap
         function loadScriptOnce(src, timeoutMs) {
             return new Promise((resolve) => {
                 let settled = false;
-                const finish = (ok) => { if (settled) return; settled = true; resolve(ok); };
                 const tag = document.createElement('script');
+                const finish = (ok) => {
+                    if (settled) return;
+                    settled = true;
+                    try {
+                        if (!ok && tag && tag.parentNode) tag.parentNode.removeChild(tag);
+                    } catch (e) {}
+                    resolve(!!ok);
+                };
                 tag.src = src;
                 tag.async = true;
                 tag.onload = () => finish(true);
                 tag.onerror = () => finish(false);
-                document.head.appendChild(tag);
-                setTimeout(() => finish(false), timeoutMs || 7000);
+                try { document.head.appendChild(tag); } catch (e) { finish(false); return; }
+                // تایم‌اوت کوتاه‌تر تا روی نت ضعیف ایران ورود معطل نشود
+                setTimeout(() => finish(false), timeoutMs || 4000);
             });
         }
         const _libLoadPromises = {};
@@ -5932,25 +5951,27 @@ ${PROXY_ENDPOINTS.map(u => `<div class="summary-mini" data-sel="${u}" style="gap
         }
         // بارگذاری اختیاری و بدون‌مانع تلگرام (فقط برای زمانی که برنامه داخل خود اپ تلگرام باز شود؛
         // اگر لود نشود، برنامه در مرورگر عادی کاملاً و بدون هیچ محدودیتی کار می‌کند)
-        loadScriptOnce('https://telegram.org/js/telegram-web-app.js', 3000);
+        loadScriptOnce('https://telegram.org/js/telegram-web-app.js', 1500);
 
         function ensureBarcodeScannerLoaded() {
             return ensureLibraryLoaded('html5qrcode', () => typeof Html5Qrcode !== 'undefined', [
                 'https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js',
                 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js'
-            ], 8000);
+            ], 5000);
         }
         function ensureChartLibLoaded() {
+            // Chart.js فقط برای نمودار داشبورد لازم است؛ اگر CDN فیلتر باشد، داشبورد بدون نمودار کار می‌کند
             return ensureLibraryLoaded('chartjs', () => typeof Chart !== 'undefined', [
                 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
-                'https://unpkg.com/chart.js@4.4.0/dist/chart.umd.min.js'
-            ], 8000);
+                'https://unpkg.com/chart.js@4.4.0/dist/chart.umd.min.js',
+                'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js'
+            ], 4000);
         }
         function ensureExcelLibLoaded() {
             return ensureLibraryLoaded('xlsx', () => typeof XLSX !== 'undefined', [
                 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
                 'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js'
-            ], 8000);
+            ], 5000);
         }
         // برای گزارش هفتگی رنگی/استایل‌دار از ExcelJS استفاده می‌کنیم چون کتابخانه xlsx بالا
         // (نسخه رایگان) رنگ پس‌زمینه و استایل سلول رو موقع ذخیره‌سازی پشتیبانی نمی‌کنه
@@ -6032,7 +6053,7 @@ ${PROXY_ENDPOINTS.map(u => `<div class="summary-mini" data-sel="${u}" style="gap
                 if (!ready) {
                     // نشد؟ (مثلاً jsDelivr فیلتر بود) — یک CDN جایگزین را امتحان کن
                     console.warn('📡 Supabase از jsDelivr لود نشد؛ تلاش برای CDN جایگزین (unpkg)...');
-                    for (const u of ['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', 'https://unpkg.com/@supabase/supabase-js@2']) { await loadScriptOnce(u, 8000); if (typeof supabase !== 'undefined' && supabase.createClient) break; }
+                    for (const u of ['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', 'https://unpkg.com/@supabase/supabase-js@2']) { await loadScriptOnce(u, 4000); if (typeof supabase !== 'undefined' && supabase.createClient) break; }
                     ready = (typeof supabase !== 'undefined' && supabase.createClient);
                 }
                 if (!ready) throw new Error('کتابخانه Supabase از هیچ منبعی بارگذاری نشد');
@@ -7291,6 +7312,25 @@ notify pgrst, 'reload schema';`;
             }
         }
 
+        // ثبت تاریخ امضا/ثبت‌نام روی پروفایل پرسنل (برای نمایش در تب اطلاعات پرسنل و برگه قرارداد)
+        async function stampUserRegistrationDate(username) {
+            if (!username || !_supabase) return;
+            const nowIso = new Date().toISOString();
+            try {
+                const r1 = await _supabase.from('users').update({ signed_at: nowIso }).eq('username', username);
+                if (r1 && r1.error) throw r1.error;
+                return;
+            } catch (e1) {}
+            try {
+                const r2 = await _supabase.from('users').update({ registration_completed_at: nowIso }).eq('username', username);
+                if (r2 && r2.error) throw r2.error;
+                return;
+            } catch (e2) {}
+            try {
+                await _supabase.from('users').update({ updated_at: nowIso }).eq('username', username);
+            } catch (e3) {}
+        }
+
         async function submitRegistration() {
             const errBox = document.getElementById('registrationError');
             errBox.style.display = 'none';
@@ -7431,6 +7471,7 @@ notify pgrst, 'reload schema';`;
 
                 await notifyAdminAboutNewRegistration(fullName, nationalId, phone, roleValue, nationalIdPhotoUrl, signatureUrl, false);
                 saveSignedContractTextSilently(username, exactContractTextShown);
+                try { await stampUserRegistrationDate(username); } catch (eStamp) {}
                 showToast('✅ ثبت‌نام شما با موفقیت انجام شد!\nحالا می‌توانید با همین نام کاربری و رمز عبور وارد شوید.');
                 document.getElementById('accessUser').value = username;
                 document.getElementById('accessPin').value = '';
@@ -7460,6 +7501,7 @@ notify pgrst, 'reload schema';`;
 
                 await notifyAdminAboutNewRegistration(fullName, nationalId, phone, pendingCompleteUser.role, nationalIdPhotoUrl, signatureUrl, true);
                 saveSignedContractTextSilently(pendingCompleteUser.username, exactContractTextShown);
+                try { await stampUserRegistrationDate(pendingCompleteUser.username); } catch (eStamp2) {}
                 showToast('✅ اطلاعات و قرارداد شما با موفقیت ثبت شد.');
 
                 document.getElementById('registrationScreen').style.display = 'none';
@@ -7548,11 +7590,17 @@ notify pgrst, 'reload schema';`;
                     `;
                 }
 
+                const regInfoAdmin = getStaffRegDateInfo(s);
+                const regDateHtml = isDone
+                    ? `<p>📅 تاریخ ثبت‌نام / امضا: <b style="color:#38bdf8;">${regInfoAdmin.label}</b></p>`
+                    : (regInfoAdmin.source ? `<p>📅 تاریخ ایجاد حساب: <b>${regInfoAdmin.label}</b></p>` : '');
+
                 return `
                     <div class="report-card">
                         <h3>👤 ${s.full_name || s.username} <span style="font-size:11px; color:#94a3b8;">(${roleLabel} - ${s.username})</span></h3>
                         ${trialHtml}
                         <p>${deadlineHtml}</p>
+                        ${regDateHtml}
                         ${deadlineActionHtml}
 
                         <button class="row-btn edit-btn" style="width:100%; margin-top:10px;" onclick="togglePersonBox('contractBox_${s.username}')">📄 متن قرارداد اختصاصی همین فرد</button>
@@ -24466,6 +24514,34 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
             loadExpensesTab();
         }
 
+        // تاریخ ثبت‌نام / امضای قرارداد پرسنل — از چند فیلد ممکن + متن قرارداد امضاشده
+        function getStaffRegDateInfo(u) {
+            if (!u) return { label: 'نامشخص', shortLabel: 'نامشخص', date: null, raw: null, source: null };
+            const fields = ['signed_at', 'registration_completed_at', 'registered_at', 'created_at', 'updated_at'];
+            for (let i = 0; i < fields.length; i++) {
+                const v = u[fields[i]];
+                if (!v) continue;
+                const d = new Date(v);
+                if (!isNaN(d.getTime()) && d.getFullYear() > 2000) {
+                    return {
+                        label: getTehranFullDateTimeString(d),
+                        shortLabel: getTehranDateString(d),
+                        date: d,
+                        raw: v,
+                        source: fields[i]
+                    };
+                }
+            }
+            // اگر فیلد تاریخ نبود، از متن قرارداد امضاشده تاریخ را بخوان (مثلاً «در تاریخ ۱۴۰۵/۰۷/۳۰»)
+            const text = String(u.signed_contract_text || '');
+            const m = text.match(/در تاریخ\s*([۰-۹0-9]{4}\s*[\/\-]\s*[۰-۹0-9]{1,2}\s*[\/\-]\s*[۰-۹0-9]{1,2})/);
+            if (m && m[1]) {
+                const fa = m[1].replace(/\s+/g, '');
+                return { label: fa, shortLabel: fa, date: null, raw: fa, source: 'contract_text' };
+            }
+            return { label: 'نامشخص', shortLabel: 'نامشخص', date: null, raw: null, source: null };
+        }
+
         // اطلاعات پرسنل — مستقیم از جدول users، جدا از صندوقچه پیام
         let lastPersonnelData = [];
         async function loadPersonnelTab() {
@@ -24488,13 +24564,14 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
                 const sig = u.signature_url || u.signature;
                 const phone = u.phone || u.phone_number || u.mobile || '-';
                 const nationalId = u.national_id || u.national_id_code || '-';
+                const regInfo = getStaffRegDateInfo(u);
                 return `
                 <div class="report-card" ${u.is_terminated ? 'style="opacity:.7; border-color:#7f1d1d;"' : ''}>
                     <h3>${roleLabels[u.role] || u.role} — ${u.full_name || u.username}${firedTagUser(u)}</h3>
                     <p>👤 نام کاربری: ${u.username}</p>
                     <p>🪪 کد ملی: ${nationalId}</p>
                     <p>📱 شماره تماس: ${phone}</p>
-                    ${u.created_at ? `<p>📅 تاریخ ثبت‌نام: ${getTehranFullDateTimeString(new Date(u.created_at))}</p>` : ''}
+                    <p>📅 تاریخ ثبت‌نام / امضا: <b style="color:#38bdf8;">${regInfo.label}</b></p>
                     ${idPhoto ? `<a href="${idPhoto}" target="_blank" style="color:#38bdf8;">👁️ مشاهده عکس کارت ملی</a>` : '<span class="hint">بدون عکس کارت ملی</span>'}
                     ${sig ? ` | <a href="${sig}" target="_blank" style="color:#38bdf8;">✍️ مشاهده امضا</a>` : ''}
                     ${(idPhoto && sig) ? `<br><button class="submit-btn" style="margin-top:8px; padding:8px 14px; font-size:13px; width:auto;" onclick="viewSignedContract('${u.username}')">🖨️ مشاهده و پرینت برگه‌ی قرارداد رسمی</button>` : ''}
@@ -24522,7 +24599,8 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
                 ? u.signed_contract_text
                 : await buildContractText(u.full_name || u.username, shiftKey, nationalId, u.contract_body || null);
             const isExactSnapshot = !!(u.signed_contract_text && u.signed_contract_text.trim());
-            const signDate = u.created_at ? getTehranDateString(new Date(u.created_at)) : '-';
+            const regInfo = getStaffRegDateInfo(u);
+            const signDate = regInfo.shortLabel || regInfo.label || '-';
 
             const win = window.open('', '_blank');
             if (!win) { showToast('❌ مرورگر اجازه‌ی باز کردن پنجره‌ی جدید را نداد. لطفاً پنجره‌های Popup را برای این سایت فعال کن.'); return; }
