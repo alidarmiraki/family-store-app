@@ -1,5 +1,5 @@
-// Service Worker v259 — دسترسی پایدار در اینترنت ضعیف (ایران)
-const V = 'v282';
+// Service Worker v283 — دسترسی پایدار در اینترنت ضعیف (ایران)
+const V = 'v283';
 const SHELL = 'shell-' + V;
 const LIBS = 'libs-v1';
 const CDN = /(^|\.)(cdn\.jsdelivr\.net|unpkg\.com|cdnjs\.cloudflare\.com|fonts\.googleapis\.com|fonts\.gstatic\.com)$/;
@@ -92,9 +92,16 @@ function fetchWithTimeout(req, ms) {
   return fetch(req, { cache: 'no-store', signal: ctrl.signal }).finally(function () { clearTimeout(t); });
 }
 
-// HTML: اول کش فوری (اگر بود)، همزمان شبکه تا ۱۵ ثانیه؛ اگر شبکه رسید جایگزین کن
+// HTML: اگر کش داشتیم فوراً همان را نشان بده (سریع حتی با اینترنت ضعیف) و نسخه تازه را
+// در پس‌زمینه بگیر؛ فقط اگر کش نبود منتظر شبکه می‌مانیم.
 async function htmlStrategy(req) {
   const cached = await fromCache(req);
+  if (cached) {
+    fetchWithTimeout(req, 30000).then(function (res) {
+      if (res && res.ok) putShell(req, res.clone());
+    }).catch(function () {});
+    return cached;
+  }
   try {
     const res = await fetchWithTimeout(req, 15000);
     if (res && res.ok) {
@@ -102,7 +109,6 @@ async function htmlStrategy(req) {
       return res;
     }
   } catch (e) {}
-  if (cached) return cached;
   // آخرین تلاش بدون timeout کوتاه
   try {
     const res2 = await fetch(req, { cache: 'no-store' });

@@ -5,7 +5,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="app-build" content="v282">
+    <meta name="app-build" content="v283">
     <!-- جلوگیری از کش‌شدن خود index.html توسط مرورگر/گوشی، تا نسخه‌ی جدید همیشه فوراً لود بشه
          (sw.js شما کش نمی‌کنه، ولی مرورگر یا هاست ممکنه خودش HTML رو کش کنه) -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -5159,7 +5159,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v281 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v283 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -5339,7 +5339,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             }
         })();
 
-        const APP_BUILD = 'v279';
+        const APP_BUILD = 'v283';
         try { const __bt=document.getElementById('buildTag'); if(__bt) __bt.textContent = APP_BUILD + ' - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )'; } catch(e){}
         // ثبت Service Worker پایدار — همیشه /sw.js بدون ?v= تا آپدیت شکست نخورد
         if ('serviceWorker' in navigator) {
@@ -6066,6 +6066,30 @@ ${PROXY_ENDPOINTS.map(u => `<div class="summary-mini" data-sel="${u}" style="gap
             const n = String(p.name || '');
             return /سوسیس|کالباس|هات\s*داگ|هاتداگ|بیکن|ژامبون|همبرگر|مورتادلا/i.test(n);
         }
+        // لواشک و ترشک (در تب لبنیات نمی‌آید)
+        function isLavashakProduct(p) {
+            if (!p) return false;
+            const c = String(p.category || '').toLowerCase();
+            if (c === 'lavashak' || c === 'torshak' || c.indexOf('لواشک') >= 0 || c.indexOf('ترشک') >= 0) return true;
+            return /لواشک|ترشک/.test(String(p.name || ''));
+        }
+        // کالاهای مجاز تب «ثبت فروش لبنیات»: لبنیات، حلوا و حلواجات، ترشی‌ها، رب، زیتون
+        function isDairyTabProduct(p) {
+            if (!p) return false;
+            if (isSausageProduct(p) || isLavashakProduct(p)) return false;
+            return true;
+        }
+        // قانون هر تب فروش: instore=لبنیات و ترشیجات، sausage=فقط سوسیس/کالباس، ekala=همه کالاها
+        function productAllowedInSaleType(p, type) {
+            if (!p) return false;
+            if (type === 'sausage') return isSausageProduct(p);
+            if (type === 'instore') return isDairyTabProduct(p);
+            return true;
+        }
+        function saleTypeProducts(type) {
+            const list = cachedProductsList || [];
+            return list.filter(function (p) { return productAllowedInSaleType(p, type); });
+        }
         function findProductInList(input, list) {
             const raw = String(input || '').trim();
             if (!raw) return null;
@@ -6661,14 +6685,10 @@ ${PROXY_ENDPOINTS.map(u => `<div class="summary-mini" data-sel="${u}" style="gap
             if (!type) { barcodeScanProcessing = false; return; }
             const ids = SALE_FORM_IDS[type];
 
-            if (type === 'sausage' && !isSausageProduct(product)) {
-                showToast('⚠️ این کالا سوسیس/کالباس نیست؛ از تب فروش لبنیات استفاده کنید.');
-                closeBarcodeScanner();
-                barcodeScanProcessing = false;
-                return;
-            }
-            if ((type === 'instore' || type === 'ekala') && isSausageProduct(product)) {
-                showToast('⚠️ سوسیس و کالباس فقط از تب مخصوص خودش ثبت می‌شود.');
+            if (!productAllowedInSaleType(product, type)) {
+                showToast(type === 'sausage'
+                    ? '⚠️ این کالا سوسیس/کالباس نیست؛ از تب فروش لبنیات یا اکالا استفاده کنید.'
+                    : '⚠️ این کالا در تب لبنیات ثبت نمی‌شود؛ سوسیس/کالباس را از تب خودش و لواشک را از تب اکالا ثبت کنید.');
                 closeBarcodeScanner();
                 barcodeScanProcessing = false;
                 return;
@@ -9782,7 +9802,7 @@ notify pgrst, 'reload schema';`;
             const spoken = normalize(spokenText);
             let candidates = cachedProductsList || [];
             if (categoryFilter === 'sausage') candidates = candidates.filter(p => isSausageProduct(p));
-            else if (categoryFilter === 'dairy') candidates = candidates.filter(p => !isSausageProduct(p));
+            else if (categoryFilter === 'dairy') candidates = candidates.filter(p => isDairyTabProduct(p));
 
             let best = null, bestScore = 0;
             for (const p of candidates) {
@@ -17944,7 +17964,14 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
             try { freq = JSON.parse(localStorage.getItem(`productFreq_${type}`) || '{}'); } catch (e) {}
             try { lastSale = JSON.parse(localStorage.getItem(`lastSale_${type}`) || 'null'); } catch (e) {}
 
-            const topProducts = Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 6).map(e => e[0]);
+            const okForTab = function (name) {
+                try {
+                    const pr = findProductInList(name, cachedProductsList || []);
+                    return !pr || productAllowedInSaleType(pr, type);
+                } catch (e) { return true; }
+            };
+            const topProducts = Object.entries(freq).sort((a, b) => b[1] - a[1]).map(e => e[0]).filter(okForTab).slice(0, 6);
+            if (lastSale && !okForTab(lastSale.name)) lastSale = null;
             if (topProducts.length === 0 && !lastSale) { box.innerHTML = ''; return; }
 
             let html = '<div style="display:flex; gap:6px; flex-wrap:wrap; margin:6px 0;">';
@@ -18017,12 +18044,10 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
                     if (matchedProduct && !unitPrice) unitPrice = Number(matchedProduct.sell_price) || 0;
                 } catch (e2) {}
                 if (matchedProduct) {
-                    if (type === 'sausage' && !isSausageProduct(matchedProduct)) {
-                        showToast('⚠️ این کالا سوسیس/کالباس نیست؛ از تب لبنیات ثبت کنید.');
-                        return;
-                    }
-                    if ((type === 'instore' || type === 'ekala') && isSausageProduct(matchedProduct)) {
-                        showToast('⚠️ سوسیس و کالباس فقط از تب مخصوص خودش ثبت می‌شود.');
+                    if (!productAllowedInSaleType(matchedProduct, type)) {
+                        showToast(type === 'sausage'
+                            ? '⚠️ این کالا سوسیس/کالباس نیست؛ از تب لبنیات یا اکالا ثبت کنید.'
+                            : '⚠️ این کالا در تب لبنیات ثبت نمی‌شود؛ از تب سوسیس/کالباس یا اکالا ثبت کنید.');
                         return;
                     }
                 }
@@ -18120,7 +18145,7 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
                 await ensureProductsLoaded(false);
             } catch (e) {}
             const list = cachedProductsList || [];
-            const dairyList = list.filter(function (p) { return !isSausageProduct(p); });
+            const dairyList = list.filter(function (p) { return isDairyTabProduct(p); });
             const sausageList = list.filter(function (p) { return isSausageProduct(p); });
             const fill = function (id, src) {
                 const el = document.getElementById(id);
@@ -18146,9 +18171,9 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
                     }).join('');
                 } catch (e) {}
             };
-            // تب لبنیات و اکالا: بدون سوسیس/کالباس/هات‌داگ/بیکن
+            // تب لبنیات: فقط لبنیات، حلوا، ترشی، رب و زیتون | تب اکالا: همه کالاها
             fill('sName', dairyList);
-            fill('seName', dairyList);
+            fill('seName', list);
             // تب سوسیس و کالباس: فقط همین دسته
             fill('ssName', sausageList);
             // بقیه فرم‌ها: همه کالاها
@@ -18157,10 +18182,10 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
             fill('qnName', list);
             try {
                 setupProductAutocomplete('sName', function () {
-                    return (cachedProductsList || []).filter(function (p) { return !isSausageProduct(p); });
+                    return (cachedProductsList || []).filter(function (p) { return isDairyTabProduct(p); });
                 });
                 setupProductAutocomplete('seName', function () {
-                    return (cachedProductsList || []).filter(function (p) { return !isSausageProduct(p); });
+                    return cachedProductsList || [];
                 });
                 setupProductAutocomplete('ssName', function () {
                     return (cachedProductsList || []).filter(function (p) { return isSausageProduct(p); });
@@ -18818,12 +18843,10 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
                 return;
             }
 
-            if (type === 'sausage' && !isSausageProduct(product)) {
-                showToast('⚠️ این کالا سوسیس/کالباس نیست. لطفاً از تب فروش لبنیات استفاده کنید یا نوع کالا را در «تعریف کالا» اصلاح کنید.');
-                return;
-            }
-            if ((type === 'instore' || type === 'ekala') && isSausageProduct(product)) {
-                showToast('⚠️ سوسیس و کالباس فقط از تب «ثبت فروش سوسیس و کالباس» ثبت می‌شود. این کالا را آنجا وارد کنید.');
+            if (!productAllowedInSaleType(product, type)) {
+                showToast(type === 'sausage'
+                    ? '⚠️ این کالا سوسیس/کالباس نیست. لطفاً از تب فروش لبنیات یا اکالا استفاده کنید یا نوع کالا را در «تعریف کالا» اصلاح کنید.'
+                    : '⚠️ این کالا در تب لبنیات ثبت نمی‌شود (سوسیس/کالباس و لواشک). آن را از تب «ثبت فروش سوسیس و کالباس» یا «ثبت فروش اکالا» ثبت کنید.');
                 return;
             }
 
@@ -24482,6 +24505,22 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
                 return;
             }
             lastPersonnelData = data;
+            // تاریخ ثبت‌نام: اگر در جدول users نبود، از تابع admin_list_sellers تکمیل می‌شود
+            const regDateOf = function (u) {
+                return u.created_at || u.registered_at || u.registration_date || u.signup_at || u.signed_at || u.contract_signed_at || u.createdAt || null;
+            };
+            if (data.some(function (u) { return !regDateOf(u); })) {
+                try {
+                    const sl = await _supabase.rpc('admin_list_sellers');
+                    if (!sl.error && sl.data) {
+                        data.forEach(function (u) {
+                            if (regDateOf(u)) return;
+                            const m = sl.data.find(function (x) { return x.username === u.username; });
+                            if (m) { const d = regDateOf(m); if (d) u.created_at = d; }
+                        });
+                    }
+                } catch (e) {}
+            }
             const roleLabels = { admin: '👑 مدیر', morning_seller: '🌅 فروشنده صبح', evening_seller: '🌙 فروشنده شب' };
             box.innerHTML = data.slice().sort((a, b) => (a.is_terminated ? 1 : 0) - (b.is_terminated ? 1 : 0)).map(u => {
                 const idPhoto = u.national_id_photo_url || u.id_photo_url || u.national_id_photo;
@@ -24494,7 +24533,7 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
                     <p>👤 نام کاربری: ${u.username}</p>
                     <p>🪪 کد ملی: ${nationalId}</p>
                     <p>📱 شماره تماس: ${phone}</p>
-                    ${u.created_at ? `<p>📅 تاریخ ثبت‌نام: ${getTehranFullDateTimeString(new Date(u.created_at))}</p>` : ''}
+                    <p>📅 تاریخ ثبت‌نام: ${regDateOf(u) ? getTehranFullDateTimeString(new Date(regDateOf(u))) : 'نامشخص (در دیتابیس ثبت نشده)'}</p>
                     ${idPhoto ? `<a href="${idPhoto}" target="_blank" style="color:#38bdf8;">👁️ مشاهده عکس کارت ملی</a>` : '<span class="hint">بدون عکس کارت ملی</span>'}
                     ${sig ? ` | <a href="${sig}" target="_blank" style="color:#38bdf8;">✍️ مشاهده امضا</a>` : ''}
                     ${(idPhoto && sig) ? `<br><button class="submit-btn" style="margin-top:8px; padding:8px 14px; font-size:13px; width:auto;" onclick="viewSignedContract('${u.username}')">🖨️ مشاهده و پرینت برگه‌ی قرارداد رسمی</button>` : ''}
@@ -24522,7 +24561,7 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
                 ? u.signed_contract_text
                 : await buildContractText(u.full_name || u.username, shiftKey, nationalId, u.contract_body || null);
             const isExactSnapshot = !!(u.signed_contract_text && u.signed_contract_text.trim());
-            const signDate = u.created_at ? getTehranDateString(new Date(u.created_at)) : '-';
+            const signDate = (u.created_at || u.registered_at || u.signed_at || u.contract_signed_at) ? getTehranDateString(new Date(u.created_at || u.registered_at || u.signed_at || u.contract_signed_at)) : '-';
 
             const win = window.open('', '_blank');
             if (!win) { showToast('❌ مرورگر اجازه‌ی باز کردن پنجره‌ی جدید را نداد. لطفاً پنجره‌های Popup را برای این سایت فعال کن.'); return; }
@@ -26258,7 +26297,7 @@ notify pgrst, 'reload schema';`;
         if (!d.name) { problems.push('نام کالا نوشته نشده'); fatal = true; }
         else if (!p) { problems.push('کالایی با این اسم در انبار پیدا نشد (✏️ ویرایش بزن)'); fatal = true; }
         else if (d.type === 'sausage' && !isSausageProduct(p)) { problems.push('این کالا سوسیس/کالباس نیست؛ نوع فروش رو اصلاح کن'); fatal = true; }
-        else if ((d.type === 'instore' || d.type === 'ekala') && isSausageProduct(p)) { problems.push('سوسیس/کالباس را فقط از تب خودش ثبت کن'); fatal = true; }
+        else if (d.type === 'instore' && !isDairyTabProduct(p)) { problems.push('این کالا در تب لبنیات ثبت نمی‌شود؛ نوع فروش را روی سوسیس/اکالا بگذار'); fatal = true; }
         if (!(qty > 0)) { problems.push('مقدار نوشته نشده'); fatal = true; }
         else if (p && (p.booth_stock || 0) < qty) { problems.push('موجودی غرفه (' + FA(p.booth_stock || 0) + ' کیلو) کمتر از این مقداره'); fatal = true; }
         return { p, qty, fatal, problems, price: p && qty > 0 ? Math.round(qty * (p.sell_price || 0)) : 0 };
@@ -27355,7 +27394,7 @@ notify pgrst, 'reload schema';`;
         if (!navigator.onLine) { showToast('📴 اینترنت قطعه؛ برای تایید باید آنلاین باشی. یادداشت‌ها سر جاشون می‌مونن.'); return false; }
         const d = load().find(x => x.id === id); if (!d) return false;
         let ev = evalDraft(d);
-        if (!ev.p || !(ev.qty > 0) || (d.type === 'sausage' && !isSausageProduct(ev.p)) || ((d.type === 'instore' || d.type === 'ekala') && isSausageProduct(ev.p))) { showToast('⛔ «' + (d.name || 'بدون نام') + '»: ' + (ev.problems && ev.problems.length ? ev.problems.join('، ') : 'نوع فروش با کالا جور نیست')); return false; }
+        if (!ev.p || !(ev.qty > 0) || !productAllowedInSaleType(ev.p, d.type)) { showToast('⛔ «' + (d.name || 'بدون نام') + '»: ' + (ev.problems && ev.problems.length ? ev.problems.join('، ') : 'نوع فروش با کالا جور نیست')); return false; }
         // موجودی تازه از دیتابیس
         const { data: fresh } = await _supabase.from('products').select('*').eq('id', ev.p.id).maybeSingle();
         const prod = fresh || ev.p, qty = ev.qty;
