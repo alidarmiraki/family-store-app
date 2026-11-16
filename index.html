@@ -5,7 +5,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="app-build" content="v282">
+    <meta name="app-build" content="v287">
     <!-- جلوگیری از کش‌شدن خود index.html توسط مرورگر/گوشی، تا نسخه‌ی جدید همیشه فوراً لود بشه
          (sw.js شما کش نمی‌کنه، ولی مرورگر یا هاست ممکنه خودش HTML رو کش کنه) -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -1076,7 +1076,7 @@
 
 </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v279 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
+    <title>v278 سیستم جامع مدیریت لبنیات و ترشیجات فله فامیلی ( دره میرکی )</title>
     <link rel="manifest" href="manifest.json" id="appManifestLink">
     <meta name="application-name" content="غرفه فامیلی">
     <meta name="theme-color" content="#0f172a">
@@ -4438,7 +4438,6 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div class="hint" style="margin-bottom:8px;">برای فروشنده‌هایی که یک روز در میان می‌آیند: سیستم روزهای استراحت را غیبت حساب نمی‌کند و در کارکرد می‌نویسد «امروز شیفتش نیست».</div>
         <label>فروشنده:</label>
         <select id="swpSeller"><option value="">انتخاب فروشنده...</option></select>
-        <button type="button" class="row-btn" style="margin:6px 0;" onclick="fillSellerWorkPatternSelect()">🔄 بارگذاری لیست فروشنده‌ها</button>
         <label>نوع شیفت کاری:</label>
         <select id="swpMode">
             <option value="all">هر روز (پیش‌فرض)</option>
@@ -5159,7 +5158,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         <div id="personnelList"><div class="skeleton-block skeleton-card"></div></div>
     </div>
 
-    <div class="build-tag" id="buildTag">v281 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
+    <div class="build-tag" id="buildTag">v278 - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )</div>
     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 12px 4px;"><span id="installBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="installPWA()">📲 نصب برنامه روی گوشی</button></span><span id="permBtnWrap" style="display:none;"><button type="button" class="row-btn" style="width:auto; padding:8px 16px;" onclick="openPermWizard()">🔐 دسترسی‌های گوشی</button></span></div>
 
     <script>
@@ -5291,8 +5290,8 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         // به‌ترتیب عوض می‌شوند تا حس کنی واقعاً داره چیزی آماده میشه.
         (function () {
             const splashShownAt = Date.now();
-            const MIN_SPLASH_MS = 2200;
-            const MAX_SPLASH_MS = 6000; // اگه نت خیلی کند بود، حداکثر همین‌قدر صبر کن و بعد به‌هرحال نشون بده
+            const MIN_SPLASH_MS = 800;
+            const MAX_SPLASH_MS = 2500; // اگه نت خیلی کند بود، حداکثر همین‌قدر صبر کن و بعد به‌هرحال نشون بده
             const subTexts = [
                 'در حال آماده‌سازی سیستم...',
                 'اتصال به سرور فروشگاه...',
@@ -5329,17 +5328,23 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
                     }, 180);
                 }, wait);
             }
-            if (document.readyState === 'complete') {
+            // بستن اجباری اسپلش — حتی اگر فونت/CDN/سوپابیس گیر کرد
+            try { window.addEventListener('DOMContentLoaded', hideSplash, { once: true }); } catch (e) {}
+            try { window.addEventListener('load', hideSplash, { once: true }); } catch (e) {}
+            if (document.readyState === 'interactive' || document.readyState === 'complete') {
                 hideSplash();
-            } else {
-                window.addEventListener('load', hideSplash);
-                // در صورتی که یک کتابخانه بیرونی (مثلاً به دلیل فیلترشکن/اینترنت ضعیف) هیچ‌وقت لود نشود،
-                // حداکثر بعد از ۶ ثانیه به‌هرحال صفحه را نشان بده تا کاربر پشت صفحه سفید/لودینگ گیر نکند
-                setTimeout(hideSplash, MAX_SPLASH_MS);
             }
+            setTimeout(hideSplash, MAX_SPLASH_MS);
+            // پشتیبان دوم اگر چیزی hideSplash را قطع کرد
+            setTimeout(function () {
+                try {
+                    var el = document.getElementById('appSplash');
+                    if (el) { el.classList.add('hidden'); if (el.parentNode) el.parentNode.removeChild(el); }
+                } catch (e) {}
+            }, MAX_SPLASH_MS + 800);
         })();
 
-        const APP_BUILD = 'v279';
+        const APP_BUILD = 'v287';
         try { const __bt=document.getElementById('buildTag'); if(__bt) __bt.textContent = APP_BUILD + ' - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )'; } catch(e){}
         // ثبت Service Worker پایدار — همیشه /sw.js بدون ?v= تا آپدیت شکست نخورد
         if ('serviceWorker' in navigator) {
@@ -5907,14 +5912,19 @@ ${PROXY_ENDPOINTS.map(u => `<div class="summary-mini" data-sel="${u}" style="gap
         function loadScriptOnce(src, timeoutMs) {
             return new Promise((resolve) => {
                 let settled = false;
-                const finish = (ok) => { if (settled) return; settled = true; resolve(ok); };
                 const tag = document.createElement('script');
+                const finish = (ok) => {
+                    if (settled) return;
+                    settled = true;
+                    try { if (!ok && tag.parentNode) tag.parentNode.removeChild(tag); } catch (e) {}
+                    resolve(!!ok);
+                };
                 tag.src = src;
                 tag.async = true;
                 tag.onload = () => finish(true);
                 tag.onerror = () => finish(false);
-                document.head.appendChild(tag);
-                setTimeout(() => finish(false), timeoutMs || 7000);
+                try { document.head.appendChild(tag); } catch (e) { finish(false); return; }
+                setTimeout(() => finish(false), timeoutMs || 4000);
             });
         }
         const _libLoadPromises = {};
@@ -5932,7 +5942,7 @@ ${PROXY_ENDPOINTS.map(u => `<div class="summary-mini" data-sel="${u}" style="gap
         }
         // بارگذاری اختیاری و بدون‌مانع تلگرام (فقط برای زمانی که برنامه داخل خود اپ تلگرام باز شود؛
         // اگر لود نشود، برنامه در مرورگر عادی کاملاً و بدون هیچ محدودیتی کار می‌کند)
-        loadScriptOnce('https://telegram.org/js/telegram-web-app.js', 3000);
+        loadScriptOnce('https://telegram.org/js/telegram-web-app.js', 1500);
 
         function ensureBarcodeScannerLoaded() {
             return ensureLibraryLoaded('html5qrcode', () => typeof Html5Qrcode !== 'undefined', [
@@ -5943,8 +5953,9 @@ ${PROXY_ENDPOINTS.map(u => `<div class="summary-mini" data-sel="${u}" style="gap
         function ensureChartLibLoaded() {
             return ensureLibraryLoaded('chartjs', () => typeof Chart !== 'undefined', [
                 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
-                'https://unpkg.com/chart.js@4.4.0/dist/chart.umd.min.js'
-            ], 8000);
+                'https://unpkg.com/chart.js@4.4.0/dist/chart.umd.min.js',
+                'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js'
+            ], 4000);
         }
         function ensureExcelLibLoaded() {
             return ensureLibraryLoaded('xlsx', () => typeof XLSX !== 'undefined', [
@@ -6032,7 +6043,7 @@ ${PROXY_ENDPOINTS.map(u => `<div class="summary-mini" data-sel="${u}" style="gap
                 if (!ready) {
                     // نشد؟ (مثلاً jsDelivr فیلتر بود) — یک CDN جایگزین را امتحان کن
                     console.warn('📡 Supabase از jsDelivr لود نشد؛ تلاش برای CDN جایگزین (unpkg)...');
-                    for (const u of ['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', 'https://unpkg.com/@supabase/supabase-js@2']) { await loadScriptOnce(u, 8000); if (typeof supabase !== 'undefined' && supabase.createClient) break; }
+                    for (const u of ['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', 'https://unpkg.com/@supabase/supabase-js@2']) { await loadScriptOnce(u, 4000); if (typeof supabase !== 'undefined' && supabase.createClient) break; }
                     ready = (typeof supabase !== 'undefined' && supabase.createClient);
                 }
                 if (!ready) throw new Error('کتابخانه Supabase از هیچ منبعی بارگذاری نشد');
@@ -6058,7 +6069,7 @@ ${PROXY_ENDPOINTS.map(u => `<div class="summary-mini" data-sel="${u}" style="gap
                 .trim()
                 .toLowerCase();
         }
-        // تشخیص سوسیس/کالباس/هات‌داگ/بیکن — هم از category و هم از نام کالا
+        // تشخیص سوسیس/کالباس/هات‌داگ/بیکن — هم از category و هم از نام
         function isSausageProduct(p) {
             if (!p) return false;
             const c = String(p.category || '').toLowerCase();
@@ -6994,14 +7005,8 @@ notify pgrst, 'reload schema';`;
         // برای داشبوردها: اخراج‌شده، یا فروشنده‌ای که در لیست پرسنل فعال فعلی نیست
         function isInactiveStaff(name) {
             if (!name) return false; name = String(name).trim();
-            // فقط اگر صریحاً اخراج/غیرفعال ثبت شده — نه صرفاً چون در لیست active لحظه‌ای نبود
             if (firedInfo(name)) return true;
-            try {
-                if (FIRED.map && FIRED.map[name]) return true;
-                const tail = name.split(' - ').slice(1).join(' - ').trim();
-                if (tail && FIRED.tails && FIRED.tails[tail]) return true;
-            } catch (e) {}
-            return false;
+            return !!(FIRED.active && FIRED.active.size > 0 && /^فروشنده (صبح|شب)/.test(name) && !FIRED.active.has(name));
         }
         function firedDateText(info) {
             if (!info || !info.at) return '';
@@ -8966,18 +8971,7 @@ notify pgrst, 'reload schema';`;
                 const myExited = (lastMyExit && lastMyEntry && new Date(lastMyExit.created_at) >= new Date(lastMyEntry.created_at))
                     || (!!getLocalAttDone(todayISO).exit && myEntered);
                 const myOnLeave = myAtt.some(a => a.type === 'leave') || !!(getLocalAttDone(todayISO).leave);
-                let myScheduledToday = true;
-                try {
-                    if (typeof isSellerScheduledDay === 'function' && currentUserLabel) {
-                        myScheduledToday = isSellerScheduledDay(currentUserLabel, todayISO);
-                    }
-                } catch (eSchDash) { myScheduledToday = true; }
-                if (!myScheduledToday) {
-                    personalAlarmCard = `<div class="report-card" style="border-color:#64748b;">
-                        <h3 style="color:#94a3b8;">⏸ امروز طبق برنامه شیفت شما نیست</h3>
-                        <p style="font-size:12px;opacity:.85;margin:4px 0 0;">غیبت برایت ثبت نمی‌شود و در کارکرد «امروز شیفتش نیست» نوشته می‌شود.</p>
-                    </div>`;
-                } else if (!myOnLeave && !myEntered) {
+                if (!myOnLeave && !myEntered) {
                     personalAlarmCard = `<div class="report-card escalated" style="border-color:#ef4444; animation: escalatedPulse 1.1s ease-in-out infinite;">
                         <h3 style="color:#ef4444;">⛔ یادت نره! هنوز ورودت رو نزدی</h3>
                         <button class="submit-btn" style="margin-top:6px;" onclick="switchTab('attendance');">همین الان ثبت کن</button>
@@ -11962,8 +11956,10 @@ function sbRenderAdminLists(cfg) {
                 else if (typeof offlineLoadProducts === 'function') products = offlineLoadProducts() || [];
             } catch (e) {}
 
-            const sausages = (products || []).filter(p => p && isSausageProduct(p))
-                .sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'fa'));
+            const sausages = (products || []).filter(p => p && (
+                p.category === 'sausage' || p.category === 'سوسیس' ||
+                /سوسیس|کالباس|هات\s*داگ|ژامبون/i.test(String(p.name || ''))
+            )).sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'fa'));
 
             const cache = pgLoadCache();
             if (!sausages.length) {
@@ -12333,7 +12329,7 @@ function sbRenderAdminLists(cfg) {
 
             const list = (typeof cachedProductsList !== 'undefined' && Array.isArray(cachedProductsList))
                 ? cachedProductsList : (typeof offlineLoadProducts === 'function' ? offlineLoadProducts() : []);
-            const sausages = list.filter(p => p && isSausageProduct(p));
+            const sausages = list.filter(p => p && (p.category === 'sausage' || p.category === 'سوسیس'));
 
             const coded = sausages.filter(p => spcIsCode22(p.code))
                 .sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'fa'));
@@ -13903,22 +13899,6 @@ function sbRenderAdminLists(cfg) {
 
             if (currentRole !== 'morning_seller' && currentRole !== 'evening_seller') { hideForceEntryLock(); return; }
             if (Date.now() < reminderSnoozeUntil) return;
-            // روزهای استراحت الگوی یک‌روزدرمیان: نه یادآوری ورود، نه قفل اجباری، نه غیبت
-            try {
-                if (typeof isSellerScheduledDay === 'function' && currentUserLabel) {
-                    const _isoRem = getTehranISODate(new Date());
-                    if (!isSellerScheduledDay(currentUserLabel, _isoRem)) {
-                        hideForceEntryLock();
-                        const panelOff = document.getElementById('attendanceReminderBanner');
-                        if (panelOff) {
-                            panelOff.classList.remove('escalated');
-                            panelOff.style.display = 'block';
-                            panelOff.innerHTML = '⏸ <b>امروز طبق برنامه شیفت شما نیست</b> — نیازی به ثبت ورود نیست و غیبت هم ثبت نمی‌شود.';
-                        }
-                        return;
-                    }
-                }
-            } catch (eOffRem) {}
             const myCallId = ++_attendanceReminderCallId;
 
             const settings = await getShiftSettings();
@@ -14893,6 +14873,7 @@ function sbRenderAdminLists(cfg) {
             } catch (e) {}
         }
 
+        async 
         // ========== الگوی کاری فروشنده (هر روز / یک‌روزدرمیان / سفارشی) ==========
         const SELLER_WORK_KEY = 'seller_work_patterns_v1';
         function loadSellerWorkPatterns() {
@@ -15005,58 +14986,15 @@ function sbRenderAdminLists(cfg) {
             const sel = document.getElementById('swpSeller');
             if (!sel) return;
             try {
-                const a = document.getElementById('swpAnchor');
-                if (a && !a.value && typeof getTehranISODate === 'function') a.value = getTehranISODate(new Date());
-            } catch (e) {}
-            // اول از لیست‌های آماده کپی کن
-            try {
                 const src = document.getElementById('workSellerSelect') || document.getElementById('sstSeller');
-                if (src && src.options && src.options.length > 1) {
+                if (src && src.options.length) {
                     sel.innerHTML = src.innerHTML;
-                    try { await renderSellerWorkPatternStatus(); } catch (e) {}
-                    return;
-                }
-            } catch (e) {}
-            // مستقیم از سرور
-            sel.innerHTML = '<option value="">⏳ در حال دریافت فروشنده‌ها...</option>';
-            try {
-                if (typeof populateWorkSellerSelect === 'function') {
-                    await populateWorkSellerSelect();
-                    const src2 = document.getElementById('workSellerSelect');
-                    if (src2 && src2.options && src2.options.length) {
-                        sel.innerHTML = src2.innerHTML;
-                        try { await renderSellerWorkPatternStatus(); } catch (e) {}
-                        return;
-                    }
                 }
             } catch (e) {}
             try {
-                let rows = [];
-                try {
-                    const r = await _supabase.rpc('admin_list_sellers');
-                    if (!r.error && r.data) rows = r.data;
-                } catch (e) {}
-                if (!rows.length) {
-                    const u = await _supabase.from('users').select('username,full_name,role,is_terminated').in('role', ['morning_seller', 'evening_seller']);
-                    if (!u.error && u.data) rows = u.data;
-                }
-                const active = (rows || []).filter(function (s) { return !s.is_terminated; });
-                if (!active.length) {
-                    sel.innerHTML = '<option value="">❌ فروشنده‌ای پیدا نشد</option>';
-                    return;
-                }
-                sel.innerHTML = '<option value="">انتخاب فروشنده...</option>';
-                active.forEach(function (s) {
-                    const roleLabel = (s.role === 'evening_seller') ? 'فروشنده شب' : 'فروشنده صبح';
-                    const name = s.full_name || s.username || '';
-                    const opt = document.createElement('option');
-                    opt.value = roleLabel + ' - ' + name;
-                    opt.textContent = '👤 ' + name + ' (' + roleLabel + ')';
-                    sel.appendChild(opt);
-                });
-            } catch (e) {
-                sel.innerHTML = '<option value="">❌ خطا در دریافت لیست</option>';
-            }
+                const a = document.getElementById('swpAnchor');
+                if (a && !a.value) a.value = getTehranISODate(new Date());
+            } catch (e) {}
             try { await renderSellerWorkPatternStatus(); } catch (e) {}
         }
         window.saveSellerWorkPatternFromUI = saveSellerWorkPatternFromUI;
@@ -15986,7 +15924,7 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
                     <div style="width:34px; height:34px; border-radius:8px; background:${color}; display:flex; align-items:center; justify-content:center; font-size:10px; color:#fff; font-weight:bold;">${dayLabel}</div>
                 </div>`;
             }
-            html += '</div><div class="hint" style="margin-top:6px;">🟢 به‌موقع &nbsp; 🔴 تاخیر &nbsp; 🟣 مرخصی &nbsp; ⚫ غیبت (بدون ثبت) &nbsp; ⬜ امروز شیفتش نیست</div>';
+            html += '</div><div class="hint" style="margin-top:6px;">🟢 به‌موقع &nbsp; 🔴 تاخیر &nbsp; 🟣 مرخصی &nbsp; ⚫ غیبت (بدون ثبت)</div>';
             box.innerHTML = html;
         }
 
@@ -17981,246 +17919,248 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
         // همین گوشی (localStorage) نگه داشته می‌شه و به‌محض وصل شدن اینترنت خودکار
         // (بدون نیاز به هیچ کاری از طرف فروشنده) ارسال می‌شه.
         // =========================================================================
-        const OFFLINE_SALES_KEY = 'offline_sales_queue_v1';
-        function loadOfflineSalesQueue() {
-            try {
-                const raw = localStorage.getItem(OFFLINE_SALES_KEY);
-                const arr = raw ? JSON.parse(raw) : [];
-                return Array.isArray(arr) ? arr : [];
-            } catch (e) { return []; }
-        }
-        function saveOfflineSalesQueue(arr) {
-            try { localStorage.setItem(OFFLINE_SALES_KEY, JSON.stringify(arr || [])); } catch (e) {}
-        }
         function queueOfflineSale(type) {
-            try {
-                const ids = SALE_FORM_IDS[type];
-                const name = document.getElementById(ids.name).value.trim();
-                const qtyRaw = document.getElementById(ids.qty).value;
-                const unit = document.querySelector(`input[name="${ids.qtyUnitName}"]:checked`)?.value || 'kg';
-                if (!name || !qtyRaw) {
-                    showToast('⛔ نام کالا و مقدار را وارد کن');
-                    return;
-                }
-                const qty = (typeof getSaleQtyInKg === 'function') ? getSaleQtyInKg(type) : (parseFloat(String(qtyRaw).replace(/,/g, '')) || 0);
-                if (!qty || qty <= 0) {
-                    showToast('⛔ مقدار معتبر نیست');
-                    return;
-                }
-                let unitPrice = 0;
-                try {
-                    unitPrice = (selectedProductUnitPrice && selectedProductUnitPrice[type]) || 0;
-                } catch (e) {}
-                let matchedProduct = null;
-                try {
-                    matchedProduct = findProductInList(name, cachedProductsList || []);
-                    if (matchedProduct && !unitPrice) unitPrice = Number(matchedProduct.sell_price) || 0;
-                } catch (e2) {}
-                if (matchedProduct) {
-                    if (type === 'sausage' && !isSausageProduct(matchedProduct)) {
-                        showToast('⚠️ این کالا سوسیس/کالباس نیست؛ از تب لبنیات ثبت کنید.');
-                        return;
-                    }
-                    if ((type === 'instore' || type === 'ekala') && isSausageProduct(matchedProduct)) {
-                        showToast('⚠️ سوسیس و کالباس فقط از تب مخصوص خودش ثبت می‌شود.');
-                        return;
-                    }
-                }
-                const customerNameVal = document.getElementById(ids.customerName) ? document.getElementById(ids.customerName).value.trim() : '';
-                const isLateEntry = !!(document.getElementById(ids.lateToggle) && document.getElementById(ids.lateToggle).checked);
-                let lateDateVal = null, lateShiftVal = null;
-                if (isLateEntry) {
-                    lateDateVal = document.getElementById(ids.lateDate) ? document.getElementById(ids.lateDate).value : null;
-                    lateShiftVal = document.getElementById(ids.lateShift) ? document.getElementById(ids.lateShift).value : null;
-                }
-                const item = {
-                    id: 'off_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
-                    type: type,
-                    product_name: name,
-                    quantity: qty,
-                    unit: unit,
-                    unit_price: unitPrice,
-                    sell_price: Math.round(unitPrice * qty),
-                    seller_name: currentUserLabel || '',
-                    customer_name: customerNameVal || null,
-                    shift_label: isLateEntry ? lateShiftVal : null,
-                    late_date: lateDateVal,
-                    created_at: new Date().toISOString()
-                };
-                const q = loadOfflineSalesQueue();
-                q.push(item);
-                saveOfflineSalesQueue(q);
-                try {
-                    document.getElementById(ids.name).value = '';
-                    document.getElementById(ids.qty).value = '';
-                    if (document.getElementById(ids.customerName)) document.getElementById(ids.customerName).value = '';
-                } catch (e3) {}
-                showToast('📴 اینترنت قطع است — فاکتور روی گوشی ذخیره شد و بعد از وصل شدن خودکار ارسال می‌شود.');
-            } catch (e) {
-                console.warn('queueOfflineSale', e);
-                showToast('❌ ذخیره آفلاین فروش ناموفق بود');
+            const ids = SALE_FORM_IDS[type];
+            const name = document.getElementById(ids.name).value.trim();
+            const qtyRaw = document.getElementById(ids.qty).value;
+            const unit = document.querySelector(`input[name="${ids.qtyUnitName}"]:checked`)?.value || 'kg';
+            if (!name || !qtyRaw) {
+                showToast('⛔ لطفاً نام کالا و مقدار را وارد کنید.');
+                return;
             }
+            let queue = [];
+            try { queue = JSON.parse(localStorage.getItem('offlineSaleQueue') || '[]'); } catch (e) {}
+            queue.push({ type, name, qtyRaw, unit, queuedAt: Date.now() });
+            localStorage.setItem('offlineSaleQueue', JSON.stringify(queue));
+            showToast(`📴 فروش آفلاین ذخیره شد: «${name}» — وقتی آنلاین شدی خودکار بارگذاری می‌شود (${queue.length.toLocaleString('fa-IR')} فاکتور در صف).`);
+            document.getElementById(ids.name).value = '';
+            document.getElementById(ids.qty).value = '';
         }
-        async function flushOfflineSales() {
-            const q = loadOfflineSalesQueue();
-            if (!q.length) return 0;
-            if (!navigator.onLine || !_supabase) return 0;
-            let ok = 0;
-            const remain = [];
-            for (const item of q) {
+        let offlineQueueFlushing = false;
+        async function flushOfflineSaleQueue() {
+            if (offlineQueueFlushing) return;
+            let queue = [];
+            try { queue = JSON.parse(localStorage.getItem('offlineSaleQueue') || '[]'); } catch (e) {}
+            if (queue.length === 0) return;
+            offlineQueueFlushing = true;
+            showToast(`📶 اینترنت وصل شد؛ در حال ارسال ${queue.length.toLocaleString('fa-IR')} فاکتور صف‌شده...`);
+
+            while (queue.length > 0) {
+                const entry = queue[0];
+                const ids = SALE_FORM_IDS[entry.type];
+                if (!ids) { queue.shift(); continue; }
+
+                // قبل از ارسال خودکار، موجودی رو تازه چک می‌کنیم — اگه الان کافی نیست، به‌جای
+                // معطل موندن پشت یه پنجره‌ی تاییدی که کسی پشتش نیست، این یکی رو رد می‌کنیم و
+                // مستقیم به مدیر خبر می‌دیم که دستی بررسی کنه.
+                if (cachedProductsList.length === 0) {
+                    try {
+                        const list = await offlineGetProducts(true);
+                        cachedProductsList = sortProductsAlpha(list || []);
+                    } catch (e) {
+                        cachedProductsList = sortProductsAlpha(offlineLoadProducts());
+                    }
+                }
+                const product = cachedProductsList.find(p => p.name === entry.name);
+                const qtyKg = entry.unit === 'gram' ? Number((parseFloat(entry.qtyRaw) / 1000).toFixed(4)) : parseFloat(entry.qtyRaw);
+                if (!product || (product.booth_stock || 0) < qtyKg) {
+                    queue.shift();
+                    localStorage.setItem('offlineSaleQueue', JSON.stringify(queue));
+                    _supabase.from('messages').insert([{
+                        sender: "سیستم خودکار صف آفلاین",
+                        recipient: "admin",
+                        title: `⚠️ فاکتور آفلاین ثبت نشد: ${currentUserLabel}`,
+                        body: `کاربر ${currentUserLabel} وقتی آفلاین بود سعی کرد «${entry.name}» به مقدار ${entry.qtyRaw} ${entry.unit === 'gram' ? 'گرم' : 'کیلوگرم'} ثبت کند، اما الان (بعد از وصل شدن اینترنت) موجودی کافی نیست یا کالا پیدا نشد. لطفاً دستی بررسی/ثبت کنید.`,
+                        created_at: new Date().toISOString()
+                    }]).then(() => {});
+                    continue;
+                }
+
+                document.getElementById(ids.name).value = entry.name;
+                document.querySelectorAll(`input[name="${ids.qtyUnitName}"]`).forEach(r => { r.checked = (r.value === entry.unit); });
+                document.getElementById(ids.qty).value = entry.qtyRaw;
+                onSaleUnitChange(entry.type);
                 try {
-                    let product = null;
-                    try { product = findProductInList(item.product_name, cachedProductsList || []); } catch (e) {}
-                    if (!product) {
-                        try { await ensureProductsLoaded(true); product = findProductInList(item.product_name, cachedProductsList || []); } catch (e) {}
-                    }
-                    if (!product) {
-                        remain.push(item);
-                        continue;
-                    }
-                    const qty = Number(item.quantity) || 0;
-                    const unitPrice = Number(item.unit_price) || Number(product.sell_price) || 0;
-                    const sellPrice = Number(item.sell_price) || Math.round(unitPrice * qty);
-                    const createdAt = item.late_date
-                        ? (item.late_date + 'T12:00:00+03:30')
-                        : (item.created_at || new Date().toISOString());
-                    const { error } = await _supabase.from('sales').insert([{
-                        product_code: product.code,
-                        quantity: qty,
-                        sell_price: sellPrice,
-                        seller_name: item.seller_name || currentUserLabel || '',
-                        sale_type: item.type || 'instore',
-                        shift_label: item.shift_label || null,
-                        customer_name: item.customer_name || null,
-                        created_at: createdAt
-                    }]);
-                    if (error) { remain.push(item); continue; }
-                    ok++;
+                    await submitSale(entry.type);
+                    queue.shift();
+                    localStorage.setItem('offlineSaleQueue', JSON.stringify(queue));
                 } catch (e) {
-                    remain.push(item);
+                    console.warn('خطا در ارسال صف آفلاین، دوباره تلاش می‌شود', e);
+                    break; // شاید دوباره آفلاین شدیم؛ بقیه صف رو نگه می‌داریم برای دفعه بعد
                 }
             }
-            saveOfflineSalesQueue(remain);
-            if (ok) {
-                try { showToast('✅ ' + ok + ' فاکتور آفلاین ارسال شد' + (remain.length ? (' — ' + remain.length + ' مورد مانده') : '')); } catch (e) {}
-            }
-            return ok;
+            offlineQueueFlushing = false;
+            const remaining = JSON.parse(localStorage.getItem('offlineSaleQueue') || '[]');
+            if (remaining.length === 0) showToast('✅ همه فاکتورهای صف‌شده با موفقیت ثبت شدند.');
         }
-        function flushOfflineSaleQueue() {
-            try { flushOfflineSales(); } catch (e) {}
-        }
-        try {
-            window.addEventListener('online', function () {
-                try { flushOfflineSales(); } catch (e) {}
-            });
-        } catch (e) {}
 
-        async function loadProductDatalist() {
-            try {
-                await ensureProductsLoaded(false);
-            } catch (e) {}
-            const list = cachedProductsList || [];
-            const dairyList = list.filter(function (p) { return !isSausageProduct(p); });
-            const sausageList = list.filter(function (p) { return isSausageProduct(p); });
-            const fill = function (id, src) {
-                const el = document.getElementById(id);
-                if (!el) return;
+        // صف آفلاین حضور و غیاب
+        function queueOfflineAttendance(payload) {
+            let queue = [];
+            try { queue = JSON.parse(localStorage.getItem('offlineAttendanceQueue') || '[]'); } catch (e) {}
+            queue.push(Object.assign({}, payload, { queuedAt: Date.now() }));
+            localStorage.setItem('offlineAttendanceQueue', JSON.stringify(queue));
+            showToast('📴 ورود/خروج روی گوشی ذخیره شد (' + queue.length.toLocaleString('fa-IR') + ' مورد در صف). به‌محض آنلاین شدن برای مدیر ارسال می‌شود.');
+        }
+        let offlineAttFlushing = false;
+        async function flushOfflineAttendanceQueue() {
+            if (offlineAttFlushing) return;
+            let queue = [];
+            try { queue = JSON.parse(localStorage.getItem('offlineAttendanceQueue') || '[]'); } catch (e) {}
+            if (!queue.length) return;
+            if (offlineIsDown()) return;
+            offlineAttFlushing = true;
+            showToast('📶 ارسال ' + queue.length.toLocaleString('fa-IR') + ' ثبت حضور آفلاین...');
+            while (queue.length) {
+                const entry = queue[0];
                 try {
-                    // datalist مرتبط
-                    let listId = el.getAttribute('list');
-                    if (!listId) {
-                        listId = id + 'List';
-                        el.setAttribute('list', listId);
+                    const row = Object.assign({}, entry);
+                    delete row.queuedAt;
+                    // اگر عکس فقط روی گوشی مانده، اول آپلود کن
+                    if (row.photo_data_url && !row.photo_url) {
+                        try {
+                            const blob = await (await fetch(row.photo_data_url)).blob();
+                            const safeName = String(row.seller_name || 'user').replace(/[^a-zA-Z0-9_-]+/g, '_');
+                            const fileName = 'offline_' + safeName + '_' + Date.now() + '.jpg';
+                            const up = await _supabase.storage.from(ATTENDANCE_BUCKET).upload(fileName, blob, { contentType: 'image/jpeg', upsert: true });
+                            if (!up.error) {
+                                const { data: pub } = _supabase.storage.from(ATTENDANCE_BUCKET).getPublicUrl(fileName);
+                                if (pub && pub.publicUrl) row.photo_url = pub.publicUrl;
+                            }
+                        } catch (pe) { console.warn('offline photo up', pe); }
                     }
-                    let dl = document.getElementById(listId);
-                    if (!dl) {
-                        dl = document.createElement('datalist');
-                        dl.id = listId;
-                        document.body.appendChild(dl);
-                    }
-                    const use = src || list;
-                    dl.innerHTML = use.map(function (p) {
-                        const n = String(p.name || '').replace(/"/g, '&quot;');
-                        const c = String(p.code || '');
-                        return '<option value="' + n + '">' + (c ? c + ' — ' : '') + n + '</option>';
-                    }).join('');
-                } catch (e) {}
-            };
-            // تب لبنیات و اکالا: بدون سوسیس/کالباس/هات‌داگ/بیکن
-            fill('sName', dairyList);
-            fill('seName', dairyList);
-            // تب سوسیس و کالباس: فقط همین دسته
-            fill('ssName', sausageList);
-            // بقیه فرم‌ها: همه کالاها
-            fill('poProductName', list);
-            fill('ptItemName', list);
-            fill('qnName', list);
-            try {
-                setupProductAutocomplete('sName', function () {
-                    return (cachedProductsList || []).filter(function (p) { return !isSausageProduct(p); });
-                });
-                setupProductAutocomplete('seName', function () {
-                    return (cachedProductsList || []).filter(function (p) { return !isSausageProduct(p); });
-                });
-                setupProductAutocomplete('ssName', function () {
-                    return (cachedProductsList || []).filter(function (p) { return isSausageProduct(p); });
-                });
-                setupProductAutocomplete('poProductName', function () { return cachedProductsList || []; });
-                setupProductAutocomplete('ptItemName', function () { return cachedProductsList || []; });
-            } catch (e) {}
-            return list;
+                    delete row.photo_data_url;
+                    delete row.offline_queued;
+                    delete row.location_text;
+                    const { error } = await _supabase.from('attendance').insert([row]);
+                    if (error) throw error;
+                    queue.shift();
+                    localStorage.setItem('offlineAttendanceQueue', JSON.stringify(queue));
+                } catch (e) {
+                    console.warn('offline att flush', e);
+                    break;
+                }
+            }
+            offlineAttFlushing = false;
+            const left = JSON.parse(localStorage.getItem('offlineAttendanceQueue') || '[]');
+            if (!left.length) showToast('✅ همه ثبت‌های حضور آفلاین برای مدیر ارسال شد');
+        }
+        window.flushOfflineAttendanceQueue = flushOfflineAttendanceQueue;
+
+
+        // لیست مشتری‌های ثابت اخیر — برای پرشدن خودکار وقتی اسمشون رو تایپ می‌کنی
+        async function loadRecentCustomers() {
+            const { data } = await _supabase.from('sales').select('customer_name').not('customer_name', 'is', null).order('created_at', { ascending: false }).limit(200);
+            if (!data) return;
+            const names = [...new Set(data.map(r => r.customer_name).filter(Boolean))].slice(0, 30);
+            const box = document.getElementById('recentCustomersDatalist');
+            if (box) box.innerHTML = names.map(n => `<option value="${escapeHtmlForToast(n)}"></option>`).join('');
         }
 
-        function setupProductAutocomplete(inputId, getListFn) {
+        // اتوکامپلیت سفارشی برای فیلدهای «نام کالا»: به‌جای دیتالیست پیش‌فرض HTML که روی گوشی
+        // اسم کالاها رو به‌صورت پیشنهاد بالای کیبورد نشون می‌ده (کوچیک و به‌سختی قابل استفاده)،
+        // با تپ‌روی فیلد یا تایپ‌کردن، یه لیست واقعی درست زیر همون فیلد باز می‌شه.
+        function setupProductAutocomplete(inputId, filterFn) {
             const input = document.getElementById(inputId);
             if (!input) return;
-            // همیشه تابع لیست را به‌روز نگه دار تا فیلتر لبنیات/سوسیس بعد از بارگذاری مجدد کار کند
-            input._acGetList = getListFn;
-            if (input.dataset.acBound === '1') return;
-            input.dataset.acBound = '1';
-            let box = document.getElementById(inputId + '_acBox');
-            if (!box) {
-                box = document.createElement('div');
-                box.id = inputId + '_acBox';
-                box.style.cssText = 'display:none;position:absolute;z-index:9000;max-height:220px;overflow:auto;background:#0f172a;border:1px solid rgba(148,163,184,.35);border-radius:12px;width:min(92vw,360px);box-shadow:0 12px 30px rgba(0,0,0,.35);';
-                input.parentElement ? input.parentElement.appendChild(box) : document.body.appendChild(box);
+            // همیشه فیلتر را به‌روز نگه دار (لبنیات بدون سوسیس / سوسیس فقط خودش)
+            input._acFilterFn = filterFn;
+            if (input.dataset.autocompleteReady) return;
+            input.dataset.autocompleteReady = '1';
+            input.removeAttribute('list');
+            input.setAttribute('autocomplete', 'off');
+
+            const wrap = document.createElement('div');
+            wrap.className = 'product-autocomplete-wrap';
+            input.parentNode.insertBefore(wrap, input);
+            wrap.appendChild(input);
+            // اگه خودِ فیلد داخل یه ردیف flex بوده (مثلاً کنار دکمه‌ی اسکن بارکد)، اون فلکس رو
+            // به wrapper منتقل می‌کنیم تا چیدمان قبلی به‌هم نریزه
+            if (input.style.flex) {
+                wrap.style.flex = input.style.flex;
+                input.style.flex = '';
             }
-            const hide = function () { box.style.display = 'none'; box.innerHTML = ''; };
-            const show = function () {
-                const q = String(input.value || '').trim().toLowerCase();
-                let list = [];
-                try {
-                    const fn = input._acGetList || getListFn;
-                    list = (typeof fn === 'function' ? fn() : []) || [];
-                } catch (e) { list = []; }
-                if (!q) { hide(); return; }
-                const hits = list.filter(function (p) {
-                    const n = String(p.name || '').toLowerCase();
-                    const c = String(p.code || '').toLowerCase();
-                    return n.indexOf(q) >= 0 || c.indexOf(q) >= 0;
-                }).slice(0, 12);
-                if (!hits.length) { hide(); return; }
-                box.innerHTML = hits.map(function (p) {
-                    const label = (p.code ? (p.code + ' — ') : '') + (p.name || '');
-                    return '<div data-name="' + String(p.name || '').replace(/"/g, '&quot;') + '" style="padding:10px 12px;cursor:pointer;border-bottom:1px solid rgba(148,163,184,.15);font-size:13px;">' + label + '</div>';
-                }).join('');
-                box.style.display = 'block';
-                Array.prototype.forEach.call(box.querySelectorAll('[data-name]'), function (row) {
-                    row.onclick = function () {
-                        input.value = row.getAttribute('data-name') || '';
-                        hide();
-                        try {
-                            // تشخیص نوع فروش از روی id
-                            if (inputId === 'sName') calculateSalePriceAuto('instore');
-                            else if (inputId === 'seName') calculateSalePriceAuto('ekala');
-                            else if (inputId === 'ssName') calculateSalePriceAuto('sausage');
-                        } catch (e) {}
-                    };
+            input.style.width = '100%';
+            input.style.boxSizing = 'border-box';
+
+            const list = document.createElement('div');
+            list.className = 'product-autocomplete-list';
+            wrap.appendChild(list);
+
+            function renderList() {
+                const q = (input.value || '').trim();
+                const fn = input._acFilterFn || filterFn;
+                const source = (typeof fn === 'function') ? (fn() || []) : (cachedProductsList || []);
+                const matches = q ? source.filter(p => p.name && p.name.indexOf(q) !== -1) : source;
+                if (matches.length === 0) {
+                    list.innerHTML = '<div class="product-autocomplete-item" style="color:#64748b;">کالایی پیدا نشد</div>';
+                } else {
+                    list.innerHTML = matches.slice(0, 60).map(p =>
+                        `<div class="product-autocomplete-item" data-name="${(p.name || '').replace(/"/g, '&quot;')}">${p.name || ''}</div>`
+                    ).join('');
+                }
+                list.classList.add('active');
+            }
+
+            input.addEventListener('focus', renderList);
+            input.addEventListener('input', renderList);
+            list.addEventListener('mousedown', (e) => {
+                // mousedown نه click، تا قبل از blur شدن فیلد (که لیست رو می‌بنده) اجرا بشه
+                const item = e.target.closest('.product-autocomplete-item');
+                if (!item || !item.dataset.name) return;
+                input.value = item.dataset.name;
+                list.classList.remove('active');
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                input.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+            document.addEventListener('click', (e) => {
+                if (!wrap.contains(e.target)) list.classList.remove('active');
+            });
+        }
+
+        async function loadProductDatalist() {
+            let products = null;
+            try { const r = await _supabase.from('products').select('*'); products = r.data; if (!r.error) offlineSaveProducts(products || []); } catch (e) { products = offlineLoadProducts(); }
+            if (!products || !products.length) products = offlineLoadProducts();
+            cachedProductsList = sortProductsAlpha(products || []);
+
+            const datalist = document.getElementById('productDatalist');
+            if (datalist) {
+                datalist.innerHTML = '';
+                cachedProductsList.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.name;
+                    datalist.appendChild(opt);
                 });
-            };
-            input.addEventListener('input', show);
-            input.addEventListener('focus', show);
-            input.addEventListener('blur', function () { setTimeout(hide, 200); });
+            }
+
+            const sausageDatalist = document.getElementById('sausageDatalist');
+            if (sausageDatalist) {
+                sausageDatalist.innerHTML = '';
+                cachedProductsList.filter(p => isSausageProduct(p)).forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.name;
+                    sausageDatalist.appendChild(opt);
+                });
+            }
+
+            const dairyDatalist = document.getElementById('dairyDatalist');
+            if (dairyDatalist) {
+                dairyDatalist.innerHTML = '';
+                cachedProductsList.filter(p => !isSausageProduct(p)).forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.name;
+                    dairyDatalist.appendChild(opt);
+                });
+            }
+
+            // فیلدهای «نام کالا» رو به اتوکامپلیت سفارشی (لیست زیر فیلد) وصل می‌کنیم
+            // لبنیات/اکالا بدون سوسیس؛ سوسیس فقط در تب خودش
+            setupProductAutocomplete('sName', () => cachedProductsList.filter(p => !isSausageProduct(p)));
+            setupProductAutocomplete('ssName', () => cachedProductsList.filter(p => isSausageProduct(p)));
+            setupProductAutocomplete('seName', () => cachedProductsList.filter(p => !isSausageProduct(p)));
+            setupProductAutocomplete('poProductName', () => cachedProductsList);
+            setupProductAutocomplete('ptItemName', () => cachedProductsList);
         }
 
         function toggleEntryMode() {
@@ -18823,7 +18763,7 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
                 return;
             }
             if ((type === 'instore' || type === 'ekala') && isSausageProduct(product)) {
-                showToast('⚠️ سوسیس و کالباس فقط از تب «ثبت فروش سوسیس و کالباس» ثبت می‌شود. این کالا را آنجا وارد کنید.');
+                showToast('⚠️ سوسیس و کالباس فقط از تب «ثبت فروش سوسیس و کالباس» ثبت می‌شود.');
                 return;
             }
 
@@ -24466,6 +24406,26 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
             loadExpensesTab();
         }
 
+        function getStaffRegDateInfo(u) {
+            if (!u) return { label: 'نامشخص', shortLabel: 'نامشخص', date: null, source: null };
+            const fields = ['signed_at', 'registration_completed_at', 'registered_at', 'created_at', 'updated_at'];
+            for (let i = 0; i < fields.length; i++) {
+                const v = u[fields[i]];
+                if (!v) continue;
+                const d = new Date(v);
+                if (!isNaN(d.getTime()) && d.getFullYear() > 2000) {
+                    return { label: getTehranFullDateTimeString(d), shortLabel: getTehranDateString(d), date: d, source: fields[i] };
+                }
+            }
+            const text = String(u.signed_contract_text || '');
+            const m = text.match(/در تاریخ\s*([۰-۹0-9]{4}\s*[\/\-]\s*[۰-۹0-9]{1,2}\s*[\/\-]\s*[۰-۹0-9]{1,2})/);
+            if (m && m[1]) {
+                const fa = m[1].replace(/\s+/g, '');
+                return { label: fa, shortLabel: fa, date: null, source: 'contract_text' };
+            }
+            return { label: 'نامشخص', shortLabel: 'نامشخص', date: null, source: null };
+        }
+
         // اطلاعات پرسنل — مستقیم از جدول users، جدا از صندوقچه پیام
         let lastPersonnelData = [];
         async function loadPersonnelTab() {
@@ -24488,13 +24448,14 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
                 const sig = u.signature_url || u.signature;
                 const phone = u.phone || u.phone_number || u.mobile || '-';
                 const nationalId = u.national_id || u.national_id_code || '-';
+                const regInfo = getStaffRegDateInfo(u);
                 return `
                 <div class="report-card" ${u.is_terminated ? 'style="opacity:.7; border-color:#7f1d1d;"' : ''}>
                     <h3>${roleLabels[u.role] || u.role} — ${u.full_name || u.username}${firedTagUser(u)}</h3>
                     <p>👤 نام کاربری: ${u.username}</p>
                     <p>🪪 کد ملی: ${nationalId}</p>
                     <p>📱 شماره تماس: ${phone}</p>
-                    ${u.created_at ? `<p>📅 تاریخ ثبت‌نام: ${getTehranFullDateTimeString(new Date(u.created_at))}</p>` : ''}
+                    <p>📅 تاریخ ثبت‌نام / امضا: <b style="color:#38bdf8;">${regInfo.label}</b></p>
                     ${idPhoto ? `<a href="${idPhoto}" target="_blank" style="color:#38bdf8;">👁️ مشاهده عکس کارت ملی</a>` : '<span class="hint">بدون عکس کارت ملی</span>'}
                     ${sig ? ` | <a href="${sig}" target="_blank" style="color:#38bdf8;">✍️ مشاهده امضا</a>` : ''}
                     ${(idPhoto && sig) ? `<br><button class="submit-btn" style="margin-top:8px; padding:8px 14px; font-size:13px; width:auto;" onclick="viewSignedContract('${u.username}')">🖨️ مشاهده و پرینت برگه‌ی قرارداد رسمی</button>` : ''}
@@ -24522,7 +24483,8 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
                 ? u.signed_contract_text
                 : await buildContractText(u.full_name || u.username, shiftKey, nationalId, u.contract_body || null);
             const isExactSnapshot = !!(u.signed_contract_text && u.signed_contract_text.trim());
-            const signDate = u.created_at ? getTehranDateString(new Date(u.created_at)) : '-';
+            const regInfo = getStaffRegDateInfo(u);
+            const signDate = regInfo.shortLabel || regInfo.label || '-';
 
             const win = window.open('', '_blank');
             if (!win) { showToast('❌ مرورگر اجازه‌ی باز کردن پنجره‌ی جدید را نداد. لطفاً پنجره‌های Popup را برای این سایت فعال کن.'); return; }
@@ -25213,7 +25175,7 @@ notify pgrst, 'reload schema';`;
             const pt = document.getElementById('sstPenaltyType').value, pv = v77Num(document.getElementById('sstPenaltyValue').value);
             if (!target) { el.innerHTML = 'مبلغ هدف را وارد کن تا خلاصه‌ی قانون اینجا نشان داده شود.'; return; }
             const rg = sstRangeFromForm();
-            let t = (rg.error ? '' : sstRangeText({ start_date: rg.start, end_date: rg.end }) + '<br>') + `🎯 فروش شیفت ≥ <b>${v77Toman(target)}</b><br>✅ پاداش: <b>+${sstAmtText(bt, bv, base)}</b>`;
+            let t = (rg.error ? '' : sstRangeText({ start_date: rg.start, end_date: rg.end }) + '<br>') + `🎯 فروش <b>هر شیفت/هر روز</b> ≥ <b>${v77Toman(target)}</b><br><span style="opacity:.85;font-size:11px;">(نه مجموع کل بازه)</span><br>✅ پاداش: <b>+${sstAmtText(bt, bv, base)}</b>`;
             t += pv > 0 ? `<br>❌ جریمه: <b>−${sstAmtText(pt, pv, base)}</b>` : '<br>❌ بدون جریمه';
             if ((bt === 'percent' || pt === 'percent') && !(base > 0)) t += '<br><span style="color:#fbbf24;">⚠️ برای تبدیل درصد به تومان، حقوق پایه را هم وارد کن.</span>';
             el.innerHTML = t;
@@ -26257,8 +26219,7 @@ notify pgrst, 'reload schema';`;
         const p = findProduct(d.name), qty = toKg(d.qty, d.unit), problems = []; let fatal = false;
         if (!d.name) { problems.push('نام کالا نوشته نشده'); fatal = true; }
         else if (!p) { problems.push('کالایی با این اسم در انبار پیدا نشد (✏️ ویرایش بزن)'); fatal = true; }
-        else if (d.type === 'sausage' && !isSausageProduct(p)) { problems.push('این کالا سوسیس/کالباس نیست؛ نوع فروش رو اصلاح کن'); fatal = true; }
-        else if ((d.type === 'instore' || d.type === 'ekala') && isSausageProduct(p)) { problems.push('سوسیس/کالباس را فقط از تب خودش ثبت کن'); fatal = true; }
+        else if (d.type === 'sausage' && p.category !== 'sausage') { problems.push('این کالا سوسیس/کالباس نیست؛ نوع فروش رو اصلاح کن'); fatal = true; }
         if (!(qty > 0)) { problems.push('مقدار نوشته نشده'); fatal = true; }
         else if (p && (p.booth_stock || 0) < qty) { problems.push('موجودی غرفه (' + FA(p.booth_stock || 0) + ' کیلو) کمتر از این مقداره'); fatal = true; }
         return { p, qty, fatal, problems, price: p && qty > 0 ? Math.round(qty * (p.sell_price || 0)) : 0 };
@@ -27355,7 +27316,7 @@ notify pgrst, 'reload schema';`;
         if (!navigator.onLine) { showToast('📴 اینترنت قطعه؛ برای تایید باید آنلاین باشی. یادداشت‌ها سر جاشون می‌مونن.'); return false; }
         const d = load().find(x => x.id === id); if (!d) return false;
         let ev = evalDraft(d);
-        if (!ev.p || !(ev.qty > 0) || (d.type === 'sausage' && !isSausageProduct(ev.p)) || ((d.type === 'instore' || d.type === 'ekala') && isSausageProduct(ev.p))) { showToast('⛔ «' + (d.name || 'بدون نام') + '»: ' + (ev.problems && ev.problems.length ? ev.problems.join('، ') : 'نوع فروش با کالا جور نیست')); return false; }
+        if (!ev.p || !(ev.qty > 0) || (d.type === 'sausage' && ev.p.category !== 'sausage')) { showToast('⛔ «' + (d.name || 'بدون نام') + '»: ' + ev.problems.join('، ')); return false; }
         // موجودی تازه از دیتابیس
         const { data: fresh } = await _supabase.from('products').select('*').eq('id', ev.p.id).maybeSingle();
         const prod = fresh || ev.p, qty = ev.qty;
@@ -29101,8 +29062,8 @@ window.catOpenSupportChat = window.catOpenSupportChat || function () {
         if (c === 'halva' || c.indexOf('حلوا') >= 0 || c.indexOf('شیرینی') >= 0) return 'halva';
         if (c === 'dairy' || c.indexOf('لبنی') >= 0) return 'dairy';
 
-        // سوسیس و کالباس و هات‌داگ و بیکن
-        if (/سوسیس|کالباس|هات\s*داگ|هاتداگ|بیکن|همبرگر|ژامبون|مورتادلا/.test(n)) return 'sausage';
+        // سوسیس و کالباس
+        if (/سوسیس|کالباس|هات\s*داگ|هاتداگ|همبرگر|ژامبون|مورتادلا/.test(n)) return 'sausage';
 
         // زیتون‌ها (جدا از ترشیجات)
         if (/زیتون/.test(n)) return 'olive';
