@@ -1,5 +1,5 @@
-// Service Worker v259 — دسترسی پایدار در اینترنت ضعیف (ایران)
-const V = 'v282';
+// Service Worker v283 — دسترسی پایدار در اینترنت ضعیف (ایران)
+const V = 'v283';
 const SHELL = 'shell-' + V;
 const LIBS = 'libs-v1';
 const CDN = /(^|\.)(cdn\.jsdelivr\.net|unpkg\.com|cdnjs\.cloudflare\.com|fonts\.googleapis\.com|fonts\.gstatic\.com)$/;
@@ -32,17 +32,14 @@ self.addEventListener('install', (e) => {
 
 self.addEventListener('activate', (e) => {
   e.waitUntil((async () => {
-    // کش‌های shell قدیمی را نگه دار (حداکثر ۳ نسخه) تا اگر شبکه قطع بود سایت باز شود
+    // با آپدیت نسخه، کش‌های shell قدیمی را کامل پاک کن تا نسخهٔ جدید فوری دیده شود
     try {
       const keys = await caches.keys();
-      const shells = keys.filter((k) => k.startsWith('shell-')).sort();
-      const keep = new Set([SHELL, LIBS].concat(shells.slice(-3)));
-      await Promise.all(keys.filter((k) => !keep.has(k) && !k.startsWith('shell-')).map((k) => caches.delete(k)));
-      // فقط shellهای خیلی قدیمی را پاک کن
-      const oldShells = shells.filter((k) => k !== SHELL);
-      if (oldShells.length > 2) {
-        await Promise.all(oldShells.slice(0, oldShells.length - 2).map((k) => caches.delete(k)));
-      }
+      await Promise.all(
+        keys
+          .filter((k) => k !== SHELL && k !== LIBS)
+          .map((k) => caches.delete(k))
+      );
     } catch (err) {}
     await self.clients.claim();
     try {
@@ -92,23 +89,18 @@ function fetchWithTimeout(req, ms) {
   return fetch(req, { cache: 'no-store', signal: ctrl.signal }).finally(function () { clearTimeout(t); });
 }
 
-// HTML: اگر کش بود فوری بده (ورود سریع)؛ شبکه در پس‌زمینه آپدیت کند
+// HTML: اول شبکه (آپدیت فوری بعد از آپلود)، اگر قطع بود از کش
 async function htmlStrategy(req) {
-  const cached = await fromCache(req);
-  if (cached) {
-    fetchWithTimeout(req, 12000).then(function (res) {
-      if (res && res.ok) putShell(req, res.clone());
-    }).catch(function () {});
-    return cached;
-  }
   try {
-    const res = await fetchWithTimeout(req, 20000);
+    const res = await fetchWithTimeout(req, 12000);
     if (res && res.ok) {
       putShell(req, res.clone());
       return res;
     }
     if (res) return res;
   } catch (e) {}
+  const cached = await fromCache(req);
+  if (cached) return cached;
   try {
     const res2 = await fetch(req, { cache: 'no-store' });
     if (res2 && res2.ok) {
