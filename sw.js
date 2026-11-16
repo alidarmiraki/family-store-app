@@ -1,5 +1,5 @@
-// Service Worker — دسترسی پایدار در اینترنت ضعیف (ایران) + لود سریع پنل
-const V = 'v284';
+// Service Worker — لود سریع پنل + دسترسی پایدار در اینترنت ضعیف
+const V = 'v285';
 const SHELL = 'shell-' + V;
 const LIBS = 'libs-v2';
 const CDN = /(^|\.)(cdn\.jsdelivr\.net|unpkg\.com|cdnjs\.cloudflare\.com|fonts\.googleapis\.com|fonts\.gstatic\.com)$/;
@@ -24,7 +24,7 @@ self.addEventListener('install', (e) => {
       const c = await caches.open(SHELL);
       await Promise.race([
         c.add(new Request('./index.html', { cache: 'reload' })).catch(function () {}),
-        new Promise(function (r) { setTimeout(r, 6000); })
+        new Promise(function (r) { setTimeout(r, 5000); })
       ]);
     } catch (err) {}
   })());
@@ -34,7 +34,6 @@ self.addEventListener('activate', (e) => {
   e.waitUntil((async () => {
     try {
       const keys = await caches.keys();
-      // libs-v1 را پاک کن (ممکن است پاسخ‌های خراب Chart.js داخلش باشد)
       const shells = keys.filter((k) => k.startsWith('shell-')).sort();
       const keep = new Set([SHELL, LIBS].concat(shells.slice(-2)));
       await Promise.all(keys.filter((k) => !keep.has(k)).map((k) => caches.delete(k)));
@@ -86,26 +85,23 @@ function fetchWithTimeout(req, ms) {
   return fetch(req, { cache: 'no-store', signal: ctrl.signal }).finally(function () { clearTimeout(t); });
 }
 
-// HTML: اگر کش هست فوری برگردان (بدون انتظار شبکه) — شبکه در پس‌زمینه آپدیت می‌کند
+// اگر کش هست فوری برگردان — شبکه فقط در پس‌زمینه آپدیت کند (علت اصلی کندی قبلی همین انتظار ۱۵ ثانیه‌ای بود)
 async function htmlStrategy(req) {
   const cached = await fromCache(req);
-
   if (cached) {
-    fetchWithTimeout(req, 8000).then(function (res) {
+    fetchWithTimeout(req, 6000).then(function (res) {
       if (res && res.ok) putShell(req, res.clone());
     }).catch(function () {});
     return cached;
   }
-
   try {
-    const res = await fetchWithTimeout(req, 8000);
+    const res = await fetchWithTimeout(req, 7000);
     if (res && res.ok) {
       putShell(req, res.clone());
       return res;
     }
     if (res) return res;
   } catch (e) {}
-
   return new Response(
     '<!DOCTYPE html><html lang="fa" dir="rtl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
     '<title>تازه مارکت</title><body style="font-family:Tahoma,sans-serif;padding:28px;text-align:center;background:#f8fafc;color:#0f172a;line-height:1.9">' +
@@ -119,7 +115,7 @@ async function htmlStrategy(req) {
 async function networkThenCache(req) {
   const cached = await fromCache(req);
   try {
-    const res = await fetchWithTimeout(req, 6000);
+    const res = await fetchWithTimeout(req, 5000);
     if (res && res.ok) {
       await putShell(req, res);
       return res;
@@ -130,32 +126,28 @@ async function networkThenCache(req) {
   return new Response('', { status: 503, statusText: 'Offline' });
 }
 
-function looksLikeJs(res, url) {
+function looksLikeScript(res, url) {
   try {
     const ct = String((res.headers && res.headers.get('content-type')) || '').toLowerCase();
-    if (ct.indexOf('javascript') >= 0 || ct.indexOf('ecmascript') >= 0 || ct.indexOf('text/plain') >= 0) return true;
-    if (ct.indexOf('html') >= 0 || ct.indexOf('json') >= 0 || ct.indexOf('text/css') >= 0) return false;
-    if (/\.js(\?|$)/i.test(url)) return true;
-    if (/\.css(\?|$)/i.test(url)) return ct.indexOf('css') >= 0 || !ct;
-    return true;
-  } catch (e) {
-    return true;
-  }
+    if (ct.indexOf('javascript') >= 0 || ct.indexOf('ecmascript') >= 0) return true;
+    if (ct.indexOf('html') >= 0 || ct.indexOf('json') >= 0) return false;
+    return /\.js(\?|$)/i.test(url) || /\.css(\?|$)/i.test(url);
+  } catch (e) { return true; }
 }
 
 async function cacheFirst(req) {
   const cached = await fromCache(req);
   if (cached) {
-    fetchWithTimeout(req, 5000).then(function (res) {
-      if (res && res.ok && looksLikeJs(res, req.url)) {
+    fetchWithTimeout(req, 4000).then(function (res) {
+      if (res && res.ok && looksLikeScript(res, req.url)) {
         caches.open(LIBS).then(function (c) { c.put(req, res); }).catch(function () {});
       }
     }).catch(function () {});
     return cached;
   }
   try {
-    const res = await fetchWithTimeout(req, 5000);
-    if (res && res.ok && looksLikeJs(res, req.url)) {
+    const res = await fetchWithTimeout(req, 4000);
+    if (res && res.ok && looksLikeScript(res, req.url)) {
       try {
         const c = await caches.open(LIBS);
         await c.put(req, res.clone());
