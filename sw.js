@@ -1,5 +1,5 @@
-// Service Worker v285 — دسترسی پایدار در اینترنت ضعیف (ایران)
-const V = 'v285';
+// Service Worker v286 — دسترسی پایدار در اینترنت ضعیف (ایران)
+const V = 'v286';
 const SHELL = 'shell-' + V;
 const LIBS = 'libs-v1';
 const CDN = /(^|\.)(cdn\.jsdelivr\.net|unpkg\.com|cdnjs\.cloudflare\.com|fonts\.googleapis\.com|fonts\.gstatic\.com)$/;
