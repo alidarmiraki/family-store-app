@@ -1,5 +1,5 @@
-// Service Worker v286 — دسترسی پایدار در اینترنت ضعیف (ایران)
-const V = 'v286';
+// Service Worker v287 — دسترسی پایدار در اینترنت ضعیف (ایران)
+const V = 'v287';
 const SHELL = 'shell-' + V;
 const LIBS = 'libs-v1';
 const CDN = /(^|\.)(cdn\.jsdelivr\.net|unpkg\.com|cdnjs\.cloudflare\.com|fonts\.googleapis\.com|fonts\.gstatic\.com)$/;
@@ -91,16 +91,25 @@ function fetchWithTimeout(req, ms) {
 
 // HTML: اول شبکه (آپدیت فوری بعد از آپلود)، اگر قطع بود از کش
 async function htmlStrategy(req) {
+  // v287: روی اینترنت ضعیف ایران — اول شبکه با تایم‌اوت کوتاه‌تر، همزمان کش آماده باشد
+  // تا PWA نصب‌شده خالی نماند و ورود سریع‌تر حس شود.
+  const cachedPromise = fromCache(req);
   try {
-    const res = await fetchWithTimeout(req, 12000);
+    const res = await fetchWithTimeout(req, 7000);
     if (res && res.ok) {
       putShell(req, res.clone());
       return res;
     }
-    if (res) return res;
+    if (res && res.status && res.status < 500) return res;
   } catch (e) {}
-  const cached = await fromCache(req);
-  if (cached) return cached;
+  const cached = await cachedPromise;
+  if (cached) {
+    // آپدیت پس‌زمینه بدون بلاک کردن نمایش
+    fetchWithTimeout(req, 12000).then(function (res) {
+      if (res && res.ok) putShell(req, res);
+    }).catch(function () {});
+    return cached;
+  }
   try {
     const res2 = await fetch(req, { cache: 'no-store' });
     if (res2 && res2.ok) {
