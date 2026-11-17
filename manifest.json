@@ -1,21 +1,39 @@
 {
-  "id": "/",
-  "name": "تازه مارکت",
-  "short_name": "تازه مارکت",
-  "description": "سفارش آنلاین لبنیات، ترشیجات و سوسیس کالباس · غرفه فامیلی بیرجند",
-  "start_url": "./",
+  "name": "تازه‌مارکت",
+  "short_name": "تازه‌مارکت",
+  "description": "سیستم مدیریت غرفه تازه‌مارکت",
+  "start_url": "./?catalog=1",
   "scope": "./",
   "display": "standalone",
-  "orientation": "portrait-primary",
-  "background_color": "#0b1220",
-  "theme_color": "#0f172a",
+  "orientation": "portrait",
+  "background_color": "#064e3b",
+  "theme_color": "#0f766e",
   "lang": "fa",
   "dir": "rtl",
-  "categories": ["shopping", "food"],
   "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }
