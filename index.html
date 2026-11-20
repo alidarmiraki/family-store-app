@@ -5,7 +5,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="app-build" content="v290">
+    <meta name="app-build" content="v291">
     <!-- جلوگیری از کش‌شدن خود index.html توسط مرورگر/گوشی، تا نسخه‌ی جدید همیشه فوراً لود بشه
          (sw.js شما کش نمی‌کنه، ولی مرورگر یا هاست ممکنه خودش HTML رو کش کنه) -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -4100,8 +4100,35 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             <button type="button" class="submit-btn" style="margin:0;padding:12px 8px;font-size:13px;background:linear-gradient(100deg,#059669,#10b981);" onclick="diagRepairAll()">✨ رفع خودکار</button>
             <button type="button" class="row-btn edit-btn" style="margin:0;padding:10px 8px;" onclick="diagForceUpdate()">🔄 آپدیت اجباری همه</button>
             <button type="button" class="row-btn edit-btn" style="margin:0;padding:10px 8px;" onclick="diagCheckEveningSales()">🌙 فروش دیشب شب</button>
+            <button type="button" class="row-btn edit-btn" style="margin:0;padding:10px 8px;grid-column:1 / -1;" onclick="diagTestAllSections()">🧪 تست همه بخش‌های سایت</button>
         </div>
         <div id="diagFullScanResult" style="display:none;margin-bottom:10px;padding:10px;border-radius:12px;background:#0f172a;border:1px solid #334155;font-size:12px;line-height:1.7;"></div>
+        <div id="diagAllSectionsResult" style="display:none;margin-bottom:10px;padding:10px;border-radius:12px;background:#0f172a;border:1px solid #334155;font-size:12px;line-height:1.7;"></div>
+        <details class="diag-acc" open>
+            <summary>📬 خطاهای تکراری صندوقچه پیام چیست؟</summary>
+            <div class="diag-body" style="font-size:12px;line-height:1.85;">
+                <p style="margin:0 0 8px;">پیام‌هایی با عنوان <b>«⚠️ خطای سیستم (خودکار)»</b> و متنی که با <code dir="ltr">[AUTO_ERROR]</code> شروع می‌شود، <b>باگ فروشنده نیست</b>.</p>
+                <p style="margin:0 0 8px;">سیستم عیب‌یابی هر خطای جاوااسکریپت مرورگر/گوشی را (حداکثر هر ۲ دقیقه یک‌بار) برای مدیر در صندوقچه می‌فرستد تا زودتر بفهمید چیزی خراب شده.</p>
+                <b>علت‌های رایج:</b>
+                <ul style="margin:6px 0 8px 18px;padding:0;">
+                    <li>قطعی یا کندی اینترنت / فیلتر بودن مسیر سوپابیس</li>
+                    <li>کش قدیمی سرویس‌ورکر بعد از آپدیت سایت</li>
+                    <li>خطای موقت شبکه یا تایم‌اوت درخواست</li>
+                    <li>خطای واقعی کد (با آدرس فایل در متن پیام)</li>
+                </ul>
+                <b>چه کار کنید؟</b>
+                <ul style="margin:6px 0 0 18px;padding:0;">
+                    <li>دکمه «تست همه بخش‌های سایت» را بزنید</li>
+                    <li>اگر تکرار شد: «پاک‌سازی کش» + یک‌بار بستن کامل برنامه و باز کردن با <code dir="ltr">?panel=1&v=291</code></li>
+                    <li>متن کامل خطا را نگه دارید؛ برای رفع باگ لازم است</li>
+                </ul>
+                <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+                    <button type="button" class="row-btn edit-btn" style="width:auto;padding:8px 12px;" onclick="diagExplainInboxErrors()">📖 نمایش خطاهای اخیر همین گوشی</button>
+                    <button type="button" class="row-btn edit-btn" style="width:auto;padding:8px 12px;" onclick="diagClearAutoErrorMessages()">🧹 پاک کردن پیام‌های AUTO_ERROR از صندوقچه</button>
+                </div>
+                <div id="diagInboxErrorsBox" style="margin-top:8px;"></div>
+            </div>
+        </details>
         <div id="diagEveningSalesBox" style="display:none;margin-bottom:10px;padding:10px;border-radius:12px;background:#0f172a;border:1px solid #a78bfa;font-size:12px;line-height:1.7;"></div>
 
         <style>
@@ -5415,7 +5442,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             }, (typeof MAX_SPLASH_MS === 'number' ? MAX_SPLASH_MS : 6000) + 1000);
         })();
 
-        const APP_BUILD = 'v290';
+        const APP_BUILD = 'v291';
         try { const __bt=document.getElementById('buildTag'); if(__bt) __bt.textContent = APP_BUILD + ' - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )'; } catch(e){}
         // ثبت Service Worker پایدار — همیشه /sw.js بدون ?v= تا آپدیت شکست نخورد
         if ('serviceWorker' in navigator) {
@@ -13284,7 +13311,206 @@ function sbRenderAdminLists(cfg) {
             return target;
         }
 
-        window.loadDailyChecklistTab = async function () {
+        
+        // --- تاریخچه چک‌لیست + جریمه وقتی مدیر حضوری ببیند کار انجام نشده ---
+        async function dclLoadPenalties() {
+            let list = [];
+            try {
+                if (_supabase) {
+                    const { data } = await _supabase.from('app_shared_config').select('config').eq('id', 1).maybeSingle();
+                    if (data && data.config && Array.isArray(data.config.checklistPenalties)) {
+                        list = data.config.checklistPenalties.slice();
+                    }
+                }
+            } catch (e) {}
+            try {
+                const raw = localStorage.getItem('dcl_penalties_v1');
+                if (raw) {
+                    const local = JSON.parse(raw) || [];
+                    local.forEach(function (p) {
+                        if (!list.some(function (x) { return x.id === p.id; })) list.push(p);
+                    });
+                }
+            } catch (e) {}
+            return list.sort(function (a, b) { return String(b.created_at || '').localeCompare(String(a.created_at || '')); });
+        }
+        async function dclSavePenalties(list) {
+            try { localStorage.setItem('dcl_penalties_v1', JSON.stringify((list || []).slice(0, 200))); } catch (e) {}
+            try {
+                if (!_supabase) return;
+                const { data } = await _supabase.from('app_shared_config').select('config').eq('id', 1).maybeSingle();
+                const cfg = (data && data.config && typeof data.config === 'object') ? Object.assign({}, data.config) : {};
+                cfg.checklistPenalties = (list || []).slice(0, 200);
+                await _supabase.from('app_shared_config').upsert({ id: 1, config: cfg });
+            } catch (e) { console.warn('dclSavePenalties', e); }
+        }
+        async function dclFetchMarksRange(startISO, endISO) {
+            const out = [];
+            try {
+                if (!_supabase) return out;
+                const { data, error } = await _supabase.from('daily_checklist_marks')
+                    .select('work_date, username, seller_label, task_id, done, marked_at')
+                    .gte('work_date', startISO)
+                    .lte('work_date', endISO)
+                    .order('work_date', { ascending: false })
+                    .limit(3000);
+                if (!error && data) return data;
+            } catch (e) {}
+            return out;
+        }
+        function dclDateList(days) {
+            const list = [];
+            const now = new Date();
+            for (let i = 0; i < days; i++) {
+                const d = new Date(now.getTime() - i * 86400000);
+                list.push(typeof getTehranISODate === 'function' ? getTehranISODate(d) : d.toISOString().slice(0, 10));
+            }
+            return list;
+        }
+        async function dclRenderHistorySection(staff, tasks) {
+            const days = dclDateList(14);
+            const startISO = days[days.length - 1];
+            const endISO = days[0];
+            const marksRows = await dclFetchMarksRange(startISO, endISO);
+            const penalties = await dclLoadPenalties();
+            const byUserDate = {};
+            (marksRows || []).forEach(function (r) {
+                const k = r.username + '|' + r.work_date;
+                if (!byUserDate[k]) byUserDate[k] = {};
+                byUserDate[k][r.task_id] = !!r.done;
+            });
+            // روزهایی که ورود زده ولی کار ناقص مانده
+            let attByUserDate = {};
+            try {
+                if (_supabase) {
+                    const { startUTC, endUTC } = tehranDateRangeToISOBounds(startISO, endISO);
+                    const { data: att } = await _supabase.from('attendance')
+                        .select('type, created_at, seller_name')
+                        .eq('type', 'entry')
+                        .gte('created_at', startUTC)
+                        .lt('created_at', endUTC)
+                        .limit(2000);
+                    (att || []).forEach(function (a) {
+                        const day = getTehranISODate(new Date(a.created_at));
+                        const un = (staff || []).find(function (u) {
+                            const lab = (roleLabels[u.role] || u.role) + ' - ' + (u.full_name || u.username);
+                            return a.seller_name === lab || (a.seller_name && a.seller_name.indexOf(u.full_name || '') >= 0) || a.seller_name === u.username;
+                        });
+                        const keyUser = un ? un.username : (a.seller_name || 'unknown');
+                        attByUserDate[keyUser + '|' + day] = true;
+                    });
+                }
+            } catch (e) {}
+
+            let rows = '';
+            let incompleteCount = 0;
+            days.forEach(function (day) {
+                (staff || []).forEach(function (u) {
+                    const mine = dclTasksForUser(tasks, u.role, u.username);
+                    if (!mine.length) return;
+                    const marks = byUserDate[u.username + '|' + day] || {};
+                    // اگر نه تیکی زده و نه ورود داشته، ردیف نساز (روز غیرکاری)
+                    const anyMark = Object.keys(marks).length > 0;
+                    const hadEntry = !!attByUserDate[u.username + '|' + day];
+                    if (!anyMark && !hadEntry) return;
+                    const missing = mine.filter(function (t) { return !marks[t.id]; });
+                    const doneN = mine.length - missing.length;
+                    if (!missing.length && doneN === mine.length) return; // کامل — در تاریخچه فقط ناقص‌ها
+                    incompleteCount++;
+                    const dayFa = (typeof jalaliLabelForISODate === 'function') ? jalaliLabelForISODate(day) : day;
+                    const missTitles = missing.map(function (t) { return t.title; }).join('، ');
+                    const pen = penalties.filter(function (p) { return p.username === u.username && p.work_date === day; });
+                    const penTxt = pen.length
+                        ? (' · 💸 جریمه: ' + pen.map(function (p) { return (Number(p.amount) || 0).toLocaleString('fa-IR') + ' ت'; }).join(' + '))
+                        : '';
+                    rows += '<div style="padding:12px;margin-bottom:8px;border-radius:14px;background:rgba(15,23,42,.9);border:1px solid rgba(248,113,113,.25);">';
+                    rows += '<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;">';
+                    rows += '<div><b>' + dclEsc(u.full_name || u.username) + '</b>';
+                    rows += ' <span style="font-size:11px;opacity:.75;">' + (u.role === 'morning_seller' ? 'صبح' : 'شب') + '</span>';
+                    rows += '<div style="font-size:11px;opacity:.8;margin-top:2px;">📅 ' + dclEsc(dayFa) + '</div></div>';
+                    rows += '<div style="font-size:12px;font-weight:800;color:#f87171;">' + doneN + '/' + mine.length + ' انجام‌شده</div></div>';
+                    rows += '<div style="font-size:12px;margin-top:6px;color:#fecaca;">❌ انجام‌نشده: ' + dclEsc(missTitles || '—') + penTxt + '</div>';
+                    rows += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">';
+                    rows += '<button type="button" class="row-btn edit-btn" style="width:auto;padding:7px 10px;font-size:11px;" onclick="dclManagerApplyPenalty(\'' + dclEsc(u.username) + '\',\'' + day + '\',\'' + dclEsc(u.full_name || u.username) + '\')">💸 کسر از حقوق (مدیر دیده انجام نشده)</button>';
+                    rows += '</div></div>';
+                });
+            });
+
+            let html = '';
+            html += '<div style="margin-top:18px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">';
+            html += '<b style="font-size:14px;color:#fbbf24;">📜 تاریخچه ۱۴ روز اخیر</b>';
+            html += '<span style="font-size:11px;opacity:.75;">' + incompleteCount + ' مورد ناقص</span></div>';
+            html += '<div class="hint" style="margin-top:0;">اگر فروشنده تیک زده ولی شما حضوری دیدید انجام نشده، با دکمه «کسر از حقوق» مبلغ جریمه ثبت می‌شود و برای همان نفر پیام می‌رود.</div>';
+            if (!rows) {
+                html += '<div style="padding:16px;text-align:center;border-radius:14px;border:1px dashed rgba(148,163,184,.3);opacity:.85;">در ۱۴ روز اخیر مورد ناقصی ثبت نشده (یا هنوز تیک/ورود نبوده).</div>';
+            } else {
+                html += rows;
+            }
+
+            // لیست جریمه‌های ثبت‌شده
+            const recentPen = penalties.slice(0, 15);
+            if (recentPen.length) {
+                html += '<div style="margin-top:14px;"><b style="font-size:13px;color:#fb7185;">💸 جریمه‌های چک‌لیست ثبت‌شده</b></div>';
+                recentPen.forEach(function (p) {
+                    const dayFa = (typeof jalaliLabelForISODate === 'function') ? jalaliLabelForISODate(p.work_date) : (p.work_date || '');
+                    html += '<div style="padding:10px 12px;margin-top:6px;border-radius:12px;background:rgba(127,29,29,.25);border:1px solid rgba(248,113,113,.3);font-size:12px;">';
+                    html += '<b>' + dclEsc(p.seller_name || p.username) + '</b> · ' + dclEsc(dayFa);
+                    html += ' · <b style="color:#fda4af;">' + (Number(p.amount) || 0).toLocaleString('fa-IR') + ' تومان</b>';
+                    if (p.note) html += '<div style="opacity:.85;margin-top:4px;">' + dclEsc(p.note) + '</div>';
+                    html += '<div style="opacity:.65;font-size:10px;margin-top:4px;">ثبت: ' + dclEsc(p.created_by || '') + '</div></div>';
+                });
+            }
+            return html;
+        }
+        window.dclManagerApplyPenalty = async function (username, workDate, displayName) {
+            if (currentRole !== 'admin') return showToast('فقط مدیر');
+            const amountStr = prompt(
+                'مبلغ کسر از حقوق «' + (displayName || username) + '» برای کارهای انجام‌نشده تاریخ ' + workDate + ' (تومان):',
+                '50000'
+            );
+            if (amountStr == null) return;
+            const amount = Number(String(amountStr).replace(/,/g, '').replace(/[^\d.]/g, ''));
+            if (!(amount > 0)) return showToast('مبلغ معتبر نیست');
+            const note = prompt('توضیح برای فروشنده و گزارش حقوق (مثلاً: تمیزی یخچال انجام نشده بود):', 'کارهای چک‌لیست با وجود تیک، حضوری انجام‌نشده دیده شد') || '';
+            const id = 'dclpen_' + workDate + '_' + username + '_' + Date.now();
+            const rec = {
+                id: id,
+                username: username,
+                seller_name: displayName || username,
+                work_date: workDate,
+                amount: amount,
+                note: note,
+                created_at: new Date().toISOString(),
+                created_by: (typeof currentUserLabel !== 'undefined' ? currentUserLabel : 'مدیر')
+            };
+            const list = await dclLoadPenalties();
+            list.unshift(rec);
+            await dclSavePenalties(list);
+            // پیام به فروشنده
+            try {
+                if (_supabase) {
+                    await _supabase.from('messages').insert([{
+                        sender: currentUserLabel || 'مدیر',
+                        recipient: username,
+                        title: '💸 کسر از حقوق بابت چک‌لیست',
+                        body: 'برای تاریخ ' + workDate + ' مبلغ ' + amount.toLocaleString('fa-IR') +
+                            ' تومان از حقوق شما بابت کارهای انجام‌نشده چک‌لیست کسر شد.\n' +
+                            (note ? ('توضیح مدیر: ' + note) : '') +
+                            '\nاگر تیک زده بودید ولی کار انجام نشده بود، این جریمه به‌خاطر بازدید حضوری مدیر است.',
+                        created_at: new Date().toISOString()
+                    }]);
+                }
+            } catch (e) {}
+            try {
+                if (typeof sendTelegramNotification === 'function') {
+                    sendTelegramNotification('💸 جریمه چک‌لیست\n' + (displayName || username) + '\n' + amount.toLocaleString('fa-IR') + ' تومان\n' + note);
+                }
+            } catch (e) {}
+            showToast('✅ جریمه ' + amount.toLocaleString('fa-IR') + ' تومان برای «' + (displayName || username) + '» ثبت شد');
+            try { loadDailyChecklistTab(); } catch (e) {}
+        };
+
+window.loadDailyChecklistTab = async function () {
             const box = document.getElementById('dclContent');
             const hint = document.getElementById('dclHint');
             if (!box) return;
@@ -13424,6 +13650,7 @@ function sbRenderAdminLists(cfg) {
                         html += '</div>';
                     });
                 }
+                try { html += await dclRenderHistorySection(staff, tasks); } catch (eHist) { console.warn(eHist); }
                 box.innerHTML = html;
             } else {
                 if (hint) hint.textContent = 'کارهای امروز شما · هنگام خروج هم می‌توانید تیک بزنید.';
@@ -17714,6 +17941,136 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
             if (box) box.innerHTML = '<h3 style="margin:0 0 8px;color:#38bdf8;">نتیجه اسکن کامل</h3>' + lines.join('<br>');
             showToast('✅ اسکن تمام شد');
         }
+
+        function diagExplainInboxErrors() {
+            const box = document.getElementById('diagInboxErrorsBox');
+            if (!box) return;
+            let log = window.__appErrorLog || [];
+            try {
+                if (!log.length) {
+                    const raw = localStorage.getItem('app_error_log_v1');
+                    if (raw) log = JSON.parse(raw) || [];
+                }
+            } catch (e) {}
+            if (!log.length) {
+                box.innerHTML = '<div class="hint">روی این گوشی خطای تازه‌ای در حافظه نیست. اگر در صندوقچه AUTO_ERROR می‌بینید، احتمالاً از گوشی/نسخه دیگری آمده.</div>';
+                return;
+            }
+            box.innerHTML = '<div class="hint" style="margin-bottom:6px;">آخرین خطاهای ثبت‌شده روی همین دستگاه:</div>' + log.slice(0, 12).map(function (it) {
+                const t = it.t ? (typeof getTehranFullDateTimeString === 'function' ? getTehranFullDateTimeString(new Date(it.t)) : it.t) : '';
+                return '<div style="padding:8px;margin-bottom:6px;border-radius:10px;background:#0b1220;border:1px solid #334155;font-size:11px;line-height:1.6;">' +
+                    '<div style="opacity:.7;">' + String(t).replace(/</g, '&lt;') + (it.src ? (' · ' + String(it.src).replace(/</g, '&lt;')) : '') + '</div>' +
+                    '<div style="margin-top:4px;word-break:break-word;">' + String(it.msg || '').replace(/</g, '&lt;') + '</div></div>';
+            }).join('');
+        }
+        async function diagClearAutoErrorMessages() {
+            if (!confirm('پیام‌های خودکار [AUTO_ERROR] از صندوقچه مدیر پاک شوند؟')) return;
+            try {
+                if (!_supabase) return showToast('اتصال نیست');
+                // فقط پیام‌های سیستم عیب‌یابی
+                const { data } = await _supabase.from('messages').select('id, body, title, sender').eq('recipient', 'admin').order('created_at', { ascending: false }).limit(200);
+                const ids = (data || []).filter(function (m) {
+                    return (m.sender && String(m.sender).indexOf('عیب') >= 0) || (m.body && String(m.body).indexOf('[AUTO_ERROR]') >= 0) || (m.title && String(m.title).indexOf('خطای سیستم') >= 0);
+                }).map(function (m) { return m.id; });
+                if (!ids.length) return showToast('پیام AUTO_ERROR تازه‌ای پیدا نشد');
+                for (let i = 0; i < ids.length; i += 20) {
+                    const chunk = ids.slice(i, i + 20);
+                    await _supabase.from('messages').delete().in('id', chunk);
+                }
+                showToast('✅ ' + ids.length + ' پیام خودکار پاک شد');
+                try { if (typeof loadInbox === 'function') loadInbox(); } catch (e) {}
+            } catch (e) {
+                showToast('❌ ' + (e.message || e));
+            }
+        }
+        async function diagTestAllSections() {
+            const box = document.getElementById('diagAllSectionsResult');
+            if (box) { box.style.display = 'block'; box.innerHTML = '⏳ در حال تست همه بخش‌ها...'; }
+            const lines = [];
+            const test = async function (name, fn) {
+                const t0 = Date.now();
+                try {
+                    await fn();
+                    lines.push(diagBadge(true, name + ' — OK (' + (Date.now() - t0) + 'ms)'));
+                } catch (e) {
+                    lines.push(diagBadge(false, name + ' — ' + (e && e.message ? e.message : e)));
+                }
+            };
+            await test('اینترنت', async function () {
+                if (!navigator.onLine) throw new Error('آفلاین');
+            });
+            await test('سوپابیس / products', async function () {
+                const { error } = await withTimeout(_supabase.from('products').select('id, name, booth_stock').limit(3), 10000, 'products');
+                if (error) throw error;
+            });
+            await test('فروش sales', async function () {
+                const { error } = await withTimeout(_supabase.from('sales').select('id').limit(1), 10000, 'sales');
+                if (error) throw error;
+            });
+            await test('حضور attendance', async function () {
+                const { error } = await withTimeout(_supabase.from('attendance').select('id').limit(1), 10000, 'att');
+                if (error) throw error;
+            });
+            await test('پیام‌ها messages', async function () {
+                const { error } = await withTimeout(_supabase.from('messages').select('id').limit(1), 10000, 'msg');
+                if (error) throw error;
+            });
+            await test('کاربران users', async function () {
+                const { error } = await withTimeout(_supabase.from('users').select('username').limit(1), 10000, 'users');
+                if (error) throw error;
+            });
+            await test('تنظیمات app_shared_config', async function () {
+                const { error } = await withTimeout(_supabase.from('app_shared_config').select('id').eq('id', 1).maybeSingle(), 10000, 'cfg');
+                if (error) throw error;
+            });
+            await test('چک‌لیست marks', async function () {
+                const { error } = await withTimeout(_supabase.from('daily_checklist_marks').select('id').limit(1), 8000, 'dcl');
+                // اگر جدول نباشد فقط هشدار
+                if (error && /relation|does not exist|42P01/i.test(String(error.message || ''))) {
+                    throw new Error('جدول daily_checklist_marks نیست — تیک‌ها فقط روی گوشی می‌مانند');
+                }
+                if (error) throw error;
+            });
+            await test('هدف فروش targets', async function () {
+                const { error } = await withTimeout(_supabase.from('seller_shift_targets').select('id').limit(1), 8000, 'targets');
+                if (error && /relation|does not exist|42P01/i.test(String(error.message || ''))) return;
+                if (error) throw error;
+            });
+            await test('RPC adjust_booth_stock', async function () {
+                // فقط وجود تابع را با مقدار صفر روی یک محصول تست نکنیم؛ فقط لیست محصولات
+                const { data, error } = await withTimeout(_supabase.from('products').select('id').limit(1), 8000, 'rpc-prep');
+                if (error) throw error;
+                if (!data || !data.length) throw new Error('کالایی برای تست موجودی نیست');
+            });
+            await test('سرویس‌ورکر', async function () {
+                if (!('serviceWorker' in navigator)) throw new Error('پشتیبانی نمی‌شود');
+                const reg = await navigator.serviceWorker.getRegistration();
+                if (!reg) throw new Error('ثبت نشده — یک‌بار صفحه را رفرش کنید');
+            });
+            await test('کش محلی', async function () {
+                const n = diagLsSizeApprox();
+                if (n > 4500) throw new Error('کش خیلی بزرگ است (' + n + 'KB) — پاک‌سازی پیشنهاد می‌شود');
+            });
+                        await test('پروکسی / مسیر فعال', async function () {
+                const ep = (typeof activeBaseUrl !== 'undefined' && activeBaseUrl) ? String(activeBaseUrl) : '';
+                if (!ep) throw new Error('مسیر فعال مشخص نیست');
+            });
+            try {
+                const ep2 = (typeof activeBaseUrl !== 'undefined' && activeBaseUrl) ? String(activeBaseUrl) : '';
+                if (ep2) lines.push(diagBadge(true, 'آدرس مسیر: ' + ep2.split('://').pop()));
+            } catch (e) {}
+const okN = lines.filter(function (x) { return x.indexOf('✅') >= 0; }).length;
+            const badN = lines.filter(function (x) { return x.indexOf('❌') >= 0; }).length;
+            if (box) {
+                box.innerHTML = '<h3 style="margin:0 0 8px;color:#a78bfa;">🧪 تست همه بخش‌ها</h3>' +
+                    '<div class="hint" style="margin:0 0 8px;">موفق: ' + okN + ' · ناموفق: ' + badN + '</div>' +
+                    lines.join('<br>');
+            }
+            showToast(badN ? ('⚠️ ' + badN + ' بخش مشکل دارد') : '✅ همه بخش‌های اصلی OK');
+        }
+        window.diagTestAllSections = diagTestAllSections;
+        window.diagExplainInboxErrors = diagExplainInboxErrors;
+        window.diagClearAutoErrorMessages = diagClearAutoErrorMessages;
 
         async function diagRepairAll() {
             showToast('⏳ رفع خودکار همه...');
