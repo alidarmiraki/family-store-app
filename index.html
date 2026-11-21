@@ -5,7 +5,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="app-build" content="v291">
+    <meta name="app-build" content="v293">
     <!-- جلوگیری از کش‌شدن خود index.html توسط مرورگر/گوشی، تا نسخه‌ی جدید همیشه فوراً لود بشه
          (sw.js شما کش نمی‌کنه، ولی مرورگر یا هاست ممکنه خودش HTML رو کش کنه) -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -4451,6 +4451,24 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
 
         <button class="submit-btn" onclick="saveShiftSettings()">ذخیره تنظیمات شیفت‌ها</button>
 
+        <h3 style="color:#fbbf24; margin-top:22px;">⏱️ نرخ اضافه‌کاری و سقف محاسبه حقوق</h3>
+        <div class="hint" style="margin-top:0;">اینجا مشخص کن اضافه‌کاری چطور پول می‌شود و تاخیر/اضافه‌کاری‌های غیرواقعی (باگ سایت) در حقوق حساب نشوند.</div>
+        <label>نرخ اضافه‌کاری (تومان):</label>
+        <input type="text" inputmode="decimal" id="otRateAmount" placeholder="مثلاً 50000" value="">
+        <label>واحد نرخ:</label>
+        <select id="otRateUnit">
+            <option value="hour">به ازای هر ساعت</option>
+            <option value="minute">به ازای هر دقیقه</option>
+            <option value="day">به ازای هر روز کامل اضافه‌کار</option>
+        </select>
+        <label>حداکثر دقایق تاخیر قابل‌محاسبه در هر روز (بیشتر از این در حقوق صفر می‌شود):</label>
+        <input type="text" inputmode="decimal" id="payMaxDelayMin" value="45" placeholder="مثلاً 45">
+        <label>حداکثر ساعت اضافه‌کاری قابل‌محاسبه در هر روز (بیشتر = احتمالاً خطای سایت):</label>
+        <input type="text" inputmode="decimal" id="payMaxOtHours" value="4" placeholder="مثلاً 4">
+        <label>کسر به ازای هر دقیقه تاخیر قابل‌قبول (تومان، اختیاری — ۰ = بدون کسر مستقیم):</label>
+        <input type="text" inputmode="decimal" id="payDelayPerMin" value="0" placeholder="مثلاً 1000">
+        <button class="submit-btn" style="background:linear-gradient(100deg,#f59e0b,#ea580c);" onclick="savePayrollRates()">💾 ذخیره نرخ اضافه‌کاری و سقف‌ها</button>
+
         <h3 style="color:#38bdf8; margin-top:22px;">🎯 هدف فروش و پاداش حقوق</h3>
         <div class="hint" style="margin-top:0;">مثلاً: «اگه فروش امشب به ۵ میلیون برسه، ۱۰٪ به حقوق اضافه می‌کنم» یا «اگه جمع فروش ۷ روز اخیر به X برسه...». این فقط پیشرفت رو به فروشنده‌ها نشون می‌ده و توی محاسبه حقوق یادآوری می‌کنه؛ خودت دستی درصد رو موقع واریز حقوق اعمال می‌کنی.</div>
         <label>بازه هدف:</label>
@@ -4514,6 +4532,41 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
 
         <button class="submit-btn" onclick="saveTelegramSettings()">💾 ذخیره تنظیمات</button>
         <button class="range-toggle-btn" onclick="testTelegramMessage()">🧪 ارسال پیام آزمایشی</button>
+
+        <div class="report-card" style="margin-top:16px; border-color:rgba(52,211,153,.45);">
+            <h3>📱 سیستم پیامک (ملی‌پیامک)</h3>
+            <div class="hint" style="margin-top:0;">از اینجا پنل پیامک را برای سفارش‌های کاتالوگ و اطلاع به مشتری فعال کن. اطلاعات را فقط مدیر وارد می‌کند.</div>
+            <label style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+                <input type="checkbox" id="smsEnabled" style="width:auto;"> فعال بودن ارسال پیامک
+            </label>
+            <label>نام کاربری ملی‌پیامک:</label>
+            <input type="text" id="smsUsername" dir="ltr" placeholder="username" autocomplete="off">
+            <label>API Key (به‌جای رمز وب‌سرویس):</label>
+            <input type="password" id="smsApiKey" dir="ltr" placeholder="API Key" autocomplete="off">
+            <label>شماره فرستنده (from):</label>
+            <input type="text" id="smsFrom" dir="ltr" placeholder="مثلاً 5000xxxx">
+            <label>متن خوش‌آمد ثبت‌نام کاتالوگ (از {name} و {phone} می‌توانی استفاده کنی):</label>
+            <textarea id="smsTplWelcome" rows="2" dir="auto" style="width:100%;border-radius:12px;padding:10px;font:inherit;">{name} عزیز، به تازه مارکت خوش آمدید 🌿
+از خرید آنلاین و باشگاه مشتریان لذت ببرید.
+لغو11</textarea>
+            <label>متن نمونه ثبت سفارش (از {code} و {name} می‌توانی استفاده کنی):</label>
+            <textarea id="smsTplOrder" rows="2" dir="auto" style="width:100%;border-radius:12px;padding:10px;font:inherit;">سفارش شما در تازه مارکت ثبت شد. کد پیگیری: {code}
+لغو11</textarea>
+            <label>متن نمونه ارسال/آماده تحویل:</label>
+            <textarea id="smsTplShip" rows="2" dir="auto" style="width:100%;border-radius:12px;padding:10px;font:inherit;">سفارش {code} آماده / در حال ارسال است. تازه مارکت
+لغو11</textarea>
+            <div class="grid-2" style="margin-top:8px;">
+                <div>
+                    <label>شماره تست:</label>
+                    <input type="tel" id="smsTestTo" dir="ltr" placeholder="09xxxxxxxxx">
+                </div>
+                <div style="display:flex;align-items:flex-end;">
+                    <button type="button" class="range-toggle-btn" style="width:100%;" onclick="smsSendTest()">🧪 ارسال پیامک آزمایشی</button>
+                </div>
+            </div>
+            <button class="submit-btn" style="margin-top:10px;" onclick="saveSmsSettings()">💾 ذخیره تنظیمات پیامک</button>
+            <div id="smsStatusBox" class="hint" style="margin-top:8px;"></div>
+        </div>
 
         <div class="report-card" style="margin-top:16px; border-color:rgba(167,139,250,.45);">
             <h3>🤖 خواندن هوشمند عکس (AI)</h3>
@@ -4882,9 +4935,28 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
 
     <!-- تب واریز حقوق -->
     <div id="salaryTab" class="card">
-        <h2>💰 واریز حقوق پرسنل</h2>
+        <h2>💰 واریز و محاسبه حقوق پرسنل</h2>
 <div id="salaryHero"></div>
         <div id="salaryAdminForm" style="display:none;">
+            <div class="report-card" style="margin-bottom:14px;border-color:#34d399;">
+                <h3 style="margin:0 0 8px;">🧮 محاسبه خودکار حقوق دوره</h3>
+                <div class="hint" style="margin-top:0;">تاخیر و اضافه‌کاری بیش از سقف تنظیم‌شده (در تنظیمات شیفت) در محاسبه نمی‌آید تا خطای سایت حقوق را خراب نکند.</div>
+                <label>فروشنده برای محاسبه:</label>
+                <select id="salaryCalcSeller"><option value="">—</option></select>
+                <div class="grid-2">
+                    <div><label>از تاریخ:</label><input type="date" id="salaryCalcFrom"></div>
+                    <div><label>تا تاریخ:</label><input type="date" id="salaryCalcTo"></div>
+                </div>
+                <label>حقوق پایه این دوره (تومان) — اگر خالی باشد از هدف/حقوق پایه فروشنده خوانده می‌شود:</label>
+                <input type="text" inputmode="decimal" id="salaryCalcBase" placeholder="مثلاً 15000000">
+                <button type="button" class="submit-btn" style="margin-top:8px;" onclick="runSalaryCalculation()">🧮 محاسبه حقوق</button>
+                <div id="salaryCalcResult" style="margin-top:10px;"></div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+                    <button type="button" class="row-btn edit-btn" style="flex:1;" onclick="applySalaryCalcToPayment()">⬇️ انتقال مبلغ به فرم واریز</button>
+                    <button type="button" class="row-btn fill-btn" style="flex:1;" onclick="printSalaryPayslip()">🧾 صدور فیش حقوقی PDF</button>
+                </div>
+            </div>
+
             <label>انتخاب فروشنده:</label>
             <select id="salaryTargetSeller">
                 <option value="">در حال دریافت لیست پرسنل...</option>
@@ -4897,6 +4969,16 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             <input type="text" id="salaryNote" placeholder="مثلاً حقوق مرداد ماه">
             <button class="submit-btn" onclick="submitSalaryPayment()">ثبت واریز حقوق</button>
         </div>
+
+        <div class="report-card" style="margin-top:16px;border-color:#38bdf8;">
+            <h3 style="margin:0 0 8px;">📘 راهنمای PDF برای حساب آزمایشی</h3>
+            <div class="hint" style="margin-top:0;">برای کسی که حساب آزمایشی می‌سازی، راهنمای کامل همان شیفت را PDF بگیر و بده.</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button type="button" class="row-btn fill-btn" style="flex:1;" onclick="printTrialGuide('morning')">🌅 راهنمای شیفت صبح</button>
+                <button type="button" class="row-btn fill-btn" style="flex:1;" onclick="printTrialGuide('evening')">🌙 راهنمای شیفت شب</button>
+            </div>
+        </div>
+
         <div class="report-card" style="margin-top:16px;">
             <h3>📋 تاریخچه واریز حقوق</h3>
             <div id="salaryList"><div class="skeleton-block skeleton-card"></div></div>
@@ -5442,7 +5524,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             }, (typeof MAX_SPLASH_MS === 'number' ? MAX_SPLASH_MS : 6000) + 1000);
         })();
 
-        const APP_BUILD = 'v291';
+        const APP_BUILD = 'v293';
         try { const __bt=document.getElementById('buildTag'); if(__bt) __bt.textContent = APP_BUILD + ' - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )'; } catch(e){}
         // ثبت Service Worker پایدار — همیشه /sw.js بدون ?v= تا آپدیت شکست نخورد
         if ('serviceWorker' in navigator) {
@@ -13046,6 +13128,7 @@ function sbRenderAdminLists(cfg) {
             document.getElementById('tgBotToken').value = s.botToken;
             document.getElementById('tgChatId').value = s.chatId;
             document.getElementById('tgEnabled').checked = s.enabled;
+            try { await loadSmsSettingsIntoForm(); } catch (e) {}
             try {
                 const g = getGeminiSettings();
                 const gi = document.getElementById('geminiApiKeyInput');
@@ -13112,6 +13195,7 @@ function sbRenderAdminLists(cfg) {
             document.getElementById('reminderMinutes').value = s.reminderMinutes;
             document.getElementById('earlyEntryWindow').value = s.earlyEntryWindow;
             document.getElementById('lateExitWindow').value = s.lateExitWindow;
+            try { await loadPayrollRates(); } catch (e) {}
             loadBonusTargetIntoForm();
         }
 
@@ -25397,12 +25481,390 @@ async function loadExpensesTab() {
             loadWasteTab();
         }
 
+
+        // ================== پیامک ملی‌پیامک + محاسبه حقوق + فیش PDF ==================
+        window.__lastSalaryCalc = null;
+        window.__payrollRates = null;
+        window.__smsCfg = null;
+
+        async function loadSharedConfigObject() {
+            try {
+                if (!_supabase) return {};
+                const { data } = await _supabase.from('app_shared_config').select('config').eq('id', 1).maybeSingle();
+                return (data && data.config && typeof data.config === 'object') ? Object.assign({}, data.config) : {};
+            } catch (e) { return {}; }
+        }
+        async function saveSharedConfigPatch(patch) {
+            const cfg = await loadSharedConfigObject();
+            Object.assign(cfg, patch || {});
+            const { error } = await _supabase.from('app_shared_config').upsert({ id: 1, config: cfg });
+            if (error) throw error;
+            return cfg;
+        }
+
+        async function loadSmsSettingsIntoForm() {
+            try {
+                const cfg = await loadSharedConfigObject();
+                const s = cfg.smsConfig || {};
+                window.__smsCfg = s;
+                const en = document.getElementById('smsEnabled');
+                if (en) en.checked = !!s.enabled;
+                const u = document.getElementById('smsUsername'); if (u) u.value = s.username || '';
+                const k = document.getElementById('smsApiKey'); if (k) k.value = s.apiKey || '';
+                const f = document.getElementById('smsFrom'); if (f) f.value = s.from || '';
+                const tw = document.getElementById('smsTplWelcome'); if (tw && s.tplWelcome) tw.value = s.tplWelcome;
+                const t1 = document.getElementById('smsTplOrder'); if (t1 && s.tplOrder) t1.value = s.tplOrder;
+                const t2 = document.getElementById('smsTplShip'); if (t2 && s.tplShip) t2.value = s.tplShip;
+                const box = document.getElementById('smsStatusBox');
+                if (box) box.textContent = s.enabled ? ('✅ پیامک فعال · فرستنده: ' + (s.from || '—')) : 'پیامک فعلاً خاموش است';
+            } catch (e) {}
+        }
+        async function saveSmsSettings() {
+            if (currentRole !== 'admin') return showToast('فقط مدیر');
+            const s = {
+                enabled: !!(document.getElementById('smsEnabled') || {}).checked,
+                username: ((document.getElementById('smsUsername') || {}).value || '').trim(),
+                apiKey: ((document.getElementById('smsApiKey') || {}).value || '').trim(),
+                from: ((document.getElementById('smsFrom') || {}).value || '').trim(),
+                tplWelcome: ((document.getElementById('smsTplWelcome') || {}).value || '').trim(),
+                tplOrder: ((document.getElementById('smsTplOrder') || {}).value || '').trim(),
+                tplShip: ((document.getElementById('smsTplShip') || {}).value || '').trim(),
+                updated_at: new Date().toISOString()
+            };
+            if (s.enabled && (!s.username || !s.apiKey || !s.from)) {
+                return showToast('برای فعال‌سازی، نام کاربری و API Key و شماره فرستنده لازم است');
+            }
+            try {
+                await saveSharedConfigPatch({ smsConfig: s });
+                window.__smsCfg = s;
+                showToast('✅ تنظیمات پیامک ذخیره شد');
+                const box = document.getElementById('smsStatusBox');
+                if (box) box.textContent = s.enabled ? ('✅ پیامک فعال · فرستنده: ' + s.from) : 'پیامک خاموش شد';
+            } catch (e) {
+                showToast('❌ ' + (e.message || e));
+            }
+        }
+        async function smsSendRaw(to, text) {
+            const cfg = window.__smsCfg || (await loadSharedConfigObject()).smsConfig || {};
+            if (!cfg.username || !cfg.apiKey || !cfg.from) throw new Error('تنظیمات پیامک کامل نیست');
+            const phone = String(to || '').replace(/\D/g, '');
+            if (!/^09\d{9}$/.test(phone)) throw new Error('شماره باید مثل 09xxxxxxxxx باشد');
+            const body = new URLSearchParams();
+            body.set('username', cfg.username);
+            body.set('password', cfg.apiKey);
+            body.set('to', phone);
+            body.set('from', cfg.from);
+            body.set('text', text);
+            body.set('isFlash', 'false');
+            const res = await fetch('https://rest.payamak-panel.com/api/SendSMS/SendSMS', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: body.toString()
+            });
+            const data = await res.json().catch(function () { return {}; });
+            // ملی‌پیامک معمولاً Value/RetStatus برمی‌گرداند
+            const val = (data && (data.Value != null ? data.Value : data.value));
+            const ret = data && (data.RetStatus != null ? data.RetStatus : data.retStatus);
+            if (ret === 1 || (typeof val === 'string' && /^\d{5,}$/.test(val)) || (typeof val === 'number' && val > 1000)) {
+                return { ok: true, raw: data, recId: val };
+            }
+            throw new Error((data && (data.StrRetStatus || data.message)) || ('پاسخ نامعتبر: ' + JSON.stringify(data).slice(0, 180)));
+        }
+        async function smsSendTest() {
+            if (currentRole !== 'admin') return;
+            await loadSmsSettingsIntoForm();
+            const to = ((document.getElementById('smsTestTo') || {}).value || '').trim();
+            try {
+                showToast('⏳ ارسال پیامک آزمایشی...');
+                await smsSendRaw(to, 'تست پیامک تازه مارکت\nلغو11');
+                showToast('✅ پیامک آزمایشی ارسال شد');
+            } catch (e) {
+                showToast('❌ ارسال نشد: ' + (e.message || e));
+            }
+        }
+        window.saveSmsSettings = saveSmsSettings;
+        window.smsSendTest = smsSendTest;
+        window.smsSendRaw = smsSendRaw;
+
+        async function loadPayrollRates() {
+            const cfg = await loadSharedConfigObject();
+            const p = cfg.payrollRates || {};
+            window.__payrollRates = {
+                otRate: Number(p.otRate) || 0,
+                otUnit: p.otUnit || 'hour',
+                maxDelayMin: Number(p.maxDelayMin) != null && p.maxDelayMin !== '' ? Number(p.maxDelayMin) : 45,
+                maxOtHours: Number(p.maxOtHours) != null && p.maxOtHours !== '' ? Number(p.maxOtHours) : 4,
+                delayPerMin: Number(p.delayPerMin) || 0
+            };
+            const a = document.getElementById('otRateAmount'); if (a) a.value = window.__payrollRates.otRate ? String(window.__payrollRates.otRate) : '';
+            const u = document.getElementById('otRateUnit'); if (u) u.value = window.__payrollRates.otUnit || 'hour';
+            const d = document.getElementById('payMaxDelayMin'); if (d) d.value = String(window.__payrollRates.maxDelayMin);
+            const o = document.getElementById('payMaxOtHours'); if (o) o.value = String(window.__payrollRates.maxOtHours);
+            const dp = document.getElementById('payDelayPerMin'); if (dp) dp.value = String(window.__payrollRates.delayPerMin || 0);
+            return window.__payrollRates;
+        }
+        async function savePayrollRates() {
+            if (currentRole !== 'admin') return showToast('فقط مدیر');
+            const p = {
+                otRate: v77Num((document.getElementById('otRateAmount') || {}).value),
+                otUnit: ((document.getElementById('otRateUnit') || {}).value) || 'hour',
+                maxDelayMin: v77Num((document.getElementById('payMaxDelayMin') || {}).value) || 45,
+                maxOtHours: v77Num((document.getElementById('payMaxOtHours') || {}).value) || 4,
+                delayPerMin: v77Num((document.getElementById('payDelayPerMin') || {}).value) || 0,
+                updated_at: new Date().toISOString()
+            };
+            try {
+                await saveSharedConfigPatch({ payrollRates: p });
+                window.__payrollRates = p;
+                showToast('✅ نرخ اضافه‌کاری و سقف محاسبه ذخیره شد');
+            } catch (e) {
+                showToast('❌ ' + (e.message || e));
+            }
+        }
+        window.savePayrollRates = savePayrollRates;
+
+        function openPrintHtml(title, bodyHtml) {
+            const w = window.open('', '_blank');
+            if (!w) { showToast('پنجره چاپ مسدود شد — اجازه پاپ‌آپ بده'); return; }
+            const html = '<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><title>' + title + '</title>' +
+                '<style>@page{size:A4;margin:14mm}body{font-family:Tahoma,Arial,sans-serif;color:#0f172a;line-height:1.7;font-size:13px}' +
+                'h1{font-size:18px;margin:0 0 6px}h2{font-size:15px;margin:14px 0 6px;color:#0f766e}' +
+                '.box{border:1px solid #cbd5e1;border-radius:12px;padding:12px;margin:10px 0}' +
+                'table{width:100%;border-collapse:collapse;margin-top:8px}th,td{border:1px solid #e2e8f0;padding:8px;text-align:right;font-size:12px}' +
+                'th{background:#f1f5f9}.muted{color:#64748b;font-size:11px}.brand{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #0f766e;padding-bottom:8px;margin-bottom:12px}' +
+                '@media print{.noprint{display:none}}</style></head><body>' +
+                '<div class="noprint" style="margin-bottom:10px"><button onclick="window.print()" style="padding:10px 16px;border:0;border-radius:8px;background:#0f766e;color:#fff;font-weight:700">🖨️ چاپ / ذخیره PDF</button></div>' +
+                bodyHtml + '</body></html>';
+            w.document.write(html);
+            w.document.close();
+            setTimeout(function () { try { w.focus(); w.print(); } catch (e) {} }, 400);
+        }
+
+        async function runSalaryCalculation() {
+            if (currentRole !== 'admin') return;
+            const seller = ((document.getElementById('salaryCalcSeller') || {}).value || '').trim();
+            const from = ((document.getElementById('salaryCalcFrom') || {}).value || '').trim();
+            const to = ((document.getElementById('salaryCalcTo') || {}).value || '').trim();
+            let base = v77Num((document.getElementById('salaryCalcBase') || {}).value);
+            const out = document.getElementById('salaryCalcResult');
+            if (!seller || !from || !to) return showToast('فروشنده و بازه تاریخ را مشخص کن');
+            if (from > to) return showToast('بازه تاریخ نامعتبر است');
+            if (out) out.innerHTML = '<div class="hint">در حال محاسبه...</div>';
+
+            const rates = (await loadPayrollRates()) || {};
+            const maxDelay = Number(rates.maxDelayMin) || 45;
+            const maxOtH = Number(rates.maxOtHours) || 4;
+            const delayPerMin = Number(rates.delayPerMin) || 0;
+            const otRate = Number(rates.otRate) || 0;
+            const otUnit = rates.otUnit || 'hour';
+
+            // base from targets if empty
+            if (!(base > 0)) {
+                try {
+                    const { data: tg } = await _supabase.from('seller_shift_targets').select('base_salary').eq('seller_label', seller).limit(5);
+                    const found = (tg || []).find(function (x) { return Number(x.base_salary) > 0; });
+                    if (found) base = Number(found.base_salary) || 0;
+                } catch (e) {}
+            }
+
+            const { startUTC, endUTC } = tehranDateRangeToISOBounds(from, to);
+            const attStart = new Date(new Date(startUTC).getTime() - 36 * 3600000).toISOString();
+            const attEnd = new Date(new Date(endUTC).getTime() + 18 * 3600000).toISOString();
+
+            let attendance = [];
+            try {
+                const { data, error } = await _supabase.from('attendance').select('*')
+                    .eq('seller_name', seller)
+                    .gte('created_at', attStart).lt('created_at', attEnd)
+                    .order('created_at', { ascending: true }).limit(3000);
+                if (error) throw error;
+                attendance = data || [];
+            } catch (e) {
+                if (out) out.innerHTML = '<div class="hint" style="color:#f87171;">خطا در خواندن حضور: ' + (e.message || e) + '</div>';
+                return;
+            }
+
+            // per day aggregate
+            const byDay = {};
+            attendance.forEach(function (r) {
+                const day = getTehranISODate(new Date(r.created_at));
+                if (day < from || day > to) return;
+                if (!byDay[day]) byDay[day] = { delay: 0, ot: 0, entry: 0, exit: 0, leave: 0, rawOt: 0, rawDelay: 0 };
+                const d = byDay[day];
+                if (r.type === 'entry') {
+                    d.entry += 1;
+                    const dm = Number(r.delay_minutes) || 0;
+                    d.rawDelay += dm;
+                    d.delay += Math.min(Math.max(0, dm), maxDelay);
+                } else if (r.type === 'exit') {
+                    d.exit += 1;
+                } else if (r.type === 'leave' || r.type === 'leave_hourly') {
+                    d.leave += 1;
+                } else if (r.type === 'overtime') {
+                    const h = Number(r.overtime_hours) || 0;
+                    d.rawOt += h;
+                    d.ot += Math.min(Math.max(0, h), maxOtH);
+                }
+            });
+
+            const days = Object.keys(byDay).sort();
+            let workDays = 0, totalDelay = 0, totalOt = 0, skippedDelay = 0, skippedOt = 0;
+            days.forEach(function (day) {
+                const d = byDay[day];
+                if (d.entry > 0 || d.exit > 0) workDays += 1;
+                totalDelay += d.delay;
+                totalOt += d.ot;
+                skippedDelay += Math.max(0, d.rawDelay - d.delay);
+                skippedOt += Math.max(0, d.rawOt - d.ot);
+            });
+
+            // checklist penalties in range
+            let checklistPenalty = 0;
+            try {
+                const pens = (typeof dclLoadPenalties === 'function') ? await dclLoadPenalties() : [];
+                (pens || []).forEach(function (p) {
+                    if (!p) return;
+                    if (p.seller_name === seller || p.username && seller.indexOf(p.username) >= 0) {
+                        if (p.work_date >= from && p.work_date <= to) checklistPenalty += Number(p.amount) || 0;
+                    }
+                });
+            } catch (e) {}
+
+            let otPay = 0;
+            if (otRate > 0 && totalOt > 0) {
+                if (otUnit === 'minute') otPay = totalOt * 60 * otRate;
+                else if (otUnit === 'day') otPay = (totalOt / 8) * otRate; // تقریبی: ۸ ساعت = ۱ روز
+                else otPay = totalOt * otRate;
+            }
+            const delayDeduct = delayPerMin > 0 ? totalDelay * delayPerMin : 0;
+            const net = Math.max(0, Math.round(base + otPay - delayDeduct - checklistPenalty));
+
+            const calc = {
+                seller: seller, from: from, to: to, base: base, workDays: workDays,
+                totalDelay: totalDelay, totalOt: totalOt, skippedDelay: skippedDelay, skippedOt: skippedOt,
+                otPay: Math.round(otPay), delayDeduct: Math.round(delayDeduct), checklistPenalty: Math.round(checklistPenalty),
+                net: net, rates: rates, byDay: byDay
+            };
+            window.__lastSalaryCalc = calc;
+
+            const fa = function (n) { return Math.round(n || 0).toLocaleString('fa-IR'); };
+            const j = function (iso) { try { return jalaliLabelForISODate(iso); } catch (e) { return iso; } };
+            if (out) {
+                out.innerHTML =
+                    '<div style="padding:12px;border-radius:14px;background:rgba(15,23,42,.6);border:1px solid rgba(52,211,153,.35);font-size:13px;line-height:1.85;">' +
+                    '<div><b>' + seller + '</b></div>' +
+                    '<div>بازه: ' + j(from) + ' تا ' + j(to) + ' · روز کارکرد تقریبی: <b>' + fa(workDays) + '</b></div>' +
+                    '<div>حقوق پایه: <b>' + fa(base) + '</b> ت</div>' +
+                    '<div>اضافه‌کار محاسبه‌شده: <b>' + (Math.round(totalOt * 10) / 10).toLocaleString('fa-IR') + '</b> ساعت → +' + fa(otPay) + ' ت</div>' +
+                    '<div>تاخیر محاسبه‌شده: <b>' + fa(totalDelay) + '</b> دقیقه → −' + fa(delayDeduct) + ' ت</div>' +
+                    '<div>جریمه چک‌لیست: −' + fa(checklistPenalty) + ' ت</div>' +
+                    (skippedDelay || skippedOt ? ('<div style="color:#fbbf24;">⚠️ حذف‌شده به‌خاطر سقف/خطای احتمالی سایت: تاخیر ' + fa(skippedDelay) + ' دقیقه · اضافه‌کار ' + (Math.round(skippedOt * 10) / 10).toLocaleString('fa-IR') + ' ساعت</div>') : '') +
+                    '<div style="margin-top:6px;font-size:16px;">خالص پیشنهادی: <b style="color:#34d399;">' + fa(net) + ' تومان</b></div></div>';
+            }
+            showToast('✅ محاسبه انجام شد');
+        }
+
+        function applySalaryCalcToPayment() {
+            const c = window.__lastSalaryCalc;
+            if (!c) return showToast('اول محاسبه را بزن');
+            const sel = document.getElementById('salaryTargetSeller');
+            if (sel) {
+                // try match option
+                const opts = Array.from(sel.options || []);
+                const hit = opts.find(function (o) { return o.value === c.seller; });
+                if (hit) sel.value = c.seller;
+            }
+            const amt = document.getElementById('salaryAmount');
+            if (amt) { amt.value = String(c.net); if (typeof updateSalaryPreview === 'function') updateSalaryPreview(); }
+            const note = document.getElementById('salaryNote');
+            if (note) note.value = 'حقوق ' + c.from + ' تا ' + c.to + ' (محاسبه سیستم)';
+            showToast('مبلغ به فرم واریز منتقل شد');
+        }
+
+        function printSalaryPayslip() {
+            const c = window.__lastSalaryCalc;
+            if (!c) return showToast('اول محاسبه حقوق را انجام بده');
+            const fa = function (n) { return Math.round(n || 0).toLocaleString('fa-IR'); };
+            const j = function (iso) { try { return jalaliLabelForISODate(iso); } catch (e) { return iso; } };
+            const now = (typeof getTehranFullDateTimeString === 'function') ? getTehranFullDateTimeString(new Date()) : new Date().toLocaleString('fa-IR');
+            const body =
+                '<div class="brand"><div><h1>فیش حقوقی</h1><div class="muted">تازه مارکت</div></div><div class="muted">صادر شده: ' + now + '</div></div>' +
+                '<div class="box"><b>پرسنل:</b> ' + c.seller + '<br><b>دوره:</b> ' + j(c.from) + ' تا ' + j(c.to) + '<br><b>روز کارکرد:</b> ' + fa(c.workDays) + '</div>' +
+                '<table><thead><tr><th>شرح</th><th>مبلغ (تومان)</th></tr></thead><tbody>' +
+                '<tr><td>حقوق پایه</td><td>' + fa(c.base) + '</td></tr>' +
+                '<tr><td>اضافه‌کاری (' + (Math.round(c.totalOt * 10) / 10).toLocaleString('fa-IR') + ' ساعت)</td><td>' + fa(c.otPay) + '</td></tr>' +
+                '<tr><td>کسر تاخیر (' + fa(c.totalDelay) + ' دقیقه)</td><td>− ' + fa(c.delayDeduct) + '</td></tr>' +
+                '<tr><td>جریمه چک‌لیست</td><td>− ' + fa(c.checklistPenalty) + '</td></tr>' +
+                '<tr><th>خالص قابل پرداخت</th><th>' + fa(c.net) + '</th></tr>' +
+                '</tbody></table>' +
+                ((c.skippedDelay || c.skippedOt) ? ('<p class="muted">تاخیر/اضافه‌کاری خارج از سقف مجاز در این فیش لحاظ نشده است.</p>') : '') +
+                '<p class="muted" style="margin-top:18px;">این فیش توسط سامانه تازه مارکت صادر شده است.</p>';
+            openPrintHtml('فیش حقوقی - تازه مارکت', body);
+        }
+
+        function printTrialGuide(shift) {
+            const isMorning = shift === 'morning';
+            const title = isMorning ? 'راهنمای حساب آزمایشی — شیفت صبح' : 'راهنمای حساب آزمایشی — شیفت شب';
+            const tasks = isMorning
+                ? [
+                    'ورود را با اثر انگشت/گوشی خودت ثبت کن (نه گوشی دیگران).',
+                    'قفسه و یخچال غرفه را شارژ کن.',
+                    'شیشه، دستگاه برش و سطح کار را تمیز کن.',
+                    'کالاهای کم را چک کن و کمبود را ثبت/به مدیر بگو.',
+                    'دستگاه‌ها را روشن و غرفه را برای شروع فروش آماده کن.',
+                    'فروش را همان لحظه در تب مربوط ثبت کن (لبنیات / اکالا / سوسیس).',
+                    'اگر موجودی غرفه کم بود و سیستم پیشنهاد شارژ داد، فقط وقتی واقعاً شارژ شده تأیید کن.',
+                    'پیام‌های مدیر در صندوقچه را همان روز جواب بده.',
+                    'قبل از خروج، چک‌لیست روزانه را تیک بزن و خروج ثبت کن.'
+                  ]
+                : [
+                    'ورود شیفت شب را سر وقت ثبت کن.',
+                    'فروش را دقیق و همان لحظه ثبت کن.',
+                    'دستگاه برش، ترازو و زیر وکیوم را تمیز نگه دار.',
+                    'روی یخچال، زمین و زیر ترازو را تمیز کن.',
+                    'زباله را جمع و غرفه را مرتب کن.',
+                    'وضعیت را برای شیفت بعد/بستن فروشگاه آماده کن.',
+                    'پیام‌های مدیر را در صندوقچه بررسی کن.',
+                    'چک‌لیست پایان شیفت را قبل از خروج انجام بده.',
+                    'خروج را ثبت کن؛ بدون خروج، شیفت باز می‌ماند.'
+                  ];
+            const lis = tasks.map(function (t, i) {
+                return '<tr><td style="width:36px">' + (i + 1).toLocaleString('fa-IR') + '</td><td>' + t + '</td></tr>';
+            }).join('');
+            const body =
+                '<div class="brand"><div><h1>' + title + '</h1><div class="muted">تازه مارکت — راهنمای کار با پنل</div></div></div>' +
+                '<div class="box"><b>این حساب آزمایشی است، اما ثبت‌ها واقعی‌اند.</b><br>هر فروش، ورود/خروج و موجودی که ثبت کنی روی سیستم اصلی اثر دارد. با دقت کار کن.</div>' +
+                '<h2>هر روز باید چه کار کنی؟</h2>' +
+                '<table><thead><tr><th>#</th><th>کار</th></tr></thead><tbody>' + lis + '</tbody></table>' +
+                '<h2>نکات مهم</h2>' +
+                '<div class="box">• فقط با گوشی ثبت‌شده خودت ورود/خروج بزن.<br>• فاکتور اشتباه همان روز قابل ویرایش/حذف محدود است.<br>• اگر سایت کند بود، صبر کن؛ چندبار ثبت نکن.<br>• مشکل داشتی در صندوقچه به مدیر پیام بده.</div>' +
+                '<p class="muted">صادر شده توسط سامانه تازه مارکت</p>';
+            openPrintHtml(title, body);
+        }
+
+        window.runSalaryCalculation = runSalaryCalculation;
+        window.applySalaryCalcToPayment = applySalaryCalcToPayment;
+        window.printSalaryPayslip = printSalaryPayslip;
+        window.printTrialGuide = printTrialGuide;
+
         async function loadSalaryTab() {
             const box = document.getElementById('salaryList');
             box.innerHTML = skeletonCards(2);
 
             if (currentRole === 'admin') {
                 loadSalaryTargets();
+                try {
+                    // پر کردن لیست محاسبه حقوق
+                    const calcSel = document.getElementById('salaryCalcSeller');
+                    if (calcSel && calcSel.options.length <= 1) {
+                        const { data } = await _supabase.rpc('admin_list_sellers');
+                        const list = (data || []).filter(function (s) { return !s.is_terminated; });
+                        calcSel.innerHTML = '<option value="">انتخاب فروشنده</option>' + list.map(function (s) {
+                            const lab = (roleLabels[s.role] || s.role) + ' - ' + (s.full_name || s.username);
+                            return '<option value="' + lab.replace(/"/g, '&quot;') + '">' + lab + '</option>';
+                        }).join('');
+                    }
+                } catch (e) {}
             }
             let query = _supabase.from('salary_payments').select('*').order('paid_at', { ascending: false });
 
@@ -32617,6 +33079,86 @@ async function openCatalogPublic() {
                 }
             } catch (e) { console.warn(e); }
         };
+
+        async function loadCatalogCustomersAdmin() {
+            const box = document.getElementById('catCustomersAdminList');
+            if (!box) return;
+            box.innerHTML = '<div class="hint">در حال بارگذاری...</div>';
+            try {
+                if (!_supabase) { box.innerHTML = '<p class="hint">اتصال نیست</p>'; return; }
+                const { data, error } = await _supabase.from('catalog_customers')
+                    .select('phone, name, customer_code, updated_at, created_at')
+                    .order('updated_at', { ascending: false })
+                    .limit(500);
+                if (error) throw error;
+                const rows = data || [];
+                if (!rows.length) {
+                    box.innerHTML = '<p class="hint">هنوز مشتری کاتالوگی ثبت نشده. با اولین ثبت‌نام/سفارش اینجا می‌آیند.</p>';
+                    return;
+                }
+                window.__catCustomersCache = rows;
+                box.innerHTML =
+                    '<div class="hint" style="margin-bottom:6px;">' + rows.length.toLocaleString('fa-IR') + ' مشتری · تیک بزن برای ارسال انتخابی</div>' +
+                    '<label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:6px;"><input type="checkbox" id="catCustCheckAll" style="width:auto;" onchange="catalogCustomersToggleAll(this.checked)"> انتخاب همه</label>' +
+                    rows.map(function (r, i) {
+                        const ph = String(r.phone || '');
+                        return '<label style="display:flex;align-items:flex-start;gap:8px;padding:8px;margin-bottom:4px;border-radius:10px;background:rgba(15,23,42,.55);border:1px solid rgba(148,163,184,.2);font-size:12px;">' +
+                            '<input type="checkbox" class="cat-cust-cb" value="' + ph.replace(/"/g, '') + '" style="width:auto;margin-top:3px;">' +
+                            '<span style="flex:1;"><b>' + (r.name || 'بدون نام') + '</b><br><span dir="ltr">' + ph + '</span>' +
+                            (r.customer_code ? (' · <span style="color:#38bdf8;" dir="ltr">' + r.customer_code + '</span>') : '') +
+                            '</span></label>';
+                    }).join('');
+            } catch (e) {
+                box.innerHTML = '<p style="color:#f87171;">خطا: ' + (e.message || e) + '</p>';
+            }
+        }
+        function catalogCustomersToggleAll(on) {
+            document.querySelectorAll('.cat-cust-cb').forEach(function (cb) { cb.checked = !!on; });
+        }
+        async function sendCatalogPromoSms(all) {
+            if (currentRole !== 'admin') return showToast('فقط مدیر');
+            const st = document.getElementById('catPromoSmsStatus');
+            let textSms = ((document.getElementById('catPromoSmsText') || {}).value || '').trim();
+            if (!textSms) return showToast('متن پیامک را بنویس');
+            if (!/لغو\s*11/i.test(textSms)) textSms += '\nلغو11';
+            let phones = [];
+            if (all) {
+                phones = (window.__catCustomersCache || []).map(function (r) { return String(r.phone || '').replace(/\D/g, ''); }).filter(Boolean);
+                if (!phones.length) {
+                    await loadCatalogCustomersAdmin();
+                    phones = (window.__catCustomersCache || []).map(function (r) { return String(r.phone || '').replace(/\D/g, ''); }).filter(Boolean);
+                }
+            } else {
+                document.querySelectorAll('.cat-cust-cb:checked').forEach(function (cb) {
+                    const p = String(cb.value || '').replace(/\D/g, '');
+                    if (p) phones.push(p);
+                });
+            }
+            phones = Array.from(new Set(phones)).filter(function (p) { return /^09\d{9}$/.test(p); });
+            if (!phones.length) return showToast('هیچ شماره معتبری انتخاب نشده');
+            if (!confirm('ارسال پیامک به ' + phones.length + ' شماره انجام شود؟\n(هزینه از اعتبار پنل ملی‌پیامک کم می‌شود)')) return;
+            if (st) st.textContent = '⏳ در حال ارسال 0/' + phones.length + '...';
+            let okN = 0, failN = 0;
+            for (let i = 0; i < phones.length; i++) {
+                try {
+                    if (typeof smsSendRaw === 'function') await smsSendRaw(phones[i], textSms);
+                    else throw new Error('تابع ارسال پیامک آماده نیست — تنظیمات پیامک را ذخیره کن');
+                    okN++;
+                } catch (e) {
+                    failN++;
+                    console.warn('promo sms fail', phones[i], e);
+                }
+                if (st) st.textContent = '⏳ ' + (i + 1) + '/' + phones.length + ' · موفق ' + okN + ' · ناموفق ' + failN;
+                // فاصله کوتاه برای فشار کمتر به API
+                await new Promise(function (r) { setTimeout(r, 350); });
+            }
+            if (st) st.textContent = '✅ تمام شد · موفق: ' + okN + ' · ناموفق: ' + failN;
+            showToast('ارسال تمام شد — موفق ' + okN + ' از ' + phones.length);
+        }
+        window.loadCatalogCustomersAdmin = loadCatalogCustomersAdmin;
+        window.catalogCustomersToggleAll = catalogCustomersToggleAll;
+        window.sendCatalogPromoSms = sendCatalogPromoSms;
+
         function loyaltyAdminLoad() {
             try { const tab = document.getElementById('loyaltyTab'); if (tab) tab.style.display = ''; } catch (e) {}
             loyaltyPullCfg().then(function (cfg) {
@@ -33115,6 +33657,11 @@ async function openCatalogPublic() {
             if (typeof _supabase === 'undefined' || !_supabase) return false;
             const phone = String(catCustomerProfile.phone || '').replace(/\D/g, '');
             if (!phone || phone.length < 10) return false;
+            let isNew = false;
+            try {
+                const { data: existing } = await _supabase.from('catalog_customers').select('phone').eq('phone', phone).maybeSingle();
+                isNew = !existing;
+            } catch (e0) { isNew = true; }
             const row = {
                 phone: phone,
                 name: catCustomerProfile.name || '',
@@ -33122,10 +33669,68 @@ async function openCatalogPublic() {
                 addresses: catCustomerProfile.addresses || [],
                 updated_at: new Date().toISOString()
             };
+            if (isNew) row.created_at = new Date().toISOString();
             const { error } = await _supabase.from('catalog_customers').upsert([row], { onConflict: 'phone' });
+            if (!error && isNew) {
+                try { await catOnNewCustomerRegistered(phone, row.name); } catch (e1) { console.warn('catOnNewCustomer', e1); }
+            }
             return !error;
         } catch (e) { return false; }
     }
+    async function catGetSmsConfig() {
+        try {
+            if (window.__smsCfg && window.__smsCfg.username) return window.__smsCfg;
+            if (typeof _supabase === 'undefined' || !_supabase) return null;
+            const { data } = await _supabase.from('app_shared_config').select('config').eq('id', 1).maybeSingle();
+            const s = (data && data.config && data.config.smsConfig) ? data.config.smsConfig : null;
+            if (s) window.__smsCfg = s;
+            return s;
+        } catch (e) { return null; }
+    }
+    async function catOnNewCustomerRegistered(phone, name) {
+        const cfg = await catGetSmsConfig();
+        // پیامک خوش‌آمد به مشتری
+        if (cfg && cfg.enabled && cfg.username && cfg.apiKey && cfg.from) {
+            let textSms = (cfg.tplWelcome || '{name} عزیز، به تازه مارکت خوش آمدید\nلغو11')
+                .replace(/\{name\}/g, name || 'مشتری')
+                .replace(/\{phone\}/g, phone);
+            if (!/لغو\s*11/i.test(textSms)) textSms += '\nلغو11';
+            try {
+                if (typeof window.smsSendRaw === 'function') {
+                    await window.smsSendRaw(phone, textSms);
+                } else {
+                    const body = new URLSearchParams();
+                    body.set('username', cfg.username);
+                    body.set('password', cfg.apiKey);
+                    body.set('to', phone);
+                    body.set('from', cfg.from);
+                    body.set('text', textSms);
+                    body.set('isFlash', 'false');
+                    await fetch('https://rest.payamak-panel.com/api/SendSMS/SendSMS', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: body.toString()
+                    });
+                }
+            } catch (e) { console.warn('welcome sms', e); }
+        }
+        // اطلاع به مدیر
+        try {
+            await _supabase.from('messages').insert([{
+                sender: 'کاتالوگ',
+                recipient: 'admin',
+                title: '🆕 ثبت‌نام مشتری کاتالوگ',
+                body: 'مشتری جدید:\nنام: ' + (name || '—') + '\nموبایل: ' + phone + '\nکد: ' + (typeof catCustomerCode === 'function' ? catCustomerCode(phone) : ''),
+                created_at: new Date().toISOString()
+            }]);
+        } catch (e) {}
+        try {
+            if (typeof sendTelegramNotification === 'function') {
+                sendTelegramNotification('🆕 مشتری کاتالوگ\n' + (name || '') + '\n' + phone);
+            }
+        } catch (e) {}
+    }
+
     async function catPullCustomerCloud() {
         try {
             if (typeof _supabase === 'undefined' || !_supabase) return;
