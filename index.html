@@ -5,7 +5,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="app-build" content="v295">
+    <meta name="app-build" content="v296">
     <!-- جلوگیری از کش‌شدن خود index.html توسط مرورگر/گوشی، تا نسخه‌ی جدید همیشه فوراً لود بشه
          (sw.js شما کش نمی‌کنه، ولی مرورگر یا هاست ممکنه خودش HTML رو کش کنه) -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -5534,7 +5534,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             }, (typeof MAX_SPLASH_MS === 'number' ? MAX_SPLASH_MS : 6000) + 1000);
         })();
 
-        const APP_BUILD = 'v295';
+        const APP_BUILD = 'v296';
         try { const __bt=document.getElementById('buildTag'); if(__bt) __bt.textContent = APP_BUILD + ' - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )'; } catch(e){}
         // ثبت Service Worker پایدار — همیشه /sw.js بدون ?v= تا آپدیت شکست نخورد
         if ('serviceWorker' in navigator) {
@@ -25713,6 +25713,32 @@ async function loadExpensesTab() {
         }
         window.openPrintHtml = openPrintHtml;
 
+        function salaryPersonKey(label) {
+            // از "فروشنده شب - خانم عباسی" فقط "خانم عباسی" را برمی‌گرداند
+            const s = String(label || '').trim();
+            if (!s) return '';
+            const parts = s.split(' - ');
+            if (parts.length >= 2) return parts.slice(1).join(' - ').trim();
+            // اگر برچسب شیفت نباشد، کل نام
+            return s.replace(/^فروشنده\s*(صبح|شب)\s*/i, '').trim() || s;
+        }
+        function salaryNameMatches(recordName, selectedLabel) {
+            const rec = String(recordName || '').trim();
+            const sel = String(selectedLabel || '').trim();
+            if (!rec || !sel) return false;
+            // تطبیق دقیق برچسب کامل
+            if (rec === sel) return true;
+            const person = salaryPersonKey(sel);
+            const recPerson = salaryPersonKey(rec);
+            // فقط اگر نام شخصی (نه فقط «فروشنده شب») کافی باشد
+            if (person && person.length >= 2) {
+                if (rec === person) return true;
+                if (recPerson && recPerson === person) return true;
+                // رکورد: "فروشنده شب - خانم عباسی" و انتخاب همان
+                if (rec.indexOf(person) >= 0 && !/^فروشنده\s*(صبح|شب)$/i.test(person)) return true;
+            }
+            return false;
+        }
         async function runSalaryCalculation() {
             if (currentRole !== 'admin') return;
             const seller = ((document.getElementById('salaryCalcSeller') || {}).value || '').trim();
@@ -25730,12 +25756,13 @@ async function loadExpensesTab() {
             const delayPerMin = Number(rates.delayPerMin) || 0;
             const otRate = Number(rates.otRate) || 0;
             const otUnit = rates.otUnit || 'hour';
+            const personKey = salaryPersonKey(seller);
 
             if (!(base > 0)) {
                 try {
-                    const { data: tg } = await _supabase.from('seller_shift_targets').select('base_salary, seller_label').limit(50);
+                    const { data: tg } = await _supabase.from('seller_shift_targets').select('base_salary, seller_label').limit(80);
                     const found = (tg || []).find(function (x) {
-                        return x.seller_label === seller || (x.seller_label && seller.indexOf(x.seller_label) >= 0) || (seller && x.seller_label && x.seller_label.indexOf(seller.split(' - ').pop() || '') >= 0);
+                        return salaryNameMatches(x.seller_label, seller) || x.seller_label === seller;
                     });
                     if (found) base = Number(found.base_salary) || 0;
                 } catch (e) {}
@@ -25745,34 +25772,30 @@ async function loadExpensesTab() {
             const attStart = new Date(new Date(startUTC).getTime() - 36 * 3600000).toISOString();
             const attEnd = new Date(new Date(endUTC).getTime() + 18 * 3600000).toISOString();
 
-            // نام‌های ممکن برای تطبیق حضور (برچسب کامل / فقط نام)
-            const nameHints = [seller];
-            try {
-                const parts = seller.split(' - ');
-                if (parts.length > 1) nameHints.push(parts.slice(1).join(' - ').trim());
-                nameHints.push(parts[0]);
-            } catch (e) {}
-
             let attendance = [];
             try {
-                const { data, error } = await _supabase.from('attendance').select('*')
+                // فیلتر اولیه با نام شخصی تا داده‌ی کل شیفت نیاید
+                let q = _supabase.from('attendance').select('*')
                     .gte('created_at', attStart).lt('created_at', attEnd)
                     .order('created_at', { ascending: true }).limit(5000);
+                if (personKey && personKey.length >= 2) {
+                    q = q.ilike('seller_name', '%' + personKey + '%');
+                }
+                const { data, error } = await q;
                 if (error) throw error;
                 attendance = (data || []).filter(function (r) {
-                    const sn = String(r.seller_name || '');
-                    return nameHints.some(function (h) { return h && (sn === h || sn.indexOf(h) >= 0 || h.indexOf(sn) >= 0); });
+                    return salaryNameMatches(r.seller_name, seller);
                 });
             } catch (e) {
                 if (out) out.innerHTML = '<div class="hint" style="color:#f87171;">خطا در خواندن حضور: ' + (e.message || e) + '</div>';
                 return;
             }
 
-            // تنظیمات شیفت برای محاسبه اضافه‌کار از روی خروج دیر
             let shiftSettings = null;
             try { shiftSettings = await getShiftSettings(); } catch (e) {}
             const isEvening = /شب|evening/i.test(seller);
             const shiftEndStr = shiftSettings ? (isEvening ? shiftSettings.eEnd : shiftSettings.mEnd) : (isEvening ? '23:00' : '15:30');
+            const shiftStartStr = shiftSettings ? (isEvening ? shiftSettings.eStart : shiftSettings.mStart) : (isEvening ? '15:30' : '08:00');
 
             function minutesOfDay(d) {
                 try {
@@ -25787,48 +25810,56 @@ async function loadExpensesTab() {
                 return (parseInt(p[0], 10) || 0) * 60 + (parseInt(p[1], 10) || 0);
             }
             const shiftEndMin = parseHHMM(shiftEndStr);
+            const shiftStartMin = parseHHMM(shiftStartStr);
 
             const byDay = {};
             attendance.forEach(function (r) {
                 const day = getTehranISODate(new Date(r.created_at));
                 if (day < from || day > to) return;
-                if (!byDay[day]) byDay[day] = { delay: 0, ot: 0, entry: 0, exit: 0, leave: 0, rawOt: 0, rawDelay: 0, exitLateMin: 0 };
+                if (!byDay[day]) byDay[day] = { delay: 0, ot: 0, entry: 0, exit: 0, leave: 0, rawOt: 0, rawDelay: 0, exitLateMin: 0, otSource: '' };
                 const d = byDay[day];
                 if (r.type === 'entry') {
                     d.entry += 1;
                     const dm = Math.max(0, Number(r.delay_minutes) || 0);
                     d.rawDelay += dm;
-                    // تاخیر منفی یا خیلی بزرگ (باگ) حذف می‌شود
                     if (dm > 0 && dm <= 180) d.delay += Math.min(dm, maxDelay);
-                    else if (dm > 180) d.rawDelay += 0; // already counted in raw
                 } else if (r.type === 'exit') {
                     d.exit += 1;
-                    try {
-                        const mins = minutesOfDay(new Date(r.created_at));
-                        let late = mins - shiftEndMin;
-                        if (late < 0) late = 0;
-                        // اگر خروج بعد از نیمه‌شب باشد و شیفت شب
-                        if (isEvening && mins < 5 * 60 && shiftEndMin > 20 * 60) late = (mins + 24 * 60) - shiftEndMin;
-                        if (late > 0 && late <= 8 * 60) d.exitLateMin = Math.max(d.exitLateMin, late);
-                    } catch (e) {}
+                    // اگر exit_diff_minutes مثبت باشد (ماندن بعد از پایان) به‌عنوان OT
+                    const exitDiff = Number(r.exit_diff_minutes);
+                    if (!isNaN(exitDiff) && exitDiff > 0 && exitDiff <= 8 * 60) {
+                        d.exitLateMin = Math.max(d.exitLateMin, exitDiff);
+                    } else {
+                        try {
+                            const mins = minutesOfDay(new Date(r.created_at));
+                            let late = mins - shiftEndMin;
+                            if (late < 0) late = 0;
+                            if (isEvening && mins < 5 * 60 && shiftEndMin > 18 * 60) late = (mins + 24 * 60) - shiftEndMin;
+                            if (late > 0 && late <= 8 * 60) d.exitLateMin = Math.max(d.exitLateMin, late);
+                        } catch (e) {}
+                    }
                 } else if (r.type === 'leave' || r.type === 'leave_hourly') {
                     d.leave += 1;
                 } else if (r.type === 'overtime') {
                     let h = Number(r.overtime_hours) || 0;
-                    if (h < 0) h = 0;
-                    if (h > 24) h = 0; // باگ واضح
+                    // اگر مقدار به دقیقه ذخیره شده باشد
+                    if (h > 24 && h <= 24 * 60) h = h / 60;
+                    if (h < 0 || h > 24) h = 0;
                     d.rawOt += h;
                     d.ot += Math.min(h, maxOtH);
+                    d.otSource = 'manual';
                 }
             });
 
-            // اگر اضافه‌کار دستی نبود، از دیرکرد خروج به‌عنوان OT محتاطانه استفاده کن
+            // فقط وقتی OT دستی همان روز نبود، از ماندن بعد از خروج شیفت حساب کن
             Object.keys(byDay).forEach(function (day) {
                 const d = byDay[day];
-                if (d.ot <= 0 && d.exitLateMin > 15) {
+                if (d.otSource === 'manual') return;
+                if (d.exitLateMin > 10) {
                     const h = Math.min(d.exitLateMin / 60, maxOtH);
-                    d.ot += h;
-                    d.rawOt += h;
+                    d.ot = Math.max(d.ot, h);
+                    d.rawOt = Math.max(d.rawOt, h);
+                    d.otSource = 'exit';
                 }
             });
 
@@ -25844,33 +25875,39 @@ async function loadExpensesTab() {
                 skippedOt += Math.max(0, d.rawOt - d.ot);
             });
 
-            // روزهای تقویمی بازه برای تسهیم حقوق پایه (اگر پایه ماهانه باشد)
             const periodDays = Math.max(1, Math.round((new Date(to + 'T12:00:00+03:30') - new Date(from + 'T12:00:00+03:30')) / 86400000) + 1);
-            // فرض: پایه واردشده برای همین بازه است؛ اگر بازه حدود یک ماه بود و کاربر خواست می‌تواند پایه ماهانه بگذارد
             const baseForPeriod = base;
 
-            // برداشت شخصی در بازه
+            // برداشت شخصی — فقط همین فرد (نه کل شیفت)
             let takeoutSum = 0;
+            let takeoutCount = 0;
             try {
-                const { data: takes } = await _supabase.from('personal_takeouts').select('amount, seller_name, created_at')
-                    .gte('created_at', startUTC).lt('created_at', endUTC).limit(2000);
+                let tq = _supabase.from('personal_takeouts').select('amount, seller_name, created_at')
+                    .gte('created_at', startUTC).lt('created_at', endUTC).limit(3000);
+                if (personKey && personKey.length >= 2) tq = tq.ilike('seller_name', '%' + personKey + '%');
+                const { data: takes } = await tq;
                 (takes || []).forEach(function (t) {
-                    const sn = String(t.seller_name || '');
-                    if (nameHints.some(function (h) { return h && (sn === h || sn.indexOf(h) >= 0); })) {
-                        takeoutSum += Number(t.amount) || 0;
-                    }
+                    if (!salaryNameMatches(t.seller_name, seller)) return;
+                    takeoutSum += Number(t.amount) || 0;
+                    takeoutCount += 1;
                 });
             } catch (e) {
-                try {
-                    const { data: takes2 } = await _supabase.from('takeouts').select('amount, seller_name, created_at')
-                        .gte('created_at', startUTC).lt('created_at', endUTC).limit(2000);
-                    (takes2 || []).forEach(function (t) {
-                        const sn = String(t.seller_name || '');
-                        if (nameHints.some(function (h) { return h && (sn === h || sn.indexOf(h) >= 0); })) {
-                            takeoutSum += Number(t.amount) || 0;
-                        }
-                    });
-                } catch (e2) {}
+                console.warn('takeout', e);
+            }
+
+            // واریزی‌های قبلی مدیر در همین بازه (علی‌الحساب / حین کار)
+            let paidAdvance = 0;
+            let paidCount = 0;
+            try {
+                const { data: pays } = await _supabase.from('salary_payments').select('amount, seller_name, paid_at, note')
+                    .gte('paid_at', startUTC).lt('paid_at', endUTC).limit(500);
+                (pays || []).forEach(function (p) {
+                    if (!salaryNameMatches(p.seller_name, seller)) return;
+                    paidAdvance += Number(p.amount) || 0;
+                    paidCount += 1;
+                });
+            } catch (e) {
+                console.warn('salary_payments', e);
             }
 
             // جریمه چک‌لیست
@@ -25880,8 +25917,7 @@ async function loadExpensesTab() {
                 (pens || []).forEach(function (p) {
                     if (!p || !p.work_date) return;
                     if (p.work_date < from || p.work_date > to) return;
-                    const who = String(p.seller_name || p.username || '');
-                    if (nameHints.some(function (h) { return h && (who === h || who.indexOf(h) >= 0 || h.indexOf(who) >= 0); })) {
+                    if (salaryNameMatches(p.seller_name || p.username, seller)) {
                         checklistPenalty += Number(p.amount) || 0;
                     }
                 });
@@ -25894,14 +25930,17 @@ async function loadExpensesTab() {
                 else otPay = totalOt * otRate;
             }
             const delayDeduct = delayPerMin > 0 ? totalDelay * delayPerMin : 0;
-            const net = Math.max(0, Math.round(baseForPeriod + otPay - delayDeduct - checklistPenalty - takeoutSum));
+            const gross = Math.round(baseForPeriod + otPay);
+            const deductions = Math.round(delayDeduct + checklistPenalty + takeoutSum + paidAdvance);
+            const net = Math.max(0, gross - Math.round(delayDeduct) - Math.round(checklistPenalty) - Math.round(takeoutSum) - Math.round(paidAdvance));
 
             const calc = {
-                seller: seller, from: from, to: to, base: baseForPeriod, workDays: workDays, leaveDays: leaveDays,
-                periodDays: periodDays, totalDelay: totalDelay, totalOt: totalOt,
-                skippedDelay: skippedDelay, skippedOt: skippedOt,
+                seller: seller, personKey: personKey, from: from, to: to, base: baseForPeriod,
+                workDays: workDays, leaveDays: leaveDays, periodDays: periodDays,
+                totalDelay: totalDelay, totalOt: totalOt, skippedDelay: skippedDelay, skippedOt: skippedOt,
                 otPay: Math.round(otPay), delayDeduct: Math.round(delayDeduct),
                 checklistPenalty: Math.round(checklistPenalty), takeoutSum: Math.round(takeoutSum),
+                takeoutCount: takeoutCount, paidAdvance: Math.round(paidAdvance), paidCount: paidCount,
                 net: net, rates: rates, byDay: byDay, records: attendance.length
             };
             window.__lastSalaryCalc = calc;
@@ -25913,25 +25952,27 @@ async function loadExpensesTab() {
             let dayTable = '';
             days.forEach(function (day) {
                 const d = byDay[day];
-                dayTable += '<tr><td>' + j(day) + '</td><td>' + fa(d.entry) + '/' + fa(d.exit) + '</td><td>' + fa(d.delay) + '</td><td>' + fa1(d.ot) + '</td></tr>';
+                const src = d.otSource === 'manual' ? 'دستی' : (d.otSource === 'exit' ? 'خروج' : '—');
+                dayTable += '<tr><td>' + j(day) + '</td><td>' + fa(d.entry) + '/' + fa(d.exit) + '</td><td>' + fa(d.delay) + '</td><td>' + fa1(d.ot) + (d.ot > 0 ? ' <span style="opacity:.6;font-size:10px">(' + src + ')</span>' : '') + '</td></tr>';
             });
 
             if (out) {
                 out.innerHTML =
                     '<div style="padding:12px;border-radius:14px;background:rgba(15,23,42,.6);border:1px solid rgba(52,211,153,.35);font-size:13px;line-height:1.85;">' +
-                    '<div><b>' + seller + '</b></div>' +
-                    '<div>بازه: ' + j(from) + ' تا ' + j(to) + ' (' + fa(periodDays) + ' روز) · کارکرد: <b>' + fa(workDays) + '</b> روز · رکورد حضور: ' + fa(attendance.length) + '</div>' +
+                    '<div><b>' + seller + '</b>' + (personKey ? ' <span style="opacity:.7;font-size:11px">(فیلتر: فقط «' + personKey + '»)</span>' : '') + '</div>' +
+                    '<div>بازه: ' + j(from) + ' تا ' + j(to) + ' (' + fa(periodDays) + ' روز) · کارکرد: <b>' + fa(workDays) + '</b> · رکورد حضور همین فرد: ' + fa(attendance.length) + '</div>' +
                     '<div>حقوق پایه دوره: <b>' + fa(baseForPeriod) + '</b> ت</div>' +
-                    '<div>اضافه‌کار: <b>' + fa1(totalOt) + '</b> ساعت → +' + fa(otPay) + ' ت <span style="opacity:.75;">(سقف روزانه ' + fa1(maxOtH) + ' س)</span></div>' +
-                    '<div>تاخیر: <b>' + fa(totalDelay) + '</b> دقیقه → −' + fa(delayDeduct) + ' ت <span style="opacity:.75;">(سقف روزانه ' + fa(maxDelay) + ' د)</span></div>' +
-                    '<div>برداشت شخصی: −' + fa(takeoutSum) + ' ت</div>' +
+                    '<div>اضافه‌کار: <b>' + fa1(totalOt) + '</b> ساعت → +' + fa(otPay) + ' ت <span style="opacity:.75;">(سقف روزانه ' + fa1(maxOtH) + ' س · از ثبت OT یا خروج دیر)</span></div>' +
+                    '<div>تاخیر: <b>' + fa(totalDelay) + '</b> دقیقه → −' + fa(delayDeduct) + ' ت</div>' +
+                    '<div>برداشت شخصی همین فرد: −' + fa(takeoutSum) + ' ت <span style="opacity:.75;">(' + fa(takeoutCount) + ' مورد)</span></div>' +
+                    '<div>واریزی‌های قبلی مدیر در این بازه: −' + fa(paidAdvance) + ' ت <span style="opacity:.75;">(' + fa(paidCount) + ' فقره علی‌الحساب)</span></div>' +
                     '<div>جریمه چک‌لیست: −' + fa(checklistPenalty) + ' ت</div>' +
-                    ((skippedDelay || skippedOt) ? ('<div style="color:#fbbf24;">⚠️ حذف‌شده (سقف/مشکوک به خطای سایت): تاخیر ' + fa(skippedDelay) + ' د · OT ' + fa1(skippedOt) + ' س</div>') : '') +
-                    '<div style="margin-top:6px;font-size:16px;">خالص پیشنهادی: <b style="color:#34d399;">' + fa(net) + ' تومان</b></div>' +
+                    ((skippedDelay || skippedOt) ? ('<div style="color:#fbbf24;">⚠️ حذف‌شده (سقف/مشکوک): تاخیر ' + fa(skippedDelay) + ' د · OT ' + fa1(skippedOt) + ' س</div>') : '') +
+                    '<div style="margin-top:6px;font-size:16px;">باقی‌مانده قابل پرداخت: <b style="color:#34d399;">' + fa(net) + ' تومان</b></div>' +
                     (dayTable ? ('<div style="margin-top:10px;overflow:auto;"><table style="width:100%;font-size:11px;"><thead><tr><th>روز</th><th>ورود/خروج</th><th>تاخیر(د)</th><th>OT(س)</th></tr></thead><tbody>' + dayTable + '</tbody></table></div>') : '') +
                     '</div>';
             }
-            showToast('✅ محاسبه دقیق انجام شد');
+            showToast('✅ محاسبه فقط برای «' + (personKey || seller) + '» انجام شد');
         }
 
         function applySalaryCalcToPayment() {
@@ -25988,9 +26029,10 @@ async function loadExpensesTab() {
                 '<tr><td>حقوق پایه دوره</td><td>' + fa(c.base) + '</td></tr>' +
                 '<tr><td>اضافه‌کاری (' + fa1(c.totalOt) + ' ساعت)</td><td>' + fa(c.otPay) + '</td></tr>' +
                 '<tr><td>کسر بابت تاخیر (' + fa(c.totalDelay) + ' دقیقه)</td><td>− ' + fa(c.delayDeduct) + '</td></tr>' +
-                '<tr><td>کسر برداشت شخصی</td><td>− ' + fa(c.takeoutSum || 0) + '</td></tr>' +
+                '<tr><td>کسر برداشت شخصی' + (c.takeoutCount ? (' (' + fa(c.takeoutCount) + ' مورد)') : '') + '</td><td>− ' + fa(c.takeoutSum || 0) + '</td></tr>' +
+                '<tr><td>کسر واریزی‌های قبلی / علی‌الحساب' + (c.paidCount ? (' (' + fa(c.paidCount) + ' فقره)') : '') + '</td><td>− ' + fa(c.paidAdvance || 0) + '</td></tr>' +
                 '<tr><td>کسر جریمه چک‌لیست</td><td>− ' + fa(c.checklistPenalty) + '</td></tr>' +
-                '<tr class="net-row"><td>خالص قابل پرداخت</td><td>' + fa(c.net) + '</td></tr>' +
+                '<tr class="net-row"><td>باقی‌مانده قابل پرداخت</td><td>' + fa(c.net) + '</td></tr>' +
                 '</tbody></table>' +
                 ((c.skippedDelay || c.skippedOt) ? ('<p class="muted" style="margin:8px 0 0">* مبالغ خارج از سقف مجاز تاخیر/اضافه‌کاری در این فیش لحاظ نشده است.</p>') : '') +
                 '<div class="sign-row">' +
@@ -26008,40 +26050,81 @@ async function loadExpensesTab() {
             const isMorning = shift === 'morning';
             const shiftFa = isMorning ? 'صبح' : 'شب';
             const daily = isMorning
-                ? ['ورود فقط با گوشی ثبت‌شده خودت','شارژ قفسه و یخچال غرفه','تمیزی شیشه، دستگاه برش و سطح کار','چک موجودی کم و اعلام کمبود','آماده‌سازی دستگاه‌ها و شروع فروش','ثبت لحظه‌ای فروش در تب درست','پاسخ پیام‌های مدیر در صندوقچه','تیک چک‌لیست روزانه و ثبت خروج']
-                : ['ورود سر وقت شیفت شب','ثبت دقیق و لحظه‌ای فروش','تمیزی دستگاه برش، ترازو و زیر وکیوم','تمیزی روی یخچال، زمین و زیر ترازو','جمع زباله و مرتب‌سازی غرفه','آماده‌سازی تحویل به شیفت بعد / بستن','بررسی صندوقچه پیام مدیر','چک‌لیست پایان شیفت + ثبت خروج'];
+                ? [
+                    'با گوشی ثبت‌شده خودت در تب «حضور و غیاب» ورود بزن (اثرانگشت/تأیید گوشی).',
+                    'قفسه و یخچال غرفه را شارژ کن؛ کمبود را در سیستم یا به مدیر بگو.',
+                    'شیشه ویترین، دستگاه برش و سطح کار را تمیز کن.',
+                    'دستگاه‌ها (ترازو، وکیوم، برش) را روشن و آماده فروش کن.',
+                    'هر فروش را همان لحظه در تب درست ثبت کن: لبنیات / اکالا / سوسیس.',
+                    'اگر سیستم گفت موجودی غرفه کم است، بدون موجودی واقعی تأیید شارژ نکن.',
+                    'پیام‌های مدیر را در «صندوقچه» همان روز بخوان و جواب بده.',
+                    'چک‌لیست روزانه را واقعی تیک بزن؛ قبل از رفتن حتماً خروج ثبت کن.'
+                  ]
+                : [
+                    'سر وقت در تب «حضور و غیاب» ورود شیفت شب را ثبت کن.',
+                    'فروش را دقیق و همان لحظه در تب لبنیات / اکالا / سوسیس ثبت کن.',
+                    'دستگاه برش، ترازو و زیر وکیوم را تمیز نگه دار.',
+                    'روی یخچال، زمین و زیر ترازو را تمیز کن.',
+                    'زباله را جمع و غرفه را مرتب کن.',
+                    'وضعیت را برای شیفت بعد یا بستن فروشگاه آماده کن.',
+                    'صندوقچه پیام مدیر را چک و در صورت نیاز جواب بده.',
+                    'چک‌لیست پایان شیفت را انجام بده و حتماً خروج ثبت کن.'
+                  ];
             const sections = [
-                ['🏠 داشبورد','خلاصه امروز و میانبرها'],
-                ['🧀 فروش لبنیات','ثبت فروش حضوری'],
-                ['🛒 فروش اکالا','ثبت جدا از حضوری'],
-                ['🌭 فروش سوسیس','ثبت سوسیس و کالباس'],
-                ['✅ چک‌لیست روزانه','کارهای اجباری شیفت'],
-                ['🕒 حضور و غیاب','ورود و خروج'],
-                ['📥 صندوقچه','پیام و هشدار مدیر'],
-                ['🧊 غرفه / انبار','موجودی و شارژ'],
-                ['📈 گزارش فروش','کارکرد و فروش خودت'],
-                ['🎯 هدف و پاداش','وضعیت پاداش/جریمه'],
-                ['💰 حقوق','تاریخچه واریز'],
-                ['📒 هزینه / برداشت','ثبت هزینه و برداشت شخصی'],
-                ['⚙️ حساب من','تغییر مشخصات + همین راهنما']
+                ['🏠 داشبورد', 'صفحه اول بعد از ورود. خلاصه فروش امروز، وضعیت حضور، میانبر تب‌های مهم و هشدارها را می‌بینی. هر شیفت را از اینجا شروع کن.'],
+                ['🧀 ثبت فروش لبنیات', 'فروش حضوری پنیر، ماست، کره و مشابه. کالا را انتخاب یا با بارکد اسکن کن، وزن/تعداد را بزن و ثبت کن. فاکتور اشتباه را سریع همان روز اصلاح کن.'],
+                ['🛒 ثبت فروش اکالا', 'فقط سفارش‌ها و فروش‌های اکالا. با فروش حضوری قاطی نکن تا گزارش‌ها درست بماند.'],
+                ['🌭 ثبت فروش سوسیس', 'سوسیس، کالباس و فراورده‌های گوشتی فقط در این تب. قیمت و وزن را دقیق وارد کن.'],
+                ['📊 مقایسه قیمت سوسیس', 'برای دیدن/مقایسه قیمت مرجع سوسیس‌ها قبل از فروش یا قیمت‌گذاری.'],
+                ['📖 راهنمای کالا', 'اسم، کد و راهنمای پیدا کردن کالاها. اگر کد را بلد نیستی از اینجا جستجو کن.'],
+                ['🤖 دستیار هوش مصنوعی', 'سؤال کاری بپرس (مثلاً «این کالا کجاست»). جایگزین دستور مدیر نیست.'],
+                ['📝 یادداشت سریع', 'یادداشت کوتاه برای خودت یا تحویل به شیفت بعد.'],
+                ['✅ چک‌لیست روزانه', 'لیست کارهای اجباری همان شیفت. تیک الکی نزن؛ مدیر می‌تواند حضوری چک کند و جریمه ثبت کند.'],
+                ['🕒 حضور و غیاب', 'ورود، خروج، مرخصی و اضافه‌کاری. بدون خروج، شیفت باز می‌ماند. فقط با گوشی خودت.'],
+                ['💬 پیام به مدیر', 'سؤال، مشکل یا گزارش را مستقیم برای مدیر بفرست.'],
+                ['📥 صندوقچه', 'پیام‌ها، هشدار کمبود، یادآوری و اعلان‌های مدیر را اینجا می‌بینی.'],
+                ['🧊 وضعیت غرفه', 'موجودی یخچال و غرفه را ببین. برای شارژ و کنترل کمبود مهم است.'],
+                ['📦 موجودی انبار', 'موجودی انبار اصلی (معمولاً برای شیفت صبح و مدیر). بی‌دلیل کم/زیاد نکن.'],
+                ['🧾 سفارش خرید', 'کالای سفارش‌داده‌شده/در راه. بعد از رسیدن واقعی، وضعیت را درست کن.'],
+                ['📈 گزارش فروش', 'فروش و کارکرد خودت را در بازه دلخواه ببین.'],
+                ['🎯 هدف و پاداش', 'هدف فروش شیفت و وضعیت رسیدن به پاداش یا جریمه را نشان می‌دهد.'],
+                ['🚀 تقویت فروش', 'پیشنهاد و نکات برای فروش بیشتر در شیفت.'],
+                ['💰 حقوق', 'تاریخچه واریزهای مربوط به خودت. محاسبه نهایی با مدیر است.'],
+                ['📒 دفترچه هزینه', 'اگر از جیب خودت برای غرفه خرید کردی ثبت کن تا مدیر برگرداند.'],
+                ['🗑️ ضایعات', 'ضایعات را ثبت کن تا آمار درست باشد.'],
+                ['🛒 برداشت شخصی', 'اگر از غرفه برای مصرف شخصی چیزی برداشتی اینجا ثبت کن؛ بعداً از حقوق کم می‌شود.'],
+                ['📒 بدهکاری مشتری', 'بدهی مشتری را در صورت نیاز ثبت و پیگیری کن.'],
+                ['⚙️ حساب کاربری من', 'تغییر نام، موبایل، رمز و دانلود همین راهنمای شیفت.']
             ];
+            if (!isMorning) {
+                // برای شب بعضی تب‌ها ممکن است در منو نباشد؛ توضیح عمومی کافی است
+            }
             const dailyRows = daily.map(function (t, i) {
                 return '<tr><td style="width:36px">' + (i + 1).toLocaleString('fa-IR') + '</td><td>' + t + '</td></tr>';
             }).join('');
             const secRows = sections.map(function (s) {
-                return '<tr><td style="white-space:nowrap;font-weight:700">' + s[0] + '</td><td>' + s[1] + '</td></tr>';
+                return '<tr><td style="white-space:nowrap;font-weight:700;vertical-align:top">' + s[0] + '</td><td>' + s[1] + '</td></tr>';
             }).join('');
             return (
-                '<div class="brand"><div><h1>راهنمای پنل تازه مارکت</h1><div class="muted">شیفت ' + shiftFa + ' · حساب آزمایشی / آموزشی</div></div>' +
-                '<div class="muted">' + (typeof APP_BUILD !== 'undefined' ? APP_BUILD : '') + '</div></div>' +
-                '<div class="box"><b>توجه:</b> ثبت‌های فروش و حضور معمولاً <b>واقعی</b> هستند. با دقت کار کنید.</div>' +
-                '<h2>کارهای هر روز — شیفت ' + shiftFa + '</h2>' +
-                '<table><thead><tr><th>#</th><th>کار</th></tr></thead><tbody>' + dailyRows + '</tbody></table>' +
-                '<h2>بخش‌های اصلی سایت</h2>' +
-                '<table><thead><tr><th>بخش</th><th>کاربرد</th></tr></thead><tbody>' + secRows + '</tbody></table>' +
-                '<h2>قوانین مهم</h2>' +
-                '<div class="box">• ورود/خروج فقط با گوشی خودتان<br>• فروش را همان لحظه یک‌بار ثبت کنید<br>• چک‌لیست را الکی تیک نزنید<br>• مشکل داشتید در صندوقچه به مدیر پیام دهید</div>' +
-                '<p class="muted" style="margin-top:14px;text-align:center">صادر شده توسط سامانه تازه مارکت</p>'
+                '<div class="brand"><div><h1>راهنمای کامل پنل تازه مارکت</h1><div class="muted">شیفت ' + shiftFa + ' · آموزشی / آزمایشی</div></div>' +
+                '<div class="muted">نسخه: ' + (typeof APP_BUILD !== 'undefined' ? APP_BUILD : '') + '</div></div>' +
+                '<div class="box"><b>مهم:</b> حتی در حساب آزمایشی، فروش، حضور و موجودی اغلب <b>واقعی</b> ثبت می‌شوند. با دقت کار کنید.</div>' +
+                '<h2>۱) کارهای هر روز — شیفت ' + shiftFa + '</h2>' +
+                '<table><thead><tr><th>#</th><th>شرح کار</th></tr></thead><tbody>' + dailyRows + '</tbody></table>' +
+                '<h2>۲) توضیح دقیق تب‌ها و بخش‌های سایت</h2>' +
+                '<table><thead><tr><th>تب</th><th>توضیح کامل</th></tr></thead><tbody>' + secRows + '</tbody></table>' +
+                '<h2>۳) قوانین طلایی</h2>' +
+                '<div class="box">' +
+                '• ورود و خروج فقط با گوشی ثبت‌شده خودتان.<br>' +
+                '• هر فروش را همان لحظه و فقط یک‌بار ثبت کنید.<br>' +
+                '• تب‌ها را قاطی نکنید (اکالا جدا از حضوری).<br>' +
+                '• چک‌لیست را الکی تیک نزنید.<br>' +
+                '• برداشت شخصی را حتماً ثبت کنید.<br>' +
+                '• مشکل سایت یا کار: از «پیام به مدیر» یا صندوقچه اطلاع دهید.' +
+                '</div>' +
+                '<h2>۴) اگر صفحه بالا نیامد یا کند بود</h2>' +
+                '<div class="box">یک‌بار کامل ببندید، اینترنت پایدار وصل کنید، دوباره وارد شوید. چندبار پشت‌سرهم روی ثبت نزنید.</div>' +
+                '<p class="muted" style="margin-top:16px;text-align:center">صادر شده توسط سامانه تازه مارکت — همگام با نسخه فعلی پنل</p>'
             );
         }
         function printTrialGuide(shift) {
