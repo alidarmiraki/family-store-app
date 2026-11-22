@@ -5,7 +5,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="app-build" content="v297">
+    <meta name="app-build" content="v298">
     <!-- جلوگیری از کش‌شدن خود index.html توسط مرورگر/گوشی، تا نسخه‌ی جدید همیشه فوراً لود بشه
          (sw.js شما کش نمی‌کنه، ولی مرورگر یا هاست ممکنه خودش HTML رو کش کنه) -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -5553,7 +5553,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             }, (typeof MAX_SPLASH_MS === 'number' ? MAX_SPLASH_MS : 6000) + 1000);
         })();
 
-        const APP_BUILD = 'v297';
+        const APP_BUILD = 'v298';
         try { const __bt=document.getElementById('buildTag'); if(__bt) __bt.textContent = APP_BUILD + ' - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )'; } catch(e){}
         // ثبت Service Worker پایدار — همیشه /sw.js بدون ?v= تا آپدیت شکست نخورد
         if ('serviceWorker' in navigator) {
@@ -7911,19 +7911,21 @@ notify pgrst, 'reload schema';`;
         function buildTrialCredsMessage(c) {
             c = c || window.__lastTrialCreds;
             if (!c) return '';
-            const link = (location.origin || '') + (location.pathname || '/') + '?panel=1';
+            // پیام کوتاه برای واتساپ/پیامک (حداکثر حدود یک حباب کوتاه)
+            let link = '';
+            try {
+                link = (location.origin || 'https://taze-market.ir').replace(/\/$/, '') + '/?panel=1';
+            } catch (e) {
+                link = 'https://taze-market.ir/?panel=1';
+            }
             const shiftFa = c.role === 'evening_seller' ? 'شب' : 'صبح';
-            const modeFa = c.workMode === 'alternate' ? 'یک‌روزدرمیان' : 'هر روز';
-            return 'سلام ' + (c.fullName || '') + ' 👋\n' +
-                'حساب آزمایشی شما در پنل تازه مارکت آماده است.\n\n' +
-                '🔗 لینک ورود:\n' + link + '\n\n' +
-                '👤 نام کاربری: ' + c.username + '\n' +
-                '🔑 رمز عبور: ' + c.password + '\n' +
-                '🕒 شیفت: ' + shiftFa + '\n' +
-                '📅 الگوی کاری: ' + modeFa + '\n' +
-                '⏳ مهلت آزمایشی: ' + String(c.days) + ' روز\n\n' +
-                'بعد از ورود از بخش «حساب کاربری من» راهنمای کامل شیفت را دانلود کنید.\n' +
-                '— تازه مارکت';
+            const firstName = String(c.fullName || '').trim().split(/\s+/)[0] || '';
+            return 'سلام' + (firstName ? (' ' + firstName) : '') +
+                '\nورود پنل: ' + link +
+                '\nکاربری: ' + c.username +
+                '\nرمز: ' + c.password +
+                '\nشیفت ' + shiftFa +
+                (c.days ? (' · ' + c.days + ' روز آزمایشی') : '');
         }
         async function copyTrialCredentials() {
             const msg = buildTrialCredsMessage();
