@@ -5,7 +5,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="app-build" content="v300">
+    <meta name="app-build" content="v303">
     <!-- جلوگیری از کش‌شدن خود index.html توسط مرورگر/گوشی، تا نسخه‌ی جدید همیشه فوراً لود بشه
          (sw.js شما کش نمی‌کنه، ولی مرورگر یا هاست ممکنه خودش HTML رو کش کنه) -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -3169,6 +3169,25 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
 </script>
 
 
+    <!-- هشدار ساعت اشتباه گوشی -->
+    <div id="clockSkewOverlay" style="display:none;position:fixed;inset:0;z-index:10050;background:rgba(2,6,23,.88);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:18px;">
+        <div style="max-width:420px;width:100%;background:linear-gradient(160deg,#0f172a,#1e293b);border:1px solid rgba(251,191,36,.45);border-radius:18px;padding:18px 16px;color:#e2e8f0;box-shadow:0 20px 50px rgba(0,0,0,.45);">
+            <div style="font-size:28px;text-align:center;">⏰</div>
+            <h3 style="margin:8px 0 6px;text-align:center;color:#fbbf24;">ساعت یا تاریخ گوشی اشتباه است</h3>
+            <div id="clockSkewBody" style="margin:0;line-height:1.85;font-size:13px;color:#cbd5e1;"></div>
+            <div style="margin-top:12px;padding:10px;border-radius:12px;background:rgba(15,23,42,.7);border:1px solid rgba(148,163,184,.25);font-size:12px;line-height:1.75;">
+                <b style="color:#38bdf8;">راه حل:</b><br>
+                ۱) تنظیمات گوشی → تاریخ و ساعت<br>
+                ۲) «تاریخ و ساعت خودکار» را روشن کن<br>
+                ۳) منطقه زمانی: تهران<br>
+                ۴) برگرد و «دوباره چک کن» را بزن
+            </div>
+            <button type="button" class="submit-btn" style="margin-top:12px;" onclick="recheckDeviceClockAndContinue()">🔄 دوباره چک کن</button>
+            <button type="button" class="row-btn edit-btn" style="width:100%;margin-top:8px;" onclick="dismissClockSkewWarning(true)">ادامه موقت با زمان صحیح سرور</button>
+            <div style="margin-top:8px;text-align:center;font-size:11px;color:#94a3b8;">با ادامه موقت وارد می‌شوی؛ ثبت‌ها با ساعت درست ذخیره می‌شوند.</div>
+        </div>
+    </div>
+
     <!-- صفحه ورود -->
     <div id="loginScreen" class="login-box login-fancy" style="max-width:380px; margin:40px auto 0; animation: cardFadeIn 0.4s ease;">
         <div class="lg-aurora"><i></i><i></i><i></i></div>
@@ -5553,7 +5572,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             }, (typeof MAX_SPLASH_MS === 'number' ? MAX_SPLASH_MS : 6000) + 1000);
         })();
 
-        const APP_BUILD = 'v300';
+        const APP_BUILD = 'v303';
         try { const __bt=document.getElementById('buildTag'); if(__bt) __bt.textContent = APP_BUILD + ' - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )'; } catch(e){}
         // ثبت Service Worker پایدار — همیشه /sw.js بدون ?v= تا آپدیت شکست نخورد
         if ('serviceWorker' in navigator) {
@@ -7113,13 +7132,26 @@ ${PROXY_ENDPOINTS.map(u => `<div class="summary-mini" data-sel="${u}" style="gap
             }
         }
         function tehranNowForStorage(dateObj) {
-            const base = (dateObj instanceof Date) ? dateObj : new Date();
+            let base;
+            try {
+                // اگر ساعت گوشی خراب است، از ساعت سرور اصلاح‌شده استفاده کن
+                if (typeof trustedNowDate === 'function' && window.__clockSkew && window.__clockSkew.serverMs && !window.__clockSkew.ok) {
+                    base = trustedNowDate();
+                } else {
+                    base = (dateObj instanceof Date) ? dateObj : new Date();
+                }
+            } catch (e) {
+                base = (dateObj instanceof Date) ? dateObj : new Date();
+            }
             const day = getTehranISODate(base);
             const t = getTehranHMS(base);
             const d = new Date(day + 'T' + t.h + ':' + t.m + ':' + t.s + '+03:30');
             try {
                 if (isNaN(d.getTime())) return new Date();
-                if (d.getTime() - Date.now() > 15 * 60 * 1000) return new Date();
+                if (d.getTime() - Date.now() > 15 * 60 * 1000) {
+                    // هنوز جلو است — به trusted برگرد
+                    try { return (typeof trustedNowDate === 'function') ? trustedNowDate() : new Date(); } catch (e2) { return new Date(); }
+                }
             } catch (e) { return new Date(); }
             return d;
         }
@@ -8339,12 +8371,173 @@ notify pgrst, 'reload schema';`;
             } catch (e) { /* اشکالی ندارد */ }
         })();
 
+
+
+        // ========== تشخیص ساعت اشتباه گوشی + راهنمای اصلاح ==========
+        window.__clockSkew = { skewMs: 0, serverMs: 0, checkedAt: 0, dismissed: false, forceCorrect: true, ok: true };
+
+        async function probeServerTimeMs() {
+            async function headDate(url) {
+                const ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+                const timer = ctrl ? setTimeout(function () { try { ctrl.abort(); } catch (e) {} }, 3500) : null;
+                try {
+                    const resp = await fetch(url, { method: 'HEAD', cache: 'no-store', signal: ctrl ? ctrl.signal : undefined });
+                    if (timer) clearTimeout(timer);
+                    const dh = resp && resp.headers && (resp.headers.get('date') || resp.headers.get('Date'));
+                    if (dh) {
+                        const ms = Date.parse(dh);
+                        if (ms && !isNaN(ms)) return ms;
+                    }
+                } catch (e) { if (timer) clearTimeout(timer); }
+                return 0;
+            }
+            let ms = 0;
+            try { ms = await headDate((location.origin || '') + (location.pathname || '/') + '?clock=' + Date.now()); } catch (e) {}
+            if (!ms) {
+                try {
+                    const ctrl = new AbortController();
+                    const t = setTimeout(function () { try { ctrl.abort(); } catch (e) {} }, 4500);
+                    const r = await fetch('https://worldtimeapi.org/api/timezone/Asia/Tehran', { signal: ctrl.signal, cache: 'no-store' });
+                    clearTimeout(t);
+                    const j = await r.json();
+                    if (j && j.unixtime) ms = Number(j.unixtime) * 1000;
+                    else if (j && j.datetime) ms = Date.parse(j.datetime);
+                } catch (e) {}
+            }
+            return ms || 0;
+        }
+
+        async function checkDeviceClockSkew() {
+            const localMs = Date.now();
+            let serverMs = 0;
+            try { serverMs = await probeServerTimeMs(); } catch (e) {}
+            if (!serverMs) {
+                window.__clockSkew = Object.assign({}, window.__clockSkew || {}, {
+                    skewMs: 0, serverMs: 0, checkedAt: localMs, ok: true, unknown: true
+                });
+                return window.__clockSkew;
+            }
+            const skewMs = localMs - serverMs;
+            const localDay = (typeof getTehranISODate === 'function') ? getTehranISODate(new Date(localMs)) : '';
+            const serverDay = (typeof getTehranISODate === 'function') ? getTehranISODate(new Date(serverMs)) : '';
+            const dayMismatch = !!(localDay && serverDay && localDay !== serverDay);
+            const bad = dayMismatch || Math.abs(skewMs) > 30 * 60 * 1000;
+            window.__clockSkew = {
+                skewMs: skewMs,
+                serverMs: serverMs,
+                checkedAt: localMs,
+                localDay: localDay,
+                serverDay: serverDay,
+                dayMismatch: dayMismatch,
+                ok: !bad,
+                unknown: false,
+                dismissed: !!(window.__clockSkew && window.__clockSkew.dismissed),
+                forceCorrect: true
+            };
+            return window.__clockSkew;
+        }
+
+        function formatSkewHuman(ms) {
+            const abs = Math.abs(ms || 0);
+            const mins = Math.round(abs / 60000);
+            if (mins < 60) return mins.toLocaleString('fa-IR') + ' دقیقه';
+            const hours = Math.round(mins / 60);
+            if (hours < 48) return hours.toLocaleString('fa-IR') + ' ساعت';
+            return Math.round(hours / 24).toLocaleString('fa-IR') + ' روز';
+        }
+
+        function showClockSkewOverlay(info) {
+            const ov = document.getElementById('clockSkewOverlay');
+            const body = document.getElementById('clockSkewBody');
+            if (!ov || !body) return;
+            info = info || window.__clockSkew || {};
+            const ahead = (info.skewMs || 0) > 0;
+            const dir = ahead ? 'جلو' : 'عقب';
+            let html = '';
+            if (info.dayMismatch) {
+                html += 'تاریخ این گوشی: <b style="color:#fbbf24;">' + (info.localDay || '؟') + '</b><br>';
+                html += 'تاریخ واقعی تهران: <b style="color:#34d399;">' + (info.serverDay || '؟') + '</b><br><br>';
+            }
+            html += 'ساعت گوشی حدود <b style="color:#fbbf24;">' + formatSkewHuman(info.skewMs) + ' ' + dir + '</b> است.<br>';
+            html += 'اگر درستش نکنی، فروش‌ها ممکن است برای روز اشتباه ثبت شوند.';
+            body.innerHTML = html;
+            ov.style.display = 'flex';
+        }
+        function hideClockSkewOverlay() {
+            const ov = document.getElementById('clockSkewOverlay');
+            if (ov) ov.style.display = 'none';
+        }
+        async function recheckDeviceClockAndContinue() {
+            try { showToast('⏳ بررسی ساعت...'); } catch (e) {}
+            const info = await checkDeviceClockSkew();
+            if (info.ok || info.unknown) {
+                if (window.__clockSkew) window.__clockSkew.dismissed = false;
+                hideClockSkewOverlay();
+                try { showToast('✅ ساعت گوشی درست است — می‌توانی وارد شوی'); } catch (e) {}
+                return true;
+            }
+            showClockSkewOverlay(info);
+            try { showToast('هنوز اشتباه است — تاریخ/ساعت خودکار را روشن کن'); } catch (e) {}
+            return false;
+        }
+        function dismissClockSkewWarning(allowContinue) {
+            window.__clockSkew = window.__clockSkew || {};
+            window.__clockSkew.dismissed = true;
+            window.__clockSkew.forceCorrect = true;
+            hideClockSkewOverlay();
+            if (allowContinue) {
+                try { showToast('ادامه با زمان سرور — بعداً ساعت گوشی را درست کن'); } catch (e) {}
+            }
+        }
+        function trustedNowDate() {
+            try {
+                const sk = window.__clockSkew;
+                if (sk && sk.serverMs && (sk.forceCorrect || !sk.ok) && Math.abs(sk.skewMs || 0) > 2 * 60 * 1000) {
+                    const elapsed = Date.now() - (sk.checkedAt || Date.now());
+                    return new Date(sk.serverMs + Math.max(0, elapsed));
+                }
+            } catch (e) {}
+            return new Date();
+        }
+        window.recheckDeviceClockAndContinue = recheckDeviceClockAndContinue;
+        window.dismissClockSkewWarning = dismissClockSkewWarning;
+        window.checkDeviceClockSkew = checkDeviceClockSkew;
+        window.showClockSkewOverlay = showClockSkewOverlay;
+
+        // هنگام باز شدن صفحه ورود، ساعت را چک کن
+        (function () {
+            function runClockBoot() {
+                try {
+                    checkDeviceClockSkew().then(function (info) {
+                        if (info && !info.ok && !info.unknown && !info.dismissed) showClockSkewOverlay(info);
+                    }).catch(function () {});
+                } catch (e) {}
+            }
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(runClockBoot, 900); });
+            else setTimeout(runClockBoot, 900);
+        })();
+
         async function checkLogin() {
             const username = document.getElementById('accessUser').value.trim();
             const password = document.getElementById('accessPin').value;
             const errBox = document.getElementById('loginError');
             const loginBtn = document.getElementById('loginSubmitBtn');
             errBox.style.display = 'none';
+
+            // قبل از ورود: اگر تاریخ گوشی یک روز جلو/عقب است، راهنما نشان بده
+            try {
+                const info = await checkDeviceClockSkew();
+                if (info && !info.ok && !info.unknown && !(info.dismissed)) {
+                    showClockSkewOverlay(info);
+                    // ورود را قطع نمی‌کنیم اگر کاربر قبلاً «ادامه موقت» زده باشد؛
+                    // در غیر این صورت تا اصلاح یا ادامه موقت، توقف
+                    if (!window.__clockSkew || !window.__clockSkew.dismissed) {
+                        showToast('⏰ اول ساعت گوشی را درست کن یا «ادامه موقت» را بزن');
+                        return;
+                    }
+                }
+            } catch (e) {}
+
 
             if (!username || !password) {
                 errBox.innerText = '❌ لطفاً نام کاربری و رمز عبور را وارد کنید';
@@ -8519,8 +8712,23 @@ notify pgrst, 'reload schema';`;
             try { setTimeout(ensureDiagnosticsVisible, 800); setTimeout(ensureDiagnosticsVisible, 2500); } catch (e) {}
             try { setTimeout(function () { dclMaybeRemindOnLogin(); }, 1800); } catch (e) {}
             try {
-                setTimeout(function () { try { diagPulseSession(); } catch (e) {} }, 1500);
+                setTimeout(function () {
+                    try {
+                        checkDeviceClockSkew().then(function (info) {
+                            if (info && !info.ok && !info.unknown && !info.dismissed) showClockSkewOverlay(info);
+                        });
+                    } catch (e) {}
+                    try { diagPulseSession(); } catch (e) {}
+                }, 1200);
                 setInterval(function () { try { if (currentSessionUser || currentRole) diagPulseSession(); } catch (e) {} }, 180000);
+                setInterval(function () {
+                    try {
+                        if (!(currentSessionUser || currentRole)) return;
+                        checkDeviceClockSkew().then(function (info) {
+                            if (info && !info.ok && !info.unknown && !info.dismissed) showClockSkewOverlay(info);
+                        });
+                    } catch (e) {}
+                }, 10 * 60 * 1000);
             } catch (e) {}
 
             renderBottomNav();
@@ -16999,12 +17207,44 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
                 const ua = (navigator.userAgent || '').slice(0, 140);
                 const role = String(currentRole || (currentSessionUser && currentSessionUser.role) || '');
                 const username = (currentSessionUser && (currentSessionUser.username || currentSessionUser.full_name)) || '';
+                let atIso = new Date().toISOString();
+                try {
+                    const ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+                    const timer = ctrl ? setTimeout(function () { try { ctrl.abort(); } catch (e) {} }, 2500) : null;
+                    const resp = await fetch((location.origin || '') + (location.pathname || '/') + '?ping=' + Date.now(), {
+                        method: 'HEAD',
+                        cache: 'no-store',
+                        signal: ctrl ? ctrl.signal : undefined
+                    });
+                    if (timer) clearTimeout(timer);
+                    const dh = resp && resp.headers && (resp.headers.get('date') || resp.headers.get('Date'));
+                    if (dh) {
+                        const serverMs = Date.parse(dh);
+                        if (serverMs && !isNaN(serverMs)) atIso = new Date(serverMs).toISOString();
+                    }
+                } catch (e) {}
+                try {
+                    let maxOther = 0;
+                    Object.keys(sessions).forEach(function (k) {
+                        if (k === id) return;
+                        const ts = sessions[k] && sessions[k].at ? Date.parse(sessions[k].at) : 0;
+                        if (ts > maxOther) maxOther = ts;
+                    });
+                    const myMs = Date.parse(atIso) || Date.now();
+                    if (maxOther > 0 && myMs - maxOther > 6 * 3600 * 1000) {
+                        atIso = new Date(Math.min(myMs, maxOther + 60 * 1000)).toISOString();
+                    }
+                    if ((Date.parse(atIso) || 0) - Date.now() > 15 * 60 * 1000) {
+                        atIso = new Date().toISOString();
+                    }
+                } catch (e2) {}
                 sessions[id] = {
                     user: username,
                     label: currentUserLabel || username || role,
                     role: role,
                     ua: ua,
-                    at: new Date().toISOString(),
+                    at: atIso,
+                    tehran_day: (typeof getTehranISODate === 'function') ? getTehranISODate(new Date(Date.parse(atIso) || Date.now())) : '',
                     build: (typeof APP_BUILD !== 'undefined' ? APP_BUILD : ''),
                     online: true
                 };
@@ -17044,8 +17284,18 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
                 const now = Date.now();
                 function card(k) {
                     const s = sessions[k] || {};
-                    const when = s.at ? (typeof getTehranFullDateTimeString === 'function' ? getTehranFullDateTimeString(new Date(s.at)) : s.at) : '—';
-                    const ageMin = s.at ? Math.round((now - Date.parse(s.at)) / 60000) : 9999;
+                    const let atMs = s.at ? Date.parse(s.at) : 0;
+                    let clockAhead = false;
+                    if (atMs && atMs - now > 2 * 60 * 1000) {
+                        // ساعت گوشی فروشنده جلو است — برای نمایش و «فعال بودن» اصلاح می‌کنیم
+                        clockAhead = true;
+                        atMs = now;
+                    }
+                    when = atMs
+                        ? ((typeof getTehranFullDateTimeString === 'function' ? getTehranFullDateTimeString(new Date(atMs)) : new Date(atMs).toISOString())
+                            + (clockAhead ? ' ⚠️ ساعت گوشی جلو بود' : ''))
+                        : '—';
+                    const ageMin = atMs ? Math.round((now - atMs) / 60000) : 9999;
                     const live = ageMin <= 15;
                     const isMe = k === me;
                     const roleFa = diagRoleFa(s.role);
