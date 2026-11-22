@@ -5,7 +5,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="app-build" content="v304">
+    <meta name="app-build" content="v305">
     <!-- جلوگیری از کش‌شدن خود index.html توسط مرورگر/گوشی، تا نسخه‌ی جدید همیشه فوراً لود بشه
          (sw.js شما کش نمی‌کنه، ولی مرورگر یا هاست ممکنه خودش HTML رو کش کنه) -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -3261,9 +3261,18 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             <input type="checkbox" id="regAcceptContract" style="width:auto;"> متن قرارداد بالا را به‌طور کامل مطالعه کردم و می‌پذیرم.
         </label>
 
-        <label>📸 عکس کارت ملی (رو یا هردو طرف در یک عکس) - <span style="color:#ef4444; font-weight:bold;">الزامی*</span>:</label>
-        <input type="file" id="regNationalIdPhoto" accept="image/*" onchange="previewRegNationalIdPhoto(event)">
-        <img id="regNationalIdPhotoPreview" class="photo-preview">
+        <label>📘 عکس صفحه اول شناسنامه - <span style="color:#ef4444; font-weight:bold;">الزامی*</span>:</label>
+        <input type="file" id="regShenasPage1" accept="image/*" onchange="previewRegDocPhoto(event, 'page1')">
+        <img id="regShenasPage1Preview" class="photo-preview">
+        <div class="hint" style="margin-top:4px;">صفحه مشخصات اصلی شناسنامه (صفحه اول).</div>
+
+        <label>🪪 عکس صفحه دوم شناسنامه + کارت ملی - <span style="color:#ef4444; font-weight:bold;">الزامی*</span>:</label>
+        <input type="file" id="regShenasPage2Id" accept="image/*" onchange="previewRegDocPhoto(event, 'page2')">
+        <img id="regShenasPage2IdPreview" class="photo-preview">
+        <div class="hint" style="margin-top:4px;">صفحه دوم شناسنامه و کارت ملی (ترجیحاً در یک عکس واضح).</div>
+
+        <input type="file" id="regNationalIdPhoto" accept="image/*" style="display:none;" onchange="previewRegNationalIdPhoto(event)">
+        <img id="regNationalIdPhotoPreview" class="photo-preview" style="display:none;">
 
         <label>✍️ امضای دیجیتال شما (با انگشت یا موس امضا کنید) - <span style="color:#ef4444; font-weight:bold;">الزامی*</span>:</label>
         <div style="background:#fff; border-radius:10px; overflow:hidden;">
@@ -3384,10 +3393,14 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             <label><input type="radio" name="sQtyUnit" value="gram" onchange="onSaleUnitChange('instore')"> گرم (زیر یک کیلو)</label>
         </div>
         <label id="sQtyLabel">مقدار (کیلوگرم):</label>
-        <input type="text" inputmode="decimal" id="sQty" step="0.001" placeholder="مثلاً 1.5" oninput="calculateSalePriceAuto('instore')">
+        <input type="text" inputmode="decimal" id="sQty" step="0.001" placeholder="مثلاً 1.5" oninput="onSaleQtyTyped('instore')">
         <div class="hint">سیستم قیمت را بر اساس نرخ کالا در انبار خودکار محاسبه می‌کند. اگر مقدار زیر یک کیلوست، واحد «گرم» را انتخاب کنید و مثلاً 250 وارد کنید. این تب فقط برای فروش‌های حضوری داخل غرفه است.</div>
 
-        <div id="sCalcDisplay" class="price-display">مبلغ کل فاکتور: ۰ تومان (قیمت واحد: ۰ تومان)</div>
+                <label>یا مبلغ کل فاکتور (تومان):</label>
+        <input type="text" inputmode="decimal" id="sAmount" placeholder="مثلاً 250000" oninput="onSaleAmountInput('instore')">
+        <div class="hint" id="sAmountHint" style="margin-top:4px;">می‌توانی به‌جای وزن، مبلغ را وارد کنی تا وزن از روی قیمت کیلویی حساب شود.</div>
+
+<div id="sCalcDisplay" class="price-display">مبلغ کل فاکتور: ۰ تومان (قیمت واحد: ۰ تومان)</div>
 
         <div class="tare-box" style="margin-top:14px;">
             <label style="margin-top:0; display:flex; align-items:center; gap:6px;">
@@ -3458,9 +3471,13 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             <label><input type="radio" name="seQtyUnit" value="gram" onchange="onSaleUnitChange('ekala')"> گرم (زیر یک کیلو)</label>
         </div>
         <label id="seQtyLabel">مقدار (کیلوگرم):</label>
-        <input type="text" inputmode="decimal" id="seQty" step="0.001" placeholder="مثلاً 1.5" oninput="calculateSalePriceAuto('ekala')">
+        <input type="text" inputmode="decimal" id="seQty" step="0.001" placeholder="مثلاً 1.5" oninput="onSaleQtyTyped('ekala')">
 
-        <div id="seCalcDisplay" class="price-display">مبلغ کل فاکتور: ۰ تومان (قیمت واحد: ۰ تومان)</div>
+                <label>یا مبلغ کل فاکتور (تومان):</label>
+        <input type="text" inputmode="decimal" id="seAmount" placeholder="مثلاً 250000" oninput="onSaleAmountInput('ekala')">
+        <div class="hint" id="seAmountHint" style="margin-top:4px;">می‌توانی به‌جای وزن، مبلغ را وارد کنی تا وزن از روی قیمت کیلویی حساب شود.</div>
+
+<div id="seCalcDisplay" class="price-display">مبلغ کل فاکتور: ۰ تومان (قیمت واحد: ۰ تومان)</div>
 
         <div class="tare-box" style="margin-top:14px;">
             <label style="margin-top:0; display:flex; align-items:center; gap:6px;">
@@ -3531,9 +3548,13 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             <label><input type="radio" name="ssQtyUnit" value="gram" onchange="onSaleUnitChange('sausage')"> گرم (زیر یک کیلو)</label>
         </div>
         <label id="ssQtyLabel">مقدار (کیلوگرم):</label>
-        <input type="text" inputmode="decimal" id="ssQty" step="0.001" placeholder="مثلاً 1.5" oninput="calculateSalePriceAuto('sausage')">
+        <input type="text" inputmode="decimal" id="ssQty" step="0.001" placeholder="مثلاً 1.5" oninput="onSaleQtyTyped('sausage')">
 
-        <div id="ssCalcDisplay" class="price-display">مبلغ کل فاکتور: ۰ تومان (قیمت واحد: ۰ تومان)</div>
+                <label>یا مبلغ کل فاکتور (تومان):</label>
+        <input type="text" inputmode="decimal" id="ssAmount" placeholder="مثلاً 250000" oninput="onSaleAmountInput('sausage')">
+        <div class="hint" id="ssAmountHint" style="margin-top:4px;">می‌توانی به‌جای وزن، مبلغ را وارد کنی تا وزن از روی قیمت کیلویی حساب شود.</div>
+
+<div id="ssCalcDisplay" class="price-display">مبلغ کل فاکتور: ۰ تومان (قیمت واحد: ۰ تومان)</div>
 
         <div class="tare-box" style="margin-top:14px;">
             <label style="margin-top:0; display:flex; align-items:center; gap:6px;">
@@ -5572,7 +5593,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             }, (typeof MAX_SPLASH_MS === 'number' ? MAX_SPLASH_MS : 3500) + 800);
         })();
 
-        const APP_BUILD = 'v304';
+        const APP_BUILD = 'v305';
         try { const __bt=document.getElementById('buildTag'); if(__bt) __bt.textContent = APP_BUILD + ' - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )'; } catch(e){}
         // ثبت Service Worker پایدار — همیشه /sw.js بدون ?v= تا آپدیت شکست نخورد
         if ('serviceWorker' in navigator) {
@@ -6962,6 +6983,7 @@ ${PROXY_ENDPOINTS.map(u => `<div class="summary-mini" data-sel="${u}" style="gap
         const SALE_FORM_IDS = {
             instore: {
                 name: 'sName', qtyUnitName: 'sQtyUnit', qty: 'sQty', qtyLabel: 'sQtyLabel',
+                amount: 'sAmount', amountHint: 'sAmountHint',
                 calc: 'sCalcDisplay', submitBtn: 'saleSubmitBtn', formTitle: 'saleFormTitle',
                 cancelBtn: 'cancelSaleEditBtn', table: 'recentSalesTable', pageIndicator: 'salesPageIndicator',
                 lateToggle: 'sLateToggle', lateBox: 'sLateBox', lateDate: 'sLateDate', lateShift: 'sLateShift',
@@ -6970,6 +6992,7 @@ ${PROXY_ENDPOINTS.map(u => `<div class="summary-mini" data-sel="${u}" style="gap
             },
             ekala: {
                 name: 'seName', qtyUnitName: 'seQtyUnit', qty: 'seQty', qtyLabel: 'seQtyLabel',
+                amount: 'seAmount', amountHint: 'seAmountHint',
                 calc: 'seCalcDisplay', submitBtn: 'saleEkalaSubmitBtn', formTitle: 'saleEkalaFormTitle',
                 cancelBtn: 'cancelSaleEkalaEditBtn', table: 'recentSalesTableEkala', pageIndicator: 'salesPageIndicatorEkala',
                 lateToggle: 'seLateToggle', lateBox: 'seLateBox', lateDate: 'seLateDate', lateShift: 'seLateShift',
@@ -6978,6 +7001,7 @@ ${PROXY_ENDPOINTS.map(u => `<div class="summary-mini" data-sel="${u}" style="gap
             },
             sausage: {
                 name: 'ssName', qtyUnitName: 'ssQtyUnit', qty: 'ssQty', qtyLabel: 'ssQtyLabel',
+                amount: 'ssAmount', amountHint: 'ssAmountHint',
                 calc: 'ssCalcDisplay', submitBtn: 'saleSausageSubmitBtn', formTitle: 'saleSausageFormTitle',
                 cancelBtn: 'cancelSaleSausageEditBtn', table: 'recentSalesTableSausage', pageIndicator: 'salesPageIndicatorSausage',
                 lateToggle: 'ssLateToggle', lateBox: 'ssLateBox', lateDate: 'ssLateDate', lateShift: 'ssLateShift',
@@ -7450,15 +7474,23 @@ notify pgrst, 'reload schema';`;
         async function buildContractText(fullName, shiftKey, nationalId, customBody) {
             const template = (customBody && customBody.trim()) ? customBody : await getContractTemplate();
             const todayFa = getTehranDateString(new Date());
+            const todayFull = (typeof getTehranFullDateTimeString === 'function') ? getTehranFullDateTimeString(new Date()) : todayFa;
             const shiftText = (shiftKey === 'evening') ? 'شیفت شب' : 'شیفت صبح';
             const nameDisplay = fullName || '[نام و نام خانوادگی]';
             const idDisplay = nationalId ? (' به کد ملی ' + nationalId) : '';
 
-            return template
+            let body = template
                 .split('{{نام}}').join(nameDisplay)
                 .split('{{کدملی}}').join(idDisplay)
                 .split('{{شیفت}}').join(shiftText)
-                .split('{{تاریخ}}').join(todayFa);
+                .split('{{تاریخ}}').join(todayFa)
+                .split('{{تاریخ_عقد}}').join(todayFa)
+                .split('{{زمان_امضا}}').join(todayFull);
+
+            if (body.indexOf('تاریخ عقد قرارداد') < 0) {
+                body += '\n\n————————————\n📅 تاریخ عقد قرارداد: ' + todayFa + '\n🕒 زمان امضای قرارداد: ' + todayFull + '\n';
+            }
+            return body;
         }
 
         async function updateContractPreview() {
@@ -7541,27 +7573,39 @@ notify pgrst, 'reload schema';`;
             return canvas.toDataURL('image/png');
         }
 
-        function previewRegNationalIdPhoto(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    selectedRegNationalIdPhotoDataUrl = e.target.result;
-                    const img = document.getElementById('regNationalIdPhotoPreview');
-                    img.src = selectedRegNationalIdPhotoDataUrl;
-                    img.style.display = 'block';
-                };
-                reader.onerror = function() {
-                    selectedRegNationalIdPhotoDataUrl = null;
-                    showToast('❌ خطا در خواندن عکس انتخاب‌شده. لطفاً دوباره تلاش کنید.');
-                };
-                reader.readAsDataURL(file);
-            } else {
-                selectedRegNationalIdPhotoDataUrl = null;
+        let selectedRegShenasPage1DataUrl = null;
+        let selectedRegShenasPage2DataUrl = null;
+
+        function previewRegDocPhoto(event, which) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) {
+                if (which === 'page1') selectedRegShenasPage1DataUrl = null;
+                else { selectedRegShenasPage2DataUrl = null; }
+                return;
             }
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const url = e.target.result;
+                if (which === 'page1') {
+                    selectedRegShenasPage1DataUrl = url;
+                    const img = document.getElementById('regShenasPage1Preview');
+                    if (img) { img.src = url; img.style.display = 'block'; }
+                } else {
+                    selectedRegShenasPage2DataUrl = url;
+                    selectedRegNationalIdPhotoDataUrl = url;
+                    const img = document.getElementById('regShenasPage2IdPreview');
+                    if (img) { img.src = url; img.style.display = 'block'; }
+                }
+            };
+            reader.onerror = function () { showToast('❌ خطا در خواندن عکس. دوباره تلاش کنید.'); };
+            reader.readAsDataURL(file);
         }
 
-        async function notifyAdminAboutNewRegistration(fullName, nationalId, phone, role, idPhotoUrl, signatureUrl, isExisting) {
+        function previewRegNationalIdPhoto(event) {
+            previewRegDocPhoto(event, 'page2');
+        }
+
+        async function notifyAdminAboutNewRegistration(fullName, nationalId, phone, role, idPhotoUrl, signatureUrl, isExisting, shenasPage1Url) {
             try {
                 const now = new Date();
                 const roleLabelText = (role === 'evening_seller') ? 'فروشنده شب' : 'فروشنده صبح';
@@ -7569,7 +7613,7 @@ notify pgrst, 'reload schema';`;
                     sender: 'سیستم ثبت‌نام',
                     recipient: 'admin',
                     title: isExisting ? `📄 تکمیل قرارداد همکاری: ${fullName}` : `🆕 ثبت‌نام نیروی جدید: ${fullName}`,
-                    body: `${isExisting ? 'یک نیروی قبلی، فرم اطلاعات و قرارداد خود را تکمیل کرد.' : 'یک نیروی جدید ثبت‌نام کرد و قرارداد را امضا کرد.'}\n\n👤 نام و نام خانوادگی: ${fullName}\n🪪 کد ملی: ${nationalId}\n📱 شماره موبایل: ${phone}\n🕐 شیفت: ${roleLabelText}\n\n📸 عکس کارت ملی: ${idPhotoUrl || 'آپلود نشد'}\n✍️ لینک تصویر امضا: ${signatureUrl || 'ثبت نشد'}`,
+                    body: `${isExisting ? 'یک نیروی قبلی، فرم اطلاعات و قرارداد خود را تکمیل کرد.' : 'یک نیروی جدید ثبت‌نام کرد و قرارداد را امضا کرد.'}\n\n👤 نام و نام خانوادگی: ${fullName}\n🪪 کد ملی: ${nationalId}\n📱 شماره موبایل: ${phone}\n🕐 شیفت: ${roleLabelText}\n\n📅 تاریخ عقد: ${getTehranDateString(now)}\n📘 شناسنامه ص۱: ${(typeof shenasPage1Url !== "undefined" && shenasPage1Url) ? shenasPage1Url : "—"}\n🪪 شناسنامه ص۲ + کارت ملی: ${idPhotoUrl || 'آپلود نشد'}\n✍️ امضا: ${signatureUrl || 'ثبت نشد'}`,
                     created_at: now.toISOString()
                 }]);
                 sendTelegramNotification(`${isExisting ? '📄 تکمیل قرارداد' : '🆕 ثبت‌نام نیروی جدید'}: ${fullName} (${roleLabelText})`);
@@ -7624,11 +7668,18 @@ notify pgrst, 'reload schema';`;
                 errBox.style.display = 'block';
                 return;
             }
-            if (!selectedRegNationalIdPhotoDataUrl) {
-                errBox.innerText = '❌ آپلود عکس کارت ملی الزامی است.';
+            if (!selectedRegShenasPage1DataUrl) {
+                errBox.innerText = '❌ آپلود عکس صفحه اول شناسنامه الزامی است.';
                 errBox.style.display = 'block';
                 return;
             }
+            if (!selectedRegShenasPage2DataUrl && !selectedRegNationalIdPhotoDataUrl) {
+                errBox.innerText = '❌ آپلود عکس صفحه دوم شناسنامه و کارت ملی الزامی است.';
+                errBox.style.display = 'block';
+                return;
+            }
+            if (!selectedRegShenasPage2DataUrl) selectedRegShenasPage2DataUrl = selectedRegNationalIdPhotoDataUrl;
+            if (!selectedRegNationalIdPhotoDataUrl) selectedRegNationalIdPhotoDataUrl = selectedRegShenasPage2DataUrl;
             const signatureDataUrl = getSignatureDataUrl();
             if (!signatureDataUrl) {
                 errBox.innerText = '❌ لطفاً در کادر امضا، امضای خود را ثبت کنید.';
@@ -7675,9 +7726,17 @@ notify pgrst, 'reload schema';`;
             let signatureUrl = null;
             const safeNamePart = (username || (pendingCompleteUser ? pendingCompleteUser.username : 'user')).replace(/[^a-zA-Z0-9_-]+/g, '_');
 
+            let shenasPage1Url = null;
             try {
-                const idBlob = await compressDataUrl(selectedRegNationalIdPhotoDataUrl);
-                const idFileName = `${safeNamePart}_${Date.now()}.jpg`;
+                const p1Blob = await compressDataUrl(selectedRegShenasPage1DataUrl);
+                const p1Name = `${safeNamePart}_${Date.now()}_shenas1.jpg`;
+                const { error: p1Err } = await _supabase.storage.from(NATIONAL_ID_BUCKET).upload(p1Name, p1Blob, { contentType: 'image/jpeg', upsert: true });
+                if (p1Err) throw p1Err;
+                const { data: p1UrlData } = _supabase.storage.from(NATIONAL_ID_BUCKET).getPublicUrl(p1Name);
+                shenasPage1Url = p1UrlData ? p1UrlData.publicUrl : null;
+
+                const idBlob = await compressDataUrl(selectedRegShenasPage2DataUrl || selectedRegNationalIdPhotoDataUrl);
+                const idFileName = `${safeNamePart}_${Date.now()}_shenas2_id.jpg`;
                 const { error: idUploadErr } = await _supabase.storage.from(NATIONAL_ID_BUCKET).upload(idFileName, idBlob, { contentType: 'image/jpeg', upsert: true });
                 if (idUploadErr) throw idUploadErr;
                 const { data: idUrlData } = _supabase.storage.from(NATIONAL_ID_BUCKET).getPublicUrl(idFileName);
@@ -7732,7 +7791,7 @@ notify pgrst, 'reload schema';`;
                     return;
                 }
 
-                await notifyAdminAboutNewRegistration(fullName, nationalId, phone, roleValue, nationalIdPhotoUrl, signatureUrl, false);
+                await notifyAdminAboutNewRegistration(fullName, nationalId, phone, roleValue, nationalIdPhotoUrl, signatureUrl, false, shenasPage1Url);
                 saveSignedContractTextSilently(username, exactContractTextShown);
                 showToast('✅ ثبت‌نام شما با موفقیت انجام شد!\nحالا می‌توانید با همین نام کاربری و رمز عبور وارد شوید.');
                 document.getElementById('accessUser').value = username;
@@ -7761,7 +7820,7 @@ notify pgrst, 'reload schema';`;
                     return;
                 }
 
-                await notifyAdminAboutNewRegistration(fullName, nationalId, phone, pendingCompleteUser.role, nationalIdPhotoUrl, signatureUrl, true);
+                await notifyAdminAboutNewRegistration(fullName, nationalId, phone, pendingCompleteUser.role, nationalIdPhotoUrl, signatureUrl, true, shenasPage1Url);
                 saveSignedContractTextSilently(pendingCompleteUser.username, exactContractTextShown);
                 showToast('✅ اطلاعات و قرارداد شما با موفقیت ثبت شد.');
 
@@ -10319,46 +10378,129 @@ notify pgrst, 'reload schema';`;
             calculateSalePriceAuto(type);
         }
 
+        let saleInputMode = { instore: 'qty', ekala: 'qty', sausage: 'qty' };
+
+        function parseFaNumberInput(raw) {
+            if (raw == null) return 0;
+            var s = String(raw).trim()
+                .replace(/[۰-۹]/g, function (d) { return String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)); })
+                .replace(/[٠-٩]/g, function (d) { return String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)); })
+                .replace(/,/g, '')
+                .replace(/٫/g, '.')
+                .replace(/[^\d.]/g, '');
+            var n = parseFloat(s);
+            return isNaN(n) ? 0 : n;
+        }
+        function formatTomanFa(n) {
+            return Math.round(Number(n) || 0).toLocaleString('fa-IR') + ' تومان';
+        }
+
         function getSaleQtyInKg(type) {
-            const ids = SALE_FORM_IDS[type];
-            const raw = parseFloat(document.getElementById(ids.qty).value) || 0;
-            const unit = document.querySelector(`input[name="${ids.qtyUnitName}"]:checked`).value;
+            var ids = SALE_FORM_IDS[type];
+            var raw = parseFaNumberInput((document.getElementById(ids.qty) || {}).value);
+            var unitEl = document.querySelector('input[name="' + ids.qtyUnitName + '"]:checked');
+            var unit = unitEl ? unitEl.value : 'kg';
             return unit === 'gram' ? Number((raw / 1000).toFixed(4)) : raw;
         }
 
+        async function resolveSaleProduct(type) {
+            var ids = SALE_FORM_IDS[type];
+            var nameVal = ((document.getElementById(ids.name) || {}).value || '').trim();
+            if (!nameVal) return null;
+            if (!cachedProductsList || cachedProductsList.length === 0) {
+                var _pd = null;
+                try { var r = await _supabase.from('products').select('*'); _pd = r.data; if (!r.error) offlineSaveProducts(_pd || []); } catch (e) { _pd = offlineLoadProducts(); }
+                if (!_pd || !_pd.length) _pd = offlineLoadProducts();
+                cachedProductsList = sortProductsAlpha(_pd || []);
+            }
+            return cachedProductsList.find(function (p) { return p.name === nameVal || p.code === nameVal; })
+                || (typeof findProductInList === 'function' ? findProductInList(nameVal, cachedProductsList) : null);
+        }
+
+        async function onSaleAmountInput(type) {
+            saleInputMode[type] = 'amount';
+            var ids = SALE_FORM_IDS[type];
+            var amountEl = ids.amount ? document.getElementById(ids.amount) : null;
+            var hintEl = ids.amountHint ? document.getElementById(ids.amountHint) : null;
+            var amount = parseFaNumberInput(amountEl ? amountEl.value : 0);
+            if (hintEl) {
+                hintEl.innerHTML = amount > 0
+                    ? ('مبلغ واردشده: <b style="color:#38bdf8;">' + formatTomanFa(amount) + '</b>')
+                    : 'می‌توانی به‌جای وزن، مبلغ را وارد کنی تا وزن از روی قیمت کیلویی حساب شود.';
+            }
+            var product = await resolveSaleProduct(type);
+            var unitPrice = product ? (Number(product.sell_price) || 0) : (selectedProductUnitPrice[type] || 0);
+            selectedProductUnitPrice[type] = unitPrice;
+            var qtyInput = document.getElementById(ids.qty);
+            if (unitPrice > 0 && amount > 0) {
+                var kg = Number((amount / unitPrice).toFixed(4));
+                try {
+                    var gramRadio = document.querySelector('input[name="' + ids.qtyUnitName + '"][value="gram"]');
+                    var kgRadio = document.querySelector('input[name="' + ids.qtyUnitName + '"][value="kg"]');
+                    if (kg < 1 && gramRadio) {
+                        gramRadio.checked = true;
+                        if (qtyInput) qtyInput.value = String(Math.round(kg * 1000));
+                    } else {
+                        if (kgRadio) kgRadio.checked = true;
+                        if (qtyInput) qtyInput.value = String(kg);
+                    }
+                    var label = document.getElementById(ids.qtyLabel);
+                    var unit = document.querySelector('input[name="' + ids.qtyUnitName + '"]:checked');
+                    if (label && unit) {
+                        if (unit.value === 'gram') { label.innerText = 'مقدار (گرم):'; if (qtyInput) qtyInput.placeholder = 'مثلاً 250 برای 250 گرم'; }
+                        else { label.innerText = 'مقدار (کیلوگرم):'; if (qtyInput) qtyInput.placeholder = 'مثلاً 1.5'; }
+                    }
+                } catch (e) {}
+            }
+            await calculateSalePriceAuto(type);
+        }
+
+        function onSaleQtyTyped(type) {
+            saleInputMode[type] = 'qty';
+            calculateSalePriceAuto(type);
+        }
+
         async function calculateSalePriceAuto(type) {
-            const ids = SALE_FORM_IDS[type];
-            const nameVal = document.getElementById(ids.name).value.trim();
-            const qty = getSaleQtyInKg(type);
-            const display = document.getElementById(ids.calc);
+            var ids = SALE_FORM_IDS[type];
+            var nameVal = ((document.getElementById(ids.name) || {}).value || '').trim();
+            var qty = getSaleQtyInKg(type);
+            var display = document.getElementById(ids.calc);
+            var amountEl = ids.amount ? document.getElementById(ids.amount) : null;
+            var hintEl = ids.amountHint ? document.getElementById(ids.amountHint) : null;
 
             if (!nameVal) {
-                display.innerText = 'مبلغ کل فاکتور: ۰ تومان (قیمت واحد: ۰ تومان)';
+                if (display) display.innerText = 'مبلغ کل فاکتور: ۰ تومان (قیمت واحد: ۰ تومان)';
                 selectedProductUnitPrice[type] = 0;
                 return;
             }
 
-            if (cachedProductsList.length === 0) {
-                let _pd = null;
-                try { const r = await _supabase.from('products').select('*'); _pd = r.data; if (!r.error) offlineSaveProducts(_pd || []); } catch (e) { _pd = offlineLoadProducts(); }
-                if (!_pd || !_pd.length) _pd = offlineLoadProducts();
-                cachedProductsList = sortProductsAlpha(_pd || []);
-            }
-
-            const product = cachedProductsList.find(p => p.name === nameVal || p.code === nameVal);
+            var product = await resolveSaleProduct(type);
             if (product) {
-                selectedProductUnitPrice[type] = product.sell_price || 0;
-                const totalPrice = Math.round(qty * selectedProductUnitPrice[type]);
-                let html = `مبلغ کل فاکتور: ${totalPrice.toLocaleString('fa-IR')} تومان (نرخ واحد: ${selectedProductUnitPrice[type].toLocaleString('fa-IR')} تومان/کیلو)`;
-                // هشدار کمبود موجودی مستقیم همینجا (نه فقط تب انبار) — قبل از اینکه فروشنده جنسی رو
-                // بفروشه که تقریباً تمومه، همینجا متوجه بشه
-                const boothStock = product.booth_stock || 0;
-                if (boothStock <= 2) {
-                    html += `<br><span style="color:#fbbf24;">⚠️ فقط ${boothStock.toLocaleString('fa-IR')} کیلوگرم از این کالا داخل غرفه مونده — به مدیر اطلاع بده شارژ کنه.</span>`;
+                selectedProductUnitPrice[type] = Number(product.sell_price) || 0;
+                var unitPrice = selectedProductUnitPrice[type];
+                var totalPrice = Math.round(qty * unitPrice);
+                if (saleInputMode[type] === 'amount' && amountEl) {
+                    var typed = parseFaNumberInput(amountEl.value);
+                    if (typed > 0) totalPrice = Math.round(typed);
+                } else if (amountEl && saleInputMode[type] === 'qty' && unitPrice > 0 && qty > 0) {
+                    try { amountEl.value = String(totalPrice); } catch (e) {}
                 }
-                display.innerHTML = html;
+                if (hintEl) {
+                    var typedAmt = amountEl ? parseFaNumberInput(amountEl.value) : totalPrice;
+                    hintEl.innerHTML = 'مبلغ: <b style="color:#38bdf8;">' + formatTomanFa(typedAmt || totalPrice) + '</b>'
+                        + (unitPrice > 0 ? (' · وزن معادل: <b>' + (qty > 0 ? qty.toLocaleString('fa-IR', { maximumFractionDigits: 4 }) : '۰') + '</b> کیلو') : '');
+                }
+                var html = 'مبلغ کل فاکتور: <b style="color:#38bdf8;">' + formatTomanFa(totalPrice) + '</b> (نرخ واحد: ' + unitPrice.toLocaleString('fa-IR') + ' تومان/کیلو)';
+                if (qty > 0) {
+                    html += '<br><span style="opacity:.9;">وزن: ' + qty.toLocaleString('fa-IR', { maximumFractionDigits: 4 }) + ' کیلوگرم</span>';
+                }
+                var boothStock = product.booth_stock || 0;
+                if (boothStock <= 2) {
+                    html += '<br><span style="color:#fbbf24;">⚠️ فقط ' + boothStock.toLocaleString('fa-IR') + ' کیلوگرم از این کالا داخل غرفه مونده — به مدیر اطلاع بده شارژ کنه.</span>';
+                }
+                if (display) display.innerHTML = html;
             } else {
-                display.innerText = '⚠️ کالا یافت نشد؛ قیمت تعریف‌نشده است';
+                if (display) display.innerText = '⚠️ کالا یافت نشد؛ قیمت تعریف‌نشده است';
                 selectedProductUnitPrice[type] = 0;
             }
         }
