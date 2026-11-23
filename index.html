@@ -5,7 +5,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="app-build" content="v306">
+    <meta name="app-build" content="v307">
     <!-- جلوگیری از کش‌شدن خود index.html توسط مرورگر/گوشی، تا نسخه‌ی جدید همیشه فوراً لود بشه
          (sw.js شما کش نمی‌کنه، ولی مرورگر یا هاست ممکنه خودش HTML رو کش کنه) -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -5602,7 +5602,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             }, (typeof MAX_SPLASH_MS === 'number' ? MAX_SPLASH_MS : 3500) + 800);
         })();
 
-        const APP_BUILD = 'v306';
+        const APP_BUILD = 'v307';
         try { const __bt=document.getElementById('buildTag'); if(__bt) __bt.textContent = APP_BUILD + ' - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )'; } catch(e){}
         // ثبت Service Worker پایدار — همیشه /sw.js بدون ?v= تا آپدیت شکست نخورد
         if ('serviceWorker' in navigator) {
@@ -8585,6 +8585,12 @@ function showLoginScreen() {
         }
 
         function showClockSkewOverlay(info) {
+            try {
+                // وسط ثبت ورود/خروج کاربر را پرت نکن
+                if (typeof isUserOnAttendanceTab === 'function' && isUserOnAttendanceTab()) return;
+                if (document.getElementById('forceEntryLockOverlay') && document.getElementById('forceEntryLockOverlay').style.display === 'flex') return;
+                if (window.__clockSkew && window.__clockSkew.dismissed) return;
+            } catch (e) {}
             const ov = document.getElementById('clockSkewOverlay');
             const body = document.getElementById('clockSkewBody');
             if (!ov || !body) return;
@@ -9306,7 +9312,13 @@ function showLoginScreen() {
             if (tab === 'sale') { renderQuickPickButtons('instore'); loadRecentCustomers(); }
             if (tab === 'saleEkala') { renderQuickPickButtons('ekala'); loadRecentCustomers(); }
             if (tab === 'saleSausage') { renderQuickPickButtons('sausage'); loadRecentCustomers(); }
-            if (tab === 'attendance') { syncAttendanceTypeSelector(); loadMyLeaveRecords(); checkAttendanceReminders(); }
+            if (tab === 'attendance') {
+                try { hideForceEntryLock(); } catch (e) {}
+                try { hideClockSkewOverlay(); } catch (e) {}
+                syncAttendanceTypeSelector();
+                loadMyLeaveRecords();
+                checkAttendanceReminders();
+            }
             if (tab === 'dashboard') { loadAdminDashboard(); }
             if (tab === 'goals') { sstInit(); }
             if (tab === 'quickNote') { try { qnOpen(); } catch (e) { console.warn(e); } }
@@ -14904,8 +14916,19 @@ window.loadDailyChecklistTab = async function () {
         // چون دقیقاً همان کاری را می‌کند که قفل از او می‌خواهد؛ نمایش دوباره‌ی قفل فقط باعث
         // می‌شود بین «برو ثبت کن» و «دوباره قفل شو» گیر کند و اصلاً نتواند ثبت را کامل کند.
         function isUserOnAttendanceTab() {
-            const tabEl = document.getElementById('attendanceTab');
-            return !!(tabEl && tabEl.classList.contains('active'));
+            try {
+                const tabEl = document.getElementById('attendanceTab');
+                if (!tabEl) return false;
+                if (tabEl.classList.contains('active')) return true;
+                // بعضی حالت‌ها کلاس active نیست ولی تب دیده می‌شود
+                const st = window.getComputedStyle ? getComputedStyle(tabEl) : null;
+                if (st && st.display !== 'none' && st.visibility !== 'hidden') {
+                    // اگر فقط همین کارت دیده می‌شود
+                    const cards = document.querySelectorAll('.card.active');
+                    if (!cards.length) return tabEl.offsetParent !== null;
+                }
+            } catch (e) {}
+            return false;
         }
         async function sendUrgentHelpMessageToAdmin() {
             await notifyAdminAboutAttendanceIssue('فروشنده از پشت قفل صفحه‌ی تاخیر درخواست کمک فوری کرد — احتمالاً در ثبت ورود/خروج مشکل دارد (مثلاً دوربین/بیومتریک/موقعیت مکانی کار نمی‌کند).');
@@ -15089,13 +15112,15 @@ window.loadDailyChecklistTab = async function () {
                     <br>۴) روی دکمه «ثبت در سیستم حضور و غیاب» بزنید
                     <button class="dismiss-alert-btn" onclick="dismissReminderBanner()">باشه، همین الان ثبت می‌کنم</button>`;
                 panel.style.display = 'block';
-                if (isEscalated) {
+                if (isEscalated && !(typeof isTrialAccount === 'function' && isTrialAccount())) {
                     playLateAlertSound();
                     if (isUserOnAttendanceTab()) {
                         hideForceEntryLock();
                     } else {
                         showForceEntryLock(`شیفت شما از ساعت ${shiftStart} شروع شده و حدود ${lateBy} دقیقه تاخیر دارید. تا زمانی که «ورود» را ثبت نکنید، امکان استفاده از بقیه‌ی برنامه وجود ندارد.`);
                     }
+                } else {
+                    hideForceEntryLock();
                 }
                 return;
             }
@@ -15135,13 +15160,15 @@ window.loadDailyChecklistTab = async function () {
                     <br>۳) عکس یا موقعیت مکانی را ثبت کنید و روی دکمه «ثبت در سیستم حضور و غیاب» بزنید
                     <button class="dismiss-alert-btn" onclick="dismissReminderBanner()">باشه، الان می‌زنم</button>`;
                 panel.style.display = 'block';
-                if (isEscalated) {
+                if (isEscalated && !(typeof isTrialAccount === 'function' && isTrialAccount())) {
                     playLateAlertSound();
                     if (isUserOnAttendanceTab()) {
                         hideForceEntryLock();
                     } else {
                         showForceEntryLock(`ساعت پایان شیفت شما (${shiftEnd}) حدود ${lateBy} دقیقه پیش گذشته. تا زمانی که «خروج» را ثبت نکنید، امکان استفاده از بقیه‌ی برنامه وجود ندارد.`);
                     }
+                } else {
+                    hideForceEntryLock();
                 }
                 return;
             }
@@ -16137,15 +16164,28 @@ window.loadDailyChecklistTab = async function () {
 
 
         async function submitAttendance() {
+            try { hideForceEntryLock(); } catch (e) {}
+            try { hideClockSkewOverlay(); } catch (e) {}
             const type = document.getElementById('attType').value;
             try {
                 if (typeof isSellerScheduledDay === 'function' && currentUserLabel) {
                     const today = getTehranISODate(new Date());
                     if (!isSellerScheduledDay(currentUserLabel, today)) {
                         if (type === 'entry' || type === 'exit') {
-                            showToast('⏸ امروز طبق برنامه شیفت شما نیست — غیبت ثبت نمی‌شود.');
-                            // اجازه ثبت نده مگر مدیر باشد
-                            if (currentRole !== 'admin') return;
+                            // حساب آزمایشی و مدیر: همیشه اجازه ثبت
+                            if (typeof isTrialAccount === 'function' && isTrialAccount()) {
+                                showToast('ℹ️ طبق الگو شاید امروز شیفت نباشد، ولی چون حساب آزمایشی است ورود/خروج ثبت می‌شود.');
+                            } else if (currentRole === 'admin') {
+                                /* ok */
+                            } else {
+                                // فروشنده دائم: فقط هشدار + تایید، نه پرت شدن به صفحه دیگر
+                                const ok = await showConfirm('⏸ امروز طبق برنامهٔ کاری شما «روز شیفت» ثبت نشده.\n\nاگر واقعاً امروز سر کار هستید و می‌خواهید ورود/خروج ثبت شود، تأیید کنید.\n(در غیر این صورت لغو کنید و با مدیر هماهنگ کنید.)');
+                                if (!ok) {
+                                    showToast('ثبت لغو شد');
+                                    return;
+                                }
+                                showToast('✅ ثبت با تأیید شما ادامه پیدا می‌کند');
+                            }
                         }
                     }
                 }
