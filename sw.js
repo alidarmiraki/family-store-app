@@ -1,7 +1,7 @@
-// Service Worker v307 — دسترسی پایدار در اینترنت ضعیف (ایران)
-const V = 'v307';
+// Service Worker v308 — دسترسی پایدار در اینترنت ضعیف (ایران)
+const V = 'v308';
 const SHELL = 'shell-' + V;
-const LIBS = 'libs-v307';
+const LIBS = 'libs-v308';
 const CDN = /(^|\.)(cdn\.jsdelivr\.net|unpkg\.com|cdnjs\.cloudflare\.com|fonts\.googleapis\.com|fonts\.gstatic\.com)$/;
 
 self.addEventListener('message', (e) => {
@@ -91,7 +91,7 @@ function fetchWithTimeout(req, ms) {
 
 // HTML: اول شبکه (آپدیت فوری بعد از آپلود)، اگر قطع بود از کش
 async function htmlStrategy(req) {
-  // v307: روی اینترنت ضعیف ایران — اول شبکه با تایم‌اوت کوتاه‌تر، همزمان کش آماده باشد
+  // v308: روی اینترنت ضعیف ایران — اول شبکه با تایم‌اوت کوتاه‌تر، همزمان کش آماده باشد
   // تا PWA نصب‌شده خالی نماند و ورود سریع‌تر حس شود.
   const cachedPromise = fromCache(req);
   try {

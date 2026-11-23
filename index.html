@@ -5,7 +5,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="app-build" content="v307">
+    <meta name="app-build" content="v308">
     <!-- جلوگیری از کش‌شدن خود index.html توسط مرورگر/گوشی، تا نسخه‌ی جدید همیشه فوراً لود بشه
          (sw.js شما کش نمی‌کنه، ولی مرورگر یا هاست ممکنه خودش HTML رو کش کنه) -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -5602,7 +5602,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             }, (typeof MAX_SPLASH_MS === 'number' ? MAX_SPLASH_MS : 3500) + 800);
         })();
 
-        const APP_BUILD = 'v307';
+        const APP_BUILD = 'v308';
         try { const __bt=document.getElementById('buildTag'); if(__bt) __bt.textContent = APP_BUILD + ' - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )'; } catch(e){}
         // ثبت Service Worker پایدار — همیشه /sw.js بدون ?v= تا آپدیت شکست نخورد
         if ('serviceWorker' in navigator) {
@@ -26714,26 +26714,121 @@ async function loadExpensesTab() {
                 });
             } catch (e) {}
 
+            // تفکیک OT دستی مدیر و OT خروج — فقط همین فروشنده
+            let manualOtHours = 0, exitOtHours = 0;
+            days.forEach(function (day) {
+                const d = byDay[day];
+                if (!d) return;
+                manualOtHours += Number(d.manualOt) || 0;
+                exitOtHours += Number(d.exitOt) || 0;
+            });
+
             let otPay = 0;
             if (otRate > 0 && totalOt > 0) {
                 if (otUnit === 'minute') otPay = totalOt * 60 * otRate;
                 else if (otUnit === 'day') {
-                    // هر ۸ ساعت = دقیقاً ۱ روز کاری با نرخ کامل
                     otPay = (totalOt / 8) * otRate;
                 } else {
                     otPay = totalOt * otRate;
                 }
             }
             const delayDeduct = delayPerMin > 0 ? totalDelay * delayPerMin : 0;
-            const gross = Math.round(baseForPeriod + otPay);
-            const deductions = Math.round(delayDeduct + checklistPenalty + takeoutSum + paidAdvance);
-            const net = Math.max(0, gross - Math.round(delayDeduct) - Math.round(checklistPenalty) - Math.round(takeoutSum) - Math.round(paidAdvance));
+
+            // پاداش / جریمه هدف — فقط همین فروشنده (نه کل شیفت)
+            let goalBonus = 0, goalPenalty = 0, goalHits = 0, goalMisses = 0;
+            try {
+                const { data: allTargets } = await _supabase.from('seller_shift_targets').select('*').limit(200);
+                const myTargets = (allTargets || []).filter(function (t) {
+                    return salaryNameMatches(t.seller_label, seller) || (personKey && String(t.seller_label || '').indexOf(personKey) >= 0);
+                });
+                let salesRows = [];
+                try {
+                    let sq = _supabase.from('sales').select('sell_price, quantity, created_at, seller_name, sale_type, product_code, shift_label')
+                        .gte('created_at', startUTC).lt('created_at', endUTC).limit(8000);
+                    if (personKey && personKey.length >= 2) sq = sq.ilike('seller_name', '%' + personKey + '%');
+                    const { data: sd } = await sq;
+                    salesRows = (sd || []).filter(function (s) {
+                        if (typeof sstSaleBelongsToSeller === 'function') return sstSaleBelongsToSeller(s, seller);
+                        return salaryNameMatches(s.seller_name, seller);
+                    });
+                } catch (eS) { console.warn(eS); }
+
+                if (myTargets.length && typeof weeklyBuildGoalSummary === 'function') {
+                    const ctx = {
+                        startISODate: from,
+                        endISODate: to,
+                        sales: salesRows,
+                        salesForGoals: salesRows,
+                        attendance: attendance,
+                        takeouts: [],
+                        shiftTargets: myTargets,
+                        sellerMap: {},
+                        attendanceSellerMap: {},
+                        takeoutSellerMap: {},
+                        allSellerNames: new Set([seller])
+                    };
+                    const gsum = weeklyBuildGoalSummary(ctx);
+                    const bags = (gsum && gsum.bySellerNet) || {};
+                    // پیدا کردن کیف همین فروشنده
+                    let bag = bags[seller];
+                    if (!bag) {
+                        const keys = Object.keys(bags);
+                        for (let ki = 0; ki < keys.length; ki++) {
+                            if (salaryNameMatches(keys[ki], seller)) { bag = bags[keys[ki]]; break; }
+                        }
+                    }
+                    if (bag) {
+                        goalBonus = Number(bag.bonus) || 0;
+                        goalPenalty = Number(bag.penalty) || 0;
+                        goalHits = Number(bag.hit) || 0;
+                        goalMisses = Number(bag.miss) || 0;
+                    }
+                } else if (myTargets.length) {
+                    // محاسبه ساده روزانه اگر تابع هفتگی نبود
+                    const bySaleDay = {};
+                    salesRows.forEach(function (s) {
+                        const day = getTehranISODate(new Date(s.created_at));
+                        if (day < from || day > to) return;
+                        bySaleDay[day] = (bySaleDay[day] || 0) + (Number(s.sell_price) || 0);
+                    });
+                    days.forEach(function (day) {
+                        const d = byDay[day];
+                        if (!d || (d.entry <= 0 && d.exit <= 0)) return;
+                        const t = myTargets.find(function (tg) {
+                            const okStart = !tg.start_date || tg.start_date <= day;
+                            const okEnd = !tg.end_date || tg.end_date >= day;
+                            return okStart && okEnd && tg.active !== false;
+                        }) || myTargets[0];
+                        if (!t || !(Number(t.target_amount) > 0)) return;
+                        const sold = bySaleDay[day] || 0;
+                        const baseSal = Number(t.base_salary) || baseForPeriod || 0;
+                        if (sold >= Number(t.target_amount)) {
+                            goalHits += 1;
+                            if (t.bonus_type === 'percent') goalBonus += baseSal * (Number(t.bonus_value) || 0) / 100;
+                            else goalBonus += Number(t.bonus_value) || 0;
+                        } else {
+                            goalMisses += 1;
+                            if (t.penalty_type === 'percent') goalPenalty += baseSal * (Number(t.penalty_value) || 0) / 100;
+                            else goalPenalty += Number(t.penalty_value) || 0;
+                        }
+                    });
+                }
+            } catch (eG) { console.warn('goal salary', eG); }
+            goalBonus = Math.round(goalBonus);
+            goalPenalty = Math.round(goalPenalty);
+
+            const gross = Math.round(baseForPeriod + otPay + goalBonus);
+            const deductions = Math.round(delayDeduct + checklistPenalty + takeoutSum + paidAdvance + goalPenalty);
+            const net = Math.max(0, gross - deductions);
 
             const calc = {
                 seller: seller, personKey: personKey, from: from, to: to, base: baseForPeriod,
                 workDays: workDays, leaveDays: leaveDays, periodDays: periodDays,
                 totalDelay: totalDelay, totalOt: totalOt, skippedDelay: skippedDelay, skippedOt: skippedOt,
+                manualOtHours: Math.round(manualOtHours * 100) / 100,
+                exitOtHours: Math.round(exitOtHours * 100) / 100,
                 otPay: Math.round(otPay), delayDeduct: Math.round(delayDeduct),
+                goalBonus: goalBonus, goalPenalty: goalPenalty, goalHits: goalHits, goalMisses: goalMisses,
                 checklistPenalty: Math.round(checklistPenalty), takeoutSum: Math.round(takeoutSum),
                 takeoutCount: takeoutCount, paidAdvance: Math.round(paidAdvance), paidCount: paidCount,
                 net: net, rates: rates, byDay: byDay, records: attendance.length
@@ -26758,7 +26853,10 @@ async function loadExpensesTab() {
                     '<div>بازه: ' + j(from) + ' تا ' + j(to) + ' (' + fa(periodDays) + ' روز) · کارکرد: <b>' + fa(workDays) + '</b> · رکورد حضور همین فرد: ' + fa(attendance.length) +
                     (offDaysInPeriod ? (' · روز استراحت الگو (بدون کسر): <b>' + fa(offDaysInPeriod) + '</b>') : '') + '</div>' +
                     '<div>حقوق پایه دوره: <b>' + fa(baseForPeriod) + '</b> ت</div>' +
-                    '<div>اضافه‌کار: <b>' + fa1(totalOt) + '</b> ساعت → +' + fa(otPay) + ' ت <span style="opacity:.75;">(سقف روزانه ' + fa1(maxOtH) + ' س · از ثبت OT یا خروج دیر)</span></div>' +
+                    '<div>اضافه‌کار: <b>' + fa1(totalOt) + '</b> ساعت → +' + fa(otPay) + ' ت' +
+                    ' <span style="opacity:.75;">(دستی مدیر: ' + fa1(manualOtHours) + ' س · از خروج: ' + fa1(exitOtHours) + ' س)</span></div>' +
+                    '<div>پاداش هدف همین فرد: +' + fa(goalBonus) + ' ت <span style="opacity:.75;">(برد: ' + fa(goalHits) + ' · باخت: ' + fa(goalMisses) + ')</span></div>' +
+                    '<div>جریمه هدف همین فرد: −' + fa(goalPenalty) + ' ت</div>' +
                     '<div>تاخیر: <b>' + fa(totalDelay) + '</b> دقیقه → −' + fa(delayDeduct) + ' ت</div>' +
                     '<div>برداشت شخصی همین فرد: −' + fa(takeoutSum) + ' ت <span style="opacity:.75;">(' + fa(takeoutCount) + ' مورد)</span></div>' +
                     '<div>واریزی‌های قبلی مدیر در این بازه: −' + fa(paidAdvance) + ' ت <span style="opacity:.75;">(' + fa(paidCount) + ' فقره علی‌الحساب)</span></div>' +
@@ -26823,7 +26921,10 @@ async function loadExpensesTab() {
                 '</div>' +
                 '<table class="slip-tbl"><thead><tr><th>شرح</th><th style="width:34%">مبلغ (تومان)</th></tr></thead><tbody>' +
                 '<tr><td>حقوق پایه دوره</td><td>' + fa(c.base) + '</td></tr>' +
-                '<tr><td>اضافه‌کاری (' + fa1(c.totalOt) + ' ساعت)</td><td>' + fa(c.otPay) + '</td></tr>' +
+                '<tr><td>اضافه‌کاری کل (' + fa1(c.totalOt) + ' ساعت)</td><td>' + fa(c.otPay) + '</td></tr>' +
+                '<tr><td style="font-size:11px;opacity:.85">— دستی مدیر / از خروج</td><td style="font-size:11px;opacity:.85">' + fa1(c.manualOtHours || 0) + ' س / ' + fa1(c.exitOtHours || 0) + ' س</td></tr>' +
+                '<tr><td>پاداش هدف فروش</td><td>' + fa(c.goalBonus || 0) + '</td></tr>' +
+                '<tr><td>کسر جریمه هدف فروش</td><td>− ' + fa(c.goalPenalty || 0) + '</td></tr>' +
                 '<tr><td>کسر بابت تاخیر (' + fa(c.totalDelay) + ' دقیقه)</td><td>− ' + fa(c.delayDeduct) + '</td></tr>' +
                 '<tr><td>کسر برداشت شخصی' + (c.takeoutCount ? (' (' + fa(c.takeoutCount) + ' مورد)') : '') + '</td><td>− ' + fa(c.takeoutSum || 0) + '</td></tr>' +
                 '<tr><td>کسر واریزی‌های قبلی / علی‌الحساب' + (c.paidCount ? (' (' + fa(c.paidCount) + ' فقره)') : '') + '</td><td>− ' + fa(c.paidAdvance || 0) + '</td></tr>' +
