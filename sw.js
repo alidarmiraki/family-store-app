@@ -1,7 +1,7 @@
-// Service Worker v311 — دسترسی پایدار در اینترنت ضعیف (ایران)
-const V = 'v311';
+// Service Worker v312 — دسترسی پایدار در اینترنت ضعیف (ایران)
+const V = 'v312';
 const SHELL = 'shell-' + V;
-const LIBS = 'libs-v311';
+const LIBS = 'libs-v312';
 const CDN = /(^|\.)(cdn\.jsdelivr\.net|unpkg\.com|cdnjs\.cloudflare\.com|fonts\.googleapis\.com|fonts\.gstatic\.com)$/;
 
 self.addEventListener('message', (e) => {
@@ -91,7 +91,7 @@ function fetchWithTimeout(req, ms) {
 
 // HTML: اول شبکه (آپدیت فوری بعد از آپلود)، اگر قطع بود از کش
 async function htmlStrategy(req) {
-  // v311: روی اینترنت ضعیف ایران — اول شبکه با تایم‌اوت کوتاه‌تر، همزمان کش آماده باشد
+  // v312: روی اینترنت ضعیف ایران — اول شبکه با تایم‌اوت کوتاه‌تر، همزمان کش آماده باشد
   // تا PWA نصب‌شده خالی نماند و ورود سریع‌تر حس شود.
   const cachedPromise = fromCache(req);
   try {
