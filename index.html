@@ -5,7 +5,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="app-build" content="v313">
+    <meta name="app-build" content="v314">
     <!-- جلوگیری از کش‌شدن خود index.html توسط مرورگر/گوشی، تا نسخه‌ی جدید همیشه فوراً لود بشه
          (sw.js شما کش نمی‌کنه، ولی مرورگر یا هاست ممکنه خودش HTML رو کش کنه) -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -5571,7 +5571,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
         (function () {
             const splashShownAt = Date.now();
             const MIN_SPLASH_MS = 1200;
-            const MAX_SPLASH_MS = 2200; // اگه نت خیلی کند بود، حداکثر همین‌قدر صبر کن و بعد به‌هرحال نشون بده
+            const MAX_SPLASH_MS = 3000; // اگه نت خیلی کند بود، حداکثر همین‌قدر صبر کن و بعد به‌هرحال نشون بده
             const subTexts = [
                 'در حال آماده‌سازی سیستم...',
                 'اتصال به سرور فروشگاه...',
@@ -5623,7 +5623,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             }, (typeof MAX_SPLASH_MS === 'number' ? MAX_SPLASH_MS : 3500) + 800);
         })();
 
-        const APP_BUILD = 'v313';
+        const APP_BUILD = 'v314';
         try { const __bt=document.getElementById('buildTag'); if(__bt) __bt.textContent = APP_BUILD + ' - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )'; } catch(e){}
         // ثبت Service Worker پایدار — همیشه /sw.js بدون ?v= تا آپدیت شکست نخورد
         if ('serviceWorker' in navigator) {
@@ -5676,20 +5676,11 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
                         console.warn('SW register failed', e);
                     }
                 })();
-                let __ctrlOnce = false;
-                navigator.serviceWorker.addEventListener('controllerchange', function () {
-                    if (__ctrlOnce) return;
-                    __ctrlOnce = true;
-                    __swReloadOnce();
-                });
+                // رفرش اجباری بعد از عوض‌شدن SW حذف شد — همان عامل صفحه سفید «ارتباط برقرار نشد» بود
+                // آپدیت SW در پس‌زمینه می‌ماند و با رفرش دستی کاربر اعمال می‌شود.
                 navigator.serviceWorker.addEventListener('message', function (ev) {
                     if (ev && ev.data && ev.data.type === 'SW_UPDATED') {
-                        try {
-                            const incoming = String(ev.data.version || '');
-                            const mine = String(APP_BUILD || '');
-                            if (incoming && (incoming === mine || incoming === mine.replace(/^v/, '') || ('v' + incoming) === mine)) return;
-                        } catch (e) {}
-                        __swReloadOnce();
+                        try { console.info('SW updated to', ev.data.version); } catch (e) {}
                     }
                 });
             });
@@ -6323,58 +6314,47 @@ ${PROXY_ENDPOINTS.map(u => `<div class="summary-mini" data-sel="${u}" style="gap
         let _supabase = null;
         let _supabaseInitPromise = null;
 
+        // بازیابی اختیاری — ورود را قفل نمی‌کند (رفتار پایدار v309)
         async function ensureSupabaseClient(opts) {
             opts = opts || {};
             if (_supabase && typeof _supabase.from === 'function') return _supabase;
-            if (_supabaseInitPromise) {
-                try { await _supabaseInitPromise; } catch (e) {}
-                if (_supabase && typeof _supabase.from === 'function') return _supabase;
-            }
-            _supabaseInitPromise = (async function () {
-                try {
-                    var ready = (typeof supabase !== 'undefined' && supabase.createClient);
-                    if (!ready) {
-                        console.warn('📡 Supabase SDK نیست؛ تلاش CDN...');
-                        var urls = [
-                            'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
-                            'https://unpkg.com/@supabase/supabase-js@2',
-                            'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js'
-                        ];
-                        for (var i = 0; i < urls.length; i++) {
-                            try { await loadScriptOnce(urls[i], opts.timeoutMs || 7000); } catch (e) {}
-                            if (typeof supabase !== 'undefined' && supabase.createClient) { ready = true; break; }
-                        }
-                    }
-                    if (!ready || typeof supabase === 'undefined' || !supabase.createClient) {
-                        throw new Error('کتابخانه Supabase بارگذاری نشد');
-                    }
+            try {
+                if (typeof supabase !== 'undefined' && supabase.createClient) {
                     _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
                         global: { fetch: (typeof proxiedFetch === 'function' ? proxiedFetch : fetch) }
                     });
                     return _supabase;
-                } catch (e) {
-                    console.error('ensureSupabaseClient:', e);
-                    throw e;
-                } finally {
-                    _supabaseInitPromise = null;
                 }
-            })();
-            try { await _supabaseInitPromise; } catch (e) {}
-            return (_supabase && typeof _supabase.from === 'function') ? _supabase : null;
+            } catch (e) { console.warn(e); }
+            return _supabase;
         }
         window.ensureSupabaseClient = ensureSupabaseClient;
 
         (async function initSupabaseClient() {
             try {
-                var client = await ensureSupabaseClient({ timeoutMs: 8000 });
-                if (!client) throw new Error('کتابخانه Supabase از هیچ منبعی بارگذاری نشد');
+                var ready = (typeof supabase !== 'undefined' && supabase.createClient);
+                if (!ready) {
+                    console.warn('📡 Supabase از jsDelivr لود نشد؛ تلاش برای CDN جایگزین (unpkg)...');
+                    for (var ui = 0; ui < 2; ui++) {
+                        var u = ['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', 'https://unpkg.com/@supabase/supabase-js@2'][ui];
+                        try { await loadScriptOnce(u, 8000); } catch (e) {}
+                        if (typeof supabase !== 'undefined' && supabase.createClient) { ready = true; break; }
+                    }
+                }
+                if (!ready) throw new Error('کتابخانه Supabase از هیچ منبعی بارگذاری نشد');
+                _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+                    global: { fetch: proxiedFetch }
+                });
             } catch (e) {
                 console.error('خطا در اتصال به Supabase:', e);
-                var loginErr = document.getElementById('loginError');
-                if (loginErr) {
-                    loginErr.innerText = '❌ اتصال به سرور برقرار نشد. لطفاً اینترنت خود را چک کنید (وای‌فای/موبایل‌دیتا یا فیلترشکن) و صفحه را رفرش (Reload) کنید.';
-                    loginErr.style.display = 'block';
-                }
+                // فقط پیام روی صفحه ورود — کل اپ را متوقف نکن
+                try {
+                    var loginErr = document.getElementById('loginError');
+                    if (loginErr) {
+                        loginErr.innerText = '❌ اتصال به سرور برقرار نشد. اینترنت را چک کنید و صفحه را رفرش کنید.';
+                        loginErr.style.display = 'block';
+                    }
+                } catch (e2) {}
             }
         })();
 
