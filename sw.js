@@ -1,7 +1,6 @@
-// Service Worker v321 — HTML همیشه مستقیم از سرور؛ کش فقط فایل‌های کمکی
-const V = 'v321';
-const SHELL = 'shell-' + V;
-const LIBS = 'libs-v321';
+// Service Worker v322 — HTML را اصلاً نمی‌گیرد (سایت همیشه مثل مرورگر عادی)
+const V = 'v322';
+const LIBS = 'libs-v322';
 const CDN = /(^|\.)(cdn\.jsdelivr\.net|unpkg\.com|cdnjs\.cloudflare\.com|fonts\.googleapis\.com|fonts\.gstatic\.com)$/;
 
 self.addEventListener('message', function (e) {
@@ -27,10 +26,10 @@ self.addEventListener('activate', function (e) {
   e.waitUntil((async function () {
     try {
       var keys = await caches.keys();
-      // فقط کش‌های خیلی قدیمی libs/shell را جمع کن؛ HTML را بلوکه نکن
       await Promise.all(keys.map(function (k) {
-        if (k === SHELL || k === LIBS) return Promise.resolve();
-        if (k.indexOf('shell-') === 0 || k.indexOf('libs-') === 0) return caches.delete(k);
+        // کش‌های shell قدیمی که HTML را قفل می‌کردند پاک شوند
+        if (k.indexOf('shell-') === 0) return caches.delete(k);
+        if (k.indexOf('libs-') === 0 && k !== LIBS) return caches.delete(k);
         return Promise.resolve();
       }));
     } catch (err) {}
@@ -38,71 +37,14 @@ self.addEventListener('activate', function (e) {
   })());
 });
 
-async function putShell(res) {
-  try {
-    if (!res || !res.ok) return;
-    var c = await caches.open(SHELL);
-    await c.put('./index.html', res.clone());
-    await c.put('./', res.clone());
-  } catch (e) {}
-}
-
-// HTML: فقط شبکه — هیچ صفحه سفید/آفلاین ساختگی
-async function htmlNetworkOnly(req) {
-  try {
-    var res = await fetch(req, { cache: 'no-store' });
-    if (res && res.ok) {
-      // در پس‌زمینه برای سرعت دفعه بعد (اختیاری)
-      putShell(res.clone());
-    }
-    return res;
-  } catch (e) {
-    // یک‌بار دیگر تلاش
-    try {
-      return await fetch(req);
-    } catch (e2) {
-      // آخرین پشتیبان: اگر قبلاً کش شده بود
-      try {
-        var hit = await caches.match('./index.html') || await caches.match('./');
-        if (hit) return hit;
-      } catch (e3) {}
-      return new Response(
-        '<!DOCTYPE html><html lang="fa" dir="rtl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
-        '<title>تازه مارکت</title><body style="font-family:Tahoma;padding:24px;text-align:center;background:#0f172a;color:#e2e8f0;line-height:1.9">' +
-        '<h2>اینترنت قطع است</h2>' +
-        '<p><a style="color:#38bdf8" href="https://taze-market.ir/?panel=1">تلاش مجدد پنل</a></p>' +
-        '<script>setTimeout(function(){location.href="https://taze-market.ir/?panel=1&t="+Date.now()},2000);</script></body></html>',
-        { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } }
-      );
-    }
-  }
-}
-
-async function networkThenCache(req) {
-  try {
-    var res = await fetch(req, { cache: 'no-store' });
-    if (res && res.ok) {
-      try {
-        var c = await caches.open(SHELL);
-        await c.put(req, res.clone());
-      } catch (e) {}
-    }
-    return res;
-  } catch (e) {
-    try {
-      var hit = await caches.match(req) || await caches.match(req, { ignoreSearch: true });
-      if (hit) return hit;
-    } catch (e2) {}
-    return new Response('', { status: 503 });
-  }
-}
-
 async function cacheFirst(req) {
   try {
     var hit = await caches.match(req);
     if (hit) {
       fetch(req).then(function (res) {
-        if (res && res.ok) caches.open(LIBS).then(function (c) { c.put(req, res); }).catch(function () {});
+        if (res && res.ok) {
+          caches.open(LIBS).then(function (c) { c.put(req, res); }).catch(function () {});
+        }
       }).catch(function () {});
       return hit;
     }
@@ -110,52 +52,44 @@ async function cacheFirst(req) {
   try {
     var res = await fetch(req);
     if (res && res.ok) {
-      var c = await caches.open(LIBS);
-      await c.put(req, res.clone());
+      try {
+        var c = await caches.open(LIBS);
+        await c.put(req, res.clone());
+      } catch (e2) {}
     }
     return res;
-  } catch (e2) {
+  } catch (e3) {
     return new Response('', { status: 503 });
   }
 }
 
 self.addEventListener('fetch', function (e) {
   if (e.request.method !== 'GET') return;
-  var url = new URL(e.request.url);
+  var url;
+  try { url = new URL(e.request.url); } catch (err) { return; }
 
-  // همیشه بای‌پس برای حالت بازیابی
-  if (url.searchParams.has('nocache') || url.searchParams.has('recover') || url.searchParams.has('_bypass_sw')) {
-    e.respondWith(fetch(e.request, { cache: 'no-store' }));
-    return;
-  }
-
-  if (url.pathname.endsWith('sw.js')) {
+  // sw.js همیشه از شبکه
+  if (url.pathname.indexOf('sw.js') >= 0) {
     e.respondWith(fetch(e.request, { cache: 'no-store' }));
     return;
   }
 
   // APIها را دست نزن
-  if (/supabase\.co|openrouter\.ai|generativelanguage\.googleapis|api\.telegram|workers\.dev/i.test(url.hostname)) return;
-
-  if (url.origin === self.location.origin) {
-    var path = url.pathname || '/';
-    var isHtml =
-      e.request.mode === 'navigate' ||
-      path === '/' ||
-      path.endsWith('/') ||
-      path.endsWith('.html') ||
-      path.endsWith('index.html') ||
-      url.search.indexOf('panel=') >= 0;
-
-    if (isHtml) {
-      // مهم: /?panel=1 همیشه از خود سرور می‌آید
-      e.respondWith(htmlNetworkOnly(e.request));
-      return;
-    }
-    e.respondWith(networkThenCache(e.request));
+  if (/supabase\.co|openrouter\.ai|generativelanguage\.googleapis|api\.telegram|workers\.dev/i.test(url.hostname)) {
     return;
   }
 
+  // ===== مهم: هرگز HTML / navigate را مداخله نکن =====
+  // همین باعث «اینترنت قطع است» و سفید شدن /?panel=1 می‌شد
+  var path = url.pathname || '/';
+  var isNav = e.request.mode === 'navigate' || e.request.destination === 'document';
+  var isHtml = isNav || path === '/' || path.endsWith('/') || /\.html?$/i.test(path) ||
+    url.search.indexOf('panel=') >= 0 || url.search.indexOf('catalog=') >= 0;
+  if (isHtml) {
+    return; // مرورگر مستقیم از سرور می‌گیرد
+  }
+
+  // فقط CDN/کتابخانه‌ها را کش کن
   if (CDN.test(url.hostname)) {
     e.respondWith(cacheFirst(e.request));
   }

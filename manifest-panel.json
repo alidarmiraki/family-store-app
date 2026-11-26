@@ -2,8 +2,8 @@
   "name": "پنل غرفه تازه‌مارکت",
   "short_name": "پنل غرفه",
   "description": "سیستم مدیریت غرفه تازه‌مارکت",
-  "start_url": "./?panel=1",
-  "scope": "./",
+  "start_url": "/?panel=1",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#064e3b",
@@ -35,5 +35,10 @@
       "type": "image/png",
       "purpose": "maskable"
     }
+  ],
+  "id": "/?panel=1",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
   ]
 }
