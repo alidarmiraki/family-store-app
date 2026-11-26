@@ -5,20 +5,14 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="app-build" content="v318">
+    <meta name="app-build" content="v321">
 
-    <!-- بازیابی فوری: SW خراب را بردار تا خود سایت از سرور بیاید -->
+    <!-- بازیابی اضطراری فقط با ?recover=1 یا ?nocache=1 — SW سالم را دست نمی‌زند -->
     <script>
     (function () {
         try {
             var q = location.search || '';
-            var force = /[?&](nocache|recover|panel)=1\b/.test(q) || /[?&]_bypass_sw=1\b/.test(q);
-            if (!force) {
-                // یک‌بار خودکار برای همه بعد از v317
-                try {
-                    if (localStorage.getItem('sw_killed_v318') === '1') return;
-                } catch (e) {}
-            }
+            if (!(/[?&](nocache|recover)=1\b/.test(q) || /[?&]_bypass_sw=1\b/.test(q))) return;
             if (!('serviceWorker' in navigator)) return;
             navigator.serviceWorker.getRegistrations().then(function (regs) {
                 return Promise.all((regs || []).map(function (r) {
@@ -30,8 +24,6 @@
                         return Promise.all((keys || []).map(function (k) { return caches.delete(k); }));
                     });
                 }
-            }).then(function () {
-                try { localStorage.setItem('sw_killed_v318', '1'); } catch (e) {}
             }).catch(function () {});
         } catch (e) {}
     })();
@@ -5643,26 +5635,31 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             }, (typeof MAX_SPLASH_MS === 'number' ? MAX_SPLASH_MS : 3500) + 800);
         })();
 
-        const APP_BUILD = 'v318';
+        const APP_BUILD = 'v321';
         try { const __bt=document.getElementById('buildTag'); if(__bt) __bt.textContent = APP_BUILD + ' - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )'; } catch(e){}
-        // Service Worker موقتاً غیرفعال است تا ورود خراب نشود.
-        // کش لازم نیست؛ سایت مستقیم از سرور می‌آید.
-        // بعد از پایدار شدن می‌توان دوباره فعال کرد.
+        // Service Worker امن: شبکه اول، کش فقط پشتیبان، بدون رفرش اجباری
         if ('serviceWorker' in navigator) {
-            (function killBrokenSW() {
-                try {
-                    navigator.serviceWorker.getRegistrations().then(function (regs) {
-                        (regs || []).forEach(function (r) {
-                            try { r.unregister(); } catch (e) {}
-                        });
-                    });
-                    if (window.caches && caches.keys) {
-                        caches.keys().then(function (keys) {
-                            (keys || []).forEach(function (k) { try { caches.delete(k); } catch (e) {} });
-                        });
-                    }
-                } catch (e) {}
-            })();
+            window.addEventListener('load', function () {
+                setTimeout(function () {
+                    try {
+                        navigator.serviceWorker.register('sw.js', { updateViaCache: 'none', scope: './' })
+                            .then(function (reg) {
+                                try { reg.update(); } catch (e) {}
+                                // آپدیت در پس‌زمینه؛ صفحه را اجباری رفرش نکن
+                                reg.addEventListener('updatefound', function () {
+                                    var nw = reg.installing;
+                                    if (!nw) return;
+                                    nw.addEventListener('statechange', function () {
+                                        if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+                                            try { nw.postMessage({ type: 'SKIP_WAITING' }); } catch (e) {}
+                                        }
+                                    });
+                                });
+                            })
+                            .catch(function (e) { console.warn('SW register', e); });
+                    } catch (e) { console.warn('SW', e); }
+                }, 2500);
+            });
             try { localStorage.setItem('app_build_seen', String(APP_BUILD || '')); } catch (e) {}
         }
 
@@ -18127,7 +18124,7 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
             // 4) رفرش سخت از خود سایت — نه وابسته به کش
             setTimeout(function () {
                 try {
-                    var u = '/index.html?panel=1&nocache=1&_bypass_sw=1&v=' + String(typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v317') + '&t=' + Date.now();
+                    var u = '/?panel=1&nocache=1&recover=1&v=' + String(typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v320') + '&t=' + Date.now();
                     location.replace(u);
                 } catch (e) {
                     try { location.reload(true); } catch (e2) { location.reload(); }
