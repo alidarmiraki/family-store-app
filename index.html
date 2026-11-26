@@ -5,7 +5,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="app-build" content="v316">
+    <meta name="app-build" content="v317">
     <!-- جلوگیری از کش‌شدن خود index.html توسط مرورگر/گوشی، تا نسخه‌ی جدید همیشه فوراً لود بشه
          (sw.js شما کش نمی‌کنه، ولی مرورگر یا هاست ممکنه خودش HTML رو کش کنه) -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -5612,7 +5612,7 @@ button.submit-btn{border-radius:15px;padding:15px;font-weight:800;letter-spacing
             }, (typeof MAX_SPLASH_MS === 'number' ? MAX_SPLASH_MS : 3500) + 800);
         })();
 
-        const APP_BUILD = 'v316';
+        const APP_BUILD = 'v317';
         try { const __bt=document.getElementById('buildTag'); if(__bt) __bt.textContent = APP_BUILD + ' - سیستم جامع مدیریت لبنیات، ترشیجات و سوسیس‌وکالباس فله فامیلی ( دره میرکی )'; } catch(e){}
         // ثبت Service Worker پایدار — همیشه /sw.js بدون ?v= تا آپدیت شکست نخورد
         if ('serviceWorker' in navigator) {
@@ -18084,78 +18084,64 @@ showToast('✅ ورود امروز قبلاً ثبت شده. الان «خروج
 
         async function diagClearAppCaches() {
             const out = document.getElementById('diagCacheResult');
-            if (out) out.innerHTML = '⏳ پاک‌سازی واقعی کش...';
+            if (out) out.innerHTML = '⏳ پاک‌سازی کش... بعد مستقیم از سرور باز می‌شود';
             const report = [];
-            // 1) Cache Storage (Service Worker)
-            try {
-                if (window.caches && caches.keys) {
-                    const keys = await caches.keys();
-                    await Promise.all(keys.map(function (k) { return caches.delete(k); }));
-                    report.push(keys.length + ' کش SW');
-                } else report.push('Cache API نیست');
-            } catch (e) { report.push('کش SW❌'); }
-            // 2) پیام به SW برای purge
+            // 1) اول Service Worker را از کنترل خارج کن تا بدون کش هم سایت بیاید
             try {
                 if ('serviceWorker' in navigator) {
                     const regs = await navigator.serviceWorker.getRegistrations();
                     for (let i = 0; i < regs.length; i++) {
                         try {
                             if (regs[i].active) regs[i].active.postMessage({ type: 'PURGE_CACHES' });
-                            if (regs[i].waiting) regs[i].waiting.postMessage({ type: 'SKIP_WAITING' });
                         } catch (e) {}
+                        try { await regs[i].unregister(); } catch (e) {}
                     }
-                    report.push(regs.length + ' سرویس‌ورکر');
+                    report.push(regs.length + ' SW حذف');
                 }
-            } catch (e) {}
-            // 3) پاک کردن کلیدهای کش اپ (نه نشست ورود)
+            } catch (e) { report.push('SW❌'); }
+            // 2) پاک کردن Cache Storage
+            try {
+                if (window.caches && caches.keys) {
+                    const keys = await caches.keys();
+                    await Promise.all(keys.map(function (k) { return caches.delete(k); }));
+                    report.push(keys.length + ' کش');
+                }
+            } catch (e) { report.push('کش❌'); }
+            // 3) فقط کلیدهای کش موقت localStorage (نشست ورود را نگه دار)
             let lsN = 0;
             try {
-                const keep = {
-                    offline_sessions_multi_v1: 1,
-                    diag_device_id: 1
-                };
-                // session key variable
+                const keep = { offline_sessions_multi_v1: 1, diag_device_id: 1 };
                 try { if (typeof OFFLINE_KEYS !== 'undefined' && OFFLINE_KEYS.session) keep[OFFLINE_KEYS.session] = 1; } catch (e) {}
-                const prefixes = ['shell-', 'att_local_', 'attDayDone_', 'sstGoal', 'offline_products', 'offline_sales', 'app_error_log', 'sw_reloaded_', 'diag_last_', 'pwaHint', 'readMsgIds_', 'qn_', 'cat_'];
+                const prefixes = ['shell-', 'att_local_', 'attDayDone_', 'sstGoal', 'app_error_log', 'sw_reloaded_', 'diag_last_', 'pwaHint', 'readMsgIds_', 'qn_'];
                 const toRemove = [];
                 for (let i = 0; i < localStorage.length; i++) {
                     const k = localStorage.key(i);
                     if (!k || keep[k]) continue;
-                    if (prefixes.some(function (p) { return k.indexOf(p) === 0 || k.indexOf(p) >= 0; })) toRemove.push(k);
-                    if (/^workbox|^cache|^sb-/i.test(k)) toRemove.push(k);
+                    if (prefixes.some(function (p) { return k.indexOf(p) === 0; })) toRemove.push(k);
                 }
-                // محصولات را نگه می‌داریم مگر force کامل — فقط کش‌های مشکل‌ساز
-                toRemove.forEach(function (k) {
-                    try { localStorage.removeItem(k); lsN++; } catch (e) {}
-                });
-                report.push(lsN + ' کلید localStorage');
-            } catch (e) { report.push('LS❌'); }
-            // 4) sessionStorage نسخه‌ها
+                toRemove.forEach(function (k) { try { localStorage.removeItem(k); lsN++; } catch (e) {} });
+                report.push(lsN + ' LS');
+            } catch (e) {}
             try {
                 const sk = [];
                 for (let i = 0; i < sessionStorage.length; i++) {
                     const k = sessionStorage.key(i);
-                    if (k && (k.indexOf('sw_') === 0 || k.indexOf('_v') >= 0)) sk.push(k);
+                    if (k && k.indexOf('sw_') === 0) sk.push(k);
                 }
                 sk.forEach(function (k) { try { sessionStorage.removeItem(k); } catch (e) {} });
-                report.push(sk.length + ' session');
-            } catch (e) {}
-            // 5) IndexedDB سبک
-            try {
-                if (window.indexedDB && indexedDB.databases) {
-                    const dbs = await indexedDB.databases();
-                    for (let i = 0; i < (dbs || []).length; i++) {
-                        const name = dbs[i] && dbs[i].name;
-                        if (name && /workbox|cache|keyval/i.test(name)) {
-                            try { indexedDB.deleteDatabase(name); } catch (e) {}
-                        }
-                    }
-                    report.push('IDB');
-                }
             } catch (e) {}
             if (out) out.innerHTML = diagBadge(true, 'پاک شد: ' + report.join(' · ')) +
-                '<div style="margin-top:8px;font-size:11px;opacity:.85;">برای نسخه جدید، «آپدیت اجباری» را بزن یا صفحه را کامل ببند و دوباره باز کن.</div>';
-            showToast('✅ کش واقعی پاک شد');
+                '<div style="margin-top:8px;font-size:12px;color:#34d399;">الان صفحه از خود سرور (بدون کش) دوباره باز می‌شود...</div>';
+            showToast('✅ کش پاک شد — در حال باز کردن مستقیم از سرور');
+            // 4) رفرش سخت از خود سایت — نه وابسته به کش
+            setTimeout(function () {
+                try {
+                    var u = '/index.html?panel=1&nocache=1&_bypass_sw=1&v=' + String(typeof APP_BUILD !== 'undefined' ? APP_BUILD : 'v317') + '&t=' + Date.now();
+                    location.replace(u);
+                } catch (e) {
+                    try { location.reload(true); } catch (e2) { location.reload(); }
+                }
+            }, 600);
         }
 
         async function diagPingSupabase() {
