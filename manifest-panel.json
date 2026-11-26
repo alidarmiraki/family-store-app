@@ -2,9 +2,14 @@
   "name": "پنل غرفه تازه‌مارکت",
   "short_name": "پنل غرفه",
   "description": "سیستم مدیریت غرفه تازه‌مارکت",
+  "id": "/?panel=1",
   "start_url": "/?panel=1",
   "scope": "/",
   "display": "standalone",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
   "orientation": "portrait",
   "background_color": "#064e3b",
   "theme_color": "#0f766e",
@@ -12,33 +17,28 @@
   "dir": "rtl",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icon-512.png",
+      "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icon-192.png",
+      "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "icon-512.png",
+      "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
     }
-  ],
-  "id": "/?panel=1",
-  "display_override": [
-    "standalone",
-    "minimal-ui"
   ]
 }
